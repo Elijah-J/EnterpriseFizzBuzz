@@ -59,6 +59,15 @@ from models import AuthContext, EvaluationStrategy, FizzBuzzRole, OutputFormat
 from observers import ConsoleObserver, EventBus, StatisticsObserver
 from rules_engine import RuleEngineFactory
 from event_sourcing import EventSourcingSystem
+from sla import (
+    AlertSeverity,
+    OnCallSchedule,
+    SLADashboard,
+    SLAMiddleware,
+    SLAMonitor,
+    SLODefinition,
+    SLOType,
+)
 from tracing import TraceExporter, TraceRenderer, TracingMiddleware, TracingService
 
 
@@ -273,6 +282,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--post-mortem",
         action="store_true",
         help="Generate a satirical post-mortem incident report after chaos execution",
+    )
+
+    # SLA Monitoring
+    parser.add_argument(
+        "--sla",
+        action="store_true",
+        help="Enable SLA Monitoring with PagerDuty-style alerting for FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--sla-dashboard",
+        action="store_true",
+        help="Display the SLA monitoring dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--on-call",
+        action="store_true",
+        help="Display the current on-call status and escalation chain",
     )
 
     # Feature Flags
@@ -539,6 +567,73 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Feature flags not enabled. Use --feature-flags to enable.\n")
         return 0
 
+    # SLA Monitoring setup
+    sla_monitor = None
+    sla_middleware = None
+    if args.sla:
+        slo_definitions = [
+            SLODefinition(
+                name="latency",
+                slo_type=SLOType.LATENCY,
+                target=config.sla_latency_target,
+                threshold_ms=config.sla_latency_threshold_ms,
+            ),
+            SLODefinition(
+                name="accuracy",
+                slo_type=SLOType.ACCURACY,
+                target=config.sla_accuracy_target,
+            ),
+            SLODefinition(
+                name="availability",
+                slo_type=SLOType.AVAILABILITY,
+                target=config.sla_availability_target,
+            ),
+        ]
+
+        on_call_schedule = OnCallSchedule(
+            team_name=config.sla_on_call_team_name,
+            rotation_interval_hours=config.sla_on_call_rotation_interval_hours,
+            engineers=config.sla_on_call_engineers,
+        )
+
+        sla_monitor = SLAMonitor(
+            slo_definitions=slo_definitions,
+            event_bus=event_bus,
+            on_call_schedule=on_call_schedule,
+            burn_rate_threshold=config.sla_error_budget_burn_rate_threshold,
+        )
+
+        sla_middleware = SLAMiddleware(
+            sla_monitor=sla_monitor,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | SLA MONITORING: PagerDuty-Style Alerting ENABLED        |\n"
+            "  | Latency, accuracy, and availability SLOs are now being  |\n"
+            "  | tracked with error budgets and escalation policies.     |\n"
+            "  | On-call: Bob McFizzington (he's always on call).        |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    elif args.sla_dashboard:
+        print("\n  SLA monitoring not enabled. Use --sla to enable.\n")
+        return 0
+    elif args.on_call:
+        # Allow --on-call without --sla for quick status check
+        on_call_schedule = OnCallSchedule(
+            team_name=config.sla_on_call_team_name,
+            rotation_interval_hours=config.sla_on_call_rotation_interval_hours,
+            engineers=config.sla_on_call_engineers,
+        )
+        sla_monitor = SLAMonitor(
+            slo_definitions=[],
+            on_call_schedule=on_call_schedule,
+        )
+        print(SLADashboard.render_on_call(sla_monitor))
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -620,6 +715,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if chaos_middleware is not None:
         builder.with_middleware(chaos_middleware)
+
+    if sla_middleware is not None:
+        builder.with_middleware(sla_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -729,6 +827,16 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Feature flag evaluation summary
     if flag_store is not None:
         print(FlagEvaluationSummary.render(flag_store))
+
+    # SLA dashboard
+    if args.sla_dashboard and sla_monitor is not None:
+        print(SLADashboard.render(sla_monitor))
+    elif args.sla_dashboard:
+        print("\n  SLA monitoring not enabled. Use --sla to enable.\n")
+
+    # On-call status (when combined with --sla)
+    if args.on_call and sla_monitor is not None:
+        print(SLADashboard.render_on_call(sla_monitor))
 
     return 0
 

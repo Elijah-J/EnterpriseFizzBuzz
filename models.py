@@ -152,6 +152,16 @@ class EventType(Enum):
     FLAG_DEPENDENCY_RESOLVED = auto()
     FLAG_ROLLOUT_DECISION = auto()
 
+    # SLA Monitoring events
+    SLA_EVALUATION_RECORDED = auto()
+    SLA_SLO_CHECKED = auto()
+    SLA_SLO_VIOLATION = auto()
+    SLA_ALERT_FIRED = auto()
+    SLA_ALERT_ACKNOWLEDGED = auto()
+    SLA_ALERT_RESOLVED = auto()
+    SLA_ERROR_BUDGET_UPDATED = auto()
+    SLA_ERROR_BUDGET_EXHAUSTED = auto()
+
 
 @dataclass(frozen=True)
 class Permission:

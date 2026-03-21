@@ -931,6 +931,123 @@ class FlagTargetingError(FeatureFlagError):
         )
 
 
+class SLAError(FizzBuzzError):
+    """Base exception for all SLA Monitoring and Alerting errors.
+
+    When your Service Level Agreement monitoring system for FizzBuzz
+    evaluation encounters an error, it raises questions about the
+    reliability of reliability monitoring itself. This is the
+    observability equivalent of "who watches the watchmen?" — except
+    the watchmen are monitoring whether n % 3 == 0 completes within
+    the agreed-upon latency budget.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-SL00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class SLOViolationError(SLAError):
+    """Raised when a Service Level Objective is violated.
+
+    The FizzBuzz evaluation pipeline has failed to meet the exacting
+    standards set forth in the Service Level Agreement. Whether it was
+    latency, accuracy, or availability, something has fallen below
+    the threshold that separates "enterprise-grade FizzBuzz" from
+    "just some modulo operations in a for loop." The difference,
+    as always, is in the SLO compliance percentage.
+    """
+
+    def __init__(self, slo_name: str, target: float, actual: float) -> None:
+        super().__init__(
+            f"SLO '{slo_name}' violated: target={target:.4f}, actual={actual:.4f}. "
+            f"The FizzBuzz pipeline has failed to meet its contractual obligations.",
+            error_code="EFP-SL01",
+            context={"slo_name": slo_name, "target": target, "actual": actual},
+        )
+
+
+class ErrorBudgetExhaustedError(SLAError):
+    """Raised when the error budget has been fully consumed.
+
+    You have used up every last drop of your error budget. There is
+    no more room for failure. Every remaining FizzBuzz evaluation
+    must succeed perfectly, or the SLA will be breached and the
+    on-call engineer will receive a page at 3 AM about a modulo
+    operation that took 2ms too long.
+    """
+
+    def __init__(self, budget_name: str, consumed: float) -> None:
+        super().__init__(
+            f"Error budget '{budget_name}' exhausted: {consumed:.2%} consumed. "
+            f"Zero tolerance for further FizzBuzz failures.",
+            error_code="EFP-SL02",
+            context={"budget_name": budget_name, "consumed": consumed},
+        )
+
+
+class AlertEscalationError(SLAError):
+    """Raised when an alert escalation fails to proceed.
+
+    The alert tried to escalate to the next level of on-call support,
+    but the escalation policy encountered an error. This is the
+    incident management equivalent of calling 911 and getting a busy
+    signal. The FizzBuzz incident remains unacknowledged, the error
+    budget continues to burn, and somewhere a PagerDuty integration
+    weeps silently.
+    """
+
+    def __init__(self, alert_id: str, reason: str) -> None:
+        super().__init__(
+            f"Alert '{alert_id}' escalation failed: {reason}. "
+            f"The incident response team has not been notified. "
+            f"Please escalate manually by shouting loudly.",
+            error_code="EFP-SL03",
+            context={"alert_id": alert_id, "reason": reason},
+        )
+
+
+class OnCallNotFoundError(SLAError):
+    """Raised when the on-call engineer cannot be determined.
+
+    The on-call rotation schedule has been consulted, the modulo
+    arithmetic has been performed (ironic, given the context), and
+    yet no on-call engineer could be found. This typically means
+    the rotation has zero entries, which is the scheduling equivalent
+    of dividing by zero.
+    """
+
+    def __init__(self, schedule_name: str) -> None:
+        super().__init__(
+            f"No on-call engineer found for schedule '{schedule_name}'. "
+            f"The rotation is empty or misconfigured. "
+            f"FizzBuzz incidents will go unattended.",
+            error_code="EFP-SL04",
+            context={"schedule_name": schedule_name},
+        )
+
+
+class SLAConfigurationError(SLAError):
+    """Raised when the SLA monitoring configuration is invalid.
+
+    The SLA monitoring system cannot start because its configuration
+    is invalid. Perhaps the latency SLO target is negative, the error
+    budget window is zero days, or the on-call rotation contains
+    nobody. These are all signs that the person who configured the
+    SLA monitoring system may themselves need monitoring.
+    """
+
+    def __init__(self, config_key: str, value: Any, reason: str) -> None:
+        super().__init__(
+            f"SLA configuration error for '{config_key}' = {value!r}: {reason}",
+            error_code="EFP-SL05",
+            context={"config_key": config_key, "value": value, "reason": reason},
+        )
+
+
 class DownstreamFizzBuzzDegradationError(FizzBuzzError):
     """Raised when downstream FizzBuzz evaluation quality degrades.
 

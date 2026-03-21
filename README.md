@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**19,500+ lines** across **40 files** with **673 unit tests** and **59 custom exception classes**, because this is an enterprise and we have standards.
+**22,000+ lines** across **42 files** with **769 unit tests** and **61 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 31 flags
-├── config.yaml              # YAML-based configuration with 10 sections
+├── main.py                  # CLI entry point with 34 flags
+├── config.yaml              # YAML-based configuration with 11 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (59 exception classes)
+├── exceptions.py            # Custom exception hierarchy (61 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -60,6 +60,7 @@ EnterpriseFizzBuzz/
 ├── event_sourcing.py        # Event Sourcing + CQRS with command/query buses (~1,500 lines)
 ├── chaos.py                 # Chaos Engineering / Fault Injection Framework (~1,200 lines)
 ├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
+├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
 │   ├── de.fizztranslation   # German (Deutsch)
@@ -76,7 +77,8 @@ EnterpriseFizzBuzz/
     ├── test_tracing.py      # 68 distributed tracing tests
     ├── test_event_sourcing.py  # 98 event sourcing & CQRS tests
     ├── test_chaos.py        # 69 chaos engineering & fault injection tests
-    └── test_feature_flags.py  # 69 feature flag & progressive rollout tests
+    ├── test_feature_flags.py  # 69 feature flag & progressive rollout tests
+    └── test_sla.py          # 96 SLA monitoring & alerting tests
 ```
 
 ## Design Patterns
@@ -123,6 +125,10 @@ EnterpriseFizzBuzz/
 | Rollout Strategy | `feature_flags.py` | SHA-256 deterministic hash-based percentage rollout, because non-deterministic FizzBuzz feature toggles would be an affront to engineering principles |
 | Dependency DAG | `feature_flags.py` | Kahn's topological sort with cycle detection for flag dependencies, because circular feature flag dependencies deserve a graph-theoretic response |
 | Targeting Rules | `feature_flags.py` | Rule-based flag evaluation (prime, even, odd, range, modulo), because deciding whether to show "Fizz" for the number 7 requires a formal targeting engine |
+| SLA Monitoring | `sla.py` | Three-pillar SLO tracking (latency, accuracy, availability) with compliance dashboards, because FizzBuzz without contractual guarantees is just a hobby |
+| Error Budgets | `sla.py` | Rolling-window budget consumption and burn rate calculation, because every failed modulo is a finite and precious resource |
+| Escalation Policy | `sla.py` | Four-tier PagerDuty-style escalation chain, because when `n % 3` violates its SLA, someone must be held accountable (it's always Bob) |
+| On-Call Rotation | `sla.py` | Modulo-based engineer rotation across a team of one, because even the on-call schedule uses modulo arithmetic -- and the irony is not lost on us |
 
 ## Features
 
@@ -141,7 +147,8 @@ EnterpriseFizzBuzz/
 - **Event Sourcing / CQRS** - Append-only event store with command/query bus separation, temporal queries, event upcasting, periodic snapshots, and materialized projections -- because the ability to reconstruct FizzBuzz state at any point in history is a compliance requirement, not a luxury
 - **Chaos Engineering** - A Chaos Monkey that deliberately corrupts results, injects latency, throws exceptions, sabotages the rule engine, and manipulates ML confidence scores -- with five severity levels ranging from "Gentle Breeze" to "Apocalypse," pre-built Game Day scenarios, and a satirical post-mortem incident report generator that would make any SRE weep with pride
 - **Feature Flags / Progressive Rollout** - Boolean, Percentage, and Targeting flag types with SHA-256 deterministic rollout, Kahn's topological sort for dependency resolution, full lifecycle management (CREATED -> ACTIVE -> DEPRECATED -> ARCHIVED), FlagMiddleware integration, and an ASCII evaluation summary renderer -- because toggling FizzBuzz rules on and off clearly requires the same infrastructure Netflix uses to manage feature rollouts across 200 million subscribers
-- **Custom Exception Hierarchy** - 59 exception classes for every conceivable FizzBuzz failure mode
+- **SLA Monitoring / PagerDuty-Style Alerting** - Three-pillar SLO tracking (latency, accuracy, availability) with error budgets, burn rate alerts, a four-tier escalation policy, and an on-call rotation that uses modulo arithmetic to determine which engineer from a team of one (1) person is currently responsible -- complete with an ASCII dashboard, ground-truth accuracy verification, and the unshakeable certainty that Bob McFizzington will always be the one who gets paged
+- **Custom Exception Hierarchy** - 61 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -264,6 +271,21 @@ python main.py --feature-flags --circuit-breaker --circuit-status --range 1 50
 
 # Full enterprise stack: feature flags + RBAC + tracing + chaos (peak configuration)
 python main.py --feature-flags --user alice --role FIZZBUZZ_SUPERUSER --trace --chaos --range 1 20
+
+# SLA Monitoring: track latency, accuracy, and availability SLOs
+python main.py --sla --range 1 50
+
+# SLA Monitoring with dashboard: see error budgets and compliance ratios
+python main.py --sla --sla-dashboard --range 1 100
+
+# Quick on-call status: who's responsible when FizzBuzz goes down? (spoiler: Bob)
+python main.py --on-call
+
+# SLA + chaos: watch the error budget burn as the monkey wreaks havoc
+python main.py --sla --sla-dashboard --chaos --chaos-level 3 --range 1 50
+
+# Full reliability stack: SLA + circuit breaker + chaos + tracing (peak SRE)
+python main.py --sla --sla-dashboard --circuit-breaker --circuit-status --chaos --chaos-level 2 --trace --range 1 30
 ```
 
 ## CLI Options
@@ -300,6 +322,9 @@ python main.py --feature-flags --user alice --role FIZZBUZZ_SUPERUSER --trace --
 --feature-flags      Enable the Feature Flag / Progressive Rollout subsystem
 --flag NAME=VALUE    Override a feature flag (e.g. --flag wuzz_rule_experimental=true)
 --list-flags         Display all registered feature flags and exit
+--sla                Enable SLA Monitoring with PagerDuty-style alerting
+--sla-dashboard      Display the SLA monitoring dashboard after execution
+--on-call            Display the current on-call status and escalation chain
 ```
 
 ## Environment Variables
@@ -705,6 +730,84 @@ Because even Kahn never imagined his algorithm being used to determine whether p
 | ASCII dashboard | Evaluation summary with per-flag statistics |
 | Netflix subscribers supported | 0 (but the architecture is ready) |
 
+## SLA Monitoring Architecture
+
+The SLA Monitoring subsystem implements a production-grade Service Level Agreement enforcement framework for the Enterprise FizzBuzz Platform -- because computing `n % 3` without contractual latency guarantees, error budgets, and a multi-tier escalation policy would be unconscionable in a production environment. Every FizzBuzz evaluation is measured against three SLOs, its impact on the error budget is calculated in real time, and if things go sideways, Bob McFizzington gets paged. Bob is always on call. Bob cannot escape.
+
+**Key components:**
+- **SLAMonitor** - Central orchestrator that coordinates SLO checking, error budget tracking, alert lifecycle, and on-call escalation
+- **SLOMetricCollector** - Thread-safe metric aggregator with P50/P99 latency percentiles
+- **ErrorBudget** - Rolling-window budget tracker with burn rate calculation and projected exhaustion estimates
+- **OnCallSchedule** - Modulo-based rotation across a team of one, with a four-tier escalation chain (L1 through L4 are all Bob, but with increasingly dramatic job titles)
+- **SLAMiddleware** - Pipeline integration with ground-truth accuracy verification (re-computes `n % 3` independently, because trusting the system you're monitoring defeats the purpose)
+- **SLADashboard** - ASCII dashboard renderer for SLO compliance, error budget status, and on-call information
+- **Alert** - Immutable alert records with PagerDuty-style severity levels (P1-P4) and lifecycle states (FIRING, ACKNOWLEDGED, RESOLVED)
+
+### Service Level Objectives
+
+| SLO | Target | What It Measures | What Happens When It's Violated |
+|-----|--------|------------------|---------------------------------|
+| Latency | 99.9% under 100ms | Each evaluation must complete within the threshold | Bob's phone rings. The neural network is probably having an existential crisis |
+| Accuracy | 99.999% (five nines) | The pipeline must produce the correct FizzBuzz result, verified against independent ground truth | Bob's phone rings louder. Someone broke modulo arithmetic |
+| Availability | 99.99% (four nines) | Each evaluation must succeed without throwing an exception | Bob's phone achieves sentience and begins ringing itself |
+
+### Error Budget Mechanics
+
+The error budget is the mathematically permissible amount of failure within the SLO window. For a 99.9% latency target over 30 days, the budget allows exactly 0.1% of evaluations to exceed the threshold. Once exhausted, every subsequent violation is a direct SLA breach.
+
+The **burn rate** measures how fast the budget is being consumed relative to the ideal pace:
+- **1.0x** -- Consuming at exactly the planned rate. Technically fine. Bob sleeps.
+- **2.0x** -- Consuming twice as fast as planned. Bob receives a politely worded email.
+- **10.0x** -- The budget will be exhausted in days. Bob updates his resume.
+- **Infinity** -- Zero tolerance met a non-zero failure. Bob has already left the building.
+
+### Escalation Tiers
+
+| Level | Title | Action |
+|-------|-------|--------|
+| L1 | On-Call Engineer | Acknowledge alert and begin investigation |
+| L2 | Senior On-Call Escalation Engineer | Escalate to senior management (yourself) |
+| L3 | Principal FizzBuzz Incident Commander | Declare SEV-1 and convene the war room (your desk) |
+| L4 | VP of FizzBuzz Reliability & Existential Dread | Update the status page and contemplate career choices |
+
+All four escalation levels are staffed by the same person: Bob McFizzington. The escalation chain provides the illusion of organizational depth while faithfully reflecting the reality that Bob is a one-person SRE team.
+
+### Bob McFizzington's On-Call Schedule
+
+```
+  +===========================================================+
+  |              ON-CALL ROTATION                              |
+  |  Team: FizzBuzz Reliability Engineering                    |
+  |  Rotation: Weekly (168 hours)                              |
+  +===========================================================+
+  |  Current On-Call: Bob McFizzington                         |
+  |  Title: Senior Principal Staff FizzBuzz Reliability        |
+  |         Engineer II                                        |
+  |  Email: bob.mcfizzington@enterprise.example.com            |
+  |  Phone: +1-555-FIZZBUZZ                                    |
+  +===========================================================+
+  |  Next On-Call: Bob McFizzington (surprise!)                |
+  +===========================================================+
+```
+
+The rotation algorithm uses modulo arithmetic (the supreme irony) to cycle through the engineering roster. For a roster of one, every rotation produces the same result. Bob's shift ends when Bob's shift begins again.
+
+| Spec | Value |
+|------|-------|
+| SLO types | 3 (latency, accuracy, availability) |
+| Alert severities | 4 (P1 CRITICAL through P4 LOW) |
+| Alert lifecycle states | 3 (FIRING, ACKNOWLEDGED, RESOLVED) |
+| Escalation tiers | 4 (L1 through L4, all Bob) |
+| Error budget window | 30 days (configurable) |
+| Burn rate alert threshold | 2.0x (configurable) |
+| On-call roster size | 1 (not configurable, Bob is eternal) |
+| Ground-truth verification | Independent `n % d` recomputation |
+| Middleware priority | 4 (after chaos, inside the pipeline) |
+| Thread safety | Full (threading.Lock on all collectors) |
+| Custom exceptions | 5 (SLAConfigurationError, SLOViolationError, ErrorBudgetExhaustedError, AlertEscalationError, OnCallNotFoundError) |
+| PagerDuty integration | None (but the vibes are there) |
+| MTTR for Bob | Instantaneous (he never leaves) |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -822,7 +925,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 673 tests
+# Run all 769 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -839,7 +942,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 673 tests, 59 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, and nanosecond timing. You tell me.
+A: It has 769 tests, 61 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -867,6 +970,9 @@ A: Because resilience is not a feature you test after the fact -- it's a culture
 
 **Q: Why does FizzBuzz need feature flags?**
 A: Because deploying FizzBuzz rules without a progressive rollout strategy is reckless. What if "Fizz" introduces a regression? What if the business wants to A/B test "Buzz" against a control group? What if the experimental "Wuzz" rule (n % 7) needs to be rolled out to exactly 50% of integers using deterministic SHA-256 hash-based bucketing? Feature flags answer all of these questions, plus several more that nobody asked. The dependency DAG ensures that you can't enable "Wuzz" without first enabling "Buzz," which itself depends on "FizzBuzz Premium Features" -- a flag whose purpose remains strategically undefined. Kahn's topological sort runs in O(V+E) time to resolve these dependencies, which is comforting when V is 5 and E is 3.
+
+**Q: Why does FizzBuzz need SLOs?**
+A: Because "it works" is not a Service Level Objective. Without formal SLO targets, how would you know if your FizzBuzz latency has regressed from 0.003ms to 0.004ms? Without an error budget, how would you decide whether it's safe to deploy a new modulo optimization? Without an on-call rotation, who gets paged at 3am when the accuracy SLO drops below five nines because the Chaos Monkey corrupted a Fizz? The answer to all three questions is Bob McFizzington, Senior Principal Staff FizzBuzz Reliability Engineer II. Bob is always on call. The rotation algorithm uses modulo arithmetic to select the on-call engineer from a team of one, which means the rotation is both technically correct and existentially cruel. The error budget tracks how many failures you're "allowed" before breaching your SLA, and the burn rate tells you how fast you're spending that budget -- because every failed FizzBuzz evaluation is a finite and precious resource that must be conserved with the same discipline as a NASA fuel budget. PagerDuty integration is not included, but the vibes are unmistakably PagerDuty.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
