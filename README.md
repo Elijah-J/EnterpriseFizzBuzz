@@ -249,7 +249,7 @@ The circuit breaker also monitors ML confidence scores from the neural network s
 ## Testing
 
 ```bash
-# Run all 132 tests
+# Run all 160 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -266,7 +266,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 132 tests, a plugin system, a neural network, a circuit breaker, and nanosecond timing. You tell me.
+A: It has 160 tests, a plugin system, a neural network, a circuit breaker, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
