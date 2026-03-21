@@ -1,6 +1,6 @@
 # EnterpriseFizzBuzz
 
-### A Production-Grade, Enterprise-Ready FizzBuzz Evaluation Engine
+### A Production-Grade, Enterprise-Ready, Clean-Architecture-Layered FizzBuzz Evaluation Engine
 
 > *Because you can never be too careful when dividing by 3 and 5.*
 
@@ -32,63 +32,134 @@ for i in range(1, 101):
 
 ## This Solution
 
-**26,300+ lines** across **44 files** with **885 unit tests** and **77 custom exception classes**, because this is an enterprise and we have standards.
+**26,600+ lines** across **66 files** with **927 unit tests** and **77 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
+The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 26,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
+
+### The Dependency Rule
+
+```
+    +---------------------------------------------------------------+
+    |                     INFRASTRUCTURE                             |
+    |   config, formatters, middleware, observers, plugins,          |
+    |   rules_engine, ml_engine, blockchain, circuit_breaker,        |
+    |   tracing, auth, i18n, event_sourcing, chaos, feature_flags,   |
+    |   sla, cache, migrations                                       |
+    |                                                                |
+    |   +-------------------------------------------------------+   |
+    |   |                   APPLICATION                          |   |
+    |   |   fizzbuzz_service (Builder pattern orchestration)      |   |
+    |   |   factory (Abstract Factory + Caching Decorator)       |   |
+    |   |                                                        |   |
+    |   |   +-----------------------------------------------+   |   |
+    |   |   |                 DOMAIN                         |   |   |
+    |   |   |   models, exceptions, interfaces               |   |   |
+    |   |   |   (the sacred inner circle)                    |   |   |
+    |   |   +-----------------------------------------------+   |   |
+    |   +-------------------------------------------------------+   |
+    +---------------------------------------------------------------+
+
+    Dependencies point INWARD only:
+      domain  <--  application  <--  infrastructure
+    Violations are caught by an AST-based architecture test.
+```
+
+### Package Structure
+
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 43 flags
-├── config.yaml              # YAML-based configuration with 12 sections
-├── config.py                # Singleton configuration manager with env var overrides
-├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (77 exception classes)
-├── interfaces.py            # Abstract base classes for everything
-├── rules_engine.py          # Four evaluation strategies
-├── ml_engine.py             # From-scratch neural network (pure stdlib)
-├── factory.py               # Abstract Factory + Caching Decorator
-├── observers.py             # Thread-safe event bus with statistics tracking
-├── middleware.py             # Composable middleware pipeline
-├── formatters.py            # Four output formatters
-├── plugins.py               # Plugin registry with auto-registration
-├── fizzbuzz_service.py      # Service orchestration with Builder pattern
-├── blockchain.py            # Immutable audit ledger with proof-of-work
-├── circuit_breaker.py       # Circuit breaker with exponential backoff
-├── tracing.py               # OpenTelemetry-inspired distributed tracing (from scratch)
-├── auth.py                  # RBAC with HMAC-SHA256 token engine and 47-field access denials
-├── i18n.py                  # Internationalization subsystem with locale fallback chains
-├── event_sourcing.py        # Event Sourcing + CQRS with command/query buses (~1,500 lines)
-├── chaos.py                 # Chaos Engineering / Fault Injection Framework (~1,200 lines)
-├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
-├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
-├── cache.py                 # In-Memory Caching with MESI coherence and eulogies (~1,100 lines)
-├── migrations.py            # Database Migration Framework for ephemeral RAM schemas (~1,160 lines)
-├── locales/                 # Proprietary .fizztranslation locale files
-│   ├── en.fizztranslation   # English (base locale)
-│   ├── de.fizztranslation   # German (Deutsch)
-│   ├── fr.fizztranslation   # French (Français)
-│   ├── ja.fizztranslation   # Japanese (日本語)
-│   ├── tlh.fizztranslation  # Klingon (tlhIngan Hol)
-│   ├── sjn.fizztranslation  # Sindarin (Edhellen) — ISO 639-3
-│   └── qya.fizztranslation  # Quenya (Eldarin) — ISO 639-3
+├── main.py                          # CLI entry point with 43 flags
+├── config.yaml                      # YAML-based configuration with 12 sections
+│
+├── enterprise_fizzbuzz/             # Clean Architecture package root
+│   ├── __init__.py
+│   ├── __main__.py                  # python -m enterprise_fizzbuzz support
+│   │
+│   ├── domain/                      # THE INNER CIRCLE (no outward dependencies)
+│   │   ├── __init__.py
+│   │   ├── models.py                # Dataclasses, enums, and domain models
+│   │   ├── exceptions.py            # Custom exception hierarchy (77 exception classes)
+│   │   └── interfaces.py            # Abstract base classes for everything
+│   │
+│   ├── application/                 # USE CASES (depends only on domain)
+│   │   ├── __init__.py
+│   │   ├── fizzbuzz_service.py      # Service orchestration with Builder pattern
+│   │   └── factory.py               # Abstract Factory + Caching Decorator
+│   │
+│   └── infrastructure/              # ADAPTERS & FRAMEWORKS (the outer ring)
+│       ├── __init__.py
+│       ├── adapters/                # Port adapters (future expansion surface)
+│       │   └── __init__.py
+│       ├── config.py                # Singleton configuration manager with env var overrides
+│       ├── formatters.py            # Four output formatters
+│       ├── middleware.py            # Composable middleware pipeline
+│       ├── observers.py            # Thread-safe event bus with statistics tracking
+│       ├── plugins.py               # Plugin registry with auto-registration
+│       ├── rules_engine.py          # Four evaluation strategies
+│       ├── ml_engine.py             # From-scratch neural network (pure stdlib)
+│       ├── blockchain.py            # Immutable audit ledger with proof-of-work
+│       ├── circuit_breaker.py       # Circuit breaker with exponential backoff
+│       ├── tracing.py               # OpenTelemetry-inspired distributed tracing (from scratch)
+│       ├── auth.py                  # RBAC with HMAC-SHA256 token engine and 47-field access denials
+│       ├── i18n.py                  # Internationalization subsystem with locale fallback chains
+│       ├── event_sourcing.py        # Event Sourcing + CQRS with command/query buses (~1,500 lines)
+│       ├── chaos.py                 # Chaos Engineering / Fault Injection Framework (~1,200 lines)
+│       ├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
+│       ├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
+│       ├── cache.py                 # In-Memory Caching with MESI coherence and eulogies (~1,100 lines)
+│       └── migrations.py            # Database Migration Framework for ephemeral RAM schemas (~1,160 lines)
+│
+├── *.py (root)                      # Backward-compatible re-export stubs
+│   │                                  (each file re-exports from the package so
+│   │                                   existing imports continue to work)
+│   ├── models.py → enterprise_fizzbuzz.domain.models
+│   ├── exceptions.py → enterprise_fizzbuzz.domain.exceptions
+│   ├── interfaces.py → enterprise_fizzbuzz.domain.interfaces
+│   ├── config.py → enterprise_fizzbuzz.infrastructure.config
+│   ├── ... (one stub per original module)
+│   └── tracing.py → enterprise_fizzbuzz.infrastructure.tracing
+│
+├── locales/                         # Proprietary .fizztranslation locale files
+│   ├── en.fizztranslation           # English (base locale)
+│   ├── de.fizztranslation           # German (Deutsch)
+│   ├── fr.fizztranslation           # French (Français)
+│   ├── ja.fizztranslation           # Japanese (日本語)
+│   ├── tlh.fizztranslation          # Klingon (tlhIngan Hol)
+│   ├── sjn.fizztranslation          # Sindarin (Edhellen) — ISO 639-3
+│   └── qya.fizztranslation          # Quenya (Eldarin) — ISO 639-3
+│
 └── tests/
-    ├── test_fizzbuzz.py     # 66 comprehensive tests
-    ├── test_circuit_breaker.py  # 66 circuit breaker tests
-    ├── test_i18n.py         # 123 internationalization tests
-    ├── test_auth.py         # 86 RBAC & authentication tests
-    ├── test_tracing.py      # 68 distributed tracing tests
-    ├── test_event_sourcing.py  # 98 event sourcing & CQRS tests
-    ├── test_chaos.py        # 69 chaos engineering & fault injection tests
-    ├── test_feature_flags.py  # 69 feature flag & progressive rollout tests
-    ├── test_sla.py          # 96 SLA monitoring & alerting tests
-    ├── test_cache.py        # 60 caching & eviction policy tests
-    └── test_migrations.py   # 56 database migration & schema management tests
+    ├── test_fizzbuzz.py             # 66 comprehensive tests
+    ├── test_circuit_breaker.py      # 66 circuit breaker tests
+    ├── test_i18n.py                 # 123 internationalization tests
+    ├── test_auth.py                 # 86 RBAC & authentication tests
+    ├── test_tracing.py              # 68 distributed tracing tests
+    ├── test_event_sourcing.py       # 98 event sourcing & CQRS tests
+    ├── test_chaos.py                # 69 chaos engineering & fault injection tests
+    ├── test_feature_flags.py        # 69 feature flag & progressive rollout tests
+    ├── test_sla.py                  # 96 SLA monitoring & alerting tests
+    ├── test_cache.py                # 60 caching & eviction policy tests
+    ├── test_migrations.py           # 56 database migration & schema management tests
+    └── test_architecture.py         # AST-based import linter enforcing the Dependency Rule
 ```
+
+### Backward-Compatible Re-Export Stubs
+
+Every original root-level module (`models.py`, `exceptions.py`, `config.py`, etc.) has been replaced with a two-line re-export stub that imports everything from the corresponding package module. This means all existing imports (`from models import FizzBuzzResult`) continue to work without modification. The stubs add zero functionality and exist solely to prevent the restructuring from breaking anything -- the architectural equivalent of moving furniture while the occupants are asleep.
+
+### AST-Based Architecture Test
+
+The `tests/test_architecture.py` module uses Python's `ast` parser to statically analyze every import statement in the domain layer and verify that no domain module imports from the application or infrastructure layers. If `models.py` ever tries to import from `config.py`, this test will catch it, fail loudly, and shame it publicly. The Dependency Rule is not a suggestion.
 
 ## Design Patterns
 
 | Pattern | Where | Why |
 |---|---|---|
+| Clean Architecture / Hexagonal Architecture | `enterprise_fizzbuzz/` | Because a flat directory of 24 Python files lacked the concentric dependency rings necessary to convey architectural seriousness. Zero features added. Three layers added. The Dependency Rule is enforced by an AST-based import linter, because trust is not an architectural strategy |
+| Dependency Rule | `tests/test_architecture.py` | Domain depends on nothing. Application depends on domain. Infrastructure depends on both. Violations are caught at test time via static AST analysis, not at runtime via disappointment |
+| Backward-Compatible Facade | Root-level `*.py` stubs | Two-line re-export modules that preserve all existing imports while the real code lives in the package. The architectural equivalent of a mail forwarding service |
 | Abstract Factory | `factory.py` | Creating rules is *complex* |
 | Strategy | `rules_engine.py` | Four interchangeable evaluation algorithms |
 | Chain of Responsibility | `rules_engine.py` | Because one Strategy wasn't enough |
