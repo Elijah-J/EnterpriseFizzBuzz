@@ -39,6 +39,13 @@ from circuit_breaker import (
     CircuitBreakerRegistry,
 )
 from config import ConfigurationManager, _SingletonMeta
+from feature_flags import (
+    FlagEvaluationSummary,
+    FlagMiddleware,
+    apply_cli_overrides,
+    create_flag_store_from_config,
+    render_flag_list,
+)
 from fizzbuzz_service import FizzBuzzServiceBuilder
 from formatters import FormatterFactory
 from i18n import LocaleManager
@@ -268,6 +275,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Generate a satirical post-mortem incident report after chaos execution",
     )
 
+    # Feature Flags
+    parser.add_argument(
+        "--feature-flags",
+        action="store_true",
+        help="Enable the Feature Flag / Progressive Rollout subsystem",
+    )
+
+    parser.add_argument(
+        "--flag",
+        action="append",
+        metavar="NAME=VALUE",
+        default=[],
+        help="Override a feature flag (e.g. --flag wuzz_rule_experimental=true)",
+    )
+
+    parser.add_argument(
+        "--list-flags",
+        action="store_true",
+        help="Display all registered feature flags and exit",
+    )
+
     return parser
 
 
@@ -476,6 +504,41 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
         es_middleware = es_system.create_middleware()
 
+    # Feature Flags setup
+    flag_store = None
+    flag_middleware = None
+    if args.feature_flags:
+        from models import RuleDefinition
+        from rules_engine import ConcreteRule
+
+        flag_store = create_flag_store_from_config(config)
+
+        # Apply CLI overrides
+        if args.flag:
+            apply_cli_overrides(flag_store, args.flag)
+
+        # Handle --list-flags
+        if args.list_flags:
+            print(render_flag_list(flag_store))
+            return 0
+
+        flag_middleware = FlagMiddleware(
+            flag_store=flag_store,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FEATURE FLAGS: Progressive Rollout ENABLED              |\n"
+            "  | Flags are now controlling which rules are active.       |\n"
+            "  | The FizzBuzz rules you know and love are now subject    |\n"
+            "  | to the whims of a configuration-driven toggle system.   |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.list_flags:
+        print("\n  Feature flags not enabled. Use --feature-flags to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -558,7 +621,19 @@ def main(argv: Optional[list[str]] = None) -> int:
     if chaos_middleware is not None:
         builder.with_middleware(chaos_middleware)
 
+    # Add feature flag middleware (priority -3, runs before tracing)
+    if flag_middleware is not None:
+        builder.with_middleware(flag_middleware)
+
     service = builder.build()
+
+    # Inject the Wuzz rule when feature flags are active
+    if flag_store is not None:
+        wuzz_rule_def = RuleDefinition(
+            name="WuzzRule", divisor=7, label="Wuzz", priority=3
+        )
+        wuzz_rule = ConcreteRule(wuzz_rule_def)
+        service._rules.append(wuzz_rule)
 
     # Print authentication status
     if auth_context is not None:
@@ -650,6 +725,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(f"\n  {locale_mgr.t('messages.circuit_breaker_not_enabled')}\n")
         else:
             print("\n  Circuit breaker not enabled. Use --circuit-breaker to enable.\n")
+
+    # Feature flag evaluation summary
+    if flag_store is not None:
+        print(FlagEvaluationSummary.render(flag_store))
 
     return 0
 

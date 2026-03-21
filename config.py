@@ -188,6 +188,53 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                 },
                 "seed": None,
             },
+            "feature_flags": {
+                "enabled": False,
+                "default_lifecycle": "ACTIVE",
+                "log_evaluations": True,
+                "strict_dependencies": True,
+                "predefined_flags": {
+                    "fizz_rule_enabled": {
+                        "type": "BOOLEAN",
+                        "enabled": True,
+                        "description": "Controls the sacred Fizz rule (divisor=3)",
+                    },
+                    "buzz_rule_enabled": {
+                        "type": "BOOLEAN",
+                        "enabled": True,
+                        "description": "Controls the venerable Buzz rule (divisor=5)",
+                    },
+                    "wuzz_rule_experimental": {
+                        "type": "PERCENTAGE",
+                        "enabled": True,
+                        "percentage": 30,
+                        "description": "Experimental Wuzz rule (divisor=7) -- 30% progressive rollout",
+                    },
+                    "wuzz_prime_targeting": {
+                        "type": "TARGETING",
+                        "enabled": True,
+                        "targeting_rule": "prime",
+                        "description": "Wuzz targeting: only activates for prime numbers",
+                        "dependencies": ["wuzz_rule_experimental"],
+                    },
+                    "ml_strategy_canary": {
+                        "type": "PERCENTAGE",
+                        "enabled": False,
+                        "percentage": 10,
+                        "description": "Canary rollout for ML evaluation strategy",
+                    },
+                    "blockchain_audit": {
+                        "type": "BOOLEAN",
+                        "enabled": False,
+                        "description": "Toggle blockchain audit ledger at runtime",
+                    },
+                    "tracing_enabled": {
+                        "type": "BOOLEAN",
+                        "enabled": False,
+                        "description": "Toggle distributed tracing at runtime",
+                    },
+                },
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -582,6 +629,36 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Random seed for reproducible chaos. None = true entropy."""
         self._ensure_loaded()
         return self._raw_config.get("chaos", {}).get("seed", None)
+
+    @property
+    def feature_flags_enabled(self) -> bool:
+        """Whether the Feature Flags subsystem is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("feature_flags", {}).get("enabled", False)
+
+    @property
+    def feature_flags_default_lifecycle(self) -> str:
+        """Default lifecycle state for newly created flags."""
+        self._ensure_loaded()
+        return self._raw_config.get("feature_flags", {}).get("default_lifecycle", "ACTIVE")
+
+    @property
+    def feature_flags_log_evaluations(self) -> bool:
+        """Whether to log every flag evaluation for audit compliance."""
+        self._ensure_loaded()
+        return self._raw_config.get("feature_flags", {}).get("log_evaluations", True)
+
+    @property
+    def feature_flags_strict_dependencies(self) -> bool:
+        """Whether to enforce dependency graph constraints."""
+        self._ensure_loaded()
+        return self._raw_config.get("feature_flags", {}).get("strict_dependencies", True)
+
+    @property
+    def feature_flags_predefined(self) -> dict[str, Any]:
+        """Predefined feature flag definitions from config."""
+        self._ensure_loaded()
+        return self._raw_config.get("feature_flags", {}).get("predefined_flags", {})
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

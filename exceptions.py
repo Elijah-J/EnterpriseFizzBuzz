@@ -793,6 +793,144 @@ class ResultCorruptionDetectedError(ChaosError):
         )
 
 
+class FeatureFlagError(FizzBuzzError):
+    """Base exception for the Feature Flag / Progressive Rollout subsystem.
+
+    When your feature flag system itself becomes a feature that needs
+    flagging, you've achieved a level of recursive configuration that
+    most enterprise architects can only aspire to. These exceptions
+    cover everything from missing flags to dependency cycles to the
+    existential dread of a percentage rollout that can't decide
+    whether 49.99% rounds up or down.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-FF00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class FlagNotFoundError(FeatureFlagError):
+    """Raised when a referenced feature flag does not exist in the store.
+
+    You asked for a flag that simply isn't there. Perhaps it was never
+    created, perhaps it was archived to the great flag graveyard, or
+    perhaps you misspelled it. Check your YAML, check your conscience,
+    and try again.
+    """
+
+    def __init__(self, flag_name: str) -> None:
+        super().__init__(
+            f"Feature flag '{flag_name}' not found in the flag store. "
+            f"Available flags may be listed with --list-flags.",
+            error_code="EFP-FF01",
+            context={"flag_name": flag_name},
+        )
+        self.flag_name = flag_name
+
+
+class FlagDependencyCycleError(FeatureFlagError):
+    """Raised when the flag dependency graph contains a cycle.
+
+    Flag A depends on Flag B which depends on Flag C which depends
+    on Flag A. Congratulations, you've created a circular dependency
+    in your boolean toggles. This is the feature flag equivalent of
+    the chicken-and-egg problem, except both the chicken and the egg
+    are just if-statements.
+    """
+
+    def __init__(self, cycle: list[str]) -> None:
+        cycle_str = " -> ".join(cycle)
+        super().__init__(
+            f"Circular dependency detected in feature flag graph: {cycle_str}. "
+            f"Topological sort has failed. Kahn is disappointed.",
+            error_code="EFP-FF02",
+            context={"cycle": cycle},
+        )
+        self.cycle = cycle
+
+
+class FlagLifecycleError(FeatureFlagError):
+    """Raised when a flag operation violates the lifecycle state machine.
+
+    Flags have feelings. You can't just activate an archived flag
+    without going through the proper lifecycle transitions. There
+    are forms to fill out, approvals to obtain, and state machines
+    to respect.
+    """
+
+    def __init__(self, flag_name: str, current_state: str, attempted_state: str) -> None:
+        super().__init__(
+            f"Flag '{flag_name}' cannot transition from '{current_state}' "
+            f"to '{attempted_state}'. Consult the lifecycle state diagram "
+            f"(available in the 47-page architecture document).",
+            error_code="EFP-FF03",
+            context={
+                "flag_name": flag_name,
+                "current_state": current_state,
+                "attempted_state": attempted_state,
+            },
+        )
+
+
+class FlagDependencyNotMetError(FeatureFlagError):
+    """Raised when a flag's dependency is not satisfied.
+
+    This flag requires another flag to be enabled first, but that
+    flag is currently off, deprecated, or pretending not to exist.
+    Feature flags have trust issues, and this dependency was not
+    met with sufficient enthusiasm.
+    """
+
+    def __init__(self, flag_name: str, dependency_name: str) -> None:
+        super().__init__(
+            f"Flag '{flag_name}' depends on '{dependency_name}', which is "
+            f"not currently enabled. Enable the dependency first, or remove "
+            f"the dependency if you enjoy living dangerously.",
+            error_code="EFP-FF04",
+            context={"flag_name": flag_name, "dependency_name": dependency_name},
+        )
+
+
+class FlagRolloutError(FeatureFlagError):
+    """Raised when the progressive rollout engine encounters an error.
+
+    The percentage-based rollout system has encountered a situation
+    it cannot handle, such as a rollout percentage of 150% or a
+    hash function that returned a value outside [0, 1]. Mathematics
+    has been violated, and the rollout engine refuses to continue.
+    """
+
+    def __init__(self, flag_name: str, reason: str) -> None:
+        super().__init__(
+            f"Rollout error for flag '{flag_name}': {reason}. "
+            f"The progressive rollout engine is experiencing doubt.",
+            error_code="EFP-FF05",
+            context={"flag_name": flag_name, "reason": reason},
+        )
+
+
+class FlagTargetingError(FeatureFlagError):
+    """Raised when a targeting rule fails to evaluate.
+
+    The targeting rule tried its best to determine whether this
+    particular number deserves the feature, but something went
+    wrong. Perhaps the rule was malformed, perhaps the number
+    was too mysterious, or perhaps targeting rules simply weren't
+    meant to be applied to integers.
+    """
+
+    def __init__(self, flag_name: str, rule_type: str, reason: str) -> None:
+        super().__init__(
+            f"Targeting error for flag '{flag_name}', rule type '{rule_type}': "
+            f"{reason}. The targeting engine is confused.",
+            error_code="EFP-FF06",
+            context={"flag_name": flag_name, "rule_type": rule_type, "reason": reason},
+        )
+
+
 class DownstreamFizzBuzzDegradationError(FizzBuzzError):
     """Raised when downstream FizzBuzz evaluation quality degrades.
 

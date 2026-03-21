@@ -14,6 +14,38 @@ from enum import Enum, auto
 from typing import Any, Optional
 
 
+class FlagLifecycle(Enum):
+    """Lifecycle states for Enterprise Feature Flags.
+
+    Every feature flag must traverse this lifecycle, because even
+    boolean toggles deserve a formal state machine. CREATED is the
+    flag's infancy, ACTIVE is its productive career, DEPRECATED is
+    its midlife crisis, and ARCHIVED is its eternal rest in the
+    great config graveyard.
+    """
+
+    CREATED = auto()
+    ACTIVE = auto()
+    DEPRECATED = auto()
+    ARCHIVED = auto()
+
+
+class FlagType(Enum):
+    """Classification of feature flag evaluation strategies.
+
+    BOOLEAN: The flag is either on or off. Revolutionary.
+    PERCENTAGE: A fraction of inputs receive the feature, determined
+        by a deterministic hash function because randomness is for
+        the undisciplined.
+    TARGETING: The flag evaluates a targeting rule to decide eligibility,
+        because some numbers are simply more deserving of features than others.
+    """
+
+    BOOLEAN = auto()
+    PERCENTAGE = auto()
+    TARGETING = auto()
+
+
 class FizzBuzzRole(Enum):
     """Role-Based Access Control roles for the Enterprise FizzBuzz Platform.
 
@@ -113,6 +145,12 @@ class EventType(Enum):
     CHAOS_EXCEPTION_INJECTED = auto()
     CHAOS_GAMEDAY_STARTED = auto()
     CHAOS_GAMEDAY_ENDED = auto()
+
+    # Feature Flag events
+    FLAG_EVALUATED = auto()
+    FLAG_STATE_CHANGED = auto()
+    FLAG_DEPENDENCY_RESOLVED = auto()
+    FLAG_ROLLOUT_DECISION = auto()
 
 
 @dataclass(frozen=True)

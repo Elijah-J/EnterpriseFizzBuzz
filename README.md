@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**17,600+ lines** across **38 files** with **604 unit tests** and **48 custom exception classes**, because this is an enterprise and we have standards.
+**19,500+ lines** across **40 files** with **673 unit tests** and **59 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 28 flags
+├── main.py                  # CLI entry point with 31 flags
 ├── config.yaml              # YAML-based configuration with 10 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (48 exception classes)
+├── exceptions.py            # Custom exception hierarchy (59 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -59,6 +59,7 @@ EnterpriseFizzBuzz/
 ├── i18n.py                  # Internationalization subsystem with locale fallback chains
 ├── event_sourcing.py        # Event Sourcing + CQRS with command/query buses (~1,500 lines)
 ├── chaos.py                 # Chaos Engineering / Fault Injection Framework (~1,200 lines)
+├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
 │   ├── de.fizztranslation   # German (Deutsch)
@@ -74,7 +75,8 @@ EnterpriseFizzBuzz/
     ├── test_auth.py         # 86 RBAC & authentication tests
     ├── test_tracing.py      # 68 distributed tracing tests
     ├── test_event_sourcing.py  # 98 event sourcing & CQRS tests
-    └── test_chaos.py        # 69 chaos engineering & fault injection tests
+    ├── test_chaos.py        # 69 chaos engineering & fault injection tests
+    └── test_feature_flags.py  # 69 feature flag & progressive rollout tests
 ```
 
 ## Design Patterns
@@ -117,6 +119,10 @@ EnterpriseFizzBuzz/
 | Chaos Engineering | `chaos.py` | Deliberate fault injection to prove that FizzBuzz can survive the apocalypse (or at least a corrupted modulo) |
 | Fault Injection | `chaos.py` | Five artisanal failure modes, hand-crafted with love and malice, each with configurable severity |
 | Game Day | `chaos.py` | Structured multi-phase chaos experiments with escalating severity, because "let's break things on purpose" deserves a framework |
+| Feature Flags | `feature_flags.py` | Boolean, Percentage, and Targeting flag types with full lifecycle management, because `if USE_FIZZ:` was insufficiently configurable |
+| Rollout Strategy | `feature_flags.py` | SHA-256 deterministic hash-based percentage rollout, because non-deterministic FizzBuzz feature toggles would be an affront to engineering principles |
+| Dependency DAG | `feature_flags.py` | Kahn's topological sort with cycle detection for flag dependencies, because circular feature flag dependencies deserve a graph-theoretic response |
+| Targeting Rules | `feature_flags.py` | Rule-based flag evaluation (prime, even, odd, range, modulo), because deciding whether to show "Fizz" for the number 7 requires a formal targeting engine |
 
 ## Features
 
@@ -134,7 +140,8 @@ EnterpriseFizzBuzz/
 - **Role-Based Access Control (RBAC)** - Five-tier role hierarchy from ANONYMOUS to FIZZBUZZ_SUPERUSER, HMAC-SHA256 token authentication, permission-based number range access, and a sacred 47-field access denied JSON response that includes whether the forbidden number is prime, a motivational quote, and a legal disclaimer
 - **Event Sourcing / CQRS** - Append-only event store with command/query bus separation, temporal queries, event upcasting, periodic snapshots, and materialized projections -- because the ability to reconstruct FizzBuzz state at any point in history is a compliance requirement, not a luxury
 - **Chaos Engineering** - A Chaos Monkey that deliberately corrupts results, injects latency, throws exceptions, sabotages the rule engine, and manipulates ML confidence scores -- with five severity levels ranging from "Gentle Breeze" to "Apocalypse," pre-built Game Day scenarios, and a satirical post-mortem incident report generator that would make any SRE weep with pride
-- **Custom Exception Hierarchy** - 48 exception classes for every conceivable FizzBuzz failure mode
+- **Feature Flags / Progressive Rollout** - Boolean, Percentage, and Targeting flag types with SHA-256 deterministic rollout, Kahn's topological sort for dependency resolution, full lifecycle management (CREATED -> ACTIVE -> DEPRECATED -> ARCHIVED), FlagMiddleware integration, and an ASCII evaluation summary renderer -- because toggling FizzBuzz rules on and off clearly requires the same infrastructure Netflix uses to manage feature rollouts across 200 million subscribers
+- **Custom Exception Hierarchy** - 59 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -239,6 +246,24 @@ python main.py --chaos --chaos-level 3 --circuit-breaker --circuit-status --rang
 
 # Full resilience stack: chaos + circuit breaker + ML + tracing (peak entropy)
 python main.py --chaos --chaos-level 4 --circuit-breaker --strategy machine_learning --trace --post-mortem --range 1 20
+
+# Feature flags: enable progressive rollout with default flag configuration
+python main.py --feature-flags --range 1 30
+
+# Feature flags: override a flag to enable the experimental Wuzz rule (divisible by 7)
+python main.py --feature-flags --flag wuzz_rule_experimental=true --range 1 30
+
+# Feature flags: disable the Fizz rule and see what happens (spoiler: no Fizz)
+python main.py --feature-flags --flag fizz_rule_enabled=false --range 1 20
+
+# Feature flags: list all registered flags and their configuration
+python main.py --feature-flags --list-flags
+
+# Feature flags: progressive rollout at 50% with circuit breaker (peak toggle)
+python main.py --feature-flags --circuit-breaker --circuit-status --range 1 50
+
+# Full enterprise stack: feature flags + RBAC + tracing + chaos (peak configuration)
+python main.py --feature-flags --user alice --role FIZZBUZZ_SUPERUSER --trace --chaos --range 1 20
 ```
 
 ## CLI Options
@@ -272,6 +297,9 @@ python main.py --chaos --chaos-level 4 --circuit-breaker --strategy machine_lear
 --chaos-level N       Chaos severity level 1-5 (1=gentle breeze, 5=apocalypse)
 --gameday SCENARIO    Run a Game Day chaos scenario (modulo_meltdown, confidence_crisis, slow_burn, total_chaos)
 --post-mortem         Generate a satirical post-mortem incident report after chaos execution
+--feature-flags      Enable the Feature Flag / Progressive Rollout subsystem
+--flag NAME=VALUE    Override a feature flag (e.g. --flag wuzz_rule_experimental=true)
+--list-flags         Display all registered feature flags and exit
 ```
 
 ## Environment Variables
@@ -595,6 +623,88 @@ After a chaos session, the `--post-mortem` flag generates a lovingly crafted sat
 | Post-mortem action items | 12 (randomly sampled, none actionable) |
 | Compliance | ISO 22301, SOC 2 Type II, PCI DSS (somehow) |
 
+## Feature Flags Architecture
+
+The Feature Flags subsystem implements a production-grade progressive rollout engine for toggling FizzBuzz rules on and off -- because the ability to disable `n % 3` at runtime clearly requires the same infrastructure that Netflix uses to manage feature rollouts across 200 million subscribers. Your 100 integers deserve nothing less.
+
+The system supports three flag types, a full lifecycle state machine, SHA-256 deterministic hash-based percentage rollout, a dependency DAG with Kahn's topological sort for cycle detection, and an ASCII evaluation summary renderer. FlagMiddleware integrates into the middleware pipeline at priority -3 (before tracing, before circuit breaking, before everything) to determine which rules are active for each number.
+
+### Flag Types
+
+| Type | Evaluation Logic | Use Case |
+|------|-----------------|----------|
+| `BOOLEAN` | Simple on/off toggle | Enabling or disabling a rule entirely, because `if enabled:` needed a type system |
+| `PERCENTAGE` | SHA-256 deterministic hash-based bucketing in [0, 100) | Gradually rolling out a rule to a percentage of numbers, because 100 integers is a large enough population for A/B testing |
+| `TARGETING` | Rule-based evaluation (prime, even, odd, range, modulo) | Enabling a rule only for numbers that match specific criteria, because "Fizz for primes only" is a valid business requirement |
+
+### Predefined Flags
+
+| Flag Name | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `fizz_rule_enabled` | BOOLEAN | ON | Controls whether the Fizz rule (n % 3) is active. Disabling this is an act of corporate sabotage |
+| `buzz_rule_enabled` | BOOLEAN | ON | Controls whether the Buzz rule (n % 5) is active. Equally treasonous to disable |
+| `wuzz_rule_experimental` | PERCENTAGE | OFF (50%) | Experimental Wuzz rule (n % 7) with 50% rollout. Because "FizzBuzzWuzz" is the future of enterprise arithmetic |
+| `fizzbuzz_premium_features` | BOOLEAN | ON | Gates access to premium FizzBuzz features. What those features are remains strategically ambiguous |
+| `prime_number_targeting` | TARGETING | ON | Targets prime numbers specifically, using a targeting rule engine that would make ad-tech engineers weep |
+
+### Flag Lifecycle
+
+```
+    +===========+       +============+       +==============+       +==============+
+    |  CREATED  |------>|   ACTIVE   |------>|  DEPRECATED  |------>|  ARCHIVED    |
+    +===========+       +============+       +==============+       +==============+
+         |                                                                 ^
+         +----------------------------------------------------------------+
+                              (skip the drama)
+```
+
+Flags progress through a formal lifecycle because even boolean toggles deserve ceremony. Archived flags cannot be resurrected -- they are consigned to the configuration graveyard, where they join the other flags that once controlled whether to print "Fizz."
+
+### Dependency DAG
+
+```
+                    fizzbuzz_premium_features
+                           /          \
+                          v            v
+                 fizz_rule_enabled   buzz_rule_enabled
+                                       |
+                                       v
+                            wuzz_rule_experimental
+```
+
+Feature flag dependencies are modeled as a Directed Acyclic Graph, validated using **Kahn's topological sort** with cycle detection. If your feature flags have circular dependencies, you have achieved a level of configuration complexity that deserves a proper graph-theoretic response.
+
+The dependency graph ensures that:
+1. No cycles exist (flags cannot depend on themselves, directly or transitively)
+2. Dependencies are resolved in topological order during evaluation
+3. A flag is only enabled if ALL its dependencies are satisfied
+
+Because even Kahn never imagined his algorithm being used to determine whether printing "Buzz" depends on whether "Fizz" is enabled.
+
+### Targeting Rules
+
+| Rule Type | Evaluation | Example |
+|-----------|-----------|---------|
+| `prime` | Matches prime numbers | Enable a flag only for primes, because they're special |
+| `even` | Matches even numbers | The reliable majority |
+| `odd` | Matches odd numbers | The rebellious minority |
+| `range` | Matches numbers in [min, max] | Geographic... er, numeric segmentation |
+| `modulo` | Matches where n % divisor == remainder | Inception-level modulo: using modulo to decide whether to apply modulo |
+
+| Spec | Value |
+|------|-------|
+| Flag types | 3 (BOOLEAN, PERCENTAGE, TARGETING) |
+| Targeting rule types | 5 (prime, even, odd, range, modulo) |
+| Lifecycle states | 4 (CREATED, ACTIVE, DEPRECATED, ARCHIVED) |
+| Rollout algorithm | SHA-256 deterministic hash-based bucketing |
+| Dependency resolution | Kahn's topological sort (O(V+E)) |
+| Predefined flags | 5 (configurable via config.yaml) |
+| Middleware priority | -3 (before tracing, before everything) |
+| Thread safety | Full (evaluation audit logging) |
+| Custom exceptions | 7 (FeatureFlagError, FlagNotFoundError, FlagDependencyCycleError, FlagDependencyNotMetError, FlagLifecycleError, FlagRolloutError, FlagTargetingError) |
+| ASCII dashboard | Evaluation summary with per-flag statistics |
+| Netflix subscribers supported | 0 (but the architecture is ready) |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -712,7 +822,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 604 tests
+# Run all 673 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -729,7 +839,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 604 tests, 48 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, and nanosecond timing. You tell me.
+A: It has 673 tests, 59 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -754,6 +864,9 @@ A: Because state is a lie. The number 15 doesn't just *become* "FizzBuzz" -- it 
 
 **Q: Why does FizzBuzz need chaos engineering?**
 A: Because resilience is not a feature you test after the fact -- it's a culture. Netflix pioneered Chaos Engineering to ensure their streaming platform survives server failures. We pioneered it to ensure our FizzBuzz platform survives the Chaos Monkey deliberately replacing "Fizz" with "Synergy." The five severity levels (from "Gentle Breeze" to "Apocalypse") ensure that you can calibrate exactly how much you want to break your modulo operations. The Game Day scenarios provide structured, multi-phase experiments for when ad-hoc destruction feels insufficiently organized. And the satirical post-mortem generator produces incident reports so elaborate that your SRE team will weep with pride -- complete with root cause analysis ("Someone typed '--chaos' on the command line, fully aware of the consequences") and action items like "Implement a Chaos Monkey for the Chaos Monkey (chaos recursion depth: 2)." ISO 22301 compliance has never been so entertaining.
+
+**Q: Why does FizzBuzz need feature flags?**
+A: Because deploying FizzBuzz rules without a progressive rollout strategy is reckless. What if "Fizz" introduces a regression? What if the business wants to A/B test "Buzz" against a control group? What if the experimental "Wuzz" rule (n % 7) needs to be rolled out to exactly 50% of integers using deterministic SHA-256 hash-based bucketing? Feature flags answer all of these questions, plus several more that nobody asked. The dependency DAG ensures that you can't enable "Wuzz" without first enabling "Buzz," which itself depends on "FizzBuzz Premium Features" -- a flag whose purpose remains strategically undefined. Kahn's topological sort runs in O(V+E) time to resolve these dependencies, which is comforting when V is 5 and E is 3.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

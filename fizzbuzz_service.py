@@ -164,7 +164,15 @@ class FizzBuzzService:
             )
 
             def evaluate(ctx: ProcessingContext) -> ProcessingContext:
-                result = self._rule_engine.evaluate(ctx.number, self._rules)
+                # Feature flags: filter rules based on middleware metadata
+                active_rules = self._rules
+                if ctx.metadata.get("feature_flags_active"):
+                    disabled = ctx.metadata.get("disabled_rule_labels", set())
+                    active_rules = [
+                        r for r in self._rules
+                        if r.get_definition().label not in disabled
+                    ]
+                result = self._rule_engine.evaluate(ctx.number, active_rules)
                 ctx.results.append(result)
                 self._emit_result_events(result)
                 return ctx
