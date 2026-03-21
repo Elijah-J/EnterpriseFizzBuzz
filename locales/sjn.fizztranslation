@@ -1,0 +1,40 @@
+;; Sindarin (Edhellen) -- Enterprise FizzBuzz Platform
+;; Ae aranelen, na vedui! (By my king, at last -- FizzBuzz in the Grey-elven tongue!)
+
+@locale = sjn
+@name = Sindarin
+@fallback = en
+@plural_rule = n != 1
+
+[labels]
+Fizz = Hithu
+Buzz = Glamor
+FizzBuzz = HithuGlamor
+
+[plurals]
+Fizz.plural.one = ${count} Hithu
+Fizz.plural.other = ${count} Hithui
+Buzz.plural.one = ${count} Glamor
+Buzz.plural.other = ${count} Glamuir
+FizzBuzz.plural.one = ${count} HithuGlamor
+FizzBuzz.plural.other = ${count} HithuGlamuir
+
+[messages]
+evaluating = Echor FizzBuzz an i lhinn [${start}, ${end}]...
+strategy = Thaur: ${name}
+output_format = Cant e-Thíw: ${name}
+wall_clock = Lû en-glaer: ${time}ms
+
+[summary]
+title = HithuGlamor Pennas Cened
+total_numbers = Gwanod Neder
+processing_time = Prestannen
+throughput = Lanc
+numbers_per_second = neder/lûth
+errors = Raeg
+
+[banner]
+subtitle = E C H O R   E N   U D U N
+
+[status]
+locale = Lam

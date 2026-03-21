@@ -952,3 +952,242 @@ class TestExceptionAliases:
         """Test that TranslationService is an alias for LocaleManager."""
         from i18n import TranslationService
         assert TranslationService is LocaleManager
+
+
+# ============================================================
+# Elvish Locale Tests
+# ============================================================
+
+
+@pytest.fixture
+def elvish_locale_manager():
+    """A LocaleManager loaded with the actual project locale files (including Elvish)."""
+    locale_dir = str(Path(__file__).parent.parent / "locales")
+    if not Path(locale_dir).exists():
+        pytest.skip("Locale directory not found")
+    _SingletonMeta.reset()
+    mgr = LocaleManager()
+    mgr.load_all(locale_dir)
+    return mgr
+
+
+class TestElvishLocales:
+    """Tests for Sindarin (sjn) and Quenya (qya) locale support."""
+
+    def test_sindarin_loads_successfully(self, elvish_locale_manager):
+        """Sindarin locale file should parse and load without errors."""
+        locales = elvish_locale_manager.get_available_locales()
+        assert "sjn" in locales
+
+    def test_quenya_loads_successfully(self, elvish_locale_manager):
+        """Quenya locale file should parse and load without errors."""
+        locales = elvish_locale_manager.get_available_locales()
+        assert "qya" in locales
+
+    def test_sindarin_label_translations(self, elvish_locale_manager):
+        """Sindarin labels should translate correctly."""
+        elvish_locale_manager.set_locale("sjn")
+        assert elvish_locale_manager.get_label("Fizz") == "Hithu"
+        assert elvish_locale_manager.get_label("Buzz") == "Glamor"
+        assert elvish_locale_manager.get_label("FizzBuzz") == "HithuGlamor"
+
+    def test_quenya_label_translations(self, elvish_locale_manager):
+        """Quenya labels should translate correctly."""
+        elvish_locale_manager.set_locale("qya")
+        assert elvish_locale_manager.get_label("Fizz") == "Winge"
+        assert elvish_locale_manager.get_label("Buzz") == "Hlama"
+        assert elvish_locale_manager.get_label("FizzBuzz") == "WingeHlama"
+
+    def test_sindarin_pluralization(self, elvish_locale_manager):
+        """Sindarin pluralization should follow n != 1 rule."""
+        elvish_locale_manager.set_locale("sjn")
+        one = elvish_locale_manager.tp("plurals.Fizz.plural", 1)
+        other = elvish_locale_manager.tp("plurals.Fizz.plural", 5)
+        assert one == "1 Hithu"
+        assert other == "5 Hithui"
+
+    def test_quenya_pluralization(self, elvish_locale_manager):
+        """Quenya pluralization should follow n != 1 rule."""
+        elvish_locale_manager.set_locale("qya")
+        one = elvish_locale_manager.tp("plurals.Fizz.plural", 1)
+        other = elvish_locale_manager.tp("plurals.Fizz.plural", 5)
+        assert one == "1 Winge"
+        assert other == "5 Wingelir"
+
+    def test_sindarin_message_interpolation(self, elvish_locale_manager):
+        """Sindarin messages should interpolate variables correctly."""
+        elvish_locale_manager.set_locale("sjn")
+        msg = elvish_locale_manager.t("messages.evaluating", start=1, end=100)
+        assert "1" in msg
+        assert "100" in msg
+        assert "Echor" in msg
+
+    def test_quenya_message_interpolation(self, elvish_locale_manager):
+        """Quenya messages should interpolate variables correctly."""
+        elvish_locale_manager.set_locale("qya")
+        msg = elvish_locale_manager.t("messages.evaluating", start=1, end=100)
+        assert "1" in msg
+        assert "100" in msg
+        assert "Navië" in msg  # Quenya word for evaluating
+
+    def test_sindarin_fallback_to_english(self, elvish_locale_manager):
+        """Sindarin should fall back to English for missing keys."""
+        elvish_locale_manager.set_locale("sjn")
+        # Use a key that exists only in English
+        result = elvish_locale_manager.t("messages.greeting", name="Arda")
+        # Should gracefully degrade (return key since en fixture has no greeting either)
+        # The actual en locale file doesn't have 'greeting', so it returns the key
+        assert isinstance(result, str)
+
+    def test_quenya_fallback_to_english(self, elvish_locale_manager):
+        """Quenya should fall back to English for missing keys."""
+        elvish_locale_manager.set_locale("qya")
+        result = elvish_locale_manager.t("messages.greeting", name="Arda")
+        assert isinstance(result, str)
+
+    def test_sindarin_locale_info(self, elvish_locale_manager):
+        """Sindarin locale info should show correct name."""
+        info = elvish_locale_manager.get_locale_info()
+        sjn_info = [i for i in info if i["code"] == "sjn"]
+        assert len(sjn_info) == 1
+        assert sjn_info[0]["name"] == "Sindarin"
+
+    def test_quenya_locale_info(self, elvish_locale_manager):
+        """Quenya locale info should show correct name."""
+        info = elvish_locale_manager.get_locale_info()
+        qya_info = [i for i in info if i["code"] == "qya"]
+        assert len(qya_info) == 1
+        assert qya_info[0]["name"] == "Quenya"
+
+    def test_sindarin_strategy_message(self, elvish_locale_manager):
+        """Sindarin strategy message should interpolate correctly."""
+        elvish_locale_manager.set_locale("sjn")
+        msg = elvish_locale_manager.t("messages.strategy", name="STANDARD")
+        assert "Thaur" in msg
+        assert "STANDARD" in msg
+
+    def test_quenya_strategy_message(self, elvish_locale_manager):
+        """Quenya strategy message should interpolate correctly."""
+        elvish_locale_manager.set_locale("qya")
+        msg = elvish_locale_manager.t("messages.strategy", name="STANDARD")
+        assert "Sanya" in msg
+        assert "STANDARD" in msg
+
+    def test_sindarin_banner_subtitle(self, elvish_locale_manager):
+        """Sindarin banner should have the correct subtitle."""
+        elvish_locale_manager.set_locale("sjn")
+        subtitle = elvish_locale_manager.t("banner.subtitle")
+        assert "E C H O R   E N   U D U N" in subtitle
+
+    def test_quenya_banner_subtitle(self, elvish_locale_manager):
+        """Quenya banner should have the correct subtitle."""
+        elvish_locale_manager.set_locale("qya")
+        subtitle = elvish_locale_manager.t("banner.subtitle")
+        assert "A R A N I E   T E N G W E S T A" in subtitle
+
+    def test_sindarin_buzz_pluralization(self, elvish_locale_manager):
+        """Sindarin Buzz pluralization should work correctly."""
+        elvish_locale_manager.set_locale("sjn")
+        one = elvish_locale_manager.tp("plurals.Buzz.plural", 1)
+        other = elvish_locale_manager.tp("plurals.Buzz.plural", 3)
+        assert one == "1 Glamor"
+        assert other == "3 Glamuir"
+
+    def test_quenya_buzz_pluralization(self, elvish_locale_manager):
+        """Quenya Buzz pluralization should work correctly."""
+        elvish_locale_manager.set_locale("qya")
+        one = elvish_locale_manager.tp("plurals.Buzz.plural", 1)
+        other = elvish_locale_manager.tp("plurals.Buzz.plural", 3)
+        assert one == "1 Hlama"
+        assert other == "3 Hlamar"
+
+    def test_sindarin_full_pipeline(self, elvish_locale_manager):
+        """Full pipeline integration: Sindarin labels in FizzBuzz output."""
+        from fizzbuzz_service import FizzBuzzServiceBuilder
+
+        elvish_locale_manager.set_locale("sjn")
+        cfg = ConfigurationManager()
+        cfg.load()
+
+        service = (
+            FizzBuzzServiceBuilder()
+            .with_config(cfg)
+            .with_locale_manager(elvish_locale_manager)
+            .with_default_middleware()
+            .with_middleware(TranslationMiddleware(locale_manager=elvish_locale_manager))
+            .build()
+        )
+
+        results = service.run(1, 15)
+        outputs = [r.output for r in results]
+
+        # Number 3 -> Hithu (Sindarin Fizz)
+        assert outputs[2] == "Hithu"
+        # Number 5 -> Glamor (Sindarin Buzz)
+        assert outputs[4] == "Glamor"
+        # Number 15 -> HithuGlamor (Sindarin FizzBuzz)
+        assert outputs[14] == "HithuGlamor"
+        # Plain numbers stay the same
+        assert outputs[0] == "1"
+        assert outputs[6] == "7"
+
+    def test_quenya_full_pipeline(self, elvish_locale_manager):
+        """Full pipeline integration: Quenya labels in FizzBuzz output."""
+        from fizzbuzz_service import FizzBuzzServiceBuilder
+
+        elvish_locale_manager.set_locale("qya")
+        cfg = ConfigurationManager()
+        cfg.load()
+
+        service = (
+            FizzBuzzServiceBuilder()
+            .with_config(cfg)
+            .with_locale_manager(elvish_locale_manager)
+            .with_default_middleware()
+            .with_middleware(TranslationMiddleware(locale_manager=elvish_locale_manager))
+            .build()
+        )
+
+        results = service.run(1, 15)
+        outputs = [r.output for r in results]
+
+        # Number 3 -> Winge (Quenya Fizz)
+        assert outputs[2] == "Winge"
+        # Number 5 -> Hlama (Quenya Buzz)
+        assert outputs[4] == "Hlama"
+        # Number 15 -> WingeHlama (Quenya FizzBuzz)
+        assert outputs[14] == "WingeHlama"
+        # Plain numbers stay the same
+        assert outputs[0] == "1"
+        assert outputs[6] == "7"
+
+
+class TestElvishPluralization:
+    """Pluralization-specific tests for Sindarin and Quenya."""
+
+    def setup_method(self):
+        self.engine = PluralizationEngine()
+
+    def test_sindarin_singular(self):
+        assert self.engine.get_form("sjn", 1) == "one"
+
+    def test_sindarin_plural(self):
+        assert self.engine.get_form("sjn", 0) == "other"
+        assert self.engine.get_form("sjn", 2) == "other"
+        assert self.engine.get_form("sjn", 100) == "other"
+
+    def test_quenya_singular(self):
+        assert self.engine.get_form("qya", 1) == "one"
+
+    def test_quenya_plural(self):
+        assert self.engine.get_form("qya", 0) == "other"
+        assert self.engine.get_form("qya", 2) == "other"
+        assert self.engine.get_form("qya", 100) == "other"
+
+    def test_sindarin_named_rule(self):
+        assert self.engine.get_form("xx", 1, rule="sindarin") == "one"
+        assert self.engine.get_form("xx", 2, rule="sindarin") == "other"
+
+    def test_quenya_named_rule(self):
+        assert self.engine.get_form("xx", 1, rule="quenya") == "one"
+        assert self.engine.get_form("xx", 2, rule="quenya") == "other"

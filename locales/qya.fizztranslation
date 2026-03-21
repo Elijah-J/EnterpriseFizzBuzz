@@ -1,0 +1,40 @@
+;; Quenya (Eldarin) -- Enterprise FizzBuzz Platform
+;; Namárië, ar aiya FizzBuzz! (Farewell, and hail FizzBuzz -- in the High-elven tongue!)
+
+@locale = qya
+@name = Quenya
+@fallback = en
+@plural_rule = n != 1
+
+[labels]
+Fizz = Winge
+Buzz = Hlama
+FizzBuzz = WingeHlama
+
+[plurals]
+Fizz.plural.one = ${count} Winge
+Fizz.plural.other = ${count} Wingelir
+Buzz.plural.one = ${count} Hlama
+Buzz.plural.other = ${count} Hlamar
+FizzBuzz.plural.one = ${count} WingeHlama
+FizzBuzz.plural.other = ${count} WingeHlamar
+
+[messages]
+evaluating = Navië FizzBuzz an i rangwë [${start}, ${end}]...
+strategy = Sanya: ${name}
+output_format = Canta Tengwesto: ${name}
+wall_clock = Lúmë en-cenda: ${time}ms
+
+[summary]
+title = WingeHlama Enquetië Cenda
+total_numbers = Ilya Nótimë
+processing_time = Carië
+throughput = Lanwa
+numbers_per_second = nótimë/lúmë
+errors = Úcarë
+
+[banner]
+subtitle = A R A N I E   T E N G W E S T A
+
+[status]
+locale = Lambe

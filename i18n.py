@@ -434,7 +434,7 @@ class PluralizationEngine:
     specification has more edge cases than the entire FizzBuzz problem space.
 
     Supported rules:
-        - English/German/Klingon: n != 1 -> "one" vs "other"
+        - English/German/Klingon/Sindarin/Quenya: n != 1 -> "one" vs "other"
         - French: n > 1 -> "one" vs "other" (0 is singular in French)
         - Japanese: always "other" (no grammatical plural)
     """
@@ -444,6 +444,8 @@ class PluralizationEngine:
         "en": "n != 1",
         "de": "n != 1",
         "tlh": "n != 1",
+        "sjn": "n != 1",
+        "qya": "n != 1",
         "fr": "n > 1",
         "ja": "0",  # Always "other"
     }
@@ -455,6 +457,8 @@ class PluralizationEngine:
         "french": "n > 1",
         "japanese": "0",
         "klingon": "n != 1",
+        "sindarin": "n != 1",
+        "quenya": "n != 1",
     }
 
     def get_form(self, locale: str, count: int, rule: Optional[str] = None) -> str:

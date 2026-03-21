@@ -153,7 +153,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
         type=str,
         metavar="LOCALE",
         default=None,
-        help="Locale for internationalized output (en, de, fr, ja, tlh)",
+        help="Locale for internationalized output (en, de, fr, ja, tlh, sjn, qya)",
     )
 
     parser.add_argument(

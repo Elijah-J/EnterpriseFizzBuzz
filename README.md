@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**13,400+ lines** across **32 files** with **411 unit tests** and **33 custom exception classes**, because this is an enterprise and we have standards.
+**12,300+ lines** across **34 files** with **437 unit tests** and **33 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
@@ -60,9 +60,11 @@ EnterpriseFizzBuzz/
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
 │   ├── de.fizztranslation   # German (Deutsch)
-│   ├── fr.fizztranslation   # French (Francais)
+│   ├── fr.fizztranslation   # French (Français)
 │   ├── ja.fizztranslation   # Japanese (日本語)
-│   └── tlh.fizztranslation  # Klingon (tlhIngan Hol)
+│   ├── tlh.fizztranslation  # Klingon (tlhIngan Hol)
+│   ├── sjn.fizztranslation  # Sindarin (Edhellen) — ISO 639-3
+│   └── qya.fizztranslation  # Quenya (Eldarin) — ISO 639-3
 └── tests/
     ├── test_fizzbuzz.py     # 66 comprehensive tests
     ├── test_circuit_breaker.py  # 66 circuit breaker tests
@@ -93,7 +95,7 @@ EnterpriseFizzBuzz/
 | Custom File Format Parser | `i18n.py` | A bespoke `.fizztranslation` format, because JSON, YAML, and TOML lacked sufficient enterprise gravitas |
 | Fallback Chain | `i18n.py` | Locale resolution via linked-list traversal with cycle detection, because one language is never enough |
 | Pluralization Engine | `i18n.py` | CLDR-inspired plural rule evaluator supporting five grammatical traditions, because "1 Fizzes" is unconscionable |
-| Internationalization | `i18n.py`, `locales/` | Five-language locale support with fallback chains, because "Fizz" is not globally understood |
+| Internationalization | `i18n.py`, `locales/` | Seven-language locale support with fallback chains, because "Fizz" is not globally understood (nor in the Undying Lands) |
 | Distributed Tracing | `tracing.py` | OpenTelemetry-inspired span trees, because you need a flame graph to debug `n % 3` |
 | Context Propagation | `tracing.py` | Thread-local span stacks for automatic parent-child relationships across the middleware pipeline |
 | Fluent Builder (Spans) | `tracing.py` | `SpanBuilder` with chainable `.with_attribute()` and context manager support, because `Span()` was too direct |
@@ -112,7 +114,7 @@ EnterpriseFizzBuzz/
 - **Async/Await** - Run FizzBuzz asynchronously, because blocking is for amateurs
 - **Machine Learning Engine** - From-scratch MLP neural network trained via backpropagation to learn `n % 3 == 0`
 - **Circuit Breaker** - Fault-tolerant evaluation with exponential backoff, sliding windows, and an ASCII status dashboard
-- **Internationalization (i18n)** - Full locale support across 5 languages (including Klingon), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine
+- **Internationalization (i18n)** - Full locale support across 7 languages (including Klingon and two dialects of Elvish), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine. DEI-compliant for the Undying Lands market segment
 - **Distributed Tracing** - OpenTelemetry-inspired span trees with W3C Trace Context IDs, ASCII waterfall visualization, JSON export, and P95/P99 latency percentiles -- for when you need to know exactly which middleware layer added 0.3 microseconds to your modulo operation
 - **Role-Based Access Control (RBAC)** - Five-tier role hierarchy from ANONYMOUS to FIZZBUZZ_SUPERUSER, HMAC-SHA256 token authentication, permission-based number range access, and a sacred 47-field access denied JSON response that includes whether the forbidden number is prime, a motivational quote, and a legal disclaimer
 - **Custom Exception Hierarchy** - 33 exception classes for every conceivable FizzBuzz failure mode
@@ -158,6 +160,12 @@ python main.py --locale tlh --range 1 15
 # Japanese locale with async execution
 python main.py --locale ja --async --range 1 50
 
+# FizzBuzz in Sindarin (Grey-elven), for the Undying Lands market segment
+python main.py --locale sjn --range 1 15
+
+# FizzBuzz in Quenya (High-elven), because Tolkien would have wanted this
+python main.py --locale qya --range 1 20 --format json
+
 # List all available locales and their metadata
 python main.py --list-locales
 
@@ -201,7 +209,7 @@ python main.py --user alice --role FIZZBUZZ_SUPERUSER --trace --circuit-breaker 
 --metadata            Include metadata in output (JSON only)
 --blockchain          Enable blockchain-based immutable audit ledger
 --mining-difficulty N Proof-of-work difficulty (default: 2)
---locale LOCALE       Locale for internationalized output (en, de, fr, ja, tlh)
+--locale LOCALE       Locale for internationalized output (en, de, fr, ja, tlh, sjn, qya)
 --list-locales        Display available locales and exit
 --circuit-breaker     Enable circuit breaker with exponential backoff
 --circuit-status      Display circuit breaker status dashboard after execution
@@ -455,7 +463,7 @@ Every number evaluation generates a complete trace with hierarchical spans, W3C-
 
 ## Internationalization Architecture
 
-The i18n subsystem provides a full-featured localization pipeline powered by the proprietary `.fizztranslation` file format -- because YAML, JSON, and TOML were insufficiently bespoke for the task of saying "Fizz" in five languages.
+The i18n subsystem provides a full-featured localization pipeline powered by the proprietary `.fizztranslation` file format -- because YAML, JSON, and TOML were insufficiently bespoke for the task of saying "Fizz" in seven languages (including two dialects of Elvish, per the Enterprise FizzBuzz Globalization Directive's Arda Addendum).
 
 **Key components:**
 - **FizzTranslationParser** - State-machine-driven parser for the `.fizztranslation` format
@@ -473,6 +481,8 @@ The i18n subsystem provides a full-featured localization pipeline powered by the
 | `fr` | Francais | Petillement | Bourdonnement | PetillementBourdonnement | `n > 1` | en |
 | `ja` | Japanese | フィズ | バズ | フィズバズ | `0` (no plural) | en |
 | `tlh` | tlhIngan Hol | ghum | wab | ghumwab | `0` (no plural) | en |
+| `sjn` | Sindarin | Hithu | Glamor | HithuGlamor | `n != 1` | en |
+| `qya` | Quenya | Winge | Hlama | WingeHlama | `n != 1` | en |
 
 ### .fizztranslation File Format
 
@@ -499,7 +509,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 411 tests
+# Run all 437 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -516,7 +526,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 411 tests, 33 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, five-language i18n support (including Klingon), a proprietary file format, RBAC with HMAC-SHA256 tokens, and nanosecond timing. You tell me.
+A: It has 437 tests, 33 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -539,14 +549,17 @@ A: Unrestricted modulo arithmetic is a security incident waiting to happen. With
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
 
-**Q: Why does FizzBuzz need to support 5 languages?**
-A: Regulatory compliance. The Enterprise FizzBuzz Globalization Directive (EFGD-2024) mandates that any arithmetic output visible to end users must be available in at least five human (or humanoid) languages. We chose English, German, French, Japanese, and Klingon to maximize coverage across NATO allies and the Klingon Empire. The proprietary `.fizztranslation` file format was necessary because no existing standard could adequately express the nuanced semantics of "Fizz" across cultures.
+**Q: Why does FizzBuzz need to support 7 languages?**
+A: Regulatory compliance. The Enterprise FizzBuzz Globalization Directive (EFGD-2024, Arda Addendum ratified 2025) mandates that any arithmetic output visible to end users must be available in at least seven human (or humanoid, or Elvish) languages. We chose English, German, French, Japanese, Klingon, Sindarin, and Quenya to maximize coverage across NATO allies, the Klingon Empire, and the Undying Lands. The Elvish locales use ISO 639-3 codes (`sjn` for Sindarin, `qya` for Quenya) because the ISO registrar, to their eternal credit, actually assigned codes to Tolkien's constructed languages. The proprietary `.fizztranslation` file format was necessary because no existing standard could adequately express the nuanced semantics of "Fizz" across cultures -- or across the Sundering Sea.
 
 **Q: Why does a single-process FizzBuzz need distributed tracing?**
 A: The word "distributed" refers to the distribution of responsibility across our middleware pipeline. When a number enters the system, it passes through validation, timing, logging, circuit breaking, and rule evaluation layers -- each of which could theoretically be running on a separate continent. They aren't, of course. They're all running in the same Python process on your laptop. But the *architecture* is ready for geographic distribution, and when the day comes that we shard modulo operations across availability zones, we'll already have the observability infrastructure in place. The waterfall diagram alone justifies the 1,000 lines of tracing code. Also, our VP of Engineering asked for "full-stack observability" and this is technically that.
 
 **Q: Why is Klingon a supported locale?**
 A: Enterprise software must serve a global user base. Our stakeholders defined "global" broadly. The Klingon Empire represents a significant untapped market segment, and our compliance team confirmed that the Universal Declaration of FizzBuzz Rights requires support for all spacefaring civilizations. Also, the Klingon word for "FizzBuzz" is `ghumwab`, which is objectively better than the English version.
+
+**Q: Why are there *two* dialects of Elvish?**
+A: DEI compliance. The Enterprise FizzBuzz Globalization Directive's Arda Addendum (EFGD-AA-2025) requires support for both Sindarin (`sjn`) and Quenya (`qya`) to ensure equitable representation of the Grey-elven and High-elven communities. Supporting only one would have constituted linguistic favoritism and risked a formal grievance from the White Council. Sindarin is the vernacular of Middle-earth (used daily by the Elves of Rivendell and Lothlórien), while Quenya is the ceremonial High-elven tongue -- think of it as the Latin of Arda. Both use ISO 639-3 codes, because even the ISO registrar recognizes that Tolkien's languages have more grammatical rigor than most natural ones. The Quenya word for "FizzBuzz" is `WingeHlama`, which sounds like something you'd hear in the Halls of Mandos.
 
 ## License
 
