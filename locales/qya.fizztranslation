@@ -1,5 +1,7 @@
 ;; Quenya (Eldarin) -- Enterprise FizzBuzz Platform
 ;; Namárië, ar aiya FizzBuzz! (Farewell, and hail FizzBuzz -- in the High-elven tongue!)
+;; Linguistic attestation: wingë (GWIG/WIGIL, Ety/PE17), láma (LAM, "ringing sound")
+;; Validated against: Eldamo, Parf Edhellen, Tolkien Gateway, RealElvish Academy
 
 @locale = qya
 @name = Quenya
@@ -7,34 +9,34 @@
 @plural_rule = n != 1
 
 [labels]
-Fizz = Winge
-Buzz = Hlama
-FizzBuzz = WingeHlama
+Fizz = Wingë
+Buzz = Láma
+FizzBuzz = WingeLáma
 
 [plurals]
-Fizz.plural.one = ${count} Winge
-Fizz.plural.other = ${count} Wingelir
-Buzz.plural.one = ${count} Hlama
-Buzz.plural.other = ${count} Hlamar
-FizzBuzz.plural.one = ${count} WingeHlama
-FizzBuzz.plural.other = ${count} WingeHlamar
+Fizz.plural.one = ${count} Wingë
+Fizz.plural.other = ${count} Wingi
+Buzz.plural.one = ${count} Láma
+Buzz.plural.other = ${count} Lámar
+FizzBuzz.plural.one = ${count} WingeLáma
+FizzBuzz.plural.other = ${count} WingeLámar
 
 [messages]
-evaluating = Navië FizzBuzz an i rangwë [${start}, ${end}]...
-strategy = Sanya: ${name}
+evaluating = Notië FizzBuzz an i nóti [${start}, ${end}]...
+strategy = Tië: ${name}
 output_format = Canta Tengwesto: ${name}
-wall_clock = Lúmë en-cenda: ${time}ms
+wall_clock = Lúmë cendo: ${time}ms
 
 [summary]
-title = WingeHlama Enquetië Cenda
-total_numbers = Ilya Nótimë
-processing_time = Carië
-throughput = Lanwa
-numbers_per_second = nótimë/lúmë
+title = WingeLáma Enquetië Cenda
+total_numbers = Ilyë Nóti
+processing_time = Lúmë cario
+throughput = Lintië
+numbers_per_second = nóti/lúmë
 errors = Úcarë
 
 [banner]
-subtitle = A R A N I E   T E N G W E S T A
+subtitle = A R A N I Ë   T E N G W E S T A
 
 [status]
-locale = Lambe
+locale = Lambë

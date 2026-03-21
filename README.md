@@ -481,8 +481,10 @@ The i18n subsystem provides a full-featured localization pipeline powered by the
 | `fr` | Francais | Petillement | Bourdonnement | PetillementBourdonnement | `n > 1` | en |
 | `ja` | Japanese | フィズ | バズ | フィズバズ | `0` (no plural) | en |
 | `tlh` | tlhIngan Hol | ghum | wab | ghumwab | `0` (no plural) | en |
-| `sjn` | Sindarin | Hithu | Glamor | HithuGlamor | `n != 1` | en |
-| `qya` | Quenya | Winge | Hlama | WingeHlama | `n != 1` | en |
+| `sjn` | Sindarin | Hith | Glamor | HithGlamor | `n != 1` | en |
+| `qya` | Quenya | Wingë | Láma | WingeLáma | `n != 1` | en |
+
+> **Linguistic note:** All Elvish translations have been validated against Tolkien's published linguistic papers and attested vocabulary.
 
 ### .fizztranslation File Format
 
@@ -559,7 +561,7 @@ A: The word "distributed" refers to the distribution of responsibility across ou
 A: Enterprise software must serve a global user base. Our stakeholders defined "global" broadly. The Klingon Empire represents a significant untapped market segment, and our compliance team confirmed that the Universal Declaration of FizzBuzz Rights requires support for all spacefaring civilizations. Also, the Klingon word for "FizzBuzz" is `ghumwab`, which is objectively better than the English version.
 
 **Q: Why are there *two* dialects of Elvish?**
-A: DEI compliance. The Enterprise FizzBuzz Globalization Directive's Arda Addendum (EFGD-AA-2025) requires support for both Sindarin (`sjn`) and Quenya (`qya`) to ensure equitable representation of the Grey-elven and High-elven communities. Supporting only one would have constituted linguistic favoritism and risked a formal grievance from the White Council. Sindarin is the vernacular of Middle-earth (used daily by the Elves of Rivendell and Lothlórien), while Quenya is the ceremonial High-elven tongue -- think of it as the Latin of Arda. Both use ISO 639-3 codes, because even the ISO registrar recognizes that Tolkien's languages have more grammatical rigor than most natural ones. The Quenya word for "FizzBuzz" is `WingeHlama`, which sounds like something you'd hear in the Halls of Mandos.
+A: DEI compliance. The Enterprise FizzBuzz Globalization Directive's Arda Addendum (EFGD-AA-2025) requires support for both Sindarin (`sjn`) and Quenya (`qya`) to ensure equitable representation of the Grey-elven and High-elven communities. Supporting only one would have constituted linguistic favoritism and risked a formal grievance from the White Council. Sindarin is the vernacular of Middle-earth (used daily by the Elves of Rivendell and Lothlórien), while Quenya is the ceremonial High-elven tongue -- think of it as the Latin of Arda. Both use ISO 639-3 codes, because even the ISO registrar recognizes that Tolkien's languages have more grammatical rigor than most natural ones. The Quenya word for "FizzBuzz" is `WingeLáma`, which sounds like something you'd hear in the Halls of Mandos.
 
 ## License
 

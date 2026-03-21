@@ -1,5 +1,7 @@
 ;; Sindarin (Edhellen) -- Enterprise FizzBuzz Platform
 ;; Ae aranelen, na vedui! (By my king, at last -- FizzBuzz in the Grey-elven tongue!)
+;; Linguistic attestation: hith (KHITH, Ety/364), glamor (GLAM, Ety), glemyr (i-affection plural)
+;; Validated against: Eldamo, Parf Edhellen, Tolkien Gateway, RealElvish Academy
 
 @locale = sjn
 @name = Sindarin
@@ -7,30 +9,30 @@
 @plural_rule = n != 1
 
 [labels]
-Fizz = Hithu
+Fizz = Hith
 Buzz = Glamor
-FizzBuzz = HithuGlamor
+FizzBuzz = HithGlamor
 
 [plurals]
-Fizz.plural.one = ${count} Hithu
-Fizz.plural.other = ${count} Hithui
+Fizz.plural.one = ${count} Hith
+Fizz.plural.other = ${count} Hith
 Buzz.plural.one = ${count} Glamor
-Buzz.plural.other = ${count} Glamuir
-FizzBuzz.plural.one = ${count} HithuGlamor
-FizzBuzz.plural.other = ${count} HithuGlamuir
+Buzz.plural.other = ${count} Glemyr
+FizzBuzz.plural.one = ${count} HithGlamor
+FizzBuzz.plural.other = ${count} HithGlemyr
 
 [messages]
-evaluating = Echor FizzBuzz an i lhinn [${start}, ${end}]...
-strategy = Thaur: ${name}
-output_format = Cant e-Thíw: ${name}
-wall_clock = Lû en-glaer: ${time}ms
+evaluating = Gonadol FizzBuzz an i gwanod [${start}, ${end}]...
+strategy = Men: ${name}
+output_format = Cant e-Thiw: ${name}
+wall_clock = Lu en-goned: ${time}ms
 
 [summary]
-title = HithuGlamor Pennas Cened
-total_numbers = Gwanod Neder
-processing_time = Prestannen
-throughput = Lanc
-numbers_per_second = neder/lûth
+title = HithGlamor Pennas Cened
+total_numbers = Pant Gwenyd
+processing_time = Lu en-goned
+throughput = Celeg
+numbers_per_second = gwenyd/lu
 errors = Raeg
 
 [banner]

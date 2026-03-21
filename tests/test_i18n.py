@@ -987,32 +987,32 @@ class TestElvishLocales:
     def test_sindarin_label_translations(self, elvish_locale_manager):
         """Sindarin labels should translate correctly."""
         elvish_locale_manager.set_locale("sjn")
-        assert elvish_locale_manager.get_label("Fizz") == "Hithu"
+        assert elvish_locale_manager.get_label("Fizz") == "Hith"
         assert elvish_locale_manager.get_label("Buzz") == "Glamor"
-        assert elvish_locale_manager.get_label("FizzBuzz") == "HithuGlamor"
+        assert elvish_locale_manager.get_label("FizzBuzz") == "HithGlamor"
 
     def test_quenya_label_translations(self, elvish_locale_manager):
         """Quenya labels should translate correctly."""
         elvish_locale_manager.set_locale("qya")
-        assert elvish_locale_manager.get_label("Fizz") == "Winge"
-        assert elvish_locale_manager.get_label("Buzz") == "Hlama"
-        assert elvish_locale_manager.get_label("FizzBuzz") == "WingeHlama"
+        assert elvish_locale_manager.get_label("Fizz") == "Wingë"
+        assert elvish_locale_manager.get_label("Buzz") == "Láma"
+        assert elvish_locale_manager.get_label("FizzBuzz") == "WingeLáma"
 
     def test_sindarin_pluralization(self, elvish_locale_manager):
         """Sindarin pluralization should follow n != 1 rule."""
         elvish_locale_manager.set_locale("sjn")
         one = elvish_locale_manager.tp("plurals.Fizz.plural", 1)
         other = elvish_locale_manager.tp("plurals.Fizz.plural", 5)
-        assert one == "1 Hithu"
-        assert other == "5 Hithui"
+        assert one == "1 Hith"
+        assert other == "5 Hith"
 
     def test_quenya_pluralization(self, elvish_locale_manager):
         """Quenya pluralization should follow n != 1 rule."""
         elvish_locale_manager.set_locale("qya")
         one = elvish_locale_manager.tp("plurals.Fizz.plural", 1)
         other = elvish_locale_manager.tp("plurals.Fizz.plural", 5)
-        assert one == "1 Winge"
-        assert other == "5 Wingelir"
+        assert one == "1 Wingë"
+        assert other == "5 Wingi"
 
     def test_sindarin_message_interpolation(self, elvish_locale_manager):
         """Sindarin messages should interpolate variables correctly."""
@@ -1020,7 +1020,7 @@ class TestElvishLocales:
         msg = elvish_locale_manager.t("messages.evaluating", start=1, end=100)
         assert "1" in msg
         assert "100" in msg
-        assert "Echor" in msg
+        assert "Gonadol" in msg
 
     def test_quenya_message_interpolation(self, elvish_locale_manager):
         """Quenya messages should interpolate variables correctly."""
@@ -1028,7 +1028,7 @@ class TestElvishLocales:
         msg = elvish_locale_manager.t("messages.evaluating", start=1, end=100)
         assert "1" in msg
         assert "100" in msg
-        assert "Navië" in msg  # Quenya word for evaluating
+        assert "Notië" in msg  # Quenya word for evaluating
 
     def test_sindarin_fallback_to_english(self, elvish_locale_manager):
         """Sindarin should fall back to English for missing keys."""
@@ -1063,14 +1063,14 @@ class TestElvishLocales:
         """Sindarin strategy message should interpolate correctly."""
         elvish_locale_manager.set_locale("sjn")
         msg = elvish_locale_manager.t("messages.strategy", name="STANDARD")
-        assert "Thaur" in msg
+        assert "Men" in msg
         assert "STANDARD" in msg
 
     def test_quenya_strategy_message(self, elvish_locale_manager):
         """Quenya strategy message should interpolate correctly."""
         elvish_locale_manager.set_locale("qya")
         msg = elvish_locale_manager.t("messages.strategy", name="STANDARD")
-        assert "Sanya" in msg
+        assert "Tië" in msg
         assert "STANDARD" in msg
 
     def test_sindarin_banner_subtitle(self, elvish_locale_manager):
@@ -1083,7 +1083,7 @@ class TestElvishLocales:
         """Quenya banner should have the correct subtitle."""
         elvish_locale_manager.set_locale("qya")
         subtitle = elvish_locale_manager.t("banner.subtitle")
-        assert "A R A N I E   T E N G W E S T A" in subtitle
+        assert "A R A N I Ë   T E N G W E S T A" in subtitle
 
     def test_sindarin_buzz_pluralization(self, elvish_locale_manager):
         """Sindarin Buzz pluralization should work correctly."""
@@ -1091,15 +1091,15 @@ class TestElvishLocales:
         one = elvish_locale_manager.tp("plurals.Buzz.plural", 1)
         other = elvish_locale_manager.tp("plurals.Buzz.plural", 3)
         assert one == "1 Glamor"
-        assert other == "3 Glamuir"
+        assert other == "3 Glemyr"
 
     def test_quenya_buzz_pluralization(self, elvish_locale_manager):
         """Quenya Buzz pluralization should work correctly."""
         elvish_locale_manager.set_locale("qya")
         one = elvish_locale_manager.tp("plurals.Buzz.plural", 1)
         other = elvish_locale_manager.tp("plurals.Buzz.plural", 3)
-        assert one == "1 Hlama"
-        assert other == "3 Hlamar"
+        assert one == "1 Láma"
+        assert other == "3 Lámar"
 
     def test_sindarin_full_pipeline(self, elvish_locale_manager):
         """Full pipeline integration: Sindarin labels in FizzBuzz output."""
@@ -1121,12 +1121,12 @@ class TestElvishLocales:
         results = service.run(1, 15)
         outputs = [r.output for r in results]
 
-        # Number 3 -> Hithu (Sindarin Fizz)
-        assert outputs[2] == "Hithu"
+        # Number 3 -> Hith (Sindarin Fizz)
+        assert outputs[2] == "Hith"
         # Number 5 -> Glamor (Sindarin Buzz)
         assert outputs[4] == "Glamor"
-        # Number 15 -> HithuGlamor (Sindarin FizzBuzz)
-        assert outputs[14] == "HithuGlamor"
+        # Number 15 -> HithGlamor (Sindarin FizzBuzz)
+        assert outputs[14] == "HithGlamor"
         # Plain numbers stay the same
         assert outputs[0] == "1"
         assert outputs[6] == "7"
@@ -1151,12 +1151,12 @@ class TestElvishLocales:
         results = service.run(1, 15)
         outputs = [r.output for r in results]
 
-        # Number 3 -> Winge (Quenya Fizz)
-        assert outputs[2] == "Winge"
-        # Number 5 -> Hlama (Quenya Buzz)
-        assert outputs[4] == "Hlama"
-        # Number 15 -> WingeHlama (Quenya FizzBuzz)
-        assert outputs[14] == "WingeHlama"
+        # Number 3 -> Wingë (Quenya Fizz)
+        assert outputs[2] == "Wingë"
+        # Number 5 -> Láma (Quenya Buzz)
+        assert outputs[4] == "Láma"
+        # Number 15 -> WingeLáma (Quenya FizzBuzz)
+        assert outputs[14] == "WingeLáma"
         # Plain numbers stay the same
         assert outputs[0] == "1"
         assert outputs[6] == "7"
