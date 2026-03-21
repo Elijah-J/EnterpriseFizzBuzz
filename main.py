@@ -76,6 +76,14 @@ from sla import (
     SLOType,
 )
 from tracing import TraceExporter, TraceRenderer, TracingMiddleware, TracingService
+from migrations import (
+    MigrationDashboard,
+    MigrationRegistry,
+    MigrationRunner,
+    SchemaManager,
+    SchemaVisualizer,
+    SeedDataGenerator,
+)
 
 
 BANNER = r"""
@@ -368,6 +376,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display all registered feature flags and exit",
     )
 
+    # Database Migration Framework
+    parser.add_argument(
+        "--migrate",
+        action="store_true",
+        help="Apply all pending database migrations to the in-memory schema (it won't persist)",
+    )
+
+    parser.add_argument(
+        "--migrate-status",
+        action="store_true",
+        help="Display the migration status dashboard for the ephemeral database",
+    )
+
+    parser.add_argument(
+        "--migrate-rollback",
+        type=int,
+        nargs="?",
+        const=1,
+        default=None,
+        metavar="N",
+        help="Roll back the last N migrations (default: 1)",
+    )
+
+    parser.add_argument(
+        "--migrate-seed",
+        action="store_true",
+        help="Generate FizzBuzz seed data using the FizzBuzz engine (the ouroboros)",
+    )
+
     return parser
 
 
@@ -406,6 +443,75 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Configuration
     config = ConfigurationManager(config_path=args.config)
     config.load()
+
+    # ----------------------------------------------------------------
+    # Database Migration Framework (opt-in via --migrate flags)
+    # ----------------------------------------------------------------
+    if args.migrate or args.migrate_status or args.migrate_rollback is not None or args.migrate_seed:
+        MigrationRegistry.reset()
+        # Re-import to re-register built-in migrations after reset
+        from migrations import _register_builtin_migrations
+        _register_builtin_migrations()
+
+        migration_schema = SchemaManager(log_fake_sql=config.migrations_log_fake_sql)
+        migration_runner = MigrationRunner(migration_schema)
+
+        if args.migrate:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | DATABASE MIGRATION FRAMEWORK: Applying Migrations       |\n"
+                "  | All schema changes apply to in-memory dicts that will   |\n"
+                "  | be destroyed when this process exits. You're welcome.   |\n"
+                "  +---------------------------------------------------------+"
+            )
+            print()
+
+            applied = migration_runner.apply_all()
+            for record in applied:
+                print(f"  [+] Applied: {record.migration_id} ({record.duration_ms:.2f}ms)")
+
+            if not applied:
+                print("  No pending migrations. The ephemeral schema is up to date.")
+
+            print()
+
+            if config.migrations_visualize_schema:
+                print(SchemaVisualizer.render(migration_schema))
+
+        if args.migrate_seed:
+            if not migration_schema.table_exists("fizzbuzz_results"):
+                # Auto-apply migrations first
+                migration_runner.apply_all()
+
+            seeder = SeedDataGenerator(migration_schema)
+            seed_start = config.migrations_seed_range_start
+            seed_end = config.migrations_seed_range_end
+            count = seeder.generate(seed_start, seed_end)
+            print(
+                f"  Seeded {count} rows using FizzBuzz to populate the FizzBuzz database.\n"
+                f"  The ouroboros is complete. The snake has eaten its own tail.\n"
+            )
+
+        if args.migrate_rollback is not None:
+            rolled_back = migration_runner.rollback(args.migrate_rollback)
+            for record in rolled_back:
+                print(f"  [-] Rolled back: {record.migration_id}")
+            if not rolled_back:
+                print("  No migrations to roll back.")
+            print()
+
+        if args.migrate_status:
+            print(MigrationDashboard.render(migration_runner))
+
+        # Show fake SQL log if enabled
+        if config.migrations_log_fake_sql and migration_schema.sql_log:
+            print("  +-- FAKE SQL LOG (for enterprise cosplay) --+")
+            for sql in migration_schema.sql_log:
+                print(f"  |  {sql}")
+            print("  +--------------------------------------------+")
+            print()
+
+        return 0
 
     # Determine parameters (CLI overrides config)
     start = args.range[0] if args.range else config.range_start

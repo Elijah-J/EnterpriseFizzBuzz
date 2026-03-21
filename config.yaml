@@ -243,6 +243,18 @@ cache:
     range_start: 1                   # Warming range start
     range_end: 100                   # Warming range end
 
+# Database Migration Framework configuration
+# Because managing schema migrations for in-memory data structures
+# that vanish when the process exits is the pinnacle of ephemeral
+# database administration. Every dict deserves a migration history.
+migrations:
+  enabled: false                     # Master switch — opt-in via --migrate
+  auto_apply: false                  # Automatically apply pending migrations on startup
+  seed_range_start: 1                # Start of range for FizzBuzz seed data generation
+  seed_range_end: 50                 # End of range for seed data (the ouroboros range)
+  log_fake_sql: true                 # Log fake SQL statements for maximum enterprise cosplay
+  visualize_schema: true             # Render ASCII ER diagrams after migrations
+
 # Observer configuration
 observers:
   console_observer:

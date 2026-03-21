@@ -171,6 +171,15 @@ class EventType(Enum):
     CACHE_COHERENCE_TRANSITION = auto()
     CACHE_EULOGY_COMPOSED = auto()
 
+    # Database Migration Framework events
+    MIGRATION_STARTED = auto()
+    MIGRATION_APPLIED = auto()
+    MIGRATION_ROLLED_BACK = auto()
+    MIGRATION_FAILED = auto()
+    MIGRATION_SEED_STARTED = auto()
+    MIGRATION_SEED_COMPLETED = auto()
+    MIGRATION_SCHEMA_CHANGED = auto()
+
 
 class CacheCoherenceState(Enum):
     """MESI cache coherence protocol states for Enterprise FizzBuzz caching.

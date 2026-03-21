@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**24,800+ lines** across **42 files** with **829 unit tests** and **69 custom exception classes**, because this is an enterprise and we have standards.
+**26,300+ lines** across **44 files** with **885 unit tests** and **77 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 39 flags
+├── main.py                  # CLI entry point with 43 flags
 ├── config.yaml              # YAML-based configuration with 12 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (69 exception classes)
+├── exceptions.py            # Custom exception hierarchy (77 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -62,6 +62,7 @@ EnterpriseFizzBuzz/
 ├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
 ├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
 ├── cache.py                 # In-Memory Caching with MESI coherence and eulogies (~1,100 lines)
+├── migrations.py            # Database Migration Framework for ephemeral RAM schemas (~1,160 lines)
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
 │   ├── de.fizztranslation   # German (Deutsch)
@@ -80,7 +81,8 @@ EnterpriseFizzBuzz/
     ├── test_chaos.py        # 69 chaos engineering & fault injection tests
     ├── test_feature_flags.py  # 69 feature flag & progressive rollout tests
     ├── test_sla.py          # 96 SLA monitoring & alerting tests
-    └── test_cache.py        # 60 caching & eviction policy tests
+    ├── test_cache.py        # 60 caching & eviction policy tests
+    └── test_migrations.py   # 56 database migration & schema management tests
 ```
 
 ## Design Patterns
@@ -135,6 +137,9 @@ EnterpriseFizzBuzz/
 | MESI Coherence | `cache.py` | Modified/Exclusive/Shared/Invalid state machine for a single-process cache with zero concurrent readers, because protocol compliance is non-negotiable |
 | Eviction Policies | `cache.py` | Four interchangeable eviction strategies (LRU, LFU, FIFO, DramaticRandom), because choosing which cached modulo result to discard is a problem that demands a Strategy Pattern |
 | Cache Eulogies | `cache.py` | Template-method satirical obituary generation for evicted cache entries, because no data should be garbage-collected without a proper farewell |
+| Database Migrations | `migrations.py` | Forward/reverse schema migrations for in-memory dicts that will be garbage-collected when the process exits, because ephemeral data deserves a DDL lifecycle |
+| Schema Management | `migrations.py` | Full DDL/DML interface (CREATE TABLE, ALTER TABLE, DROP TABLE) for Python dicts, with fake SQL logging for maximum enterprise cosplay |
+| Seed Data | `migrations.py` | The FizzBuzz engine seeds the FizzBuzz database with FizzBuzz results -- the ouroboros of enterprise architecture |
 
 ## Features
 
@@ -155,7 +160,8 @@ EnterpriseFizzBuzz/
 - **Feature Flags / Progressive Rollout** - Boolean, Percentage, and Targeting flag types with SHA-256 deterministic rollout, Kahn's topological sort for dependency resolution, full lifecycle management (CREATED -> ACTIVE -> DEPRECATED -> ARCHIVED), FlagMiddleware integration, and an ASCII evaluation summary renderer -- because toggling FizzBuzz rules on and off clearly requires the same infrastructure Netflix uses to manage feature rollouts across 200 million subscribers
 - **SLA Monitoring / PagerDuty-Style Alerting** - Three-pillar SLO tracking (latency, accuracy, availability) with error budgets, burn rate alerts, a four-tier escalation policy, and an on-call rotation that uses modulo arithmetic to determine which engineer from a team of one (1) person is currently responsible -- complete with an ASCII dashboard, ground-truth accuracy verification, and the unshakeable certainty that Bob McFizzington will always be the one who gets paged
 - **In-Memory Caching with Cache Invalidation Protocol** - Four eviction policies (LRU, LFU, FIFO, DramaticRandom), MESI cache coherence state tracking (pointless but thorough), satirical eulogies for evicted entries, a cache warming system that pre-populates results (thereby defeating the entire purpose of caching), TTL-based expiration, thread-safe operations, and an ASCII statistics dashboard -- because the result of `15 % 3` might change between invocations, and we need to be prepared
-- **Custom Exception Hierarchy** - 69 exception classes for every conceivable FizzBuzz failure mode
+- **Database Migration Framework** - Five reversible migrations for in-memory schema management, with dependency tracking, fake SQL logging, ASCII ER diagram visualization, a migration status dashboard, and seed data generation that uses the FizzBuzz engine to populate the FizzBuzz database (the ouroboros pattern) -- all for data structures that exist exclusively in RAM and will vanish the moment you press Ctrl+C. This is by design.
+- **Custom Exception Hierarchy** - 77 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -317,6 +323,24 @@ python main.py --cache --cache-stats --chaos --chaos-level 3 --range 1 30
 
 # Full enterprise stack: caching + SLA + tracing + RBAC (peak over-engineering)
 python main.py --cache --cache-stats --sla --sla-dashboard --trace --user alice --role FIZZBUZZ_SUPERUSER --range 1 20
+
+# Database Migrations: apply all migrations to the in-memory schema (it won't persist)
+python main.py --migrate --range 1 20
+
+# Migration status dashboard: see which migrations have been applied (to RAM)
+python main.py --migrate --migrate-status --range 1 20
+
+# Seed data: use the FizzBuzz engine to populate the FizzBuzz database (the ouroboros)
+python main.py --migrate --migrate-seed --range 1 50
+
+# Rollback: undo the last N migrations (default: 1)
+python main.py --migrate --migrate-rollback 3 --range 1 20
+
+# Full migration stack: apply, seed, and display status dashboard
+python main.py --migrate --migrate-seed --migrate-status --range 1 30
+
+# Peak enterprise: migrations + caching + SLA + tracing + RBAC (the schema will still vanish on exit)
+python main.py --migrate --migrate-seed --migrate-status --cache --sla --trace --user alice --role FIZZBUZZ_SUPERUSER --range 1 20
 ```
 
 ## CLI Options
@@ -361,6 +385,10 @@ python main.py --cache --cache-stats --sla --sla-dashboard --trace --user alice 
 --cache-size N       Maximum number of cache entries (default: 1024)
 --cache-stats        Display the cache statistics dashboard after execution
 --cache-warm         Pre-populate the cache before execution (defeats the purpose of caching)
+--migrate            Apply all pending database migrations to the in-memory schema (it won't persist)
+--migrate-status     Display the migration status dashboard for the ephemeral database
+--migrate-rollback N Rollback the last N migrations (default: 1). Undo what was never permanent
+--migrate-seed       Generate FizzBuzz seed data using the FizzBuzz engine (the ouroboros)
 ```
 
 ## Environment Variables
@@ -931,6 +959,85 @@ The eulogy system is configurable via `cache.enable_eulogies` in `config.yaml`. 
 | ASCII dashboard | Hit rate, miss rate, eviction count, coherence state distribution |
 | Actual performance benefit | Negative (caching overhead exceeds computation cost) |
 
+## Database Migration Architecture
+
+The Database Migration Framework implements a full-featured schema migration system for in-memory data structures (dicts of lists of dicts) that are guaranteed to be destroyed when the process exits. This is the enterprise equivalent of building a sand castle at high tide -- meticulous, technically impressive, and ultimately doomed.
+
+Every migration provides both forward (`up()`) and reverse (`down()`) transformations, with dependency tracking via topological ordering, SHA-256 integrity checksums, fake SQL logging for enterprise cosplay, and an ASCII status dashboard. The framework manages tables that exist exclusively in RAM, with no disk I/O, no ACID compliance, and no way to back up, replicate, or shard anything. Other than that, it's enterprise-grade.
+
+**Key components:**
+- **SchemaManager** - Full DDL/DML interface for Python dicts, with `CREATE TABLE`, `ALTER TABLE`, `DROP TABLE`, `ADD COLUMN`, `DROP COLUMN`, `RENAME COLUMN`, and fake SQL logging that would make any DBA nostalgic
+- **MigrationRegistry** - Thread-safe migration registry with duplicate detection, dependency validation, and topological ordering
+- **MigrationRunner** - Orchestrates forward application and reverse rollback of migrations, with full audit trail via `MigrationRecord`
+- **SchemaVisualizer** - ASCII ER diagram renderer for the in-memory schema, complete with a disclaimer that no actual databases were harmed
+- **MigrationDashboard** - ASCII status dashboard showing applied/pending/failed/rolled-back migration counts, table inventories, and a reminder that everything will be destroyed on exit
+- **SeedDataGenerator** - Populates the in-memory database with FizzBuzz results generated by the FizzBuzz engine itself -- the ouroboros of enterprise data architecture
+
+### Migration List
+
+| ID | Description | Dependencies | What It Does |
+|----|-------------|-------------|--------------|
+| `m001_initial_schema` | Create initial fizzbuzz_results table | (none) | Creates a seven-column table in a Python dict. The genesis of our ephemeral relational model |
+| `m002_add_is_prime` | Add is_prime column with trial division backfill | m001 | Adds a primality flag using trial division, because implementing Miller-Rabin for numbers under 100 would be over-engineering (and we would never do that) |
+| `m003_add_confidence` | Add ml_confidence float column | m001 | Every FizzBuzz result deserves an ML confidence score, even when computed via simple modulo. Default: 1.0 (absolute certainty that 15 % 3 == 0) |
+| `m004_add_blockchain_hash` | Add blockchain_hash for immutable audit trail | m001 | SHA-256 hashes for tamper-proof FizzBuzz compliance. If you can't verify the cryptographic integrity of "Fizz," can you really trust anything? |
+| `m005_split_fizz_buzz_tables` | Normalize into fizz_results and buzz_results | m001 | Splits the monolithic table into two normalized tables, achieving third normal form for data that will exist for approximately 0.1 seconds |
+
+### The Ouroboros Seed Data Pattern
+
+The `--migrate-seed` flag invokes the `SeedDataGenerator`, which uses the Enterprise FizzBuzz evaluation engine to generate FizzBuzz results, then inserts those results into the in-memory FizzBuzz database managed by the migration framework. The FizzBuzz engine feeds the FizzBuzz database, which exists solely to store FizzBuzz results, which were computed by the FizzBuzz engine. It is FizzBuzz all the way down.
+
+```
+    +=====================+
+    |  FizzBuzz Engine    |
+    |  (evaluates n%3,    |
+    |   n%5, etc.)        |
+    +=========+==========+
+              |
+              | generates results
+              v
+    +=========+==========+
+    |  SeedDataGenerator  |
+    |  (inserts rows)     |
+    +=========+==========+
+              |
+              | INSERT INTO fizzbuzz_results
+              v
+    +=========+==========+
+    |  SchemaManager      |
+    |  (in-memory dict)   |
+    +=========+==========+
+              |
+              | stores results in RAM
+              v
+    +=====================+
+    |  RAM                |
+    |  (will be destroyed |
+    |   on process exit)  |
+    +=====================+
+```
+
+The entire pipeline exists to compute FizzBuzz, store the results in an in-memory database with a full migration framework, and then destroy everything when the process exits. This is, by any measure, a closed loop of pure enterprise entropy.
+
+### Schema Visualization
+
+The `SchemaVisualizer` renders ASCII ER diagrams of the current in-memory schema. Each table is drawn as a box with column names and types, accompanied by a disclaimer that the entire schema exists in RAM and will be destroyed on exit. The diagrams are architecturally indistinguishable from those generated by pgAdmin or MySQL Workbench, except that they describe Python dicts instead of actual database tables.
+
+| Spec | Value |
+|------|-------|
+| Pre-built migrations | 5 (m001 through m005) |
+| Migration states | 6 (PENDING, APPLYING, APPLIED, ROLLING_BACK, ROLLED_BACK, FAILED) |
+| Schema operations | 7 (CREATE TABLE, DROP TABLE, ADD COLUMN, DROP COLUMN, RENAME COLUMN, INSERT, SELECT) |
+| Dependency resolution | Topological ordering with cycle detection |
+| Integrity verification | SHA-256 checksums per migration |
+| Fake SQL logging | Full (every DDL/DML operation logged in SQL syntax) |
+| Seed data source | The FizzBuzz engine itself (ouroboros) |
+| Data persistence | 0 bytes (it's all in RAM) |
+| ACID compliance | None (not even the A) |
+| Thread safety | Full (registry-level locking) |
+| Custom exceptions | 8 (MigrationError, MigrationNotFoundError, MigrationAlreadyAppliedError, MigrationRollbackError, MigrationDependencyError, MigrationConflictError, SchemaError, SeedDataError) |
+| Actual databases harmed | 0 |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -1048,7 +1155,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 829 tests
+# Run all 885 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -1065,7 +1172,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 829 tests, 69 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, and nanosecond timing. You tell me.
+A: It has 885 tests, 77 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -1099,6 +1206,9 @@ A: Because "it works" is not a Service Level Objective. Without formal SLO targe
 
 **Q: Why does FizzBuzz need caching?**
 A: Because the result of `n % 3` might change between invocations. It won't, of course -- modulo arithmetic has been deterministic since roughly the 3rd century BC -- but enterprise architecture demands that we plan for the possibility. The caching layer stores FizzBuzz results in memory so they can be returned instantly on subsequent requests, saving approximately zero nanoseconds per cache hit (the cache lookup overhead exceeds the cost of recomputation). The MESI coherence protocol ensures that our single-process, single-threaded cache maintains the same consistency guarantees as an Intel Xeon's L1 cache, despite having exactly zero concurrent readers. The eulogy system ensures that when cache entries are evicted, they are mourned with the dignity they deserve -- because in the Enterprise FizzBuzz Platform, even ephemeral data has emotional weight. The `--cache-warm` flag pre-populates the cache with results for the entire evaluation range before execution begins, which defeats the entire purpose of caching with such thoroughness that it circles back around to being an anti-pattern worth documenting. Four eviction policies are available, including DramaticRandom, which selects victims at random and delivers a theatrical farewell before deletion. RFC 7234 is cited in the module docstring, not because it applies, but because referencing RFCs makes everything feel more legitimate.
+
+**Q: Why does FizzBuzz need database migrations?**
+A: Because schema management is a cornerstone of any production system, and the fact that our "database" is a Python dict that will be garbage-collected in 0.1 seconds is no excuse for architectural negligence. The migration framework provides five reversible migrations with dependency tracking, SHA-256 integrity checksums, fake SQL logging, and an ASCII status dashboard -- all for tables that exist exclusively in RAM. The `SeedDataGenerator` uses the FizzBuzz engine to populate the FizzBuzz database with FizzBuzz results, creating a closed loop of enterprise architecture so pure that it achieves the ouroboros pattern: the system consumes its own output to feed its own input. Migration m005 normalizes the schema into third normal form, because even ephemeral data structures deserve relational integrity. The entire framework logs fake SQL statements (`CREATE TABLE fizzbuzz_results ...`, `ALTER TABLE ... ADD COLUMN ...`) for the benefit of DBAs who will never see them, to a schema that will never touch a disk, in a database that does not exist. This is enterprise software at its most philosophically honest.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
