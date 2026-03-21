@@ -203,12 +203,21 @@ class RuleEngineFactory:
         EvaluationStrategy.STANDARD: StandardRuleEngine,
         EvaluationStrategy.CHAIN_OF_RESPONSIBILITY: ChainOfResponsibilityEngine,
         EvaluationStrategy.PARALLEL_ASYNC: ParallelAsyncEngine,
+        EvaluationStrategy.MACHINE_LEARNING: None,  # lazy import below
     }
+
+    @classmethod
+    def _load_ml_engine(cls) -> type[IRuleEngine]:
+        from ml_engine import MachineLearningEngine
+        cls._engines[EvaluationStrategy.MACHINE_LEARNING] = MachineLearningEngine
+        return MachineLearningEngine
 
     @classmethod
     def create(cls, strategy: EvaluationStrategy) -> IRuleEngine:
         """Create a rule engine for the given strategy."""
         engine_class = cls._engines.get(strategy)
+        if strategy == EvaluationStrategy.MACHINE_LEARNING and engine_class is None:
+            engine_class = cls._load_ml_engine()
         if engine_class is None:
             logger.warning(
                 "Unknown strategy %s, falling back to STANDARD", strategy

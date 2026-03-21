@@ -183,7 +183,7 @@ class ConfigurationManager(metaclass=_SingletonMeta):
             )
 
         strategy = self._raw_config.get("engine", {}).get("strategy", "standard")
-        valid_strategies = {"standard", "chain_of_responsibility", "parallel_async"}
+        valid_strategies = {"standard", "chain_of_responsibility", "parallel_async", "machine_learning"}
         if strategy not in valid_strategies:
             raise ConfigurationValidationError(
                 "engine.strategy", strategy, f"one of {valid_strategies}"
@@ -233,6 +233,7 @@ class ConfigurationManager(metaclass=_SingletonMeta):
             "standard": EvaluationStrategy.STANDARD,
             "chain_of_responsibility": EvaluationStrategy.CHAIN_OF_RESPONSIBILITY,
             "parallel_async": EvaluationStrategy.PARALLEL_ASYNC,
+            "machine_learning": EvaluationStrategy.MACHINE_LEARNING,
         }
         return strategy_map[self._raw_config["engine"]["strategy"]]
 

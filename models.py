@@ -29,6 +29,7 @@ class EvaluationStrategy(Enum):
     STANDARD = auto()
     CHAIN_OF_RESPONSIBILITY = auto()
     PARALLEL_ASYNC = auto()
+    MACHINE_LEARNING = auto()
 
 
 class LogLevel(Enum):

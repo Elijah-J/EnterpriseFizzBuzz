@@ -521,3 +521,102 @@ class TestPlugins:
         registry = PluginRegistry.get_instance()
         with pytest.raises(PluginNotFoundError):
             registry.initialize_plugin("NonExistentPlugin")
+
+
+# ============================================================
+# Machine Learning Engine Tests
+# ============================================================
+
+
+class TestMachineLearningEngine:
+    def test_ml_plain_number(self, default_rules):
+        from ml_engine import MachineLearningEngine
+
+        engine = MachineLearningEngine()
+        result = engine.evaluate(1, default_rules)
+        assert result.output == "1"
+        assert result.is_plain_number is True
+
+    def test_ml_fizz(self, default_rules):
+        from ml_engine import MachineLearningEngine
+
+        engine = MachineLearningEngine()
+        result = engine.evaluate(3, default_rules)
+        assert result.output == "Fizz"
+        assert result.is_fizz is True
+
+    def test_ml_buzz(self, default_rules):
+        from ml_engine import MachineLearningEngine
+
+        engine = MachineLearningEngine()
+        result = engine.evaluate(5, default_rules)
+        assert result.output == "Buzz"
+        assert result.is_buzz is True
+
+    def test_ml_fizzbuzz(self, default_rules):
+        from ml_engine import MachineLearningEngine
+
+        engine = MachineLearningEngine()
+        result = engine.evaluate(15, default_rules)
+        assert result.output == "FizzBuzz"
+        assert result.is_fizzbuzz is True
+
+    @pytest.mark.parametrize(
+        "number,expected",
+        [
+            (1, "1"),
+            (2, "2"),
+            (3, "Fizz"),
+            (4, "4"),
+            (5, "Buzz"),
+            (6, "Fizz"),
+            (7, "7"),
+            (8, "8"),
+            (9, "Fizz"),
+            (10, "Buzz"),
+            (11, "11"),
+            (12, "Fizz"),
+            (13, "13"),
+            (14, "14"),
+            (15, "FizzBuzz"),
+        ],
+    )
+    def test_ml_first_15_numbers(self, default_rules, number, expected):
+        from ml_engine import MachineLearningEngine
+
+        engine = MachineLearningEngine()
+        result = engine.evaluate(number, default_rules)
+        assert result.output == expected
+
+    def test_ml_metadata_contains_model_info(self, default_rules):
+        from ml_engine import MachineLearningEngine
+
+        engine = MachineLearningEngine()
+        result = engine.evaluate(3, default_rules)
+        assert "ml_engine" in result.metadata
+        assert result.metadata["ml_engine"] == "MLP"
+        assert "ml_confidences" in result.metadata
+
+    def test_ml_async(self, default_rules):
+        from ml_engine import MachineLearningEngine
+
+        engine = MachineLearningEngine()
+        result = asyncio.run(engine.evaluate_async(15, default_rules))
+        assert result.output == "FizzBuzz"
+
+    def test_ml_factory_creates_engine(self):
+        from ml_engine import MachineLearningEngine
+
+        engine = RuleEngineFactory.create(EvaluationStrategy.MACHINE_LEARNING)
+        assert isinstance(engine, MachineLearningEngine)
+
+    def test_ml_full_range_correctness(self, default_rules):
+        """Verify ML engine matches Standard engine for all 1-100."""
+        from ml_engine import MachineLearningEngine
+
+        ml = MachineLearningEngine()
+        std = StandardRuleEngine()
+        for n in range(1, 101):
+            ml_result = ml.evaluate(n, default_rules)
+            std_result = std.evaluate(n, default_rules)
+            assert ml_result.output == std_result.output, f"Mismatch at {n}"

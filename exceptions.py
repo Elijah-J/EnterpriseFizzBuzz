@@ -155,3 +155,21 @@ class InvalidRangeError(FizzBuzzError):
             error_code="EFP-8000",
             context={"start": start, "end": end},
         )
+
+
+class ModelConvergenceError(FizzBuzzError):
+    """Raised when the ML model fails to converge during training.
+
+    This should never happen for the FizzBuzz task, but enterprise
+    software must be prepared for all contingencies, including the
+    possibility that a neural network cannot learn modulo arithmetic.
+    """
+
+    def __init__(self, rule_name: str, final_loss: float) -> None:
+        super().__init__(
+            f"Model for rule '{rule_name}' failed to converge. "
+            f"Final loss: {final_loss:.6f}. Consider adjusting "
+            f"hyperparameters or adding more training data.",
+            error_code="EFP-9000",
+            context={"rule_name": rule_name, "final_loss": final_loss},
+        )

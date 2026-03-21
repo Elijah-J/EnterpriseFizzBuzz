@@ -72,7 +72,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--strategy",
-        choices=["standard", "chain_of_responsibility", "parallel_async"],
+        choices=["standard", "chain_of_responsibility", "parallel_async", "machine_learning"],
         help="Rule evaluation strategy (default: from config)",
     )
 
@@ -169,6 +169,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         "standard": EvaluationStrategy.STANDARD,
         "chain_of_responsibility": EvaluationStrategy.CHAIN_OF_RESPONSIBILITY,
         "parallel_async": EvaluationStrategy.PARALLEL_ASYNC,
+        "machine_learning": EvaluationStrategy.MACHINE_LEARNING,
     }
     strategy = (
         strategy_map.get(args.strategy) if args.strategy else config.evaluation_strategy
