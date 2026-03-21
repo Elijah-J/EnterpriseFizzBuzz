@@ -33,6 +33,13 @@ from chaos import (
     PostMortemGenerator,
 )
 from blockchain import BlockchainObserver, FizzBuzzBlockchain
+from cache import (
+    CacheDashboard,
+    CacheMiddleware,
+    CacheStore,
+    CacheWarmer,
+    EvictionPolicyFactory,
+)
 from circuit_breaker import (
     CircuitBreakerDashboard,
     CircuitBreakerMiddleware,
@@ -301,6 +308,43 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--on-call",
         action="store_true",
         help="Display the current on-call status and escalation chain",
+    )
+
+    # Feature Flags
+    # Cache flags
+    parser.add_argument(
+        "--cache",
+        action="store_true",
+        help="Enable the in-memory caching layer for FizzBuzz evaluation results",
+    )
+
+    parser.add_argument(
+        "--cache-policy",
+        type=str,
+        choices=["lru", "lfu", "fifo", "dramatic_random"],
+        default=None,
+        metavar="POLICY",
+        help="Cache eviction policy (default: from config)",
+    )
+
+    parser.add_argument(
+        "--cache-size",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Maximum number of cache entries (default: from config)",
+    )
+
+    parser.add_argument(
+        "--cache-stats",
+        action="store_true",
+        help="Display the cache statistics dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--cache-warm",
+        action="store_true",
+        help="Pre-populate the cache before execution (defeats the purpose of caching)",
     )
 
     # Feature Flags
@@ -634,6 +678,42 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(SLADashboard.render_on_call(sla_monitor))
         return 0
 
+    # Cache setup
+    cache_middleware = None
+    cache_store = None
+    cache_warmer = None
+    if args.cache:
+        cache_policy_name = args.cache_policy or config.cache_eviction_policy
+        cache_max_size = args.cache_size or config.cache_max_size
+        eviction_policy = EvictionPolicyFactory.create(cache_policy_name)
+
+        cache_store = CacheStore(
+            max_size=cache_max_size,
+            ttl_seconds=config.cache_ttl_seconds,
+            eviction_policy=eviction_policy,
+            enable_coherence=config.cache_enable_coherence_protocol,
+            enable_eulogies=config.cache_enable_eulogies,
+            event_bus=event_bus,
+        )
+
+        cache_middleware = CacheMiddleware(
+            cache_store=cache_store,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | CACHING: In-Memory Cache Layer ENABLED                  |\n"
+            f"  | Policy: {eviction_policy.get_name():<49}|\n"
+            f"  | Max Size: {cache_max_size:<48}|\n"
+            "  | MESI coherence protocol: ACTIVE (pointlessly)           |\n"
+            "  | Every eviction will be mourned with a eulogy.           |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.cache_stats:
+        print("\n  Cache not enabled. Use --cache to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -713,6 +793,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     if cb_middleware is not None:
         builder.with_middleware(cb_middleware)
 
+    if cache_middleware is not None:
+        builder.with_middleware(cache_middleware)
+
     if chaos_middleware is not None:
         builder.with_middleware(chaos_middleware)
 
@@ -736,6 +819,25 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Print authentication status
     if auth_context is not None:
         print(f"  Authenticated as: {auth_context.user} ({auth_context.role.name})")
+
+    # Cache warming (pre-populate cache, defeating the purpose)
+    if args.cache_warm and cache_store is not None:
+        cache_warmer = CacheWarmer(
+            cache_store=cache_store,
+            rule_engine=service._rule_engine,
+            rules=service._rules,
+        )
+        warmed_count = cache_warmer.warm(start, end)
+        print(
+            f"  Cache warmed with {warmed_count} entries for range [{start}, {end}]."
+        )
+        print(
+            "  (The entire purpose of caching has been defeated. Congratulations.)"
+        )
+        print()
+    elif args.cache_warm:
+        print("\n  Cache not enabled. Use --cache to enable.\n")
+        return 0
 
     # Execute -- use locale manager for status messages if available
     if locale_mgr is not None:
@@ -837,6 +939,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     # On-call status (when combined with --sla)
     if args.on_call and sla_monitor is not None:
         print(SLADashboard.render_on_call(sla_monitor))
+
+    # Cache statistics dashboard
+    if args.cache_stats and cache_store is not None:
+        stats = cache_store.get_statistics()
+        print(CacheDashboard.render(stats))
+    elif args.cache_stats:
+        print("\n  Cache not enabled. Use --cache to enable.\n")
 
     return 0
 

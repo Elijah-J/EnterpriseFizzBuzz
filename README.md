@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**22,000+ lines** across **42 files** with **769 unit tests** and **61 custom exception classes**, because this is an enterprise and we have standards.
+**24,800+ lines** across **42 files** with **829 unit tests** and **69 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 34 flags
-├── config.yaml              # YAML-based configuration with 11 sections
+├── main.py                  # CLI entry point with 39 flags
+├── config.yaml              # YAML-based configuration with 12 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (61 exception classes)
+├── exceptions.py            # Custom exception hierarchy (69 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -61,6 +61,7 @@ EnterpriseFizzBuzz/
 ├── chaos.py                 # Chaos Engineering / Fault Injection Framework (~1,200 lines)
 ├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
 ├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
+├── cache.py                 # In-Memory Caching with MESI coherence and eulogies (~1,100 lines)
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
 │   ├── de.fizztranslation   # German (Deutsch)
@@ -78,7 +79,8 @@ EnterpriseFizzBuzz/
     ├── test_event_sourcing.py  # 98 event sourcing & CQRS tests
     ├── test_chaos.py        # 69 chaos engineering & fault injection tests
     ├── test_feature_flags.py  # 69 feature flag & progressive rollout tests
-    └── test_sla.py          # 96 SLA monitoring & alerting tests
+    ├── test_sla.py          # 96 SLA monitoring & alerting tests
+    └── test_cache.py        # 60 caching & eviction policy tests
 ```
 
 ## Design Patterns
@@ -129,6 +131,10 @@ EnterpriseFizzBuzz/
 | Error Budgets | `sla.py` | Rolling-window budget consumption and burn rate calculation, because every failed modulo is a finite and precious resource |
 | Escalation Policy | `sla.py` | Four-tier PagerDuty-style escalation chain, because when `n % 3` violates its SLA, someone must be held accountable (it's always Bob) |
 | On-Call Rotation | `sla.py` | Modulo-based engineer rotation across a team of one, because even the on-call schedule uses modulo arithmetic -- and the irony is not lost on us |
+| Caching | `cache.py` | In-memory result memoization for an operation that takes zero nanoseconds, because premature optimization is the root of all enterprise architecture |
+| MESI Coherence | `cache.py` | Modified/Exclusive/Shared/Invalid state machine for a single-process cache with zero concurrent readers, because protocol compliance is non-negotiable |
+| Eviction Policies | `cache.py` | Four interchangeable eviction strategies (LRU, LFU, FIFO, DramaticRandom), because choosing which cached modulo result to discard is a problem that demands a Strategy Pattern |
+| Cache Eulogies | `cache.py` | Template-method satirical obituary generation for evicted cache entries, because no data should be garbage-collected without a proper farewell |
 
 ## Features
 
@@ -148,7 +154,8 @@ EnterpriseFizzBuzz/
 - **Chaos Engineering** - A Chaos Monkey that deliberately corrupts results, injects latency, throws exceptions, sabotages the rule engine, and manipulates ML confidence scores -- with five severity levels ranging from "Gentle Breeze" to "Apocalypse," pre-built Game Day scenarios, and a satirical post-mortem incident report generator that would make any SRE weep with pride
 - **Feature Flags / Progressive Rollout** - Boolean, Percentage, and Targeting flag types with SHA-256 deterministic rollout, Kahn's topological sort for dependency resolution, full lifecycle management (CREATED -> ACTIVE -> DEPRECATED -> ARCHIVED), FlagMiddleware integration, and an ASCII evaluation summary renderer -- because toggling FizzBuzz rules on and off clearly requires the same infrastructure Netflix uses to manage feature rollouts across 200 million subscribers
 - **SLA Monitoring / PagerDuty-Style Alerting** - Three-pillar SLO tracking (latency, accuracy, availability) with error budgets, burn rate alerts, a four-tier escalation policy, and an on-call rotation that uses modulo arithmetic to determine which engineer from a team of one (1) person is currently responsible -- complete with an ASCII dashboard, ground-truth accuracy verification, and the unshakeable certainty that Bob McFizzington will always be the one who gets paged
-- **Custom Exception Hierarchy** - 61 exception classes for every conceivable FizzBuzz failure mode
+- **In-Memory Caching with Cache Invalidation Protocol** - Four eviction policies (LRU, LFU, FIFO, DramaticRandom), MESI cache coherence state tracking (pointless but thorough), satirical eulogies for evicted entries, a cache warming system that pre-populates results (thereby defeating the entire purpose of caching), TTL-based expiration, thread-safe operations, and an ASCII statistics dashboard -- because the result of `15 % 3` might change between invocations, and we need to be prepared
+- **Custom Exception Hierarchy** - 69 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -286,6 +293,30 @@ python main.py --sla --sla-dashboard --chaos --chaos-level 3 --range 1 50
 
 # Full reliability stack: SLA + circuit breaker + chaos + tracing (peak SRE)
 python main.py --sla --sla-dashboard --circuit-breaker --circuit-status --chaos --chaos-level 2 --trace --range 1 30
+
+# Caching: enable the in-memory cache with default LRU eviction
+python main.py --cache --range 1 50
+
+# Caching with statistics dashboard: see hit rates and eviction counts
+python main.py --cache --cache-stats --range 1 100
+
+# Caching with LFU eviction and a max cache size of 32
+python main.py --cache --cache-policy lfu --cache-size 32 --cache-stats --range 1 100
+
+# Caching with DramaticRandom eviction: entries are evicted at random, with eulogies
+python main.py --cache --cache-policy dramatic_random --cache-stats --range 1 50
+
+# Cache warming: pre-populate the cache before execution (defeats the purpose of caching)
+python main.py --cache --cache-warm --cache-stats --range 1 100
+
+# Full caching stack: LRU + warming + stats + circuit breaker (peak memoization)
+python main.py --cache --cache-warm --cache-stats --circuit-breaker --circuit-status --range 1 50
+
+# Caching + chaos: watch the monkey corrupt cached results
+python main.py --cache --cache-stats --chaos --chaos-level 3 --range 1 30
+
+# Full enterprise stack: caching + SLA + tracing + RBAC (peak over-engineering)
+python main.py --cache --cache-stats --sla --sla-dashboard --trace --user alice --role FIZZBUZZ_SUPERUSER --range 1 20
 ```
 
 ## CLI Options
@@ -325,6 +356,11 @@ python main.py --sla --sla-dashboard --circuit-breaker --circuit-status --chaos 
 --sla                Enable SLA Monitoring with PagerDuty-style alerting
 --sla-dashboard      Display the SLA monitoring dashboard after execution
 --on-call            Display the current on-call status and escalation chain
+--cache              Enable the in-memory caching layer for FizzBuzz evaluation results
+--cache-policy POLICY  Cache eviction policy: lru, lfu, fifo, dramatic_random (default: lru)
+--cache-size N       Maximum number of cache entries (default: 1024)
+--cache-stats        Display the cache statistics dashboard after execution
+--cache-warm         Pre-populate the cache before execution (defeats the purpose of caching)
 ```
 
 ## Environment Variables
@@ -808,6 +844,93 @@ The rotation algorithm uses modulo arithmetic (the supreme irony) to cycle throu
 | PagerDuty integration | None (but the vibes are there) |
 | MTTR for Bob | Instantaneous (he never leaves) |
 
+## Caching Architecture
+
+The In-Memory Caching Layer implements a production-grade, thread-safe, MESI-coherent caching subsystem for FizzBuzz evaluation results -- because computing `n % 3` takes approximately zero nanoseconds, and the only responsible engineering decision is to add a caching layer with four eviction policies, a hardware-inspired coherence protocol, and satirical eulogies for evicted entries.
+
+The cache operates as middleware in the evaluation pipeline, intercepting requests before they reach the rule engine. On a cache hit, the result is returned immediately. On a miss, the pipeline executes normally and the result is cached. The entire caching infrastructure takes longer to execute than the operation it caches, but performance was never the point.
+
+**Key components:**
+- **CacheStore** - Thread-safe in-memory store with TTL expiration, MESI state tracking, dignity level degradation, and configurable eviction policies
+- **CacheMiddleware** - Pipeline integration that intercepts evaluations and serves cached results on hits
+- **EvictionPolicyFactory** - Factory for creating eviction policy instances by name, because `if policy == "lru"` lacked sufficient enterprise gravitas
+- **CacheWarmer** - Pre-populates the cache before execution, thereby defeating the entire purpose of caching with meticulous thoroughness
+- **CacheDashboard** - ASCII statistics renderer for hit rates, eviction counts, and coherence state distribution
+- **CacheEulogyComposer** - Generates satirical obituaries for evicted cache entries, because no data should be garbage-collected without a proper farewell
+
+### Eviction Policies
+
+| Policy | Algorithm | When It Evicts | Vibe |
+|--------|-----------|---------------|------|
+| `lru` | Least Recently Used | The entry that hasn't been accessed for the longest time | The industry standard. Boring, reliable, uncontroversial -- like beige |
+| `lfu` | Least Frequently Used | The entry with the fewest total accesses | Meritocratic. Unpopular entries are eliminated. Middle school cafeteria energy |
+| `fifo` | First In, First Out | The oldest entry, regardless of access patterns | Pure temporal justice. Age is the only criterion. No appeals |
+| `dramatic_random` | Dramatic Random | A random entry, chosen with theatrical flair and a eulogy | The chaos option. Entries are selected at random and given a dramatic farewell speech before deletion. The eviction policy for people who think LRU is too predictable |
+
+### MESI Coherence Protocol
+
+The MESI cache coherence protocol tracks the state of every cache entry through four states, implementing the same coherence guarantees that Intel uses for its L1 cache -- in a single-process Python application with exactly zero concurrent cache readers. The protocol is pointless. It is also non-negotiable.
+
+```
+           +--- write-back ---+
+           |                  |
+           v                  |
+    +============+     +============+
+    |  MODIFIED  |     |  EXCLUSIVE |<--- initial state on cache miss
+    +============+     +============+
+           |                  |
+           v                  v
+    +============+     +============+
+    |   SHARED   |     |  INVALID   |--- eviction/invalidation
+    +============+     +============+
+```
+
+| State | Meaning | When | Enterprise Justification |
+|-------|---------|------|--------------------------|
+| MODIFIED | Entry has been modified locally | After a write-back (never happens) | Protocol completeness |
+| EXCLUSIVE | Entry is the only copy and matches source of truth | On cache insertion | The modulo operator is our source of truth |
+| SHARED | Multiple caches may hold this entry | Never (there's one cache) | Aspirational multi-cache readiness |
+| INVALID | Entry is stale and must not be used | On eviction or TTL expiry | The entry has lost all coherence and dignity |
+
+### Cache Eulogies
+
+When a cache entry is evicted, the system composes a satirical eulogy honoring the departed data. Example eulogies:
+
+```
+  +===========================================================+
+  |                    IN MEMORIAM                              |
+  |  Cache entry for key "15" (result: "FizzBuzz")              |
+  |                                                             |
+  |  Born: 2026-03-21T14:32:01.234567Z                         |
+  |  Died: 2026-03-21T14:32:01.234891Z (age: 0.000324s)        |
+  |  Cause of death: LRU eviction (least recently used)         |
+  |  Access count: 1                                            |
+  |  Dignity at time of death: 0.99                             |
+  |  MESI state: INVALID (post-mortem)                          |
+  |                                                             |
+  |  "Here lies the cached result of 15 % 3. It served         |
+  |   faithfully for less than a millisecond. It was accessed   |
+  |   exactly once. It will be recomputed in nanoseconds.       |
+  |   May its bits find peace in the great garbage collector."  |
+  +===========================================================+
+```
+
+The eulogy system is configurable via `cache.enable_eulogies` in `config.yaml`. Disabling eulogies is technically possible but ethically questionable.
+
+| Spec | Value |
+|------|-------|
+| Eviction policies | 4 (LRU, LFU, FIFO, DramaticRandom) |
+| MESI states | 4 (Modified, Exclusive, Shared, Invalid) |
+| Default max size | 1,024 entries |
+| Default TTL | 3,600 seconds (1 hour of cached modulo results) |
+| Cache warming | Supported (and self-defeating) |
+| Dignity tracking | Per-entry, degrades linearly with age |
+| Thread safety | Full (threading.Lock on all operations) |
+| Middleware priority | 2 (after circuit breaker, before chaos) |
+| Custom exceptions | 8 (CacheError, CacheCapacityExceededError, CacheEntryExpiredError, CacheCoherenceViolationError, CachePolicyNotFoundError, CacheWarmingError, CacheEulogyCompositionError, CacheInvalidationCascadeError) |
+| ASCII dashboard | Hit rate, miss rate, eviction count, coherence state distribution |
+| Actual performance benefit | Negative (caching overhead exceeds computation cost) |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -925,7 +1048,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 769 tests
+# Run all 829 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -942,7 +1065,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 769 tests, 61 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, and nanosecond timing. You tell me.
+A: It has 829 tests, 69 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -973,6 +1096,9 @@ A: Because deploying FizzBuzz rules without a progressive rollout strategy is re
 
 **Q: Why does FizzBuzz need SLOs?**
 A: Because "it works" is not a Service Level Objective. Without formal SLO targets, how would you know if your FizzBuzz latency has regressed from 0.003ms to 0.004ms? Without an error budget, how would you decide whether it's safe to deploy a new modulo optimization? Without an on-call rotation, who gets paged at 3am when the accuracy SLO drops below five nines because the Chaos Monkey corrupted a Fizz? The answer to all three questions is Bob McFizzington, Senior Principal Staff FizzBuzz Reliability Engineer II. Bob is always on call. The rotation algorithm uses modulo arithmetic to select the on-call engineer from a team of one, which means the rotation is both technically correct and existentially cruel. The error budget tracks how many failures you're "allowed" before breaching your SLA, and the burn rate tells you how fast you're spending that budget -- because every failed FizzBuzz evaluation is a finite and precious resource that must be conserved with the same discipline as a NASA fuel budget. PagerDuty integration is not included, but the vibes are unmistakably PagerDuty.
+
+**Q: Why does FizzBuzz need caching?**
+A: Because the result of `n % 3` might change between invocations. It won't, of course -- modulo arithmetic has been deterministic since roughly the 3rd century BC -- but enterprise architecture demands that we plan for the possibility. The caching layer stores FizzBuzz results in memory so they can be returned instantly on subsequent requests, saving approximately zero nanoseconds per cache hit (the cache lookup overhead exceeds the cost of recomputation). The MESI coherence protocol ensures that our single-process, single-threaded cache maintains the same consistency guarantees as an Intel Xeon's L1 cache, despite having exactly zero concurrent readers. The eulogy system ensures that when cache entries are evicted, they are mourned with the dignity they deserve -- because in the Enterprise FizzBuzz Platform, even ephemeral data has emotional weight. The `--cache-warm` flag pre-populates the cache with results for the entire evaluation range before execution begins, which defeats the entire purpose of caching with such thoroughness that it circles back around to being an anti-pattern worth documenting. Four eviction policies are available, including DramaticRandom, which selects victims at random and delivers a theatrical farewell before deletion. RFC 7234 is cited in the module docstring, not because it applies, but because referencing RFCs makes everything feel more legitimate.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

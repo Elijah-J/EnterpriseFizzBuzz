@@ -162,6 +162,40 @@ class EventType(Enum):
     SLA_ERROR_BUDGET_UPDATED = auto()
     SLA_ERROR_BUDGET_EXHAUSTED = auto()
 
+    # Cache events
+    CACHE_HIT = auto()
+    CACHE_MISS = auto()
+    CACHE_EVICTION = auto()
+    CACHE_INVALIDATION = auto()
+    CACHE_WARMING = auto()
+    CACHE_COHERENCE_TRANSITION = auto()
+    CACHE_EULOGY_COMPOSED = auto()
+
+
+class CacheCoherenceState(Enum):
+    """MESI cache coherence protocol states for Enterprise FizzBuzz caching.
+
+    Implementing a full MESI protocol for an in-memory cache in a
+    single-process Python application is the pinnacle of over-engineering.
+    But if Intel does it for their L1 cache, surely our FizzBuzz results
+    deserve the same level of coherence guarantees.
+
+    MODIFIED:  This cache entry has been modified locally and is the only
+               valid copy. Other caches (of which there are none) must be
+               notified before they can read it.
+    EXCLUSIVE: This cache entry is the only copy and matches the source
+               of truth (the modulo operator, in our case).
+    SHARED:    Multiple caches may hold this entry (they don't, but we
+               track it anyway because protocol compliance is non-negotiable).
+    INVALID:   This cache entry is stale and must not be used. It has been
+               sentenced to invalidation and awaits its final eulogy.
+    """
+
+    MODIFIED = auto()
+    EXCLUSIVE = auto()
+    SHARED = auto()
+    INVALID = auto()
+
 
 @dataclass(frozen=True)
 class Permission:

@@ -1048,6 +1048,167 @@ class SLAConfigurationError(SLAError):
         )
 
 
+class CacheError(FizzBuzzError):
+    """Base exception for all In-Memory Caching Layer errors.
+
+    When your cache for storing the results of n % 3 encounters a
+    failure, you must confront the uncomfortable truth that you've
+    added a caching layer to an operation that takes approximately
+    zero nanoseconds. But caches fail, and when they do, they fail
+    with enterprise-grade exception hierarchies.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-CA00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class CacheCapacityExceededError(CacheError):
+    """Raised when the cache has reached its maximum capacity.
+
+    The cache is full. Every slot has been occupied by a FizzBuzz result
+    that someone deemed worthy of remembering. To make room for new
+    results, existing entries must be evicted — a process that involves
+    selecting a victim, composing a eulogy, and ceremonially removing
+    the entry from memory. It's like a reality TV elimination round,
+    but for modulo results.
+    """
+
+    def __init__(self, max_size: int, current_size: int) -> None:
+        super().__init__(
+            f"Cache capacity exceeded: {current_size}/{max_size} entries. "
+            f"Eviction is required but has failed. The cache is experiencing "
+            f"a housing crisis of unprecedented proportions.",
+            error_code="EFP-CA01",
+            context={"max_size": max_size, "current_size": current_size},
+        )
+
+
+class CacheCoherenceViolationError(CacheError):
+    """Raised when the MESI cache coherence protocol detects an invalid transition.
+
+    The cache entry attempted an illegal state transition in the MESI
+    protocol. For example, transitioning from INVALID to MODIFIED without
+    first passing through EXCLUSIVE. This would cause a coherence violation
+    in a multi-processor system, and even though we're running in a single
+    Python process, protocol compliance is non-negotiable.
+    """
+
+    def __init__(self, current_state: str, attempted_state: str, key: str) -> None:
+        super().__init__(
+            f"MESI coherence violation for cache key '{key}': cannot transition "
+            f"from {current_state} to {attempted_state}. The cache coherence "
+            f"protocol has been violated and the entry's dignity is compromised.",
+            error_code="EFP-CA02",
+            context={
+                "current_state": current_state,
+                "attempted_state": attempted_state,
+                "key": key,
+            },
+        )
+
+
+class CacheEntryExpiredError(CacheError):
+    """Raised when an expired cache entry is accessed.
+
+    This cache entry has exceeded its time-to-live. It once held a
+    perfectly valid FizzBuzz result, but time waits for no cache entry.
+    The result of 15 % 3 hasn't changed, of course, but the TTL policy
+    doesn't care about mathematical constants — only about timestamps.
+    """
+
+    def __init__(self, key: str, age_seconds: float, ttl_seconds: float) -> None:
+        super().__init__(
+            f"Cache entry '{key}' has expired: age={age_seconds:.2f}s, "
+            f"TTL={ttl_seconds:.2f}s. The entry lived a full life but "
+            f"its time has come.",
+            error_code="EFP-CA03",
+            context={"key": key, "age_seconds": age_seconds, "ttl_seconds": ttl_seconds},
+        )
+
+
+class CacheWarmingError(CacheError):
+    """Raised when the cache warming process encounters an error.
+
+    The cache warmer attempted to pre-populate the cache with FizzBuzz
+    results, which hilariously defeats the entire purpose of having a
+    cache in the first place. If you're computing all the results upfront
+    to put them in the cache, you've essentially just... computed all the
+    results. Congratulations on your circular logic.
+    """
+
+    def __init__(self, start: int, end: int, reason: str) -> None:
+        super().__init__(
+            f"Cache warming failed for range [{start}, {end}]: {reason}. "
+            f"The cache remains cold, which is ironic because warming it "
+            f"was pointless anyway.",
+            error_code="EFP-CA04",
+            context={"start": start, "end": end, "reason": reason},
+        )
+
+
+class CachePolicyNotFoundError(CacheError):
+    """Raised when the requested eviction policy does not exist.
+
+    You requested an eviction policy that the cache doesn't recognize.
+    Available policies include LRU, LFU, FIFO, and DramaticRandom.
+    If none of these meet your exacting FizzBuzz caching requirements,
+    please submit a 12-page architecture proposal for a new policy.
+    """
+
+    def __init__(self, policy_name: str) -> None:
+        super().__init__(
+            f"Eviction policy '{policy_name}' not found. Available policies: "
+            f"lru, lfu, fifo, dramatic_random. The cache cannot evict entries "
+            f"without a policy, and it refuses to just guess.",
+            error_code="EFP-CA05",
+            context={"policy_name": policy_name},
+        )
+
+
+class CacheInvalidationCascadeError(CacheError):
+    """Raised when a cache invalidation cascade spirals out of control.
+
+    Invalidating one cache entry triggered a cascade of invalidations
+    that affected more entries than expected. This is the cache equivalent
+    of pulling one thread and watching the entire sweater unravel. In
+    distributed systems this is a real concern; in our single-process
+    FizzBuzz cache, it's purely theatrical.
+    """
+
+    def __init__(self, initial_key: str, cascade_count: int) -> None:
+        super().__init__(
+            f"Cache invalidation cascade from key '{initial_key}' affected "
+            f"{cascade_count} entries. The invalidation spread like gossip "
+            f"through the cache, leaving devastation in its wake.",
+            error_code="EFP-CA06",
+            context={"initial_key": initial_key, "cascade_count": cascade_count},
+        )
+
+
+class CacheEulogyCompositionError(CacheError):
+    """Raised when the eulogy generator fails to compose a eulogy.
+
+    Every evicted cache entry deserves a dignified farewell, and the
+    eulogy generator has failed in its sacred duty. The entry will be
+    evicted without ceremony, without remembrance, without a single
+    word spoken in its honor. This is the saddest failure mode in
+    the entire Enterprise FizzBuzz Platform.
+    """
+
+    def __init__(self, key: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to compose eulogy for cache entry '{key}': {reason}. "
+            f"The entry will be evicted in silence, which is worse than "
+            f"any exception.",
+            error_code="EFP-CA07",
+            context={"key": key, "reason": reason},
+        )
+
+
 class DownstreamFizzBuzzDegradationError(FizzBuzzError):
     """Raised when downstream FizzBuzz evaluation quality degrades.
 
