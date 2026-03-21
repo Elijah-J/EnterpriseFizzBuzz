@@ -345,6 +345,171 @@ TranslationKeyMissingError = TranslationKeyError
 PluralizationRuleError = PluralizationError
 
 
+class TracingError(FizzBuzzError):
+    """Base exception for all distributed tracing errors.
+
+    When your observability layer itself becomes unobservable,
+    you've reached a level of meta-failure that most enterprise
+    architectures can only dream of.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-T000"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class SpanNotFoundError(TracingError):
+    """Raised when a referenced span cannot be located in the trace.
+
+    The span was here a moment ago. It was right here. We saw it.
+    And now it's gone, like tears in rain, or like a FizzBuzz result
+    that nobody bothered to log.
+    """
+
+    def __init__(self, span_id: str) -> None:
+        super().__init__(
+            f"Span '{span_id}' not found in trace. It may have been "
+            f"garbage collected by an overzealous span reaper.",
+            error_code="EFP-T001",
+            context={"span_id": span_id},
+        )
+        self.span_id = span_id
+
+
+class TraceNotFoundError(TracingError):
+    """Raised when a referenced trace cannot be located.
+
+    An entire trace has vanished. Not just a span — the whole trace.
+    This is the distributed tracing equivalent of losing an entire
+    filing cabinet instead of just one folder.
+    """
+
+    def __init__(self, trace_id: str) -> None:
+        super().__init__(
+            f"Trace '{trace_id}' not found. The trace may have already "
+            f"been exported, or it never existed in the first place.",
+            error_code="EFP-T002",
+            context={"trace_id": trace_id},
+        )
+        self.trace_id = trace_id
+
+
+class TraceAlreadyActiveError(TracingError):
+    """Raised when attempting to start a trace while one is already active.
+
+    You cannot begin a new trace when the current one hasn't ended.
+    This is distributed tracing, not distributed multitasking.
+    One existential crisis at a time, please.
+    """
+
+    def __init__(self, existing_trace_id: str) -> None:
+        super().__init__(
+            f"Cannot start new trace: trace '{existing_trace_id}' is "
+            f"already active. End the current trace first.",
+            error_code="EFP-T003",
+            context={"existing_trace_id": existing_trace_id},
+        )
+        self.existing_trace_id = existing_trace_id
+
+
+class SpanLifecycleError(TracingError):
+    """Raised when a span operation violates the span lifecycle contract.
+
+    Spans have a strict lifecycle: created → started → ended.
+    Attempting to end a span that was never started, or start one
+    that's already ended, is the temporal equivalent of dividing
+    by zero — which, unlike dividing by 3 or 5, we do not support.
+    """
+
+    def __init__(self, span_name: str, operation: str, reason: str) -> None:
+        super().__init__(
+            f"Span '{span_name}' lifecycle violation during '{operation}': {reason}",
+            error_code="EFP-T004",
+            context={"span_name": span_name, "operation": operation},
+        )
+        self.span_name = span_name
+        self.operation = operation
+
+
+class AuthenticationError(FizzBuzzError):
+    """Raised when authentication fails in the Enterprise FizzBuzz Platform.
+
+    If you can't prove who you are, you certainly can't be trusted
+    with the awesome responsibility of evaluating FizzBuzz. Identity
+    is the first pillar of enterprise security, right after compliance
+    theatre and mandatory password rotations.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-A000"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class InsufficientFizzPrivilegesError(FizzBuzzError):
+    """Raised when a user lacks the required FizzBuzz permissions.
+
+    You have been found unworthy of evaluating this particular number.
+    Your role does not grant you the divine right to compute modulo
+    arithmetic on numbers outside your authorized range. Please
+    contact your FizzBuzz administrator for a role upgrade, or
+    consider a career change to a field that doesn't require
+    enterprise-grade access control for divisibility checks.
+    """
+
+    def __init__(self, message: str, *, denial_body: Optional[dict[str, Any]] = None) -> None:
+        super().__init__(
+            message,
+            error_code="EFP-A001",
+            context={"denial_body": denial_body or {}},
+        )
+        self.denial_body = denial_body or {}
+
+
+class NumberClassificationLevelExceededError(FizzBuzzError):
+    """Raised when a number exceeds the user's classification clearance.
+
+    Some numbers are simply too important, too classified, or too
+    divisible to be evaluated by personnel without proper clearance.
+    This number has been deemed above your pay grade by the FizzBuzz
+    Security Council.
+    """
+
+    def __init__(self, number: int, clearance_level: str, required_level: str) -> None:
+        super().__init__(
+            f"Number {number} requires clearance level '{required_level}', "
+            f"but user only has '{clearance_level}'. This number is classified.",
+            error_code="EFP-A002",
+            context={
+                "number": number,
+                "clearance_level": clearance_level,
+                "required_level": required_level,
+            },
+        )
+
+
+class TokenValidationError(AuthenticationError):
+    """Raised when a FizzBuzz authentication token fails validation.
+
+    The token you presented has been examined by our highly trained
+    token validation specialists and found wanting. It may be expired,
+    tampered with, or simply not a real Enterprise FizzBuzz Platform
+    token. Nice try, though.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"Token validation failed: {reason}",
+            error_code="EFP-A003",
+            context={"reason": reason},
+        )
+
+
 class DownstreamFizzBuzzDegradationError(FizzBuzzError):
     """Raised when downstream FizzBuzz evaluation quality degrades.
 

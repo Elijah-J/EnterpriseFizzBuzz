@@ -40,6 +40,7 @@ from models import (
 from observers import ConsoleObserver, EventBus, StatisticsObserver
 from plugins import PluginRegistry
 from rules_engine import RuleEngineFactory
+from tracing import traced
 
 logger = logging.getLogger(__name__)
 
@@ -144,6 +145,7 @@ class FizzBuzzService:
         with self.create_session() as session:
             return await session.run_async(start, end)
 
+    @traced()
     def _execute(
         self, start: int, end: int, session_id: str
     ) -> list[FizzBuzzResult]:
@@ -192,6 +194,7 @@ class FizzBuzzService:
         self._build_summary(results, session_id, total_elapsed_ms)
         return results
 
+    @traced()
     def _emit_result_events(self, result: FizzBuzzResult) -> None:
         """Emit events based on the result."""
         self._event_bus.publish(
@@ -287,6 +290,7 @@ class FizzBuzzServiceBuilder:
         self._output_format: Optional[OutputFormat] = None
         self._locale: Optional[str] = None
         self._locale_manager: object = None
+        self._auth_context: object = None
 
     def with_config(self, config: ConfigurationManager) -> FizzBuzzServiceBuilder:
         """Inject configuration manager."""
@@ -339,6 +343,16 @@ class FizzBuzzServiceBuilder:
         components that need access to translations during pipeline execution.
         """
         self._locale_manager = manager
+        return self
+
+    def with_auth_context(self, auth_context: object) -> FizzBuzzServiceBuilder:
+        """Inject the authentication context for RBAC-aware processing.
+
+        Stores the auth context so that authorization middleware and
+        other security-conscious components can verify that the user
+        has sufficient FizzBuzz privileges for each number evaluation.
+        """
+        self._auth_context = auth_context
         return self
 
     def with_default_middleware(self) -> FizzBuzzServiceBuilder:

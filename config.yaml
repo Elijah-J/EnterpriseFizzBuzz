@@ -98,6 +98,28 @@ i18n:
     - "en"
   log_missing_keys: true        # Log warnings when translation keys are not found
 
+# Distributed tracing configuration
+# OpenTelemetry-style span collection for full pipeline observability.
+# Because you can't truly understand FizzBuzz until you've seen
+# a flame graph of it.
+tracing:
+  enabled: false                  # Master switch for the tracing subsystem
+  export_format: "waterfall"      # waterfall | json
+  waterfall_width: 60             # Character width of the timeline bar
+  timing_precision: "us"          # us (microseconds) | ns (nanoseconds)
+
+# Role-Based Access Control (RBAC) configuration
+# Controls who can FizzBuzz what, because unrestricted modulo
+# arithmetic is a security incident waiting to happen.
+rbac:
+  enabled: false
+  default_role: "ANONYMOUS"
+  token_secret: "enterprise-fizzbuzz-secret-do-not-share"
+  token_ttl_seconds: 3600
+  token_issuer: "enterprise-fizzbuzz-platform"
+  access_denied_contact_email: "fizzbuzz-security@enterprise.example.com"
+  next_training_session: "2026-04-01T09:00:00Z"
+
 # Observer configuration
 observers:
   console_observer:

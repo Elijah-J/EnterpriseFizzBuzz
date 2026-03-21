@@ -14,6 +14,23 @@ from enum import Enum, auto
 from typing import Any, Optional
 
 
+class FizzBuzzRole(Enum):
+    """Role-Based Access Control roles for the Enterprise FizzBuzz Platform.
+
+    Each role represents a different level of FizzBuzz privilege,
+    because not everyone deserves unfettered access to modulo arithmetic.
+    The hierarchy mirrors real enterprise org charts, where interns can
+    only read the number 1, and only C-level executives are trusted
+    with the full range of divisibility operations.
+    """
+
+    ANONYMOUS = auto()
+    FIZZ_READER = auto()
+    BUZZ_ADMIN = auto()
+    FIZZBUZZ_SUPERUSER = auto()
+    NUMBER_AUDITOR = auto()
+
+
 class OutputFormat(Enum):
     """Supported output serialization formats."""
 
@@ -65,6 +82,59 @@ class EventType(Enum):
     CIRCUIT_BREAKER_RECOVERED = auto()
     CIRCUIT_BREAKER_HALF_OPEN = auto()
     CIRCUIT_BREAKER_CALL_REJECTED = auto()
+    TRACE_STARTED = auto()
+    TRACE_ENDED = auto()
+    SPAN_STARTED = auto()
+    SPAN_ENDED = auto()
+    AUTHORIZATION_GRANTED = auto()
+    AUTHORIZATION_DENIED = auto()
+    TOKEN_VALIDATED = auto()
+    TOKEN_VALIDATION_FAILED = auto()
+
+
+@dataclass(frozen=True)
+class Permission:
+    """An immutable FizzBuzz permission grant.
+
+    Encodes the holy trinity of access control: what resource,
+    which range of that resource, and what action is allowed.
+    Because "can this user compute 15 % 3" is a question that
+    demands a formal permission model.
+
+    Attributes:
+        resource: The resource category (e.g., "numbers").
+        range_spec: The range specification (e.g., "1-50", "*", "fizz").
+        action: The permitted action (e.g., "evaluate", "read", "configure").
+    """
+
+    resource: str
+    range_spec: str
+    action: str
+
+
+@dataclass(frozen=True)
+class AuthContext:
+    """Immutable authentication context for an authorized FizzBuzz session.
+
+    Carries the identity and permissions of the user through the
+    middleware pipeline, so that every modulo operation can be
+    individually authorized. Because in enterprise software,
+    trust is never implicit — it's always a frozen dataclass.
+
+    Attributes:
+        user: The authenticated user's identifier.
+        role: The user's assigned FizzBuzz role.
+        token_id: Optional JWT-style token identifier for audit trails.
+        effective_permissions: All permissions this user has, including inherited.
+        trust_mode: If True, the user was authenticated via the "just trust me"
+                    protocol, which is exactly as secure as it sounds.
+    """
+
+    user: str
+    role: FizzBuzzRole
+    token_id: Optional[str] = None
+    effective_permissions: tuple[Permission, ...] = ()
+    trust_mode: bool = False
 
 
 @dataclass(frozen=True)

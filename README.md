@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**8,100+ lines** across **26 files** with **257 unit tests**, because this is an enterprise and we have standards.
+**12,900+ lines** across **38 files** with **383 unit tests**, because this is an enterprise and we have standards.
 
 ## Architecture
 
@@ -54,6 +54,7 @@ EnterpriseFizzBuzz/
 ├── fizzbuzz_service.py      # Service orchestration with Builder pattern
 ├── blockchain.py            # Immutable audit ledger with proof-of-work
 ├── circuit_breaker.py       # Circuit breaker with exponential backoff
+├── tracing.py               # OpenTelemetry-inspired distributed tracing (from scratch)
 ├── i18n.py                  # Internationalization subsystem with locale fallback chains
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
@@ -62,9 +63,11 @@ EnterpriseFizzBuzz/
 │   ├── ja.fizztranslation   # Japanese (日本語)
 │   └── tlh.fizztranslation  # Klingon (tlhIngan Hol)
 └── tests/
-    ├── test_fizzbuzz.py     # 94 comprehensive tests
+    ├── test_fizzbuzz.py     # 66 comprehensive tests
     ├── test_circuit_breaker.py  # 66 circuit breaker tests
-    └── test_i18n.py         # 97 internationalization tests
+    ├── test_i18n.py         # 97 internationalization tests
+    ├── test_auth.py         # 86 authentication tests
+    └── test_tracing.py      # 68 distributed tracing tests
 ```
 
 ## Design Patterns
@@ -90,6 +93,9 @@ EnterpriseFizzBuzz/
 | Fallback Chain | `i18n.py` | Locale resolution via linked-list traversal with cycle detection, because one language is never enough |
 | Pluralization Engine | `i18n.py` | CLDR-inspired plural rule evaluator supporting five grammatical traditions, because "1 Fizzes" is unconscionable |
 | Internationalization | `i18n.py`, `locales/` | Five-language locale support with fallback chains, because "Fizz" is not globally understood |
+| Distributed Tracing | `tracing.py` | OpenTelemetry-inspired span trees, because you need a flame graph to debug `n % 3` |
+| Context Propagation | `tracing.py` | Thread-local span stacks for automatic parent-child relationships across the middleware pipeline |
+| Fluent Builder (Spans) | `tracing.py` | `SpanBuilder` with chainable `.with_attribute()` and context manager support, because `Span()` was too direct |
 
 ## Features
 
@@ -103,7 +109,8 @@ EnterpriseFizzBuzz/
 - **Machine Learning Engine** - From-scratch MLP neural network trained via backpropagation to learn `n % 3 == 0`
 - **Circuit Breaker** - Fault-tolerant evaluation with exponential backoff, sliding windows, and an ASCII status dashboard
 - **Internationalization (i18n)** - Full locale support across 5 languages (including Klingon), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine
-- **Custom Exception Hierarchy** - 24 exception classes for every conceivable FizzBuzz failure mode
+- **Distributed Tracing** - OpenTelemetry-inspired span trees with W3C Trace Context IDs, ASCII waterfall visualization, JSON export, and P95/P99 latency percentiles -- for when you need to know exactly which middleware layer added 0.3 microseconds to your modulo operation
+- **Custom Exception Hierarchy** - 33 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -148,6 +155,15 @@ python main.py --locale ja --async --range 1 50
 
 # List all available locales and their metadata
 python main.py --list-locales
+
+# Distributed tracing with ASCII waterfall visualization
+python main.py --trace --range 1 15
+
+# Export trace data as JSON for your non-existent Jaeger instance
+python main.py --trace-json --range 1 5
+
+# Full observability stack: tracing + circuit breaker + ML
+python main.py --trace --circuit-breaker --strategy machine_learning --range 1 20
 ```
 
 ## CLI Options
@@ -169,6 +185,8 @@ python main.py --list-locales
 --list-locales        Display available locales and exit
 --circuit-breaker     Enable circuit breaker with exponential backoff
 --circuit-status      Display circuit breaker status dashboard after execution
+--trace               Enable distributed tracing with ASCII waterfall output
+--trace-json          Export trace data as JSON (for integration with nothing)
 ```
 
 ## Environment Variables
@@ -182,6 +200,7 @@ EFP_OUTPUT_FORMAT=json
 EFP_EVALUATION_STRATEGY=parallel_async
 EFP_LOG_LEVEL=DEBUG
 EFP_CIRCUIT_BREAKER_ENABLED=true
+EFP_TRACING_ENABLED=true
 EFP_LOCALE=tlh
 ```
 
@@ -277,6 +296,73 @@ The circuit breaker protects the FizzBuzz evaluation pipeline from cascading fai
 
 The circuit breaker also monitors ML confidence scores from the neural network strategy. If confidence drops below the threshold, it flags a "degraded FizzBuzz" condition -- because technically correct modulo results delivered without mathematical conviction are a reliability concern.
 
+## Distributed Tracing Architecture
+
+The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
+
+Every number evaluation generates a complete trace with hierarchical spans, W3C-compatible trace/span IDs, nanosecond timestamps, and ASCII waterfall visualizations. Finally, a flame graph that explains why printing "Fizz" took 3 microseconds.
+
+```
+                        TRACE (32-hex trace_id)
+                        ========================
+                        |
+     +------------------+------------------+
+     |                                     |
+  ROOT SPAN                           [metadata]
+  "evaluate_number"                   number: 15
+  span_id: a1b2c3d4                   output: FizzBuzz
+     |
+     +--- CHILD SPAN: "TracingMiddleware.process"
+     |         |
+     |         +--- CHILD SPAN: "ValidationMiddleware.process"
+     |         |
+     |         +--- CHILD SPAN: "TimingMiddleware.process"
+     |         |         |
+     |         |         +--- CHILD SPAN: "rule_evaluation"
+     |         |
+     |         +--- CHILD SPAN: "LoggingMiddleware.process"
+     |
+     +--- [end: status=OK, duration=42.7us]
+```
+
+**Waterfall format** -- the `--trace` flag renders each trace as an ASCII box-drawing waterfall with proportional timeline bars:
+
+```
+  +====================================================================+
+  |              DISTRIBUTED TRACE WATERFALL                           |
+  |  Trace ID: a1b2c3d4e5f6...  Number: 15 -> FizzBuzz               |
+  +====================================================================+
+  |  SPAN                              TIMELINE                       |
+  |  evaluate_number                   [████████████████████████████]  |
+  |  ├─ ValidationMiddleware.process   [██··························]  |
+  |  ├─ TimingMiddleware.process       [··████████████████··········]  |
+  |  │  └─ rule_evaluation             [····██████████··············]  |
+  |  └─ LoggingMiddleware.process      [························████]  |
+  +====================================================================+
+```
+
+**Key components:**
+- **TracingService** - Singleton lifecycle manager with thread-local span propagation
+- **Span / TraceContext** - W3C-compatible span tree with 128-bit trace IDs and 64-bit span IDs
+- **SpanBuilder** - Fluent builder with context manager support for automatic span lifecycle
+- **TracingMiddleware** - Priority -2 middleware that wraps the entire pipeline in a root trace
+- **@traced decorator** - Zero-overhead instrumentation (no-op when tracing is disabled)
+- **TraceRenderer** - ASCII waterfall and statistical summary visualizations
+- **TraceExporter** - JSON export for integration with observability platforms that will never receive this data
+
+| Spec | Value |
+|------|-------|
+| Trace ID length | 32 hex chars (128-bit, W3C compatible) |
+| Span ID length | 16 hex chars (64-bit, W3C compatible) |
+| Context propagation | Thread-local span stack |
+| Middleware priority | -2 (before circuit breaker at -1) |
+| Span statuses | 3 (UNSET, OK, ERROR) |
+| Export formats | ASCII waterfall, JSON |
+| Statistics | P95, P99 latency percentiles |
+| Overhead when disabled | Zero (decorator short-circuits) |
+| Thread safety | Full (threading.local + locks) |
+| Custom exceptions | 5 (TracingError, SpanNotFoundError, TraceNotFoundError, TraceAlreadyActiveError, SpanLifecycleError) |
+
 ## Internationalization Architecture
 
 The i18n subsystem provides a full-featured localization pipeline powered by the proprietary `.fizztranslation` file format -- because YAML, JSON, and TOML were insufficiently bespoke for the task of saying "Fizz" in five languages.
@@ -323,7 +409,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 257 tests
+# Run all 383 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -340,7 +426,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 257 tests, 24 custom exception classes, a plugin system, a neural network, a circuit breaker, five-language i18n support (including Klingon), a proprietary file format, and nanosecond timing. You tell me.
+A: It has 383 tests, 33 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, five-language i18n support (including Klingon), a proprietary file format, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -362,6 +448,9 @@ A: Legacy compatibility is not a joke.
 
 **Q: Why does FizzBuzz need to support 5 languages?**
 A: Regulatory compliance. The Enterprise FizzBuzz Globalization Directive (EFGD-2024) mandates that any arithmetic output visible to end users must be available in at least five human (or humanoid) languages. We chose English, German, French, Japanese, and Klingon to maximize coverage across NATO allies and the Klingon Empire. The proprietary `.fizztranslation` file format was necessary because no existing standard could adequately express the nuanced semantics of "Fizz" across cultures.
+
+**Q: Why does a single-process FizzBuzz need distributed tracing?**
+A: The word "distributed" refers to the distribution of responsibility across our middleware pipeline. When a number enters the system, it passes through validation, timing, logging, circuit breaking, and rule evaluation layers -- each of which could theoretically be running on a separate continent. They aren't, of course. They're all running in the same Python process on your laptop. But the *architecture* is ready for geographic distribution, and when the day comes that we shard modulo operations across availability zones, we'll already have the observability infrastructure in place. The waterfall diagram alone justifies the 1,000 lines of tracing code. Also, our VP of Engineering asked for "full-stack observability" and this is technically that.
 
 **Q: Why is Klingon a supported locale?**
 A: Enterprise software must serve a global user base. Our stakeholders defined "global" broadly. The Klingon Empire represents a significant untapped market segment, and our compliance team confirmed that the Universal Declaration of FizzBuzz Rights requires support for all spacefaring civilizations. Also, the Klingon word for "FizzBuzz" is `ghumwab`, which is objectively better than the English version.

@@ -23,6 +23,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+from auth import AuthorizationMiddleware, FizzBuzzTokenEngine, RoleRegistry
 from blockchain import BlockchainObserver, FizzBuzzBlockchain
 from circuit_breaker import (
     CircuitBreakerDashboard,
@@ -39,9 +40,10 @@ from middleware import (
     TranslationMiddleware,
     ValidationMiddleware,
 )
-from models import EvaluationStrategy, OutputFormat
+from models import AuthContext, EvaluationStrategy, FizzBuzzRole, OutputFormat
 from observers import ConsoleObserver, EventBus, StatisticsObserver
 from rules_engine import RuleEngineFactory
+from tracing import TraceExporter, TraceRenderer, TracingMiddleware, TracingService
 
 
 BANNER = r"""
@@ -172,6 +174,39 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the circuit breaker status dashboard after execution",
     )
 
+    parser.add_argument(
+        "--trace",
+        action="store_true",
+        help="Enable distributed tracing with ASCII waterfall output",
+    )
+
+    parser.add_argument(
+        "--trace-json",
+        action="store_true",
+        help="Enable distributed tracing with JSON export output",
+    )
+
+    parser.add_argument(
+        "--user",
+        type=str,
+        metavar="USERNAME",
+        help="Authenticate as the specified user (trust-mode, no token required)",
+    )
+
+    parser.add_argument(
+        "--role",
+        type=str,
+        choices=[r.name for r in FizzBuzzRole],
+        help="Assign the specified RBAC role (requires --user or --token)",
+    )
+
+    parser.add_argument(
+        "--token",
+        type=str,
+        metavar="TOKEN",
+        help="Authenticate using an Enterprise FizzBuzz Platform token",
+    )
+
     return parser
 
 
@@ -187,6 +222,13 @@ def configure_logging(debug: bool = False) -> None:
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Main entry point for the Enterprise FizzBuzz Platform."""
+    # Ensure stdout can handle Unicode (box-drawing chars, etc.)
+    if sys.stdout.encoding and sys.stdout.encoding.lower() not in ("utf-8", "utf8"):
+        import io
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, encoding="utf-8", errors="replace"
+        )
+
     parser = build_argument_parser()
     args = parser.parse_args(argv)
 
@@ -303,6 +345,67 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  i18n is disabled. Enable it in config.yaml.\n")
         return 0
 
+    # Distributed tracing setup
+    tracing_service = TracingService()
+    tracing_service.reset()
+    tracing_enabled = args.trace or args.trace_json
+    tracing_mw = None
+    if tracing_enabled:
+        tracing_service.enable()
+        tracing_mw = TracingMiddleware()
+
+    # ----------------------------------------------------------------
+    # Role-Based Access Control (RBAC) setup
+    # ----------------------------------------------------------------
+    auth_context = None
+    rbac_active = False
+
+    if args.token:
+        # Token-based authentication — the secure way
+        try:
+            auth_context = FizzBuzzTokenEngine.validate_token(
+                args.token, config.rbac_token_secret
+            )
+            rbac_active = True
+        except Exception as e:
+            print(f"  [AUTHENTICATION FAILED] {e}")
+            return 1
+
+    elif args.user:
+        # Trust-mode authentication — the "just trust me" protocol
+        role = FizzBuzzRole[args.role] if args.role else FizzBuzzRole[config.rbac_default_role]
+        effective_permissions = RoleRegistry.get_effective_permissions(role)
+        auth_context = AuthContext(
+            user=args.user,
+            role=role,
+            token_id=None,
+            effective_permissions=tuple(effective_permissions),
+            trust_mode=True,
+        )
+        rbac_active = True
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | WARNING: Trust-mode authentication enabled.             |\n"
+            "  | The user's identity has not been cryptographically      |\n"
+            "  | verified. This is the security equivalent of writing    |\n"
+            "  | your password on a Post-It note and sticking it to     |\n"
+            "  | your monitor. Proceed with existential dread.          |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    elif config.rbac_enabled:
+        # No auth flags but RBAC is enabled — default to ANONYMOUS
+        role = FizzBuzzRole[config.rbac_default_role]
+        effective_permissions = RoleRegistry.get_effective_permissions(role)
+        auth_context = AuthContext(
+            user="anonymous",
+            role=role,
+            token_id=None,
+            effective_permissions=tuple(effective_permissions),
+            trust_mode=False,
+        )
+        rbac_active = True
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
@@ -313,6 +416,24 @@ def main(argv: Optional[list[str]] = None) -> int:
         .with_default_middleware()
     )
 
+    # Add auth context to builder
+    if auth_context is not None:
+        builder.with_auth_context(auth_context)
+
+    # Add tracing middleware (priority -2, runs first)
+    if tracing_mw is not None:
+        builder.with_middleware(tracing_mw)
+
+    # Add authorization middleware if RBAC is active
+    if rbac_active and auth_context is not None:
+        auth_middleware = AuthorizationMiddleware(
+            auth_context=auth_context,
+            contact_email=config.rbac_access_denied_contact_email,
+            next_training_session=config.rbac_next_training_session,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(auth_middleware)
+
     # Add translation middleware if i18n is active
     if locale_mgr is not None:
         builder.with_middleware(TranslationMiddleware(locale_manager=locale_mgr))
@@ -321,6 +442,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         builder.with_middleware(cb_middleware)
 
     service = builder.build()
+
+    # Print authentication status
+    if auth_context is not None:
+        print(f"  Authenticated as: {auth_context.user} ({auth_context.role.name})")
 
     # Execute -- use locale manager for status messages if available
     if locale_mgr is not None:
@@ -354,6 +479,17 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(f"\n  {locale_mgr.t('messages.wall_clock', time=f'{wall_time_ms:.2f}')}")
         else:
             print(f"\n  Wall clock time: {wall_time_ms:.2f}ms")
+
+    # Distributed tracing output
+    if tracing_enabled:
+        completed_traces = tracing_service.get_completed_traces()
+        if args.trace_json:
+            print(TraceExporter.export_json(completed_traces))
+        else:
+            # Waterfall for each trace
+            for trace in completed_traces:
+                print(TraceRenderer.render_waterfall(trace))
+            print(TraceRenderer.render_summary(completed_traces))
 
     if blockchain_observer is not None:
         print(blockchain_observer.get_blockchain().get_chain_summary())

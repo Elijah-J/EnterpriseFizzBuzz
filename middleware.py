@@ -14,6 +14,7 @@ from typing import Any, Callable
 
 from interfaces import IMiddleware
 from models import ProcessingContext
+from tracing import traced
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class TimingMiddleware(IMiddleware):
     because performance metrics for modulo operations are critical.
     """
 
+    @traced()
     def process(
         self,
         context: ProcessingContext,
@@ -59,6 +61,7 @@ class LoggingMiddleware(IMiddleware):
     def __init__(self, log_level: int = logging.DEBUG) -> None:
         self._log_level = log_level
 
+    @traced()
     def process(
         self,
         context: ProcessingContext,
@@ -108,6 +111,7 @@ class ValidationMiddleware(IMiddleware):
         self._min_value = min_value
         self._max_value = max_value
 
+    @traced()
     def process(
         self,
         context: ProcessingContext,
@@ -172,6 +176,7 @@ class TranslationMiddleware(IMiddleware):
         from i18n import LocaleManager
         return LocaleManager()
 
+    @traced()
     def process(
         self,
         context: ProcessingContext,

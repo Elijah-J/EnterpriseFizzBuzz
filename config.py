@@ -149,6 +149,21 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                 "fallback_chain": ["en"],
                 "log_missing_keys": True,
             },
+            "rbac": {
+                "enabled": False,
+                "default_role": "ANONYMOUS",
+                "token_secret": "enterprise-fizzbuzz-secret-do-not-share",
+                "token_ttl_seconds": 3600,
+                "token_issuer": "enterprise-fizzbuzz-platform",
+                "access_denied_contact_email": "fizzbuzz-security@enterprise.example.com",
+                "next_training_session": "2026-04-01T09:00:00Z",
+            },
+            "tracing": {
+                "enabled": False,
+                "export_format": "waterfall",
+                "waterfall_width": 60,
+                "timing_precision": "us",
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -168,6 +183,7 @@ class ConfigurationManager(metaclass=_SingletonMeta):
             "EFP_LOG_LEVEL": ("logging", "level", str),
             "EFP_STRATEGY": ("engine", "strategy", str),
             "EFP_LOCALE": ("i18n", "locale", str),
+            "EFP_TRACING_ENABLED": ("tracing", "enabled", lambda v: v.lower() in ("true", "1", "yes")),
         }
 
         for env_var, (section, key, cast) in env_mappings.items():
@@ -352,6 +368,30 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         return self._raw_config.get("circuit_breaker", {}).get("call_timeout_ms", 5000)
 
     @property
+    def tracing_enabled(self) -> bool:
+        """Whether the distributed tracing subsystem is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("tracing", {}).get("enabled", False)
+
+    @property
+    def tracing_export_format(self) -> str:
+        """Export format for traces: 'waterfall' or 'json'."""
+        self._ensure_loaded()
+        return self._raw_config.get("tracing", {}).get("export_format", "waterfall")
+
+    @property
+    def tracing_waterfall_width(self) -> int:
+        """Character width of the waterfall timeline bar."""
+        self._ensure_loaded()
+        return self._raw_config.get("tracing", {}).get("waterfall_width", 60)
+
+    @property
+    def tracing_timing_precision(self) -> str:
+        """Timing precision: 'us' (microseconds) or 'ns' (nanoseconds)."""
+        self._ensure_loaded()
+        return self._raw_config.get("tracing", {}).get("timing_precision", "us")
+
+    @property
     def i18n_enabled(self) -> bool:
         """Whether the internationalization subsystem is enabled."""
         self._ensure_loaded()
@@ -386,6 +426,56 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Whether to log warnings for missing translation keys."""
         self._ensure_loaded()
         return self._raw_config.get("i18n", {}).get("log_missing_keys", True)
+
+    @property
+    def rbac_enabled(self) -> bool:
+        """Whether Role-Based Access Control is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("rbac", {}).get("enabled", False)
+
+    @property
+    def rbac_default_role(self) -> str:
+        """The default role for unauthenticated users."""
+        self._ensure_loaded()
+        return self._raw_config.get("rbac", {}).get("default_role", "ANONYMOUS")
+
+    @property
+    def rbac_token_secret(self) -> str:
+        """The HMAC secret for token signing and validation."""
+        self._ensure_loaded()
+        return self._raw_config.get("rbac", {}).get(
+            "token_secret", "enterprise-fizzbuzz-secret-do-not-share"
+        )
+
+    @property
+    def rbac_token_ttl_seconds(self) -> int:
+        """Token time-to-live in seconds."""
+        self._ensure_loaded()
+        return self._raw_config.get("rbac", {}).get("token_ttl_seconds", 3600)
+
+    @property
+    def rbac_token_issuer(self) -> str:
+        """Token issuer identifier."""
+        self._ensure_loaded()
+        return self._raw_config.get("rbac", {}).get(
+            "token_issuer", "enterprise-fizzbuzz-platform"
+        )
+
+    @property
+    def rbac_access_denied_contact_email(self) -> str:
+        """Contact email for access denied responses."""
+        self._ensure_loaded()
+        return self._raw_config.get("rbac", {}).get(
+            "access_denied_contact_email", "fizzbuzz-security@enterprise.example.com"
+        )
+
+    @property
+    def rbac_next_training_session(self) -> str:
+        """Next available RBAC training session datetime."""
+        self._ensure_loaded()
+        return self._raw_config.get("rbac", {}).get(
+            "next_training_session", "2026-04-01T09:00:00Z"
+        )
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
