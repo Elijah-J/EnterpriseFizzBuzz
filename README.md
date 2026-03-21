@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**12,900+ lines** across **38 files** with **383 unit tests**, because this is an enterprise and we have standards.
+**13,400+ lines** across **32 files** with **411 unit tests** and **33 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 16 flags
-├── config.yaml              # YAML-based configuration with 9 sections
+├── main.py                  # CLI entry point with 19 flags
+├── config.yaml              # YAML-based configuration with 10 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (24 exception classes)
+├── exceptions.py            # Custom exception hierarchy (33 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -55,6 +55,7 @@ EnterpriseFizzBuzz/
 ├── blockchain.py            # Immutable audit ledger with proof-of-work
 ├── circuit_breaker.py       # Circuit breaker with exponential backoff
 ├── tracing.py               # OpenTelemetry-inspired distributed tracing (from scratch)
+├── auth.py                  # RBAC with HMAC-SHA256 token engine and 47-field access denials
 ├── i18n.py                  # Internationalization subsystem with locale fallback chains
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
@@ -66,7 +67,7 @@ EnterpriseFizzBuzz/
     ├── test_fizzbuzz.py     # 66 comprehensive tests
     ├── test_circuit_breaker.py  # 66 circuit breaker tests
     ├── test_i18n.py         # 97 internationalization tests
-    ├── test_auth.py         # 86 authentication tests
+    ├── test_auth.py         # 114 RBAC & authentication tests
     └── test_tracing.py      # 68 distributed tracing tests
 ```
 
@@ -96,6 +97,9 @@ EnterpriseFizzBuzz/
 | Distributed Tracing | `tracing.py` | OpenTelemetry-inspired span trees, because you need a flame graph to debug `n % 3` |
 | Context Propagation | `tracing.py` | Thread-local span stacks for automatic parent-child relationships across the middleware pipeline |
 | Fluent Builder (Spans) | `tracing.py` | `SpanBuilder` with chainable `.with_attribute()` and context manager support, because `Span()` was too direct |
+| Role-Based Access Control | `auth.py` | NIST-grade RBAC with five-tier role hierarchy, because `n % 3` is a privilege, not a right |
+| Token Engine | `auth.py` | HMAC-SHA256 signed tokens in a format that is legally distinct from JWT |
+| Permission Parser | `auth.py` | Resource:range:action permission strings, because `if user == "admin"` lacked enterprise gravitas |
 
 ## Features
 
@@ -110,6 +114,7 @@ EnterpriseFizzBuzz/
 - **Circuit Breaker** - Fault-tolerant evaluation with exponential backoff, sliding windows, and an ASCII status dashboard
 - **Internationalization (i18n)** - Full locale support across 5 languages (including Klingon), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine
 - **Distributed Tracing** - OpenTelemetry-inspired span trees with W3C Trace Context IDs, ASCII waterfall visualization, JSON export, and P95/P99 latency percentiles -- for when you need to know exactly which middleware layer added 0.3 microseconds to your modulo operation
+- **Role-Based Access Control (RBAC)** - Five-tier role hierarchy from ANONYMOUS to FIZZBUZZ_SUPERUSER, HMAC-SHA256 token authentication, permission-based number range access, and a sacred 47-field access denied JSON response that includes whether the forbidden number is prime, a motivational quote, and a legal disclaimer
 - **Custom Exception Hierarchy** - 33 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
@@ -164,6 +169,21 @@ python main.py --trace-json --range 1 5
 
 # Full observability stack: tracing + circuit breaker + ML
 python main.py --trace --circuit-breaker --strategy machine_learning --range 1 20
+
+# RBAC: Run as a FIZZBUZZ_SUPERUSER (trust-mode, full access)
+python main.py --user alice --role FIZZBUZZ_SUPERUSER --range 1 100
+
+# RBAC: Run as a lowly FIZZ_READER (can only evaluate 1-50)
+python main.py --user intern --role FIZZ_READER --range 1 50
+
+# RBAC: Run as ANONYMOUS and watch the access denials roll in
+python main.py --user nobody --role ANONYMOUS --range 1 20
+
+# RBAC: Token-based authentication (the cryptographically serious way)
+python main.py --token "EFP.<payload>.<signature>" --range 1 100
+
+# Full stack: RBAC + tracing + circuit breaker + ML (peak enterprise)
+python main.py --user alice --role FIZZBUZZ_SUPERUSER --trace --circuit-breaker --strategy machine_learning --range 1 20
 ```
 
 ## CLI Options
@@ -187,6 +207,9 @@ python main.py --trace --circuit-breaker --strategy machine_learning --range 1 2
 --circuit-status      Display circuit breaker status dashboard after execution
 --trace               Enable distributed tracing with ASCII waterfall output
 --trace-json          Export trace data as JSON (for integration with nothing)
+--user USERNAME       Authenticate as the specified user (trust-mode, no token required)
+--role ROLE           Assign RBAC role: ANONYMOUS, FIZZ_READER, BUZZ_ADMIN, NUMBER_AUDITOR, FIZZBUZZ_SUPERUSER
+--token TOKEN         Authenticate using an Enterprise FizzBuzz Platform HMAC-SHA256 token
 ```
 
 ## Environment Variables
@@ -202,6 +225,7 @@ EFP_LOG_LEVEL=DEBUG
 EFP_CIRCUIT_BREAKER_ENABLED=true
 EFP_TRACING_ENABLED=true
 EFP_LOCALE=tlh
+EFP_RBAC_SECRET=my-very-secret-fizzbuzz-signing-key
 ```
 
 ## Machine Learning Architecture
@@ -295,6 +319,72 @@ The circuit breaker protects the FizzBuzz evaluation pipeline from cascading fai
 | Dashboard | ASCII-art status visualization |
 
 The circuit breaker also monitors ML confidence scores from the neural network strategy. If confidence drops below the threshold, it flags a "degraded FizzBuzz" condition -- because technically correct modulo results delivered without mathematical conviction are a reliability concern.
+
+## RBAC Architecture
+
+The Role-Based Access Control subsystem implements a comprehensive, NIST-inspired authorization framework for controlling who can evaluate what numbers. Because the ability to compute `n % 3` is a privilege, not a right.
+
+**Key components:**
+- **RoleRegistry** - Five-tier role hierarchy with permission inheritance
+- **PermissionParser** - Parses `resource:range_spec:action` permission strings with wildcard, numeric range, and named class (fizz/buzz/fizzbuzz) matching
+- **FizzBuzzTokenEngine** - HMAC-SHA256 signed token authentication (legally distinct from JWT)
+- **AccessDeniedResponseBuilder** - Constructs the sacred 47-field access denied JSON response
+- **AuthorizationMiddleware** - Intercepts every evaluation in the middleware pipeline at priority -10
+
+### Role Hierarchy
+
+```
+    ANONYMOUS                     Can read the number 1. That's it.
+      +-- FIZZ_READER             Can read multiples of 3 and evaluate 1-50.
+            +-- BUZZ_ADMIN            Can also read/configure multiples of 5 and evaluate 1-100.
+            |     +-- FIZZBUZZ_SUPERUSER  Unrestricted access. The chosen one.
+            +-- NUMBER_AUDITOR        Can audit and read all numbers, but not evaluate.
+```
+
+### Permissions
+
+Permissions follow the format `resource:range_spec:action`:
+
+| Role | Permissions | What It Means |
+|------|------------|---------------|
+| `ANONYMOUS` | `numbers:1:read` | You can look at the number 1. Congratulations. |
+| `FIZZ_READER` | `numbers:fizz:read`, `numbers:1-50:evaluate` | You've earned the right to evaluate numbers up to 50. Don't let it go to your head. |
+| `BUZZ_ADMIN` | `numbers:buzz:read`, `numbers:buzz:configure`, `numbers:1-100:evaluate` | The full 1-100 range. Middle management energy. |
+| `FIZZBUZZ_SUPERUSER` | `numbers:*:evaluate`, `numbers:*:read`, `numbers:*:configure` | Unlimited power. Use it wisely. (You won't.) |
+| `NUMBER_AUDITOR` | `numbers:*:audit`, `numbers:*:read` | You can watch everyone else FizzBuzz, but you cannot FizzBuzz yourself. Compliance in a nutshell. |
+
+### The Sacred 47-Field Access Denied Response
+
+When authorization fails, the platform does not simply return a `403 Forbidden`. That would be *pedestrian*. Instead, it constructs a lovingly crafted JSON response body containing exactly **47 fields**, including but not limited to:
+
+- Whether the forbidden number is prime
+- The number in binary and hexadecimal
+- Whether it *would have been* Fizz, Buzz, or FizzBuzz (adding insult to injury)
+- A completely meaningless "trust score"
+- A motivational quote (e.g., *"Every 'Access Denied' is just a 'Not Yet' in disguise."*)
+- A legal disclaimer absolving the platform of emotional distress
+- An auto-filed incident ticket (severity: P4 - Cosmetic)
+- The recommended role upgrade path
+- A 72-hour SLA response time
+- Content-Type: `application/fizzbuzz-denial+json`
+
+The 47-field requirement is non-negotiable. It was established by the FizzBuzz Security Council in a meeting that ran 47 minutes over schedule.
+
+### Token Format
+
+Tokens follow the format `EFP.<base64url_payload>.<hmac_sha256_hex>`, which is suspiciously similar to JWT but legally distinct enough to avoid licensing fees.
+
+| Field | Description |
+|-------|-------------|
+| `sub` | Subject (username) |
+| `role` | FizzBuzz role name |
+| `iat` | Issued at (Unix timestamp) |
+| `exp` | Expiration (Unix timestamp) |
+| `jti` | Token ID (UUID) |
+| `iss` | Issuer |
+| `fizz_clearance_level` | Clearance for Fizz operations (0-5) |
+| `buzz_clearance_level` | Clearance for Buzz operations (0-5) |
+| `favorite_prime` | The user's favorite prime number (assigned at random, as is tradition) |
 
 ## Distributed Tracing Architecture
 
@@ -409,7 +499,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 383 tests
+# Run all 411 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -426,7 +516,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 383 tests, 33 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, five-language i18n support (including Klingon), a proprietary file format, and nanosecond timing. You tell me.
+A: It has 411 tests, 33 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, five-language i18n support (including Klingon), a proprietary file format, RBAC with HMAC-SHA256 tokens, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -442,6 +532,9 @@ A: Stakeholders requested an "AI-driven solution." 130 trainable parameters and 
 
 **Q: Why does FizzBuzz need a circuit breaker?**
 A: When `n % 3` starts failing at scale, you can't just keep retrying and hope arithmetic recovers on its own. The circuit breaker provides graceful degradation with exponential backoff, a sliding window failure tracker, and an ASCII dashboard -- because SREs deserve visibility into modulo operator health.
+
+**Q: Why does FizzBuzz need RBAC?**
+A: Unrestricted modulo arithmetic is a security incident waiting to happen. Without proper access controls, any anonymous user could evaluate *any number* -- including numbers above 50, which are clearly above most people's pay grade. The five-tier role hierarchy ensures that only FIZZBUZZ_SUPERUSERs can evaluate the full numeric range, while interns are limited to reading the number 1. The 47-field access denied response ensures that every denial is not just informative, but also emotionally enriching. The token engine uses HMAC-SHA256, which is the same algorithm used by banks and militaries, because FizzBuzz deserves nothing less.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
