@@ -173,3 +173,19 @@ class ModelConvergenceError(FizzBuzzError):
             error_code="EFP-9000",
             context={"rule_name": rule_name, "final_loss": final_loss},
         )
+
+
+class BlockchainIntegrityError(FizzBuzzError):
+    """Raised when the blockchain audit ledger detects tampering.
+
+    In a distributed enterprise environment, blockchain integrity
+    violations would trigger an immediate incident response. Here,
+    it means someone modified a FizzBuzz result, which is arguably worse.
+    """
+
+    def __init__(self, block_index: int, reason: str) -> None:
+        super().__init__(
+            f"Blockchain integrity violation at block #{block_index}: {reason}",
+            error_code="EFP-B000",
+            context={"block_index": block_index},
+        )

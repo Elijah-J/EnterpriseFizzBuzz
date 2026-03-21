@@ -16,6 +16,7 @@ import pytest
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from blockchain import Block, BlockchainObserver, FizzBuzzBlockchain
 from config import ConfigurationManager, _SingletonMeta
 from exceptions import (
     ConfigurationError,
@@ -620,3 +621,137 @@ class TestMachineLearningEngine:
             ml_result = ml.evaluate(n, default_rules)
             std_result = std.evaluate(n, default_rules)
             assert ml_result.output == std_result.output, f"Mismatch at {n}"
+
+
+# ============================================================
+# Blockchain Tests
+# ============================================================
+
+
+class TestBlock:
+    def test_hash_computation_is_deterministic(self):
+        block = Block(
+            index=0,
+            timestamp=1000000.0,
+            data={"test": "data"},
+            previous_hash="0" * 64,
+            nonce=42,
+        )
+        hash1 = block.compute_hash()
+        hash2 = block.compute_hash()
+        assert hash1 == hash2
+
+    def test_hash_changes_with_nonce(self):
+        block = Block(
+            index=0,
+            timestamp=1000000.0,
+            data={"test": "data"},
+            previous_hash="0" * 64,
+            nonce=0,
+        )
+        hash_at_0 = block.compute_hash()
+        block.nonce = 1
+        hash_at_1 = block.compute_hash()
+        assert hash_at_0 != hash_at_1
+
+
+class TestFizzBuzzBlockchain:
+    def test_genesis_block(self):
+        bc = FizzBuzzBlockchain(difficulty=1)
+        assert bc.get_chain_length() == 1
+        genesis = bc.get_block(0)
+        assert genesis.index == 0
+        assert genesis.data["genesis"] == "Enterprise FizzBuzz Blockchain Initialized"
+        assert genesis.previous_hash == "0" * 64
+
+    def test_add_block(self):
+        bc = FizzBuzzBlockchain(difficulty=1)
+        bc.add_block({"number": 3, "output": "Fizz"})
+        assert bc.get_chain_length() == 2
+
+    def test_chain_links(self):
+        bc = FizzBuzzBlockchain(difficulty=1)
+        bc.add_block({"number": 3, "output": "Fizz"})
+        bc.add_block({"number": 5, "output": "Buzz"})
+        for i in range(1, bc.get_chain_length()):
+            assert bc.get_block(i).previous_hash == bc.get_block(i - 1).hash
+
+    def test_validate_chain_passes(self):
+        bc = FizzBuzzBlockchain(difficulty=1)
+        bc.add_block({"number": 3, "output": "Fizz"})
+        bc.add_block({"number": 5, "output": "Buzz"})
+        assert bc.validate_chain() is True
+
+    def test_tamper_detection(self):
+        bc = FizzBuzzBlockchain(difficulty=1)
+        bc.add_block({"number": 3, "output": "Fizz"})
+        # Tamper with the block data
+        bc.get_block(1).data = {"number": 3, "output": "TAMPERED"}
+        assert bc.validate_chain() is False
+
+    def test_mining_produces_valid_proof(self):
+        bc = FizzBuzzBlockchain(difficulty=3)
+        bc.add_block({"number": 15, "output": "FizzBuzz"})
+        latest = bc.get_block(bc.get_chain_length() - 1)
+        assert latest.hash.startswith("000")
+
+    def test_get_block_out_of_range(self):
+        bc = FizzBuzzBlockchain(difficulty=1)
+        with pytest.raises(IndexError):
+            bc.get_block(999)
+
+    def test_chain_summary_contents(self):
+        bc = FizzBuzzBlockchain(difficulty=1)
+        bc.add_block({"number": 1, "output": "1"})
+        summary = bc.get_chain_summary()
+        assert "BLOCKCHAIN" in summary
+        assert "VALID" in summary
+
+
+class TestBlockchainObserver:
+    def test_observer_records_number_processed(self):
+        from models import Event
+
+        bc = FizzBuzzBlockchain(difficulty=1)
+        observer = BlockchainObserver(blockchain=bc)
+        event = Event(
+            event_type=EventType.NUMBER_PROCESSED,
+            payload={"number": 3, "output": "Fizz"},
+        )
+        observer.on_event(event)
+        assert bc.get_chain_length() == 2  # genesis + 1
+
+    def test_observer_ignores_other_events(self):
+        from models import Event
+
+        bc = FizzBuzzBlockchain(difficulty=1)
+        observer = BlockchainObserver(blockchain=bc)
+        event = Event(
+            event_type=EventType.FIZZ_DETECTED,
+            payload={"number": 3},
+        )
+        observer.on_event(event)
+        assert bc.get_chain_length() == 1  # only genesis
+
+    def test_observer_get_name(self):
+        observer = BlockchainObserver()
+        assert observer.get_name() == "BlockchainAuditObserver"
+
+    def test_integration_with_event_bus(self):
+        from models import Event
+        from observers import EventBus
+
+        bc = FizzBuzzBlockchain(difficulty=1)
+        observer = BlockchainObserver(blockchain=bc)
+        bus = EventBus()
+        bus.subscribe(observer)
+
+        for i in range(1, 6):
+            event = Event(
+                event_type=EventType.NUMBER_PROCESSED,
+                payload={"number": i, "output": str(i)},
+            )
+            bus.publish(event)
+
+        assert bc.get_chain_length() == 6  # genesis + 5
+        assert bc.validate_chain() is True

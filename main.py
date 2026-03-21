@@ -22,6 +22,7 @@ import sys
 import time
 from typing import Optional
 
+from blockchain import BlockchainObserver, FizzBuzzBlockchain
 from config import ConfigurationManager, _SingletonMeta
 from fizzbuzz_service import FizzBuzzServiceBuilder
 from formatters import FormatterFactory
@@ -119,6 +120,20 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Include metadata in output (JSON format only)",
     )
 
+    parser.add_argument(
+        "--blockchain",
+        action="store_true",
+        help="Enable blockchain-based immutable audit ledger for tamper-proof compliance",
+    )
+
+    parser.add_argument(
+        "--mining-difficulty",
+        type=int,
+        default=2,
+        metavar="N",
+        help="Proof-of-work difficulty for blockchain mining (default: 2)",
+    )
+
     return parser
 
 
@@ -184,6 +199,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         console_observer = ConsoleObserver(verbose=True)
         event_bus.subscribe(console_observer)
 
+    blockchain_observer = None
+    if args.blockchain:
+        blockchain = FizzBuzzBlockchain(difficulty=args.mining_difficulty)
+        blockchain_observer = BlockchainObserver(blockchain=blockchain)
+        event_bus.subscribe(blockchain_observer)
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
@@ -219,6 +240,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         summary_text = service.format_summary()
         print(summary_text)
         print(f"\n  Wall clock time: {wall_time_ms:.2f}ms")
+
+    if blockchain_observer is not None:
+        print(blockchain_observer.get_blockchain().get_chain_summary())
 
     return 0
 
