@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**8,800+ lines** across **21 files** with **257 unit tests**, because this is an enterprise and we have standards.
+**8,100+ lines** across **26 files** with **257 unit tests**, because this is an enterprise and we have standards.
 
 ## Architecture
 
@@ -42,7 +42,7 @@ EnterpriseFizzBuzz/
 ├── config.yaml              # YAML-based configuration with 9 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (18 exception classes)
+├── exceptions.py            # Custom exception hierarchy (24 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -86,6 +86,9 @@ EnterpriseFizzBuzz/
 | Exponential Backoff | `circuit_breaker.py` | Giving arithmetic time to recover from outages |
 | State Machine | `circuit_breaker.py`, `i18n.py` | Three-state lifecycle for fault tolerance; parser state machine for .fizztranslation files |
 | Dependency Injection | Everywhere | Constructor injection, because globals are evil |
+| Custom File Format Parser | `i18n.py` | A bespoke `.fizztranslation` format, because JSON, YAML, and TOML lacked sufficient enterprise gravitas |
+| Fallback Chain | `i18n.py` | Locale resolution via linked-list traversal with cycle detection, because one language is never enough |
+| Pluralization Engine | `i18n.py` | CLDR-inspired plural rule evaluator supporting five grammatical traditions, because "1 Fizzes" is unconscionable |
 | Internationalization | `i18n.py`, `locales/` | Five-language locale support with fallback chains, because "Fizz" is not globally understood |
 
 ## Features
@@ -100,7 +103,7 @@ EnterpriseFizzBuzz/
 - **Machine Learning Engine** - From-scratch MLP neural network trained via backpropagation to learn `n % 3 == 0`
 - **Circuit Breaker** - Fault-tolerant evaluation with exponential backoff, sliding windows, and an ASCII status dashboard
 - **Internationalization (i18n)** - Full locale support across 5 languages (including Klingon), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine
-- **Custom Exception Hierarchy** - 18 exception classes for every conceivable FizzBuzz failure mode
+- **Custom Exception Hierarchy** - 24 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -337,7 +340,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 257 tests, a plugin system, a neural network, a circuit breaker, five-language i18n support, and nanosecond timing. You tell me.
+A: It has 257 tests, 24 custom exception classes, a plugin system, a neural network, a circuit breaker, five-language i18n support (including Klingon), a proprietary file format, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -356,6 +359,9 @@ A: When `n % 3` starts failing at scale, you can't just keep retrying and hope a
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
+
+**Q: Why does FizzBuzz need to support 5 languages?**
+A: Regulatory compliance. The Enterprise FizzBuzz Globalization Directive (EFGD-2024) mandates that any arithmetic output visible to end users must be available in at least five human (or humanoid) languages. We chose English, German, French, Japanese, and Klingon to maximize coverage across NATO allies and the Klingon Empire. The proprietary `.fizztranslation` file format was necessary because no existing standard could adequately express the nuanced semantics of "Fizz" across cultures.
 
 **Q: Why is Klingon a supported locale?**
 A: Enterprise software must serve a global user base. Our stakeholders defined "global" broadly. The Klingon Empire represents a significant untapped market segment, and our compliance team confirmed that the Universal Declaration of FizzBuzz Rights requires support for all spacefaring civilizations. Also, the Klingon word for "FizzBuzz" is `ghumwab`, which is objectively better than the English version.
