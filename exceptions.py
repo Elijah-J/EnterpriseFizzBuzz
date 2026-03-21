@@ -1,0 +1,157 @@
+"""
+Enterprise FizzBuzz Platform - Exception Hierarchy Module
+
+Provides a comprehensive, enterprise-grade exception taxonomy for all
+possible failure modes in the FizzBuzz evaluation lifecycle.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Optional
+
+
+class FizzBuzzError(Exception):
+    """Base exception for all Enterprise FizzBuzz Platform errors.
+
+    All exceptions in the EFP ecosystem MUST inherit from this class
+    to ensure consistent error handling across the middleware pipeline.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: Optional[str] = None,
+        context: Optional[dict[str, Any]] = None,
+    ) -> None:
+        self.error_code = error_code or "EFP-0000"
+        self.context = context or {}
+        super().__init__(f"[{self.error_code}] {message}")
+
+
+class ConfigurationError(FizzBuzzError):
+    """Raised when the configuration subsystem encounters an invalid state."""
+
+    def __init__(self, message: str, *, config_key: Optional[str] = None) -> None:
+        super().__init__(
+            message,
+            error_code="EFP-1000",
+            context={"config_key": config_key},
+        )
+
+
+class ConfigurationFileNotFoundError(ConfigurationError):
+    """Raised when the YAML configuration file cannot be located on disk."""
+
+    def __init__(self, path: str) -> None:
+        super().__init__(
+            f"Configuration file not found: {path}",
+            config_key="__file__",
+        )
+        self.path = path
+
+
+class ConfigurationValidationError(ConfigurationError):
+    """Raised when configuration values fail schema validation."""
+
+    def __init__(self, field: str, value: Any, expected: str) -> None:
+        super().__init__(
+            f"Invalid value for '{field}': got {value!r}, expected {expected}",
+            config_key=field,
+        )
+
+
+class RuleEvaluationError(FizzBuzzError):
+    """Raised when a rule fails to evaluate against a given number."""
+
+    def __init__(self, rule_name: str, number: int, reason: str) -> None:
+        super().__init__(
+            f"Rule '{rule_name}' failed to evaluate number {number}: {reason}",
+            error_code="EFP-2000",
+            context={"rule_name": rule_name, "number": number},
+        )
+
+
+class RuleConflictError(RuleEvaluationError):
+    """Raised when two or more rules produce conflicting results."""
+
+    def __init__(self, rule_a: str, rule_b: str, number: int) -> None:
+        super().__init__(
+            rule_a,
+            number,
+            f"Conflicts with rule '{rule_b}'",
+        )
+        self.conflicting_rule = rule_b
+
+
+class PluginLoadError(FizzBuzzError):
+    """Raised when a plugin fails to load or register."""
+
+    def __init__(self, plugin_name: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to load plugin '{plugin_name}': {reason}",
+            error_code="EFP-3000",
+            context={"plugin_name": plugin_name},
+        )
+
+
+class PluginNotFoundError(PluginLoadError):
+    """Raised when a requested plugin is not found in the registry."""
+
+    def __init__(self, plugin_name: str) -> None:
+        super().__init__(plugin_name, "Plugin not found in registry")
+
+
+class MiddlewareError(FizzBuzzError):
+    """Raised when a middleware component fails during pipeline execution."""
+
+    def __init__(self, middleware_name: str, phase: str, reason: str) -> None:
+        super().__init__(
+            f"Middleware '{middleware_name}' failed during {phase}: {reason}",
+            error_code="EFP-4000",
+            context={"middleware_name": middleware_name, "phase": phase},
+        )
+
+
+class FormatterError(FizzBuzzError):
+    """Raised when an output formatter encounters an error."""
+
+    def __init__(self, format_name: str, reason: str) -> None:
+        super().__init__(
+            f"Formatter '{format_name}' error: {reason}",
+            error_code="EFP-5000",
+            context={"format_name": format_name},
+        )
+
+
+class ObserverError(FizzBuzzError):
+    """Raised when an observer fails to handle an event."""
+
+    def __init__(self, observer_name: str, event_type: str, reason: str) -> None:
+        super().__init__(
+            f"Observer '{observer_name}' failed on event '{event_type}': {reason}",
+            error_code="EFP-6000",
+            context={"observer_name": observer_name, "event_type": event_type},
+        )
+
+
+class ServiceNotInitializedError(FizzBuzzError):
+    """Raised when the FizzBuzz service is used before initialization."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "FizzBuzzService has not been initialized. "
+            "Did you forget to call FizzBuzzServiceBuilder.build()?",
+            error_code="EFP-7000",
+        )
+
+
+class InvalidRangeError(FizzBuzzError):
+    """Raised when the numeric range for FizzBuzz evaluation is invalid."""
+
+    def __init__(self, start: int, end: int) -> None:
+        super().__init__(
+            f"Invalid range [{start}, {end}]: start must be <= end",
+            error_code="EFP-8000",
+            context={"start": start, "end": end},
+        )

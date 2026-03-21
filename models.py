@@ -1,0 +1,192 @@
+"""
+Enterprise FizzBuzz Platform - Domain Models Module
+
+Contains all value objects, data transfer objects, enumerations,
+and domain entities required by the FizzBuzz evaluation pipeline.
+"""
+
+from __future__ import annotations
+
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum, auto
+from typing import Any, Optional
+
+
+class OutputFormat(Enum):
+    """Supported output serialization formats."""
+
+    PLAIN = auto()
+    JSON = auto()
+    XML = auto()
+    CSV = auto()
+
+
+class EvaluationStrategy(Enum):
+    """Available strategies for FizzBuzz rule evaluation."""
+
+    STANDARD = auto()
+    CHAIN_OF_RESPONSIBILITY = auto()
+    PARALLEL_ASYNC = auto()
+
+
+class LogLevel(Enum):
+    """Logging verbosity levels for the platform."""
+
+    SILENT = 0
+    ERROR = 1
+    WARNING = 2
+    INFO = 3
+    DEBUG = 4
+    TRACE = 5
+
+
+class EventType(Enum):
+    """Observable event types emitted during FizzBuzz processing."""
+
+    SESSION_STARTED = auto()
+    SESSION_ENDED = auto()
+    NUMBER_PROCESSING_STARTED = auto()
+    NUMBER_PROCESSED = auto()
+    RULE_MATCHED = auto()
+    RULE_NOT_MATCHED = auto()
+    FIZZ_DETECTED = auto()
+    BUZZ_DETECTED = auto()
+    FIZZBUZZ_DETECTED = auto()
+    PLAIN_NUMBER_DETECTED = auto()
+    MIDDLEWARE_ENTERED = auto()
+    MIDDLEWARE_EXITED = auto()
+    OUTPUT_FORMATTED = auto()
+    ERROR_OCCURRED = auto()
+
+
+@dataclass(frozen=True)
+class RuleDefinition:
+    """Immutable definition of a FizzBuzz rule.
+
+    Attributes:
+        name: Human-readable rule identifier.
+        divisor: The divisor to check against.
+        label: The string to output when the rule matches.
+        priority: Evaluation priority (lower = higher priority).
+    """
+
+    name: str
+    divisor: int
+    label: str
+    priority: int = 0
+
+
+@dataclass(frozen=True)
+class RuleMatch:
+    """Records a successful rule match against a number.
+
+    Attributes:
+        rule: The rule that matched.
+        number: The number it was evaluated against.
+        timestamp: When the match occurred (UTC).
+    """
+
+    rule: RuleDefinition
+    number: int
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class FizzBuzzResult:
+    """The outcome of evaluating a single number through the FizzBuzz pipeline.
+
+    Attributes:
+        number: The input number.
+        output: The resulting string (e.g., "Fizz", "Buzz", "FizzBuzz", or the number).
+        matched_rules: All rules that matched this number.
+        processing_time_ns: Time spent processing in nanoseconds.
+        result_id: Unique identifier for this result (for traceability).
+        metadata: Arbitrary key-value metadata attached by middleware.
+    """
+
+    number: int
+    output: str
+    matched_rules: list[RuleMatch] = field(default_factory=list)
+    processing_time_ns: int = 0
+    result_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def is_fizz(self) -> bool:
+        return any(m.rule.label == "Fizz" for m in self.matched_rules)
+
+    @property
+    def is_buzz(self) -> bool:
+        return any(m.rule.label == "Buzz" for m in self.matched_rules)
+
+    @property
+    def is_fizzbuzz(self) -> bool:
+        return self.is_fizz and self.is_buzz
+
+    @property
+    def is_plain_number(self) -> bool:
+        return len(self.matched_rules) == 0
+
+
+@dataclass
+class ProcessingContext:
+    """Mutable context object passed through the middleware pipeline.
+
+    Carries state between middleware layers and enables cross-cutting concerns.
+    """
+
+    number: int
+    session_id: str
+    results: list[FizzBuzzResult] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    cancelled: bool = False
+
+    def elapsed_ms(self) -> float:
+        if self.start_time and self.end_time:
+            return (self.end_time - self.start_time).total_seconds() * 1000
+        return 0.0
+
+
+@dataclass(frozen=True)
+class Event:
+    """An observable event emitted by the FizzBuzz processing pipeline.
+
+    Attributes:
+        event_type: Category of the event.
+        payload: Event-specific data.
+        timestamp: When the event was emitted (UTC).
+        event_id: Unique identifier for this event instance.
+        source: The component that emitted this event.
+    """
+
+    event_type: EventType
+    payload: dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    source: str = "FizzBuzzEngine"
+
+
+@dataclass
+class FizzBuzzSessionSummary:
+    """Summary statistics for a completed FizzBuzz session."""
+
+    session_id: str
+    total_numbers: int = 0
+    fizz_count: int = 0
+    buzz_count: int = 0
+    fizzbuzz_count: int = 0
+    plain_count: int = 0
+    total_processing_time_ms: float = 0.0
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    errors: list[str] = field(default_factory=list)
+
+    @property
+    def numbers_per_second(self) -> float:
+        if self.total_processing_time_ms > 0:
+            return self.total_numbers / (self.total_processing_time_ms / 1000)
+        return float("inf")

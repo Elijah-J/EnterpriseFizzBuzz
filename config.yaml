@@ -1,0 +1,75 @@
+# ============================================================
+# Enterprise FizzBuzz Platform - Configuration
+# ============================================================
+# This file controls ALL aspects of the FizzBuzz evaluation
+# pipeline. Modify with caution. Changes require a full
+# service restart.
+# ============================================================
+
+# Application metadata
+application:
+  name: "Enterprise FizzBuzz Platform"
+  version: "1.0.0"
+  environment: "production"
+
+# Numeric range for FizzBuzz evaluation
+range:
+  start: 1
+  end: 100
+
+# Rule definitions
+# Each rule has a name, divisor, label, and priority
+rules:
+  - name: "FizzRule"
+    divisor: 3
+    label: "Fizz"
+    priority: 1
+  - name: "BuzzRule"
+    divisor: 5
+    label: "Buzz"
+    priority: 2
+
+# Evaluation engine settings
+engine:
+  strategy: "standard"  # standard | chain_of_responsibility | parallel_async
+  max_concurrent_evaluations: 10
+  timeout_ms: 5000
+
+# Output configuration
+output:
+  format: "plain"  # plain | json | xml | csv
+  include_metadata: false
+  include_summary: true
+  colorize: false
+
+# Logging configuration
+logging:
+  level: "INFO"  # SILENT | ERROR | WARNING | INFO | DEBUG | TRACE
+  include_timestamps: true
+  log_to_file: false
+  log_file_path: "fizzbuzz.log"
+
+# Middleware pipeline (executed in order of priority)
+middleware:
+  timing:
+    enabled: true
+    priority: 1
+  logging:
+    enabled: true
+    priority: 2
+  validation:
+    enabled: true
+    priority: 0
+
+# Plugin system
+plugins:
+  auto_discover: true
+  plugin_directory: "./plugins"
+  enabled_plugins: []
+
+# Observer configuration
+observers:
+  console_observer:
+    enabled: false
+  statistics_observer:
+    enabled: true

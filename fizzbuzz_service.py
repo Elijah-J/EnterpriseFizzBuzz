@@ -1,0 +1,398 @@
+"""
+Enterprise FizzBuzz Platform - Core Service Module
+
+The main orchestration service that ties together the rules engine,
+middleware pipeline, event bus, formatters, and plugin system into
+a cohesive FizzBuzz evaluation platform.
+
+Uses the Builder pattern for fluent service construction.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import time
+import uuid
+from contextlib import contextmanager
+from datetime import datetime, timezone
+from typing import Generator, Optional
+
+from config import ConfigurationManager
+from exceptions import InvalidRangeError, ServiceNotInitializedError
+from factory import CachingRuleFactory, ConfigurableRuleFactory, StandardRuleFactory
+from formatters import FormatterFactory
+from interfaces import IEventBus, IFormatter, IMiddleware, IRule, IRuleEngine, IRuleFactory
+from middleware import (
+    LoggingMiddleware,
+    MiddlewarePipeline,
+    TimingMiddleware,
+    ValidationMiddleware,
+)
+from models import (
+    Event,
+    EventType,
+    FizzBuzzResult,
+    FizzBuzzSessionSummary,
+    OutputFormat,
+    ProcessingContext,
+)
+from observers import ConsoleObserver, EventBus, StatisticsObserver
+from plugins import PluginRegistry
+from rules_engine import RuleEngineFactory
+
+logger = logging.getLogger(__name__)
+
+
+class FizzBuzzSession:
+    """Context manager for a FizzBuzz evaluation session.
+
+    Manages session lifecycle, including initialization, execution,
+    and cleanup of resources.
+    """
+
+    def __init__(self, service: FizzBuzzService) -> None:
+        self._service = service
+        self._session_id = str(uuid.uuid4())
+        self._start_time: Optional[datetime] = None
+        self._end_time: Optional[datetime] = None
+
+    @property
+    def session_id(self) -> str:
+        return self._session_id
+
+    def __enter__(self) -> FizzBuzzSession:
+        self._start_time = datetime.now(timezone.utc)
+        self._service.event_bus.publish(
+            Event(
+                event_type=EventType.SESSION_STARTED,
+                payload={"session_id": self._session_id},
+                source="FizzBuzzSession",
+            )
+        )
+        logger.info("Session %s started", self._session_id[:8])
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self._end_time = datetime.now(timezone.utc)
+        self._service.event_bus.publish(
+            Event(
+                event_type=EventType.SESSION_ENDED,
+                payload={
+                    "session_id": self._session_id,
+                    "duration_ms": (
+                        self._end_time - self._start_time
+                    ).total_seconds()
+                    * 1000
+                    if self._start_time
+                    else 0,
+                },
+                source="FizzBuzzSession",
+            )
+        )
+        logger.info("Session %s ended", self._session_id[:8])
+
+    def run(self, start: int, end: int) -> list[FizzBuzzResult]:
+        """Execute FizzBuzz over the given range within this session."""
+        return self._service._execute(start, end, self._session_id)
+
+    async def run_async(self, start: int, end: int) -> list[FizzBuzzResult]:
+        """Execute FizzBuzz asynchronously within this session."""
+        return await self._service._execute_async(start, end, self._session_id)
+
+
+class FizzBuzzService:
+    """The core FizzBuzz service that orchestrates all platform components.
+
+    Should be constructed using FizzBuzzServiceBuilder for proper
+    dependency injection and configuration.
+    """
+
+    def __init__(
+        self,
+        rule_engine: IRuleEngine,
+        rule_factory: IRuleFactory,
+        event_bus: IEventBus,
+        middleware_pipeline: MiddlewarePipeline,
+        formatter: IFormatter,
+        rules: list[IRule],
+    ) -> None:
+        self._rule_engine = rule_engine
+        self._rule_factory = rule_factory
+        self._event_bus = event_bus
+        self._middleware = middleware_pipeline
+        self._formatter = formatter
+        self._rules = rules
+        self._last_summary: Optional[FizzBuzzSessionSummary] = None
+        self._initialized = True
+
+    @property
+    def event_bus(self) -> IEventBus:
+        return self._event_bus
+
+    def create_session(self) -> FizzBuzzSession:
+        """Create a new FizzBuzz session context manager."""
+        return FizzBuzzSession(self)
+
+    def run(self, start: int, end: int) -> list[FizzBuzzResult]:
+        """Execute FizzBuzz synchronously."""
+        with self.create_session() as session:
+            return session.run(start, end)
+
+    async def run_async(self, start: int, end: int) -> list[FizzBuzzResult]:
+        """Execute FizzBuzz asynchronously."""
+        with self.create_session() as session:
+            return await session.run_async(start, end)
+
+    def _execute(
+        self, start: int, end: int, session_id: str
+    ) -> list[FizzBuzzResult]:
+        """Internal synchronous execution method."""
+        if start > end:
+            raise InvalidRangeError(start, end)
+
+        results: list[FizzBuzzResult] = []
+        total_start = time.perf_counter_ns()
+
+        for number in range(start, end + 1):
+            context = ProcessingContext(
+                number=number,
+                session_id=session_id,
+                results=results,
+            )
+
+            def evaluate(ctx: ProcessingContext) -> ProcessingContext:
+                result = self._rule_engine.evaluate(ctx.number, self._rules)
+                ctx.results.append(result)
+                self._emit_result_events(result)
+                return ctx
+
+            self._middleware.execute(context, evaluate)
+
+        total_elapsed_ms = (time.perf_counter_ns() - total_start) / 1_000_000
+        self._build_summary(results, session_id, total_elapsed_ms)
+        return results
+
+    async def _execute_async(
+        self, start: int, end: int, session_id: str
+    ) -> list[FizzBuzzResult]:
+        """Internal asynchronous execution method."""
+        if start > end:
+            raise InvalidRangeError(start, end)
+
+        results: list[FizzBuzzResult] = []
+        total_start = time.perf_counter_ns()
+
+        for number in range(start, end + 1):
+            result = await self._rule_engine.evaluate_async(number, self._rules)
+            results.append(result)
+            self._emit_result_events(result)
+
+        total_elapsed_ms = (time.perf_counter_ns() - total_start) / 1_000_000
+        self._build_summary(results, session_id, total_elapsed_ms)
+        return results
+
+    def _emit_result_events(self, result: FizzBuzzResult) -> None:
+        """Emit events based on the result."""
+        self._event_bus.publish(
+            Event(
+                event_type=EventType.NUMBER_PROCESSED,
+                payload={"number": result.number, "output": result.output},
+            )
+        )
+
+        if result.is_fizzbuzz:
+            self._event_bus.publish(
+                Event(
+                    event_type=EventType.FIZZBUZZ_DETECTED,
+                    payload={"number": result.number},
+                )
+            )
+        elif result.is_fizz:
+            self._event_bus.publish(
+                Event(
+                    event_type=EventType.FIZZ_DETECTED,
+                    payload={"number": result.number},
+                )
+            )
+        elif result.is_buzz:
+            self._event_bus.publish(
+                Event(
+                    event_type=EventType.BUZZ_DETECTED,
+                    payload={"number": result.number},
+                )
+            )
+        else:
+            self._event_bus.publish(
+                Event(
+                    event_type=EventType.PLAIN_NUMBER_DETECTED,
+                    payload={"number": result.number},
+                )
+            )
+
+    def _build_summary(
+        self,
+        results: list[FizzBuzzResult],
+        session_id: str,
+        total_ms: float,
+    ) -> None:
+        """Build session summary from results."""
+        self._last_summary = FizzBuzzSessionSummary(
+            session_id=session_id,
+            total_numbers=len(results),
+            fizz_count=sum(1 for r in results if r.is_fizz and not r.is_fizzbuzz),
+            buzz_count=sum(1 for r in results if r.is_buzz and not r.is_fizzbuzz),
+            fizzbuzz_count=sum(1 for r in results if r.is_fizzbuzz),
+            plain_count=sum(1 for r in results if r.is_plain_number),
+            total_processing_time_ms=total_ms,
+        )
+
+    def get_summary(self) -> Optional[FizzBuzzSessionSummary]:
+        return self._last_summary
+
+    def format_results(self, results: list[FizzBuzzResult]) -> str:
+        return self._formatter.format_results(results)
+
+    def format_summary(self) -> str:
+        if self._last_summary is None:
+            return "No session has been executed yet."
+        return self._formatter.format_summary(self._last_summary)
+
+
+class FizzBuzzServiceBuilder:
+    """Builder for constructing a fully-configured FizzBuzzService.
+
+    Provides a fluent API for assembling the service with all
+    required dependencies properly injected.
+
+    Usage:
+        service = (
+            FizzBuzzServiceBuilder()
+            .with_config(config)
+            .with_default_middleware()
+            .with_default_observers()
+            .build()
+        )
+    """
+
+    def __init__(self) -> None:
+        self._config: Optional[ConfigurationManager] = None
+        self._rule_engine: Optional[IRuleEngine] = None
+        self._rule_factory: Optional[IRuleFactory] = None
+        self._event_bus: Optional[IEventBus] = None
+        self._middleware_pipeline: Optional[MiddlewarePipeline] = None
+        self._formatter: Optional[IFormatter] = None
+        self._additional_rules: list[IRule] = []
+        self._custom_middleware: list[IMiddleware] = []
+        self._output_format: Optional[OutputFormat] = None
+
+    def with_config(self, config: ConfigurationManager) -> FizzBuzzServiceBuilder:
+        """Inject configuration manager."""
+        self._config = config
+        return self
+
+    def with_rule_engine(self, engine: IRuleEngine) -> FizzBuzzServiceBuilder:
+        """Inject a custom rule engine."""
+        self._rule_engine = engine
+        return self
+
+    def with_rule_factory(self, factory: IRuleFactory) -> FizzBuzzServiceBuilder:
+        """Inject a custom rule factory."""
+        self._rule_factory = factory
+        return self
+
+    def with_event_bus(self, bus: IEventBus) -> FizzBuzzServiceBuilder:
+        """Inject a custom event bus."""
+        self._event_bus = bus
+        return self
+
+    def with_formatter(self, formatter: IFormatter) -> FizzBuzzServiceBuilder:
+        """Inject a custom output formatter."""
+        self._formatter = formatter
+        return self
+
+    def with_output_format(self, fmt: OutputFormat) -> FizzBuzzServiceBuilder:
+        """Set the output format."""
+        self._output_format = fmt
+        return self
+
+    def with_middleware(self, middleware: IMiddleware) -> FizzBuzzServiceBuilder:
+        """Add a custom middleware component."""
+        self._custom_middleware.append(middleware)
+        return self
+
+    def with_default_middleware(self) -> FizzBuzzServiceBuilder:
+        """Add the standard middleware stack (validation, timing, logging)."""
+        self._custom_middleware.extend([
+            ValidationMiddleware(),
+            TimingMiddleware(),
+            LoggingMiddleware(),
+        ])
+        return self
+
+    def with_default_observers(self) -> FizzBuzzServiceBuilder:
+        """Subscribe default observers to the event bus."""
+        # Observers will be added during build
+        return self
+
+    def build(self) -> FizzBuzzService:
+        """Construct the fully-configured FizzBuzzService."""
+        # Config
+        if self._config is None:
+            self._config = ConfigurationManager()
+            self._config.load()
+
+        # Event bus
+        event_bus = self._event_bus or EventBus()
+
+        # Subscribe default observers
+        stats_observer = StatisticsObserver()
+        event_bus.subscribe(stats_observer)
+
+        # Rule factory
+        rule_factory: IRuleFactory
+        if self._rule_factory:
+            rule_factory = self._rule_factory
+        else:
+            config_rules = self._config.rules
+            inner_factory = ConfigurableRuleFactory(config_rules)
+            rule_factory = CachingRuleFactory(inner_factory)
+
+        # Rules
+        rules = rule_factory.create_default_rules()
+
+        # Plugin rules
+        plugin_registry = PluginRegistry.get_instance()
+        for rule_def in plugin_registry.get_all_plugin_rules():
+            rules.append(rule_factory.create_rule(rule_def))
+
+        # Rule engine
+        rule_engine = self._rule_engine or RuleEngineFactory.create(
+            self._config.evaluation_strategy
+        )
+
+        # Middleware pipeline
+        pipeline = MiddlewarePipeline()
+        for mw in self._custom_middleware:
+            pipeline.add(mw)
+
+        # Formatter
+        fmt = self._output_format or self._config.output_format
+        formatter = self._formatter or FormatterFactory.create(fmt)
+
+        logger.info(
+            "FizzBuzzService built: engine=%s, rules=%d, middleware=%d, format=%s",
+            type(rule_engine).__name__,
+            len(rules),
+            pipeline.middleware_count,
+            fmt.name,
+        )
+
+        return FizzBuzzService(
+            rule_engine=rule_engine,
+            rule_factory=rule_factory,
+            event_bus=event_bus,
+            middleware_pipeline=pipeline,
+            formatter=formatter,
+            rules=rules,
+        )
