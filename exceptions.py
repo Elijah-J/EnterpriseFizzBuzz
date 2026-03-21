@@ -510,6 +510,191 @@ class TokenValidationError(AuthenticationError):
         )
 
 
+class EventStoreError(FizzBuzzError):
+    """Base exception for all Event Sourcing and CQRS errors.
+
+    When your append-only log of FizzBuzz evaluations encounters
+    a problem, you know civilization has peaked. These errors cover
+    everything from event serialization failures to temporal paradoxes
+    in the point-in-time query engine.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str = "EFP-ES00",
+        context: Optional[dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message, error_code=error_code, context=context)
+
+
+class EventSequenceError(EventStoreError):
+    """Raised when events arrive out of sequence in the event store.
+
+    In a properly functioning universe, events occur in order.
+    If your FizzBuzz events are arriving out of sequence, either
+    the laws of causality have broken down, or someone is doing
+    something deeply inadvisable with threading.
+    """
+
+    def __init__(self, expected_seq: int, actual_seq: int) -> None:
+        super().__init__(
+            f"Event sequence violation: expected sequence {expected_seq}, "
+            f"got {actual_seq}. Causality may be compromised.",
+            error_code="EFP-ES01",
+            context={"expected_seq": expected_seq, "actual_seq": actual_seq},
+        )
+
+
+class EventDeserializationError(EventStoreError):
+    """Raised when a domain event cannot be deserialized from storage.
+
+    The event was stored with the best of intentions, but upon
+    retrieval it has become an unintelligible blob of data —
+    much like enterprise documentation after a reorg.
+    """
+
+    def __init__(self, event_type: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to deserialize event of type '{event_type}': {reason}",
+            error_code="EFP-ES02",
+            context={"event_type": event_type, "reason": reason},
+        )
+
+
+class SnapshotCorruptionError(EventStoreError):
+    """Raised when a snapshot fails integrity validation.
+
+    The snapshot was supposed to be a reliable checkpoint of
+    aggregate state, but it appears to have been corrupted.
+    This is the Event Sourcing equivalent of finding that your
+    save game file has been overwritten with cat photos.
+    """
+
+    def __init__(self, aggregate_id: str, snapshot_version: int) -> None:
+        super().__init__(
+            f"Snapshot for aggregate '{aggregate_id}' at version "
+            f"{snapshot_version} is corrupt or invalid.",
+            error_code="EFP-ES03",
+            context={"aggregate_id": aggregate_id, "snapshot_version": snapshot_version},
+        )
+
+
+class CommandValidationError(EventStoreError):
+    """Raised when a command fails pre-execution validation.
+
+    The command you submitted was examined by our rigorous
+    validation pipeline and found to be lacking. Perhaps the
+    number was outside the acceptable range, or perhaps you
+    forgot to include the mandatory cover sheet.
+    """
+
+    def __init__(self, command_type: str, reason: str) -> None:
+        super().__init__(
+            f"Command '{command_type}' failed validation: {reason}",
+            error_code="EFP-ES04",
+            context={"command_type": command_type, "reason": reason},
+        )
+
+
+class CommandHandlerNotFoundError(EventStoreError):
+    """Raised when no handler is registered for a given command type.
+
+    A command was dispatched into the void. No handler was
+    listening, no processor was waiting. The command will
+    remain forever unexecuted, a digital message in a bottle
+    floating through an empty bus.
+    """
+
+    def __init__(self, command_type: str) -> None:
+        super().__init__(
+            f"No handler registered for command type '{command_type}'. "
+            f"The command bus searched everywhere but found only silence.",
+            error_code="EFP-ES05",
+            context={"command_type": command_type},
+        )
+
+
+class QueryHandlerNotFoundError(EventStoreError):
+    """Raised when no handler is registered for a given query type.
+
+    You asked a question, but nobody was there to answer it.
+    This is the CQRS equivalent of shouting into an empty room
+    and being surprised when no one responds.
+    """
+
+    def __init__(self, query_type: str) -> None:
+        super().__init__(
+            f"No handler registered for query type '{query_type}'. "
+            f"The query side of CQRS has no opinion on this matter.",
+            error_code="EFP-ES06",
+            context={"query_type": query_type},
+        )
+
+
+class ProjectionError(EventStoreError):
+    """Raised when a read-model projection fails to process an event.
+
+    The projection was supposed to fold this event into its
+    materialized view, but something went wrong. The read model
+    is now in an inconsistent state, which for a FizzBuzz
+    statistics projection is arguably a crisis of cosmic proportions.
+    """
+
+    def __init__(self, projection_name: str, event_type: str, reason: str) -> None:
+        super().__init__(
+            f"Projection '{projection_name}' failed to process event "
+            f"'{event_type}': {reason}",
+            error_code="EFP-ES07",
+            context={
+                "projection_name": projection_name,
+                "event_type": event_type,
+                "reason": reason,
+            },
+        )
+
+
+class TemporalQueryError(EventStoreError):
+    """Raised when a temporal (point-in-time) query cannot be satisfied.
+
+    You asked to see the state of the FizzBuzz universe at a
+    specific point in time, but the temporal query engine could
+    not reconstruct that moment. Perhaps the timestamp predates
+    the event store, or perhaps time itself is an illusion.
+    """
+
+    def __init__(self, timestamp: str, reason: str) -> None:
+        super().__init__(
+            f"Temporal query at '{timestamp}' failed: {reason}. "
+            f"Time-travel is harder than it looks.",
+            error_code="EFP-ES08",
+            context={"timestamp": timestamp, "reason": reason},
+        )
+
+
+class EventVersionConflictError(EventStoreError):
+    """Raised when an event upcaster encounters an unsupported version.
+
+    The event was written in a version of the schema that the
+    current upcaster chain does not know how to handle. This is
+    the Event Sourcing equivalent of finding a VHS tape in a
+    world that has moved on to streaming.
+    """
+
+    def __init__(self, event_type: str, version: int, supported_versions: str) -> None:
+        super().__init__(
+            f"Event '{event_type}' version {version} cannot be upcasted. "
+            f"Supported versions: {supported_versions}.",
+            error_code="EFP-ES09",
+            context={
+                "event_type": event_type,
+                "version": version,
+                "supported_versions": supported_versions,
+            },
+        )
+
+
 class DownstreamFizzBuzzDegradationError(FizzBuzzError):
     """Raised when downstream FizzBuzz evaluation quality degrades.
 

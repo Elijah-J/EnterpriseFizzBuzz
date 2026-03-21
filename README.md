@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**12,300+ lines** across **34 files** with **437 unit tests** and **33 custom exception classes**, because this is an enterprise and we have standards.
+**15,300+ lines** across **36 files** with **535 unit tests** and **43 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 19 flags
+├── main.py                  # CLI entry point with 24 flags
 ├── config.yaml              # YAML-based configuration with 10 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (33 exception classes)
+├── exceptions.py            # Custom exception hierarchy (43 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -57,6 +57,7 @@ EnterpriseFizzBuzz/
 ├── tracing.py               # OpenTelemetry-inspired distributed tracing (from scratch)
 ├── auth.py                  # RBAC with HMAC-SHA256 token engine and 47-field access denials
 ├── i18n.py                  # Internationalization subsystem with locale fallback chains
+├── event_sourcing.py        # Event Sourcing + CQRS with command/query buses (~1,500 lines)
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
 │   ├── de.fizztranslation   # German (Deutsch)
@@ -68,9 +69,10 @@ EnterpriseFizzBuzz/
 └── tests/
     ├── test_fizzbuzz.py     # 66 comprehensive tests
     ├── test_circuit_breaker.py  # 66 circuit breaker tests
-    ├── test_i18n.py         # 97 internationalization tests
-    ├── test_auth.py         # 114 RBAC & authentication tests
-    └── test_tracing.py      # 68 distributed tracing tests
+    ├── test_i18n.py         # 123 internationalization tests
+    ├── test_auth.py         # 86 RBAC & authentication tests
+    ├── test_tracing.py      # 68 distributed tracing tests
+    └── test_event_sourcing.py  # 98 event sourcing & CQRS tests
 ```
 
 ## Design Patterns
@@ -102,6 +104,14 @@ EnterpriseFizzBuzz/
 | Role-Based Access Control | `auth.py` | NIST-grade RBAC with five-tier role hierarchy, because `n % 3` is a privilege, not a right |
 | Token Engine | `auth.py` | HMAC-SHA256 signed tokens in a format that is legally distinct from JWT |
 | Permission Parser | `auth.py` | Resource:range:action permission strings, because `if user == "admin"` lacked enterprise gravitas |
+| Event Sourcing | `event_sourcing.py` | Append-only event log of every modulo operation, because state is ephemeral but history is forever |
+| CQRS | `event_sourcing.py` | Separate command and query models, because reading and writing FizzBuzz results are fundamentally different responsibilities |
+| Command Bus | `event_sourcing.py` | Mediator-pattern command dispatch, because `evaluate(15)` needed an abstraction layer |
+| Query Bus | `event_sourcing.py` | Mediator-pattern query dispatch, because `get_results()` also needed an abstraction layer |
+| Temporal Query | `event_sourcing.py` | Reconstruct FizzBuzz state at any point in history, for when auditors ask "what was the Fizz count after event 42?" |
+| Event Upcasting | `event_sourcing.py` | Schema migration chain for domain events, because even FizzBuzz event schemas evolve |
+| Snapshot / Memento | `event_sourcing.py` | Periodic state snapshots to accelerate event replay, because replaying millions of FizzBuzz events would be unconscionable |
+| Projection / Materialized View | `event_sourcing.py` | Read-side projections rebuilt from the event stream, because querying raw events is for amateurs |
 
 ## Features
 
@@ -117,7 +127,8 @@ EnterpriseFizzBuzz/
 - **Internationalization (i18n)** - Full locale support across 7 languages (including Klingon and two dialects of Elvish), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine. DEI-compliant for the Undying Lands market segment
 - **Distributed Tracing** - OpenTelemetry-inspired span trees with W3C Trace Context IDs, ASCII waterfall visualization, JSON export, and P95/P99 latency percentiles -- for when you need to know exactly which middleware layer added 0.3 microseconds to your modulo operation
 - **Role-Based Access Control (RBAC)** - Five-tier role hierarchy from ANONYMOUS to FIZZBUZZ_SUPERUSER, HMAC-SHA256 token authentication, permission-based number range access, and a sacred 47-field access denied JSON response that includes whether the forbidden number is prime, a motivational quote, and a legal disclaimer
-- **Custom Exception Hierarchy** - 33 exception classes for every conceivable FizzBuzz failure mode
+- **Event Sourcing / CQRS** - Append-only event store with command/query bus separation, temporal queries, event upcasting, periodic snapshots, and materialized projections -- because the ability to reconstruct FizzBuzz state at any point in history is a compliance requirement, not a luxury
+- **Custom Exception Hierarchy** - 43 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -192,6 +203,18 @@ python main.py --token "EFP.<payload>.<signature>" --range 1 100
 
 # Full stack: RBAC + tracing + circuit breaker + ML (peak enterprise)
 python main.py --user alice --role FIZZBUZZ_SUPERUSER --trace --circuit-breaker --strategy machine_learning --range 1 20
+
+# Event Sourcing: append-only audit log of every FizzBuzz decision
+python main.py --event-sourcing --range 1 20
+
+# Event Sourcing with replay: rebuild projections from the event stream
+python main.py --event-sourcing --replay --range 1 30
+
+# Temporal query: reconstruct FizzBuzz state as it existed at event #42
+python main.py --event-sourcing --temporal-query 42 --range 1 50
+
+# Full compliance stack: event sourcing + RBAC + tracing (peak audit)
+python main.py --event-sourcing --user alice --role FIZZBUZZ_SUPERUSER --trace --range 1 20
 ```
 
 ## CLI Options
@@ -213,6 +236,9 @@ python main.py --user alice --role FIZZBUZZ_SUPERUSER --trace --circuit-breaker 
 --list-locales        Display available locales and exit
 --circuit-breaker     Enable circuit breaker with exponential backoff
 --circuit-status      Display circuit breaker status dashboard after execution
+--event-sourcing      Enable Event Sourcing with CQRS for append-only audit logging
+--replay              Replay all events from the event store to rebuild projections
+--temporal-query SEQ  Reconstruct FizzBuzz state at a specific event sequence number
 --trace               Enable distributed tracing with ASCII waterfall output
 --trace-json          Export trace data as JSON (for integration with nothing)
 --user USERNAME       Authenticate as the specified user (trust-mode, no token required)
@@ -234,6 +260,8 @@ EFP_CIRCUIT_BREAKER_ENABLED=true
 EFP_TRACING_ENABLED=true
 EFP_LOCALE=tlh
 EFP_RBAC_SECRET=my-very-secret-fizzbuzz-signing-key
+EFP_EVENT_SOURCING_ENABLED=true
+EFP_EVENT_SOURCING_SNAPSHOT_INTERVAL=10
 ```
 
 ## Machine Learning Architecture
@@ -394,6 +422,83 @@ Tokens follow the format `EFP.<base64url_payload>.<hmac_sha256_hex>`, which is s
 | `buzz_clearance_level` | Clearance for Buzz operations (0-5) |
 | `favorite_prime` | The user's favorite prime number (assigned at random, as is tradition) |
 
+## Event Sourcing / CQRS Architecture
+
+The Event Sourcing subsystem maintains a complete, append-only, temporally queryable audit log of every FizzBuzz evaluation -- because simply returning "Fizz" is not enough when SOX Section 404 demands a full paper trail of every modulo operation ever performed. The CQRS layer separates the write side (commands) from the read side (queries), ensuring that the act of evaluating FizzBuzz and the act of reading the results are architecturally, philosophically, and spiritually decoupled.
+
+```
+    WRITE SIDE (Command)                          READ SIDE (Query)
+    ====================                          ==================
+
+    +-------------+                               +-------------+
+    |   CLI /     |                               |   CLI /     |
+    |   Service   |                               |   Service   |
+    +------+------+                               +------+------+
+           |                                             ^
+           v                                             |
+    +------+------+                               +------+------+
+    | CommandBus  |                               |  QueryBus   |
+    | (Mediator)  |                               |  (Mediator)  |
+    +------+------+                               +------+------+
+           |                                             ^
+           v                                             |
+    +------+--------+                             +------+--------+
+    | CommandHandler |                            | QueryHandler  |
+    | (Evaluate,     |                            | (Results,     |
+    |  Replay)       |                            |  Statistics,  |
+    +------+---------+                            |  Temporal)    |
+           |                                      +------+--------+
+           v                                             ^
+    +------+------+    subscribe     +----------+        |
+    | EventStore  |---------------->| Projection|--------+
+    | (append-    |                  | Engine    |
+    |  only log)  |                  +----------+
+    +------+------+
+           |
+           v  (every N events)
+    +------+------+
+    | Snapshot    |
+    | Store       |
+    +-------------+
+```
+
+**Key components:**
+- **EventStore** - Thread-safe, append-only, sequenced event log. The single source of truth. Clearing it would trigger a compliance investigation
+- **CommandBus / QueryBus** - Mediator-pattern dispatchers for write and read operations
+- **EvaluateNumberCommandHandler** - Orchestrates evaluation and emits 5+ domain events per number
+- **TemporalQueryEngine** - Reconstructs system state at any historical event sequence number
+- **EventUpcaster** - Version migration chain for schema evolution (because even FizzBuzz schemas evolve)
+- **SnapshotStore** - Periodic state snapshots for accelerated replay
+- **ProjectionEngine** - Materializes read models from the event stream
+- **EventSourcingMiddleware** - Integrates with the middleware pipeline at priority 5
+
+### Domain Events
+
+Every number evaluation emits a stream of domain events, each immutable, timestamped, and globally identified:
+
+| Event | When | What It Records |
+|-------|------|----------------|
+| `NumberReceivedEvent` | Number enters pipeline | The genesis of a FizzBuzz evaluation |
+| `DivisibilityCheckedEvent` | Each `n % d` check | Whether the modulo oracle said yes or no |
+| `RuleMatchedEvent` | Rule matches | Which rule claimed this number |
+| `LabelAssignedEvent` | Final label decided | The number's ultimate FizzBuzz destiny |
+| `EvaluationCompletedEvent` | Evaluation finishes | Processing time in nanoseconds, because of course |
+| `SnapshotTakenEvent` | Periodic checkpoint | A save point in the FizzBuzz timeline |
+
+For a single evaluation of the number 15, the system emits approximately **7 domain events**. For a full 1-100 range, that is roughly **500 events** permanently recorded in the append-only store. Compliance achieved.
+
+| Spec | Value |
+|------|-------|
+| Domain event types | 7 (including snapshots) |
+| Events per evaluation | 5-7 (varies by rule matches) |
+| Command types | 2 (EvaluateNumber, ReplayEvents) |
+| Query types | 4 (Results, Statistics, EventCount, TemporalState) |
+| Snapshot interval | Configurable (default: every 10 events) |
+| Event upcasters | Extensible chain (v1->v2 demo included) |
+| Thread safety | Full (threading.Lock on all stores) |
+| Custom exceptions | 8 (CommandHandlerNotFoundError, EventSequenceError, etc.) |
+| GDPR compliance | No. Events are immutable. Your FizzBuzz history is permanent. |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -511,7 +616,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 437 tests
+# Run all 535 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -528,7 +633,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 437 tests, 33 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, and nanosecond timing. You tell me.
+A: It has 535 tests, 43 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -547,6 +652,9 @@ A: When `n % 3` starts failing at scale, you can't just keep retrying and hope a
 
 **Q: Why does FizzBuzz need RBAC?**
 A: Unrestricted modulo arithmetic is a security incident waiting to happen. Without proper access controls, any anonymous user could evaluate *any number* -- including numbers above 50, which are clearly above most people's pay grade. The five-tier role hierarchy ensures that only FIZZBUZZ_SUPERUSERs can evaluate the full numeric range, while interns are limited to reading the number 1. The 47-field access denied response ensures that every denial is not just informative, but also emotionally enriching. The token engine uses HMAC-SHA256, which is the same algorithm used by banks and militaries, because FizzBuzz deserves nothing less.
+
+**Q: Why does FizzBuzz need Event Sourcing?**
+A: Because state is a lie. The number 15 doesn't just *become* "FizzBuzz" -- it undergoes a journey. It is received, interrogated for divisibility by 3, interrogated again for divisibility by 5, matched by two rules, assigned a label, and finally completed. That is seven domain events for a single modulo check, and every single one of them deserves to be permanently recorded in an append-only, temporally queryable event log. The CQRS layer ensures that the act of *writing* FizzBuzz results is architecturally decoupled from the act of *reading* them, because in enterprise software, separation of concerns means separating things that were never conjoined. The temporal query engine lets you reconstruct FizzBuzz state at any point in history, which is essential for answering questions like "what was the Fizz count after the 42nd event?" -- a question that no one has ever asked, but which we are now prepared to answer in O(n) time with snapshot acceleration.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

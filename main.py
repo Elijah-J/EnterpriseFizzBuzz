@@ -43,6 +43,7 @@ from middleware import (
 from models import AuthContext, EvaluationStrategy, FizzBuzzRole, OutputFormat
 from observers import ConsoleObserver, EventBus, StatisticsObserver
 from rules_engine import RuleEngineFactory
+from event_sourcing import EventSourcingSystem
 from tracing import TraceExporter, TraceRenderer, TracingMiddleware, TracingService
 
 
@@ -172,6 +173,26 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--circuit-status",
         action="store_true",
         help="Display the circuit breaker status dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--event-sourcing",
+        action="store_true",
+        help="Enable Event Sourcing with CQRS for append-only FizzBuzz audit logging",
+    )
+
+    parser.add_argument(
+        "--replay",
+        action="store_true",
+        help="Replay all events from the event store to rebuild projections",
+    )
+
+    parser.add_argument(
+        "--temporal-query",
+        type=int,
+        metavar="SEQ",
+        default=None,
+        help="Reconstruct FizzBuzz state at a specific event sequence number",
     )
 
     parser.add_argument(
@@ -406,6 +427,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
         rbac_active = True
 
+    # Event Sourcing / CQRS setup
+    es_system = None
+    es_middleware = None
+    if args.event_sourcing:
+        es_system = EventSourcingSystem(
+            snapshot_interval=config.event_sourcing_snapshot_interval,
+        )
+        es_middleware = es_system.create_middleware()
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
@@ -437,6 +467,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add translation middleware if i18n is active
     if locale_mgr is not None:
         builder.with_middleware(TranslationMiddleware(locale_manager=locale_mgr))
+
+    if es_middleware is not None:
+        builder.with_middleware(es_middleware)
 
     if cb_middleware is not None:
         builder.with_middleware(cb_middleware)
@@ -490,6 +523,33 @@ def main(argv: Optional[list[str]] = None) -> int:
             for trace in completed_traces:
                 print(TraceRenderer.render_waterfall(trace))
             print(TraceRenderer.render_summary(completed_traces))
+
+    # Event Sourcing summary and temporal queries
+    if es_system is not None:
+        print(es_system.render_summary())
+
+        if args.replay:
+            replay_result = es_system.replay_events()
+            print(f"  Replayed {replay_result['replayed_events']} events.")
+            print(f"  Statistics after replay: {replay_result['statistics']}")
+            print()
+
+        if args.temporal_query is not None:
+            temporal_state = es_system.temporal_engine.query_at_sequence(
+                args.temporal_query
+            )
+            print("  +===========================================================+")
+            print("  |             TEMPORAL QUERY RESULT                          |")
+            print("  +===========================================================+")
+            print(f"  |  As-of sequence    : {args.temporal_query:<37}|")
+            print(f"  |  Events processed  : {temporal_state['events_processed']:<37}|")
+            print(f"  |  Evaluations       : {temporal_state['total_evaluations']:<37}|")
+            print(f"  |  Fizz Count        : {temporal_state['fizz_count']:<37}|")
+            print(f"  |  Buzz Count        : {temporal_state['buzz_count']:<37}|")
+            print(f"  |  FizzBuzz Count    : {temporal_state['fizzbuzz_count']:<37}|")
+            print(f"  |  Plain Count       : {temporal_state['plain_count']:<37}|")
+            print("  +===========================================================+")
+            print()
 
     if blockchain_observer is not None:
         print(blockchain_observer.get_blockchain().get_chain_summary())

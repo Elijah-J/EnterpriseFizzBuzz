@@ -91,6 +91,20 @@ class EventType(Enum):
     TOKEN_VALIDATED = auto()
     TOKEN_VALIDATION_FAILED = auto()
 
+    # Event Sourcing / CQRS events
+    ES_NUMBER_RECEIVED = auto()
+    ES_DIVISIBILITY_CHECKED = auto()
+    ES_RULE_MATCHED = auto()
+    ES_LABEL_ASSIGNED = auto()
+    ES_EVALUATION_COMPLETED = auto()
+    ES_SNAPSHOT_TAKEN = auto()
+    ES_COMMAND_DISPATCHED = auto()
+    ES_COMMAND_HANDLED = auto()
+    ES_QUERY_DISPATCHED = auto()
+    ES_PROJECTION_UPDATED = auto()
+    ES_EVENT_REPLAYED = auto()
+    ES_TEMPORAL_QUERY_EXECUTED = auto()
+
 
 @dataclass(frozen=True)
 class Permission:
