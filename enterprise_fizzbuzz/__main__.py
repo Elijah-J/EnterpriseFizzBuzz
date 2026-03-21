@@ -64,6 +64,7 @@ from enterprise_fizzbuzz.infrastructure.middleware import (
 )
 from enterprise_fizzbuzz.domain.models import AuthContext, EvaluationStrategy, FizzBuzzRole, OutputFormat
 from enterprise_fizzbuzz.infrastructure.observers import ConsoleObserver, EventBus, StatisticsObserver
+from enterprise_fizzbuzz.infrastructure.adapters.strategy_adapters import StrategyAdapterFactory
 from enterprise_fizzbuzz.infrastructure.rules_engine import RuleEngineFactory
 from enterprise_fizzbuzz.infrastructure.event_sourcing import EventSourcingSystem
 from enterprise_fizzbuzz.infrastructure.sla import (
@@ -918,11 +919,14 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # Create rule engine via factory (the ACL wraps this in an adapter below)
+    rule_engine = RuleEngineFactory.create(strategy)
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
         .with_event_bus(event_bus)
-        .with_rule_engine(RuleEngineFactory.create(strategy))
+        .with_rule_engine(rule_engine)
         .with_output_format(output_format)
         .with_locale_manager(locale_mgr)
         .with_default_middleware()
@@ -974,6 +978,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         builder.with_middleware(flag_middleware)
 
     service = builder.build()
+
+    # Wire up the Anti-Corruption Layer strategy adapter.
+    # This is done after build() because the adapter needs the resolved
+    # rules list, which is only available on the built service.
+    # The ACL wraps the rule engine in a strategy adapter that translates
+    # raw FizzBuzzResults into clean EvaluationResults and back again,
+    # because one layer of abstraction is never enough.
+    strategy_adapter = StrategyAdapterFactory.create(
+        strategy=strategy,
+        rules=service._rules,
+        event_bus=event_bus,
+        decision_threshold=config.ml_decision_threshold,
+        ambiguity_margin=config.ml_ambiguity_margin,
+        enable_disagreement_tracking=config.ml_enable_disagreement_tracking,
+    )
+    service._strategy_port = strategy_adapter
 
     # Inject the Wuzz rule when feature flags are active
     if flag_store is not None:

@@ -72,6 +72,25 @@ class OutputFormat(Enum):
     CSV = auto()
 
 
+class FizzBuzzClassification(Enum):
+    """Canonical classification of a FizzBuzz evaluation result.
+
+    Provides a strongly-typed enum for the four possible outcomes of
+    FizzBuzz evaluation, because comparing strings like "Fizz" and
+    "FizzBuzz" is the kind of untyped barbarism that leads to
+    production incidents and existential dread.
+
+    The Anti-Corruption Layer maps raw engine outputs to these values,
+    ensuring that downstream consumers never have to parse concatenated
+    rule labels like cavemen.
+    """
+
+    FIZZ = auto()
+    BUZZ = auto()
+    FIZZBUZZ = auto()
+    PLAIN = auto()
+
+
 class EvaluationStrategy(Enum):
     """Available strategies for FizzBuzz rule evaluation."""
 
@@ -161,6 +180,10 @@ class EventType(Enum):
     SLA_ALERT_RESOLVED = auto()
     SLA_ERROR_BUDGET_UPDATED = auto()
     SLA_ERROR_BUDGET_EXHAUSTED = auto()
+
+    # Anti-Corruption Layer events
+    CLASSIFICATION_AMBIGUITY = auto()
+    STRATEGY_DISAGREEMENT = auto()
 
     # Cache events
     CACHE_HIT = auto()
@@ -324,6 +347,29 @@ class FizzBuzzResult:
     @property
     def is_plain_number(self) -> bool:
         return len(self.matched_rules) == 0
+
+
+@dataclass(frozen=True)
+class EvaluationResult:
+    """The canonical, strategy-agnostic outcome of a FizzBuzz evaluation.
+
+    This is the Anti-Corruption Layer's lingua franca — a clean,
+    frozen representation of what a number "is" according to whichever
+    evaluation strategy had the privilege of judging it. By decoupling
+    classification from the raw engine output, we ensure that the
+    domain model remains blissfully ignorant of whether the answer
+    came from modulo arithmetic, a neural network, or a Magic 8-Ball.
+
+    Attributes:
+        number: The input number that was evaluated.
+        classification: The canonical FizzBuzz classification.
+        strategy_name: The strategy that produced this result, for
+            audit trails and inter-strategy blame assignment.
+    """
+
+    number: int
+    classification: FizzBuzzClassification
+    strategy_name: str
 
 
 @dataclass

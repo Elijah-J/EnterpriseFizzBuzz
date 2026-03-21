@@ -18,7 +18,43 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from enterprise_fizzbuzz.domain.models import FizzBuzzResult
+    from enterprise_fizzbuzz.domain.models import EvaluationResult, FizzBuzzResult
+
+
+class StrategyPort(ABC):
+    """Abstract port for FizzBuzz evaluation strategies.
+
+    The Anti-Corruption Layer's primary abstraction — a clean interface
+    that hides the grotesque implementation details of whichever
+    evaluation engine lurks beneath. Whether it's a simple modulo
+    check, a Chain of Responsibility with seventeen links, or a
+    neural network that took longer to train than it would have taken
+    to just write ``n % 3``, this port presents a uniform facade.
+
+    Every strategy adapter must implement this port, because without
+    a common interface, the domain model would be contaminated by
+    engine-specific concerns, and that would violate the sacred
+    principles of hexagonal architecture.
+    """
+
+    @abstractmethod
+    def classify(self, number: int) -> EvaluationResult:
+        """Classify a number according to this strategy.
+
+        Returns a frozen EvaluationResult containing the canonical
+        classification and the strategy name for traceability.
+        """
+        ...
+
+    @abstractmethod
+    def get_strategy_name(self) -> str:
+        """Return a human-readable name for this strategy.
+
+        Used in logging, dashboards, disagreement reports, and
+        passive-aggressive commit messages about why the ML strategy
+        is slower than a for-loop.
+        """
+        ...
 
 
 class AbstractRepository(ABC):

@@ -22,7 +22,7 @@ from enterprise_fizzbuzz.infrastructure.config import ConfigurationManager
 from enterprise_fizzbuzz.domain.exceptions import ChaosInducedFizzBuzzError, InvalidRangeError, ServiceNotInitializedError
 from enterprise_fizzbuzz.application.factory import CachingRuleFactory, ConfigurableRuleFactory, StandardRuleFactory
 from enterprise_fizzbuzz.infrastructure.formatters import FormatterFactory
-from enterprise_fizzbuzz.application.ports import AbstractUnitOfWork
+from enterprise_fizzbuzz.application.ports import AbstractUnitOfWork, StrategyPort
 from enterprise_fizzbuzz.domain.interfaces import IEventBus, IFormatter, IMiddleware, IRule, IRuleEngine, IRuleFactory
 from enterprise_fizzbuzz.infrastructure.middleware import (
     LoggingMiddleware,
@@ -33,10 +33,13 @@ from enterprise_fizzbuzz.infrastructure.middleware import (
 from enterprise_fizzbuzz.domain.models import (
     Event,
     EventType,
+    FizzBuzzClassification,
     FizzBuzzResult,
     FizzBuzzSessionSummary,
     OutputFormat,
     ProcessingContext,
+    RuleDefinition,
+    RuleMatch,
 )
 from enterprise_fizzbuzz.infrastructure.observers import ConsoleObserver, EventBus, StatisticsObserver
 from enterprise_fizzbuzz.infrastructure.plugins import PluginRegistry
@@ -119,6 +122,7 @@ class FizzBuzzService:
         formatter: IFormatter,
         rules: list[IRule],
         unit_of_work: Optional[AbstractUnitOfWork] = None,
+        strategy_port: Optional[StrategyPort] = None,
     ) -> None:
         self._rule_engine = rule_engine
         self._rule_factory = rule_factory
@@ -127,6 +131,7 @@ class FizzBuzzService:
         self._formatter = formatter
         self._rules = rules
         self._unit_of_work = unit_of_work
+        self._strategy_port = strategy_port
         self._last_summary: Optional[FizzBuzzSessionSummary] = None
         self._initialized = True
 
@@ -175,7 +180,17 @@ class FizzBuzzService:
                         r for r in self._rules
                         if r.get_definition().label not in disabled
                     ]
-                result = self._rule_engine.evaluate(ctx.number, active_rules)
+
+                if self._strategy_port is not None:
+                    # Anti-Corruption Layer path: use the strategy adapter
+                    # to classify, then convert back to FizzBuzzResult for
+                    # the middleware pipeline (because FizzBuzzResult is the
+                    # currency of the realm, and the ACL must respect that).
+                    eval_result = self._strategy_port.classify(ctx.number)
+                    result = self._evaluation_result_to_fizzbuzz_result(eval_result)
+                else:
+                    result = self._rule_engine.evaluate(ctx.number, active_rules)
+
                 ctx.results.append(result)
                 self._emit_result_events(result)
                 return ctx
@@ -236,6 +251,59 @@ class FizzBuzzService:
         total_elapsed_ms = (time.perf_counter_ns() - total_start) / 1_000_000
         self._build_summary(results, session_id, total_elapsed_ms)
         return results
+
+    @staticmethod
+    def _evaluation_result_to_fizzbuzz_result(
+        eval_result: "EvaluationResult",
+    ) -> FizzBuzzResult:
+        """Convert an EvaluationResult back to a FizzBuzzResult.
+
+        The middleware pipeline speaks FizzBuzzResult, and the ACL
+        speaks EvaluationResult. This method is the diplomatic
+        translator between the two, reconstructing the matched_rules
+        and output string that downstream consumers expect.
+
+        This is the price we pay for architectural purity: an extra
+        conversion step that effectively undoes the work the adapter
+        just did. But at least the domain model stays clean.
+        """
+        from enterprise_fizzbuzz.domain.models import EvaluationResult as _ER
+
+        classification = eval_result.classification
+        label_map = {
+            FizzBuzzClassification.FIZZ: "Fizz",
+            FizzBuzzClassification.BUZZ: "Buzz",
+            FizzBuzzClassification.FIZZBUZZ: "FizzBuzz",
+            FizzBuzzClassification.PLAIN: str(eval_result.number),
+        }
+        output = label_map[classification]
+
+        # Reconstruct matched_rules from classification
+        matched_rules: list[RuleMatch] = []
+        if classification in (FizzBuzzClassification.FIZZ, FizzBuzzClassification.FIZZBUZZ):
+            matched_rules.append(
+                RuleMatch(
+                    rule=RuleDefinition(name="FizzRule", divisor=3, label="Fizz", priority=1),
+                    number=eval_result.number,
+                )
+            )
+        if classification in (FizzBuzzClassification.BUZZ, FizzBuzzClassification.FIZZBUZZ):
+            matched_rules.append(
+                RuleMatch(
+                    rule=RuleDefinition(name="BuzzRule", divisor=5, label="Buzz", priority=2),
+                    number=eval_result.number,
+                )
+            )
+
+        return FizzBuzzResult(
+            number=eval_result.number,
+            output=output,
+            matched_rules=matched_rules,
+            metadata={
+                "acl_strategy": eval_result.strategy_name,
+                "acl_classification": classification.name,
+            },
+        )
 
     @traced()
     def _emit_result_events(self, result: FizzBuzzResult) -> None:
@@ -335,6 +403,7 @@ class FizzBuzzServiceBuilder:
         self._locale_manager: object = None
         self._auth_context: object = None
         self._unit_of_work: Optional[AbstractUnitOfWork] = None
+        self._strategy_port: Optional[StrategyPort] = None
 
     def with_config(self, config: ConfigurationManager) -> FizzBuzzServiceBuilder:
         """Inject configuration manager."""
@@ -399,6 +468,22 @@ class FizzBuzzServiceBuilder:
         honestly, it was doing just fine.
         """
         self._unit_of_work = uow
+        return self
+
+    def with_strategy_port(self, port: StrategyPort) -> FizzBuzzServiceBuilder:
+        """Inject a Strategy Port (Anti-Corruption Layer adapter).
+
+        When a strategy port is provided, the service will route
+        evaluation through the ACL adapter instead of calling the
+        rule engine directly. The adapter classifies numbers using
+        the clean EvaluationResult type, which is then converted
+        back to FizzBuzzResult for the middleware pipeline.
+
+        This is the hexagonal architecture equivalent of taking the
+        scenic route: longer, more abstracted, but architecturally
+        pure and pleasing to DDD purists everywhere.
+        """
+        self._strategy_port = port
         return self
 
     def with_auth_context(self, auth_context: object) -> FizzBuzzServiceBuilder:
@@ -486,4 +571,5 @@ class FizzBuzzServiceBuilder:
             formatter=formatter,
             rules=rules,
             unit_of_work=self._unit_of_work,
+            strategy_port=self._strategy_port,
         )

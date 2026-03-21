@@ -32,11 +32,11 @@ for i in range(1, 101):
 
 ## This Solution
 
-**28,100+ lines** across **72 files** with **967 unit tests** and **81 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**30,000+ lines** across **75 files** with **1,011 unit tests** and **98 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
-The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 28,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
+The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 30,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
 
 ### The Dependency Rule
 
@@ -80,19 +80,20 @@ EnterpriseFizzBuzz/
 │   ├── domain/                      # THE INNER CIRCLE (no outward dependencies)
 │   │   ├── __init__.py
 │   │   ├── models.py                # Dataclasses, enums, and domain models
-│   │   ├── exceptions.py            # Custom exception hierarchy (77 exception classes)
+│   │   ├── exceptions.py            # Custom exception hierarchy (98 exception classes)
 │   │   └── interfaces.py            # Abstract base classes for everything
 │   │
 │   ├── application/                 # USE CASES (depends only on domain)
 │   │   ├── __init__.py
 │   │   ├── fizzbuzz_service.py      # Service orchestration with Builder pattern
 │   │   ├── factory.py               # Abstract Factory + Caching Decorator
-│   │   └── ports.py                 # Repository & Unit of Work abstract contracts (hexagonal ports)
+│   │   └── ports.py                 # Repository, Unit of Work, and Strategy abstract contracts (hexagonal ports)
 │   │
 │   └── infrastructure/              # ADAPTERS & FRAMEWORKS (the outer ring)
 │       ├── __init__.py
-│       ├── adapters/                # Port adapters (future expansion surface)
-│       │   └── __init__.py
+│       ├── adapters/                # Port adapters (Anti-Corruption Layer lives here)
+│       │   ├── __init__.py
+│       │   └── strategy_adapters.py # ACL: translates engine output into clean domain classifications (~410 lines)
 │       ├── config.py                # Singleton configuration manager with env var overrides
 │       ├── formatters.py            # Four output formatters
 │       ├── middleware.py            # Composable middleware pipeline
@@ -149,6 +150,7 @@ EnterpriseFizzBuzz/
     ├── test_cache.py                # 60 caching & eviction policy tests
     ├── test_migrations.py           # 56 database migration & schema management tests
     ├── test_repository.py           # 40 repository pattern & unit of work tests (3 backends)
+    ├── test_acl.py                  # 44 Anti-Corruption Layer & strategy adapter tests
     └── test_architecture.py         # AST-based import linter enforcing the Dependency Rule
 ```
 
@@ -220,6 +222,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Seed Data | `migrations.py` | The FizzBuzz engine seeds the FizzBuzz database with FizzBuzz results -- the ouroboros of enterprise architecture |
 | Repository Pattern | `persistence/` | Abstract data access layer with three interchangeable backends, because storing FizzBuzz results in a plain list was architecturally unconscionable |
 | Unit of Work | `persistence/`, `ports.py` | Transactional boundaries around repository operations with automatic rollback, because even FizzBuzz results deserve ACID guarantees (well, ACI at least) |
+| Anti-Corruption Layer | `strategy_adapters.py` | Four strategy adapters that translate raw engine output (probabilistic ML floats, chain-of-responsibility results, async evaluations) into clean, canonical `FizzBuzzClassification` domain enums -- because allowing ML confidence scores to leak into the domain model would make Eric Evans weep into his copy of the Blue Book |
+| Strategy Adapter | `strategy_adapters.py`, `ports.py` | Each evaluation engine gets its own adapter implementing the `StrategyPort` contract, with a factory for wiring. The ML adapter adds ambiguity detection, cross-strategy disagreement tracking, and event emission -- because even the simplest modulo result deserves observability at the translation boundary |
 | Ports & Adapters (Persistence) | `ports.py`, `persistence/` | Hexagonal architecture ports for repository and UoW contracts, with three concrete adapter implementations -- ensuring the domain remains blissfully ignorant of whether its results are stored in RAM, SQLite, or artisanal JSON files |
 
 ## Features
@@ -243,7 +247,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **In-Memory Caching with Cache Invalidation Protocol** - Four eviction policies (LRU, LFU, FIFO, DramaticRandom), MESI cache coherence state tracking (pointless but thorough), satirical eulogies for evicted entries, a cache warming system that pre-populates results (thereby defeating the entire purpose of caching), TTL-based expiration, thread-safe operations, and an ASCII statistics dashboard -- because the result of `15 % 3` might change between invocations, and we need to be prepared
 - **Database Migration Framework** - Five reversible migrations for in-memory schema management, with dependency tracking, fake SQL logging, ASCII ER diagram visualization, a migration status dashboard, and seed data generation that uses the FizzBuzz engine to populate the FizzBuzz database (the ouroboros pattern) -- all for data structures that exist exclusively in RAM and will vanish the moment you press Ctrl+C. This is by design.
 - **Repository Pattern / Unit of Work** - Three interchangeable persistence backends (in-memory, SQLite, filesystem) with transactional Unit of Work semantics, abstract hexagonal ports, and automatic rollback -- because FizzBuzz results that aren't durably persisted with ACID guarantees are just numbers shouted into the void
-- **Custom Exception Hierarchy** - 81 exception classes for every conceivable FizzBuzz failure mode
+- **Anti-Corruption Layer (ACL)** - Four strategy adapters forming a protective boundary between the evaluation engines and the domain model, with ML ambiguity detection (configurable decision threshold and margin), cross-strategy disagreement tracking, and domain event emission -- because allowing a neural network's probabilistic confidence scores to contaminate the sacred `FizzBuzzClassification` enum would be an act of architectural heresy
+- **Custom Exception Hierarchy** - 98 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -1196,6 +1201,54 @@ with uow:
 | Lines of code | ~700 (across 4 modules + ports) |
 | Actual need for 3 backends | 0 (but the architecture is ready for horizontal scaling) |
 
+## Anti-Corruption Layer Architecture
+
+The Anti-Corruption Layer (ACL) implements a protective translation boundary between the FizzBuzz evaluation engines and the domain model -- because the ML engine's probabilistic confidence floats must never be permitted to contaminate the pristine `FizzBuzzClassification` enum. When Eric Evans described the ACL in *Domain-Driven Design*, he was thinking about legacy system integration. We are thinking about modulo arithmetic. The architectural gravity is equivalent.
+
+Each of the four evaluation strategies (Standard, Chain of Responsibility, Parallel Async, Machine Learning) gets its own adapter class implementing the `StrategyPort` contract. The adapters accept raw `FizzBuzzResult` objects (which contain matched rules, metadata, and ML confidence scores) and translate them into clean, canonical `EvaluationResult` value objects that the domain layer can consume without existential dread.
+
+```
+    ENGINE SIDE (Infrastructure)              DOMAIN SIDE (Application/Domain)
+    ============================              ================================
+
+    +---------------------+                   +---------------------+
+    | StandardRuleEngine  |---+               |                     |
+    +---------------------+   |               |  EvaluationResult   |
+                              |               |  {                  |
+    +---------------------+   |  +---------+  |    number: int      |
+    | ChainOfResp Engine  |---+->|  A C L  |->|    classification:  |
+    +---------------------+   |  | Adapters|  |      FizzBuzzClass  |
+                              |  +---------+  |    strategy_name:   |
+    +---------------------+   |       |       |      str            |
+    | ParallelAsyncEngine |---+       |       |  }                  |
+    +---------------------+   |       v       |                     |
+                              | ambiguity     +---------------------+
+    +---------------------+   | detection,
+    | ML Engine           |---+ disagreement        Domain Model
+    | (confidence floats) |     tracking,           (clean, canonical,
+    +---------------------+     event emission       float-free)
+```
+
+The ML adapter is where the ACL earns its keep. While the Standard, Chain, and Async adapters perform straightforward `FizzBuzzResult` -> `FizzBuzzClassification` translation, the ML adapter must also:
+
+1. **Detect ambiguous classifications** -- if any rule's ML confidence score falls within a configurable margin of the decision threshold (default: 0.5 +/- 0.1), the classification is flagged and an event is emitted. In practice this never happens, because cyclical feature encoding makes divisibility trivially separable, but the enterprise demands vigilance
+2. **Track cross-strategy disagreements** -- optionally compares ML predictions against a deterministic reference strategy (StandardRuleEngine). If they disagree, an event is published and a warning is logged. Given the ML engine's 100% accuracy, this is purely aspirational governance
+3. **Emit domain events** -- ambiguity detections and strategy disagreements are published via the `IEventBus` for downstream observability, because every edge case in the translation boundary deserves a paper trail
+
+The `StrategyAdapterFactory` maps `EvaluationStrategy` enum values to the correct adapter class, handling lazy engine construction and optional event bus / reference strategy wiring. This factory exists because manually selecting the right adapter for each strategy would require the caller to know implementation details -- and that kind of coupling is exactly what the ACL was designed to prevent.
+
+| Spec | Value |
+|------|-------|
+| Strategy adapters | 4 (Standard, Chain, Async, ML) |
+| Port contract | `StrategyPort` (abstract `classify()` + `get_strategy_name()`) |
+| ML decision threshold | 0.5 (configurable) |
+| ML ambiguity margin | 0.1 (configurable) |
+| Cross-strategy tracking | Optional (reference strategy via factory) |
+| Domain events emitted | 2 types (CLASSIFICATION_AMBIGUITY, STRATEGY_DISAGREEMENT) |
+| Factory | `StrategyAdapterFactory.create()` with lazy engine imports |
+| Lines of code | ~410 (all four adapters in one file, because even this project has limits) |
+| Eric Evans tears shed | 0 (the Blue Book is safe) |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -1313,7 +1366,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 967 tests
+# Run all 1,011 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -1330,7 +1383,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 967 tests, 81 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, and nanosecond timing. You tell me.
+A: It has 1,011 tests, 98 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -1370,6 +1423,9 @@ A: Because schema management is a cornerstone of any production system, and the 
 
 **Q: Why does FizzBuzz need three storage backends?**
 A: Because the ability to persist FizzBuzz results is a fundamental enterprise requirement, and offering only *one* way to do it would be an architectural monoculture -- a single point of failure in the storage strategy layer. The in-memory backend stores results in a Python dict that evaporates when the process exits, providing the fastest possible persistence at the cost of not actually persisting anything. The SQLite backend uses a real relational database, which is the first time this codebase has touched an actual database, and everyone is very proud. The filesystem backend writes each result as an individually serialized JSON file, because there is something deeply satisfying about `ls`-ing a directory and seeing 100 FizzBuzz results staring back at you, each in its own artisanal file. The Unit of Work pattern wraps all three backends in transactional semantics with automatic rollback, because even storing "Fizz" in a dict deserves ACID guarantees. The abstract ports live in the application layer per hexagonal architecture convention, ensuring that the domain layer remains blissfully ignorant of whether its modulo results are stored in RAM, on disk, or in a SQLite database that will outlive the heat death of the universe. Three backends. Zero business justification. Peak enterprise.
+
+**Q: Why does FizzBuzz need an Anti-Corruption Layer?**
+A: Because the ML engine returns probabilistic confidence scores -- floating-point numbers between 0 and 1 that represent the neural network's degree of belief that a number is divisible by 3. Allowing those floats to leak directly into the domain model would be a violation of architectural purity so severe that it would make Eric Evans weep into his copy of the Blue Book. The ACL translates the engine's messy, strategy-specific output into clean `FizzBuzzClassification` enums that the domain layer can consume without philosophical contamination. The ML adapter also detects ambiguous classifications (when confidence hovers near the decision boundary) and tracks disagreements between the ML engine and a deterministic reference strategy -- which, given the neural network's 100% accuracy, should never happen, but governance demands we monitor for it anyway. Four adapters, one per strategy, all implementing the same `StrategyPort` contract, all doing essentially the same thing with varying degrees of paranoia. The factory wires everything together so the caller never has to know which engine class corresponds to which strategy, because that kind of coupling is exactly what the ACL was designed to prevent. Eric Evans would be proud. Or confused. Possibly both.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
