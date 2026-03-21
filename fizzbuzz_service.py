@@ -285,6 +285,8 @@ class FizzBuzzServiceBuilder:
         self._additional_rules: list[IRule] = []
         self._custom_middleware: list[IMiddleware] = []
         self._output_format: Optional[OutputFormat] = None
+        self._locale: Optional[str] = None
+        self._locale_manager: object = None
 
     def with_config(self, config: ConfigurationManager) -> FizzBuzzServiceBuilder:
         """Inject configuration manager."""
@@ -319,6 +321,24 @@ class FizzBuzzServiceBuilder:
     def with_middleware(self, middleware: IMiddleware) -> FizzBuzzServiceBuilder:
         """Add a custom middleware component."""
         self._custom_middleware.append(middleware)
+        return self
+
+    def with_locale(self, locale: str) -> FizzBuzzServiceBuilder:
+        """Set the target locale for internationalized output (legacy API).
+
+        Maintained for backwards compatibility. Prefer with_locale_manager()
+        for full i18n support with the new LocaleManager singleton.
+        """
+        self._locale = locale
+        return self
+
+    def with_locale_manager(self, manager: object) -> FizzBuzzServiceBuilder:
+        """Inject the LocaleManager for i18n-aware middleware.
+
+        The locale manager is stored and made available for middleware
+        components that need access to translations during pipeline execution.
+        """
+        self._locale_manager = manager
         return self
 
     def with_default_middleware(self) -> FizzBuzzServiceBuilder:

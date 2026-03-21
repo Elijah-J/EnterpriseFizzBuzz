@@ -20,6 +20,7 @@ import asyncio
 import logging
 import sys
 import time
+from pathlib import Path
 from typing import Optional
 
 from blockchain import BlockchainObserver, FizzBuzzBlockchain
@@ -31,7 +32,13 @@ from circuit_breaker import (
 from config import ConfigurationManager, _SingletonMeta
 from fizzbuzz_service import FizzBuzzServiceBuilder
 from formatters import FormatterFactory
-from middleware import LoggingMiddleware, TimingMiddleware, ValidationMiddleware
+from i18n import LocaleManager
+from middleware import (
+    LoggingMiddleware,
+    TimingMiddleware,
+    TranslationMiddleware,
+    ValidationMiddleware,
+)
 from models import EvaluationStrategy, OutputFormat
 from observers import ConsoleObserver, EventBus, StatisticsObserver
 from rules_engine import RuleEngineFactory
@@ -140,6 +147,20 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--locale",
+        type=str,
+        metavar="LOCALE",
+        default=None,
+        help="Locale for internationalized output (en, de, fr, ja, tlh)",
+    )
+
+    parser.add_argument(
+        "--list-locales",
+        action="store_true",
+        help="Display available locales and exit",
+    )
+
+    parser.add_argument(
         "--circuit-breaker",
         action="store_true",
         help="Enable circuit breaker with exponential backoff for fault-tolerant FizzBuzz evaluation",
@@ -244,24 +265,72 @@ def main(argv: Optional[list[str]] = None) -> int:
             cb_middleware.circuit_breaker.name,
         )
 
+    # Internationalization (i18n) setup
+    locale_mgr = None
+    locale = args.locale or config.i18n_locale
+
+    if config.i18n_enabled:
+        LocaleManager.reset()
+        locale_mgr = LocaleManager()
+        locale_dir = str(Path(config.i18n_locale_directory))
+        locale_mgr.load_all(locale_dir)
+        locale_mgr.set_strict_mode(config.i18n_strict_mode)
+
+        # Set the active locale (CLI overrides config)
+        if locale in locale_mgr.get_available_locales():
+            locale_mgr.set_locale(locale)
+        elif locale != "en":
+            # Locale not available, warn and fall back to English
+            print(f"  Warning: locale '{locale}' not available, using 'en'")
+            locale = "en"
+
+    # Handle --list-locales
+    if args.list_locales:
+        if locale_mgr is not None:
+            info = locale_mgr.get_locale_info()
+            print("\n  Available Locales:")
+            print("  " + "-" * 60)
+            print(f"  {'Code':<8} {'Name':<20} {'Fallback':<12} {'Keys':<8} {'Plural Rule'}")
+            print("  " + "-" * 60)
+            for loc in info:
+                print(
+                    f"  {loc['code']:<8} {loc['name']:<20} {loc['fallback']:<12} "
+                    f"{loc['keys']:<8} {loc['plural_rule']}"
+                )
+            print("  " + "-" * 60)
+            print()
+        else:
+            print("\n  i18n is disabled. Enable it in config.yaml.\n")
+        return 0
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
         .with_event_bus(event_bus)
         .with_rule_engine(RuleEngineFactory.create(strategy))
         .with_output_format(output_format)
+        .with_locale_manager(locale_mgr)
         .with_default_middleware()
     )
+
+    # Add translation middleware if i18n is active
+    if locale_mgr is not None:
+        builder.with_middleware(TranslationMiddleware(locale_manager=locale_mgr))
 
     if cb_middleware is not None:
         builder.with_middleware(cb_middleware)
 
     service = builder.build()
 
-    # Execute
-    print(f"  Evaluating FizzBuzz for range [{start}, {end}]...")
-    print(f"  Strategy: {strategy.name}")
-    print(f"  Output Format: {output_format.name}")
+    # Execute -- use locale manager for status messages if available
+    if locale_mgr is not None:
+        print(f"  {locale_mgr.t('messages.evaluating', start=start, end=end)}")
+        print(f"  {locale_mgr.t('messages.strategy', name=strategy.name)}")
+        print(f"  {locale_mgr.t('messages.output_format', name=output_format.name)}")
+    else:
+        print(f"  Evaluating FizzBuzz for range [{start}, {end}]...")
+        print(f"  Strategy: {strategy.name}")
+        print(f"  Output Format: {output_format.name}")
     print()
 
     boot_time = time.perf_counter()
@@ -281,7 +350,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     if not args.no_summary:
         summary_text = service.format_summary()
         print(summary_text)
-        print(f"\n  Wall clock time: {wall_time_ms:.2f}ms")
+        if locale_mgr is not None:
+            print(f"\n  {locale_mgr.t('messages.wall_clock', time=f'{wall_time_ms:.2f}')}")
+        else:
+            print(f"\n  Wall clock time: {wall_time_ms:.2f}ms")
 
     if blockchain_observer is not None:
         print(blockchain_observer.get_blockchain().get_chain_summary())
@@ -289,7 +361,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.circuit_status and cb_middleware is not None:
         print(CircuitBreakerDashboard.render(cb_middleware.circuit_breaker))
     elif args.circuit_status:
-        print("\n  Circuit breaker not enabled. Use --circuit-breaker to enable.\n")
+        if locale_mgr is not None:
+            print(f"\n  {locale_mgr.t('messages.circuit_breaker_not_enabled')}\n")
+        else:
+            print("\n  Circuit breaker not enabled. Use --circuit-breaker to enable.\n")
 
     return 0
 

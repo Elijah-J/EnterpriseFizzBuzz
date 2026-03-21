@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime, timezone
-from typing import Callable
+from typing import Any, Callable
 
 from interfaces import IMiddleware
 from models import ProcessingContext
@@ -140,6 +140,70 @@ class ValidationMiddleware(IMiddleware):
 
     def get_priority(self) -> int:
         return 0
+
+
+class TranslationMiddleware(IMiddleware):
+    """Middleware that translates FizzBuzz result labels to the target locale.
+
+    Intercepts results after rule evaluation and replaces English labels
+    (Fizz, Buzz, FizzBuzz) with their locale-appropriate equivalents.
+    The original output is preserved in metadata["original_output"] for
+    audit purposes, because enterprise compliance demands full traceability
+    of every label mutation across the entire processing pipeline.
+
+    Priority 50 ensures this runs after all other middleware, so it
+    translates the final output rather than an intermediate result.
+    """
+
+    # The canonical English labels that we know how to translate
+    _TRANSLATABLE_LABELS = {"Fizz", "Buzz", "FizzBuzz"}
+
+    def __init__(self, locale_manager: Any = None) -> None:
+        self._locale_manager = locale_manager
+
+    def _get_locale_manager(self) -> Any:
+        """Lazily resolve the locale manager singleton.
+
+        We defer import to avoid circular dependencies, because in
+        enterprise software, every import is a potential dependency cycle.
+        """
+        if self._locale_manager is not None:
+            return self._locale_manager
+        from i18n import LocaleManager
+        return LocaleManager()
+
+    def process(
+        self,
+        context: ProcessingContext,
+        next_handler: Callable[[ProcessingContext], ProcessingContext],
+    ) -> ProcessingContext:
+        # Let the rest of the pipeline run first
+        result = next_handler(context)
+
+        if not result.results:
+            return result
+
+        latest = result.results[-1]
+        locale_mgr = self._get_locale_manager()
+
+        # Preserve the original English output for the audit trail
+        result.metadata["original_output"] = latest.output
+        result.metadata["locale"] = locale_mgr.active_locale
+
+        # Only translate recognized labels -- numbers pass through
+        if latest.output in self._TRANSLATABLE_LABELS:
+            translated = locale_mgr.get_label(latest.output)
+            latest.metadata["original_output"] = latest.output
+            latest.metadata["locale"] = locale_mgr.active_locale
+            latest.output = translated
+
+        return result
+
+    def get_name(self) -> str:
+        return "TranslationMiddleware"
+
+    def get_priority(self) -> int:
+        return 50
 
 
 class MiddlewarePipeline:

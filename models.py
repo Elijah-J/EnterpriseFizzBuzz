@@ -150,6 +150,7 @@ class ProcessingContext:
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     cancelled: bool = False
+    locale: str = "en"
 
     def elapsed_ms(self) -> float:
         if self.start_time and self.end_time:

@@ -32,13 +32,13 @@ for i in range(1, 101):
 
 ## This Solution
 
-**6,000+ lines** across **18 files** with **160 unit tests**, because this is an enterprise and we have standards.
+**8,800+ lines** across **21 files** with **257 unit tests**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 14 flags
+├── main.py                  # CLI entry point with 16 flags
 ├── config.yaml              # YAML-based configuration with 9 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
@@ -54,9 +54,17 @@ EnterpriseFizzBuzz/
 ├── fizzbuzz_service.py      # Service orchestration with Builder pattern
 ├── blockchain.py            # Immutable audit ledger with proof-of-work
 ├── circuit_breaker.py       # Circuit breaker with exponential backoff
+├── i18n.py                  # Internationalization subsystem with locale fallback chains
+├── locales/                 # Proprietary .fizztranslation locale files
+│   ├── en.fizztranslation   # English (base locale)
+│   ├── de.fizztranslation   # German (Deutsch)
+│   ├── fr.fizztranslation   # French (Francais)
+│   ├── ja.fizztranslation   # Japanese (日本語)
+│   └── tlh.fizztranslation  # Klingon (tlhIngan Hol)
 └── tests/
-    ├── test_fizzbuzz.py     # 66 comprehensive tests
-    └── test_circuit_breaker.py  # 66 circuit breaker tests
+    ├── test_fizzbuzz.py     # 94 comprehensive tests
+    ├── test_circuit_breaker.py  # 66 circuit breaker tests
+    └── test_i18n.py         # 97 internationalization tests
 ```
 
 ## Design Patterns
@@ -69,15 +77,16 @@ EnterpriseFizzBuzz/
 | Neural Network | `ml_engine.py` | Because modulo was too deterministic |
 | Observer | `observers.py` | FizzBuzz events must be monitored in real-time |
 | Middleware Pipeline | `middleware.py` | Cross-cutting concerns for modulo operations |
-| Singleton | `config.py` | Only one configuration shall rule them all |
+| Singleton | `config.py`, `i18n.py` | Only one configuration (and one locale manager) shall rule them all |
 | Builder | `fizzbuzz_service.py` | Fluent API for assembling the FizzBuzz service |
 | Decorator | `factory.py` | Caching layer around rule factories |
 | Plugin System | `plugins.py` | Third-party FizzBuzz rule extensions |
 | Circuit Breaker | `circuit_breaker.py` | Protecting modulo operations from cascading failure |
 | Sliding Window | `circuit_breaker.py` | Recent failure tracking for trip decisions |
 | Exponential Backoff | `circuit_breaker.py` | Giving arithmetic time to recover from outages |
-| State Machine | `circuit_breaker.py` | Three-state lifecycle for fault tolerance |
+| State Machine | `circuit_breaker.py`, `i18n.py` | Three-state lifecycle for fault tolerance; parser state machine for .fizztranslation files |
 | Dependency Injection | Everywhere | Constructor injection, because globals are evil |
+| Internationalization | `i18n.py`, `locales/` | Five-language locale support with fallback chains, because "Fizz" is not globally understood |
 
 ## Features
 
@@ -90,6 +99,7 @@ EnterpriseFizzBuzz/
 - **Async/Await** - Run FizzBuzz asynchronously, because blocking is for amateurs
 - **Machine Learning Engine** - From-scratch MLP neural network trained via backpropagation to learn `n % 3 == 0`
 - **Circuit Breaker** - Fault-tolerant evaluation with exponential backoff, sliding windows, and an ASCII status dashboard
+- **Internationalization (i18n)** - Full locale support across 5 languages (including Klingon), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine
 - **Custom Exception Hierarchy** - 18 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
@@ -120,6 +130,21 @@ python main.py --circuit-breaker --circuit-status --verbose
 
 # Full enterprise stack: ML + circuit breaker + status dashboard
 python main.py --strategy machine_learning --circuit-breaker --circuit-status --range 1 20
+
+# FizzBuzz auf Deutsch (German locale)
+python main.py --locale de --range 1 20
+
+# FizzBuzz en francais (French locale)
+python main.py --locale fr --format json
+
+# FizzBuzz in Klingon, because global reach means *galactic* reach
+python main.py --locale tlh --range 1 15
+
+# Japanese locale with async execution
+python main.py --locale ja --async --range 1 50
+
+# List all available locales and their metadata
+python main.py --list-locales
 ```
 
 ## CLI Options
@@ -137,6 +162,8 @@ python main.py --strategy machine_learning --circuit-breaker --circuit-status --
 --metadata            Include metadata in output (JSON only)
 --blockchain          Enable blockchain-based immutable audit ledger
 --mining-difficulty N Proof-of-work difficulty (default: 2)
+--locale LOCALE       Locale for internationalized output (en, de, fr, ja, tlh)
+--list-locales        Display available locales and exit
 --circuit-breaker     Enable circuit breaker with exponential backoff
 --circuit-status      Display circuit breaker status dashboard after execution
 ```
@@ -152,6 +179,7 @@ EFP_OUTPUT_FORMAT=json
 EFP_EVALUATION_STRATEGY=parallel_async
 EFP_LOG_LEVEL=DEBUG
 EFP_CIRCUIT_BREAKER_ENABLED=true
+EFP_LOCALE=tlh
 ```
 
 ## Machine Learning Architecture
@@ -196,7 +224,7 @@ The cyclical feature encoding maps the periodic divisibility pattern onto a 2D u
 
 ## Circuit Breaker Architecture
 
-The circuit breaker protects the FizzBuzz evaluation pipeline from cascading failures using a three-state machine with exponential backoff. Because when `n % 3` starts throwing exceptions, you need enterprise-grade fault isolation — not a `try/except`.
+The circuit breaker protects the FizzBuzz evaluation pipeline from cascading failures using a three-state machine with exponential backoff. Because when `n % 3` starts throwing exceptions, you need enterprise-grade fault isolation -- not a `try/except`.
 
 ```
                     success_count >= threshold
@@ -244,12 +272,55 @@ The circuit breaker protects the FizzBuzz evaluation pipeline from cascading fai
 | Thread safety | Full (reentrant lock) |
 | Dashboard | ASCII-art status visualization |
 
-The circuit breaker also monitors ML confidence scores from the neural network strategy. If confidence drops below the threshold, it flags a "degraded FizzBuzz" condition — because technically correct modulo results delivered without mathematical conviction are a reliability concern.
+The circuit breaker also monitors ML confidence scores from the neural network strategy. If confidence drops below the threshold, it flags a "degraded FizzBuzz" condition -- because technically correct modulo results delivered without mathematical conviction are a reliability concern.
+
+## Internationalization Architecture
+
+The i18n subsystem provides a full-featured localization pipeline powered by the proprietary `.fizztranslation` file format -- because YAML, JSON, and TOML were insufficiently bespoke for the task of saying "Fizz" in five languages.
+
+**Key components:**
+- **FizzTranslationParser** - State-machine-driven parser for the `.fizztranslation` format
+- **TranslationCatalog** - Per-locale key-value store with variable interpolation (`${var}` syntax)
+- **PluralizationEngine** - CLDR-inspired plural rules (because "1 Fizzes" is a crime against grammar)
+- **LocaleResolver** - Fallback chain walker for graceful translation degradation
+- **LocaleManager** - Singleton orchestrator tying it all together
+
+### Supported Locales
+
+| Code | Language | Fizz | Buzz | FizzBuzz | Plural Rule | Fallback |
+|------|----------|------|------|----------|-------------|----------|
+| `en` | English | Fizz | Buzz | FizzBuzz | `n != 1` | (none) |
+| `de` | Deutsch | Sprudel | Summen | SprudelSummen | `n != 1` | en |
+| `fr` | Francais | Petillement | Bourdonnement | PetillementBourdonnement | `n > 1` | en |
+| `ja` | Japanese | フィズ | バズ | フィズバズ | `0` (no plural) | en |
+| `tlh` | tlhIngan Hol | ghum | wab | ghumwab | `0` (no plural) | en |
+
+### .fizztranslation File Format
+
+```
+;; Comments start with ;;
+@locale = en
+@name = English
+@fallback = none
+@plural_rule = n != 1
+
+[labels]
+Fizz = Fizz
+
+[plurals]
+Fizz.plural.one = ${count} Fizz
+Fizz.plural.other = ${count} Fizzes
+
+[messages]
+evaluating = Evaluating FizzBuzz for range [${start}, ${end}]...
+```
+
+A purpose-built configuration language with metadata directives, sections, heredoc support, and variable interpolation. It does not compile to WebAssembly. Yet.
 
 ## Testing
 
 ```bash
-# Run all 160 tests
+# Run all 257 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -266,7 +337,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 160 tests, a plugin system, a neural network, a circuit breaker, and nanosecond timing. You tell me.
+A: It has 257 tests, a plugin system, a neural network, a circuit breaker, five-language i18n support, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -281,10 +352,13 @@ A: The platform includes built-in nanosecond-precision timing middleware, so you
 A: Stakeholders requested an "AI-driven solution." 130 trainable parameters and 100% accuracy. The model converges in ~12 epochs, which is about 11 more than necessary.
 
 **Q: Why does FizzBuzz need a circuit breaker?**
-A: When `n % 3` starts failing at scale, you can't just keep retrying and hope arithmetic recovers on its own. The circuit breaker provides graceful degradation with exponential backoff, a sliding window failure tracker, and an ASCII dashboard — because SREs deserve visibility into modulo operator health.
+A: When `n % 3` starts failing at scale, you can't just keep retrying and hope arithmetic recovers on its own. The circuit breaker provides graceful degradation with exponential backoff, a sliding window failure tracker, and an ASCII dashboard -- because SREs deserve visibility into modulo operator health.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
+
+**Q: Why is Klingon a supported locale?**
+A: Enterprise software must serve a global user base. Our stakeholders defined "global" broadly. The Klingon Empire represents a significant untapped market segment, and our compliance team confirmed that the Universal Declaration of FizzBuzz Rights requires support for all spacefaring civilizations. Also, the Klingon word for "FizzBuzz" is `ghumwab`, which is objectively better than the English version.
 
 ## License
 

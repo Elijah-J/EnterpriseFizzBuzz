@@ -170,6 +170,26 @@ class IPlugin(ABC):
         ...
 
 
+class ITranslatable(ABC):
+    """Contract for components that provide translation capabilities.
+
+    Any component wishing to participate in the Enterprise FizzBuzz
+    Platform's internationalization subsystem must implement this
+    interface to ensure consistent locale-aware behavior across the
+    entire evaluation pipeline.
+    """
+
+    @abstractmethod
+    def translate(self, key: str, locale: str, **kwargs: Any) -> str:
+        """Translate a key to the specified locale with optional interpolation."""
+        ...
+
+    @abstractmethod
+    def get_supported_locales(self) -> list[str]:
+        """Return a list of all supported locale identifiers."""
+        ...
+
+
 class IFizzBuzzService(ABC):
     """Top-level contract for the FizzBuzz service."""
 

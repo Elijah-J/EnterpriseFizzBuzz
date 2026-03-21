@@ -1,0 +1,37 @@
+;; Japanese -- Enterprise FizzBuzz Platform
+;; エンタープライズFizzBuzzプラットフォーム
+
+@locale = ja
+@name = Japanese
+@fallback = en
+@plural_rule = 0
+
+[labels]
+Fizz = フィズ
+Buzz = バズ
+FizzBuzz = フィズバズ
+
+[plurals]
+Fizz.plural.other = ${count} フィズ
+Buzz.plural.other = ${count} バズ
+FizzBuzz.plural.other = ${count} フィズバズ
+
+[messages]
+evaluating = 範囲 [${start}, ${end}] のFizzBuzzを評価中...
+strategy = 戦略: ${name}
+output_format = 出力形式: ${name}
+wall_clock = 実時間: ${time}ms
+
+[summary]
+title = FizzBuzzセッション概要
+total_numbers = 合計数
+processing_time = 処理時間
+throughput = スループット
+numbers_per_second = 数/秒
+errors = エラー
+
+[banner]
+subtitle = エンタープライズ版
+
+[status]
+locale = ロケール

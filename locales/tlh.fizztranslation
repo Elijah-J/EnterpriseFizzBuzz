@@ -1,0 +1,37 @@
+;; Klingon (tlhIngan Hol) -- Enterprise FizzBuzz Platform
+;; Heghlu'meH QaQ jajvam! (Today is a good day to FizzBuzz!)
+
+@locale = tlh
+@name = tlhIngan Hol
+@fallback = en
+@plural_rule = 0
+
+[labels]
+Fizz = ghum
+Buzz = wab
+FizzBuzz = ghumwab
+
+[plurals]
+Fizz.plural.other = ${count} ghum
+Buzz.plural.other = ${count} wab
+FizzBuzz.plural.other = ${count} ghumwab
+
+[messages]
+evaluating = FizzBuzz yIqel [${start}, ${end}]...
+strategy = DuH: ${name}
+output_format = ngoq mIw: ${name}
+wall_clock = poH 'ey: ${time}ms
+
+[summary]
+title = FizzBuzz yonmoH ngoQ
+total_numbers = Hoch mI'
+processing_time = vuSmeH poH
+throughput = Do
+numbers_per_second = mI'/lup
+errors = Qagh
+
+[banner]
+subtitle = Y O '   C H E N M O H W I '
+
+[status]
+locale = Hol

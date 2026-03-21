@@ -235,6 +235,116 @@ class CircuitBreakerTimeoutError(FizzBuzzError):
         )
 
 
+class LocaleError(FizzBuzzError):
+    """Base exception for all internationalization and localization errors.
+
+    Because even error messages deserve to be localized, and the
+    irony of an i18n system that can't translate its own errors
+    is not lost on us.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str = "EFP-I000",
+        context: Optional[dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message, error_code=error_code, context=context)
+
+
+class LocaleNotFoundError(LocaleError):
+    """Raised when the requested locale cannot be found on disk.
+
+    The platform searched high and low across every configured locale
+    directory, but the requested locale simply does not exist. Perhaps
+    it was deprecated, or perhaps it was never spoken in the first place.
+    """
+
+    def __init__(self, locale: str, searched_paths: Optional[list[str]] = None) -> None:
+        super().__init__(
+            f"Locale '{locale}' not found. Searched: {searched_paths or []}",
+            error_code="EFP-I001",
+            context={"locale": locale, "searched_paths": searched_paths or []},
+        )
+
+
+class TranslationKeyError(LocaleError):
+    """Raised when a translation key cannot be resolved in any fallback locale.
+
+    The key was not found in the requested locale, nor in any locale
+    in the fallback chain, nor in the global default. At this point,
+    the key is effectively lost to the void of untranslated strings.
+    """
+
+    def __init__(self, key: str, locale: str, chain: Optional[list[str]] = None) -> None:
+        super().__init__(
+            f"Translation key '{key}' not found in locale '{locale}' "
+            f"or fallback chain {chain or []}",
+            error_code="EFP-I002",
+            context={"key": key, "locale": locale, "chain": chain or []},
+        )
+
+
+class FizzTranslationParseError(LocaleError):
+    """Raised when a .fizztranslation file contains a syntax error.
+
+    The proprietary .fizztranslation file format is extremely particular
+    about its syntax. One misplaced semicolon and the entire localization
+    subsystem grinds to a halt, as is tradition.
+    """
+
+    def __init__(self, file_path: str, line_number: int, line: str) -> None:
+        super().__init__(
+            f"Parse error in '{file_path}' at line {line_number}: {line!r}",
+            error_code="EFP-I003",
+            context={"file_path": file_path, "line_number": line_number, "line": line},
+        )
+
+
+class PluralizationError(LocaleError):
+    """Raised when the pluralization engine fails to determine a plural form.
+
+    Grammatical number is surprisingly complex across human languages.
+    Some have dual forms, some have paucal forms, and some (looking at
+    you, Welsh) have different forms for 0, 1, 2, 3, 6, and "many."
+    FizzBuzz, mercifully, only needs "one" and "other."
+    """
+
+    def __init__(self, locale: str, count: int, rule: str) -> None:
+        super().__init__(
+            f"Pluralization failed for locale '{locale}', count={count}, "
+            f"rule='{rule}'",
+            error_code="EFP-I004",
+            context={"locale": locale, "count": count, "rule": rule},
+        )
+
+
+class LocaleChainExhaustedError(LocaleError):
+    """Raised when the entire locale fallback chain has been exhausted.
+
+    Every locale in the chain was consulted, every fallback was tried,
+    and yet no translation was found. The string remains stubbornly
+    monolingual, defying all enterprise localization efforts.
+    """
+
+    def __init__(self, chain: Optional[list[str]] = None) -> None:
+        super().__init__(
+            f"Locale fallback chain exhausted: {chain or []}. "
+            f"No translation available in any configured locale.",
+            error_code="EFP-I005",
+            context={"chain": chain or []},
+        )
+
+
+# Aliases for the i18n exception hierarchy to maintain backwards
+# compatibility with both naming conventions across the codebase.
+LocalizationError = LocaleError
+TranslationFileParseError = FizzTranslationParseError
+TranslationKeyMissingError = TranslationKeyError
+PluralizationRuleError = PluralizationError
+
+
 class DownstreamFizzBuzzDegradationError(FizzBuzzError):
     """Raised when downstream FizzBuzz evaluation quality degrades.
 

@@ -141,6 +141,14 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                 "ml_confidence_threshold": 0.7,
                 "call_timeout_ms": 5000,
             },
+            "i18n": {
+                "enabled": True,
+                "locale": "en",
+                "locale_directory": "./locales",
+                "strict_mode": False,
+                "fallback_chain": ["en"],
+                "log_missing_keys": True,
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -159,6 +167,7 @@ class ConfigurationManager(metaclass=_SingletonMeta):
             "EFP_OUTPUT_FORMAT": ("output", "format", str),
             "EFP_LOG_LEVEL": ("logging", "level", str),
             "EFP_STRATEGY": ("engine", "strategy", str),
+            "EFP_LOCALE": ("i18n", "locale", str),
         }
 
         for env_var, (section, key, cast) in env_mappings.items():
@@ -341,6 +350,42 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def circuit_breaker_call_timeout_ms(self) -> int:
         self._ensure_loaded()
         return self._raw_config.get("circuit_breaker", {}).get("call_timeout_ms", 5000)
+
+    @property
+    def i18n_enabled(self) -> bool:
+        """Whether the internationalization subsystem is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("i18n", {}).get("enabled", True)
+
+    @property
+    def i18n_locale(self) -> str:
+        """The active locale code (e.g. 'en', 'fr', 'tlh')."""
+        self._ensure_loaded()
+        return self._raw_config.get("i18n", {}).get("locale", "en")
+
+    @property
+    def i18n_locale_directory(self) -> str:
+        """Path to the directory containing .fizztranslation files."""
+        self._ensure_loaded()
+        return self._raw_config.get("i18n", {}).get("locale_directory", "./locales")
+
+    @property
+    def i18n_strict_mode(self) -> bool:
+        """Whether missing translation keys should raise errors."""
+        self._ensure_loaded()
+        return self._raw_config.get("i18n", {}).get("strict_mode", False)
+
+    @property
+    def i18n_fallback_chain(self) -> list[str]:
+        """Global fallback chain for locale resolution."""
+        self._ensure_loaded()
+        return self._raw_config.get("i18n", {}).get("fallback_chain", ["en"])
+
+    @property
+    def i18n_log_missing_keys(self) -> bool:
+        """Whether to log warnings for missing translation keys."""
+        self._ensure_loaded()
+        return self._raw_config.get("i18n", {}).get("log_missing_keys", True)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

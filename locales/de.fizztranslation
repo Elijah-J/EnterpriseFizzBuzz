@@ -1,0 +1,40 @@
+;; German (Deutsch) -- Enterprise FizzBuzz Platform
+;; Weil auch FizzBuzz die Lokalisierung verdient
+
+@locale = de
+@name = Deutsch
+@fallback = en
+@plural_rule = n != 1
+
+[labels]
+Fizz = Sprudel
+Buzz = Summen
+FizzBuzz = SprudelSummen
+
+[plurals]
+Fizz.plural.one = ${count} Sprudel
+Fizz.plural.other = ${count} Sprudeln
+Buzz.plural.one = ${count} Summen
+Buzz.plural.other = ${count} Summen
+FizzBuzz.plural.one = ${count} SprudelSummen
+FizzBuzz.plural.other = ${count} SprudelSummen
+
+[messages]
+evaluating = FizzBuzz-Auswertung fuer den Bereich [${start}, ${end}]...
+strategy = Strategie: ${name}
+output_format = Ausgabeformat: ${name}
+wall_clock = Echtzeit: ${time}ms
+
+[summary]
+title = FizzBuzz Sitzungszusammenfassung
+total_numbers = Gesamtzahlen
+processing_time = Verarbeitungszeit
+throughput = Durchsatz
+numbers_per_second = Zahlen/Sek
+errors = Fehler
+
+[banner]
+subtitle = U N T E R N E H M E N S A U S G A B E
+
+[status]
+locale = Gebietsschema

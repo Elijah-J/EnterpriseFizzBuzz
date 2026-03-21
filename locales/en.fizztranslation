@@ -1,0 +1,40 @@
+;; English (Base Locale) -- Enterprise FizzBuzz Platform
+;; All keys defined here are canonical. Other locales are measured against this.
+
+@locale = en
+@name = English
+@fallback = none
+@plural_rule = n != 1
+
+[labels]
+Fizz = Fizz
+Buzz = Buzz
+FizzBuzz = FizzBuzz
+
+[plurals]
+Fizz.plural.one = ${count} Fizz
+Fizz.plural.other = ${count} Fizzes
+Buzz.plural.one = ${count} Buzz
+Buzz.plural.other = ${count} Buzzes
+FizzBuzz.plural.one = ${count} FizzBuzz
+FizzBuzz.plural.other = ${count} FizzBuzzes
+
+[messages]
+evaluating = Evaluating FizzBuzz for range [${start}, ${end}]...
+strategy = Strategy: ${name}
+output_format = Output Format: ${name}
+wall_clock = Wall clock time: ${time}ms
+
+[summary]
+title = FizzBuzz Session Summary
+total_numbers = Total Numbers
+processing_time = Processing
+throughput = Throughput
+numbers_per_second = numbers/sec
+errors = Errors
+
+[banner]
+subtitle = E N T E R P R I S E   E D I T I O N
+
+[status]
+locale = Locale

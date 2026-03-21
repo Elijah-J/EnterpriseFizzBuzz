@@ -1,0 +1,40 @@
+;; French (Francais) -- Enterprise FizzBuzz Platform
+;; Parce que FizzBuzz merite aussi la localisation
+
+@locale = fr
+@name = Francais
+@fallback = en
+@plural_rule = n > 1
+
+[labels]
+Fizz = Petillement
+Buzz = Bourdonnement
+FizzBuzz = PetillementBourdonnement
+
+[plurals]
+Fizz.plural.one = ${count} Petillement
+Fizz.plural.other = ${count} Petillements
+Buzz.plural.one = ${count} Bourdonnement
+Buzz.plural.other = ${count} Bourdonnements
+FizzBuzz.plural.one = ${count} PetillementBourdonnement
+FizzBuzz.plural.other = ${count} PetillementBourdonnements
+
+[messages]
+evaluating = Evaluation de FizzBuzz pour la plage [${start}, ${end}]...
+strategy = Strategie: ${name}
+output_format = Format de Sortie: ${name}
+wall_clock = Temps reel: ${time}ms
+
+[summary]
+title = Resume de la Session FizzBuzz
+total_numbers = Nombres Totaux
+processing_time = Traitement
+throughput = Debit
+numbers_per_second = nombres/sec
+errors = Erreurs
+
+[banner]
+subtitle = E D I T I O N   E N T R E P R I S E
+
+[status]
+locale = Locale
