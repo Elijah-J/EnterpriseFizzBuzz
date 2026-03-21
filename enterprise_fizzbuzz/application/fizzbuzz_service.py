@@ -22,6 +22,7 @@ from enterprise_fizzbuzz.infrastructure.config import ConfigurationManager
 from enterprise_fizzbuzz.domain.exceptions import ChaosInducedFizzBuzzError, InvalidRangeError, ServiceNotInitializedError
 from enterprise_fizzbuzz.application.factory import CachingRuleFactory, ConfigurableRuleFactory, StandardRuleFactory
 from enterprise_fizzbuzz.infrastructure.formatters import FormatterFactory
+from enterprise_fizzbuzz.application.ports import AbstractUnitOfWork
 from enterprise_fizzbuzz.domain.interfaces import IEventBus, IFormatter, IMiddleware, IRule, IRuleEngine, IRuleFactory
 from enterprise_fizzbuzz.infrastructure.middleware import (
     LoggingMiddleware,
@@ -117,6 +118,7 @@ class FizzBuzzService:
         middleware_pipeline: MiddlewarePipeline,
         formatter: IFormatter,
         rules: list[IRule],
+        unit_of_work: Optional[AbstractUnitOfWork] = None,
     ) -> None:
         self._rule_engine = rule_engine
         self._rule_factory = rule_factory
@@ -124,6 +126,7 @@ class FizzBuzzService:
         self._middleware = middleware_pipeline
         self._formatter = formatter
         self._rules = rules
+        self._unit_of_work = unit_of_work
         self._last_summary: Optional[FizzBuzzSessionSummary] = None
         self._initialized = True
 
@@ -200,6 +203,19 @@ class FizzBuzzService:
 
         total_elapsed_ms = (time.perf_counter_ns() - total_start) / 1_000_000
         self._build_summary(results, session_id, total_elapsed_ms)
+
+        # Persist results via Unit of Work if configured
+        if self._unit_of_work is not None:
+            with self._unit_of_work:
+                for r in results:
+                    self._unit_of_work.repository.add(r)
+                self._unit_of_work.commit()
+            logger.info(
+                "Persisted %d result(s) via %s",
+                len(results),
+                type(self._unit_of_work).__name__,
+            )
+
         return results
 
     async def _execute_async(
@@ -318,6 +334,7 @@ class FizzBuzzServiceBuilder:
         self._locale: Optional[str] = None
         self._locale_manager: object = None
         self._auth_context: object = None
+        self._unit_of_work: Optional[AbstractUnitOfWork] = None
 
     def with_config(self, config: ConfigurationManager) -> FizzBuzzServiceBuilder:
         """Inject configuration manager."""
@@ -370,6 +387,18 @@ class FizzBuzzServiceBuilder:
         components that need access to translations during pipeline execution.
         """
         self._locale_manager = manager
+        return self
+
+    def with_unit_of_work(self, uow: AbstractUnitOfWork) -> FizzBuzzServiceBuilder:
+        """Inject a Unit of Work for result persistence.
+
+        When a UoW is provided, all FizzBuzz results produced during
+        execution will be persisted through the repository managed by
+        the UoW. This is entirely optional, because FizzBuzz has
+        survived millions of invocations without persistence, and
+        honestly, it was doing just fine.
+        """
+        self._unit_of_work = uow
         return self
 
     def with_auth_context(self, auth_context: object) -> FizzBuzzServiceBuilder:
@@ -456,4 +485,5 @@ class FizzBuzzServiceBuilder:
             middleware_pipeline=pipeline,
             formatter=formatter,
             rules=rules,
+            unit_of_work=self._unit_of_work,
         )

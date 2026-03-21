@@ -291,6 +291,11 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                 "log_fake_sql": True,
                 "visualize_schema": True,
             },
+            "repository": {
+                "backend": "none",
+                "db_path": "fizzbuzz_results.db",
+                "fs_path": "./fizzbuzz_results",
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -898,6 +903,28 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Whether to render ASCII ER diagrams after migration operations."""
         self._ensure_loaded()
         return self._raw_config.get("migrations", {}).get("visualize_schema", True)
+
+    # ----------------------------------------------------------------
+    # Repository Pattern + Unit of Work configuration properties
+    # ----------------------------------------------------------------
+
+    @property
+    def repository_backend(self) -> str:
+        """The persistence backend: 'none', 'in_memory', 'sqlite', or 'filesystem'."""
+        self._ensure_loaded()
+        return self._raw_config.get("repository", {}).get("backend", "none")
+
+    @property
+    def repository_db_path(self) -> str:
+        """Path to the SQLite database file for the sqlite backend."""
+        self._ensure_loaded()
+        return self._raw_config.get("repository", {}).get("db_path", "fizzbuzz_results.db")
+
+    @property
+    def repository_fs_path(self) -> str:
+        """Path to the directory for the filesystem backend."""
+        self._ensure_loaded()
+        return self._raw_config.get("repository", {}).get("fs_path", "./fizzbuzz_results")
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

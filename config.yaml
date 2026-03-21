@@ -255,6 +255,15 @@ migrations:
   log_fake_sql: true                 # Log fake SQL statements for maximum enterprise cosplay
   visualize_schema: true             # Render ASCII ER diagrams after migrations
 
+# Repository Pattern + Unit of Work configuration
+# Because storing FizzBuzz results in a variable wasn't enterprise
+# enough, you can now persist them across THREE different backends,
+# each more unnecessarily durable than the last.
+repository:
+  backend: "none"                  # none | in_memory | sqlite | filesystem
+  db_path: "fizzbuzz_results.db"   # SQLite database path (sqlite backend)
+  fs_path: "./fizzbuzz_results"    # Filesystem directory (filesystem backend)
+
 # Observer configuration
 observers:
   console_observer:

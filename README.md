@@ -32,11 +32,11 @@ for i in range(1, 101):
 
 ## This Solution
 
-**26,600+ lines** across **66 files** with **927 unit tests** and **77 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**28,100+ lines** across **72 files** with **967 unit tests** and **81 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
-The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 26,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
+The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 28,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
 
 ### The Dependency Rule
 
@@ -70,7 +70,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                          # CLI entry point with 43 flags
+├── main.py                          # CLI entry point with 46 flags
 ├── config.yaml                      # YAML-based configuration with 12 sections
 │
 ├── enterprise_fizzbuzz/             # Clean Architecture package root
@@ -86,7 +86,8 @@ EnterpriseFizzBuzz/
 │   ├── application/                 # USE CASES (depends only on domain)
 │   │   ├── __init__.py
 │   │   ├── fizzbuzz_service.py      # Service orchestration with Builder pattern
-│   │   └── factory.py               # Abstract Factory + Caching Decorator
+│   │   ├── factory.py               # Abstract Factory + Caching Decorator
+│   │   └── ports.py                 # Repository & Unit of Work abstract contracts (hexagonal ports)
 │   │
 │   └── infrastructure/              # ADAPTERS & FRAMEWORKS (the outer ring)
 │       ├── __init__.py
@@ -109,7 +110,12 @@ EnterpriseFizzBuzz/
 │       ├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
 │       ├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
 │       ├── cache.py                 # In-Memory Caching with MESI coherence and eulogies (~1,100 lines)
-│       └── migrations.py            # Database Migration Framework for ephemeral RAM schemas (~1,160 lines)
+│       ├── migrations.py            # Database Migration Framework for ephemeral RAM schemas (~1,160 lines)
+│       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
+│           ├── __init__.py           # Factory + public API re-exports
+│           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
+│           ├── sqlite.py             # SQLite repository (a real database, for once)
+│           └── filesystem.py         # Filesystem repository (JSON files on disk, artisanally serialized)
 │
 ├── *.py (root)                      # Backward-compatible re-export stubs
 │   │                                  (each file re-exports from the package so
@@ -142,6 +148,7 @@ EnterpriseFizzBuzz/
     ├── test_sla.py                  # 96 SLA monitoring & alerting tests
     ├── test_cache.py                # 60 caching & eviction policy tests
     ├── test_migrations.py           # 56 database migration & schema management tests
+    ├── test_repository.py           # 40 repository pattern & unit of work tests (3 backends)
     └── test_architecture.py         # AST-based import linter enforcing the Dependency Rule
 ```
 
@@ -211,6 +218,9 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Database Migrations | `migrations.py` | Forward/reverse schema migrations for in-memory dicts that will be garbage-collected when the process exits, because ephemeral data deserves a DDL lifecycle |
 | Schema Management | `migrations.py` | Full DDL/DML interface (CREATE TABLE, ALTER TABLE, DROP TABLE) for Python dicts, with fake SQL logging for maximum enterprise cosplay |
 | Seed Data | `migrations.py` | The FizzBuzz engine seeds the FizzBuzz database with FizzBuzz results -- the ouroboros of enterprise architecture |
+| Repository Pattern | `persistence/` | Abstract data access layer with three interchangeable backends, because storing FizzBuzz results in a plain list was architecturally unconscionable |
+| Unit of Work | `persistence/`, `ports.py` | Transactional boundaries around repository operations with automatic rollback, because even FizzBuzz results deserve ACID guarantees (well, ACI at least) |
+| Ports & Adapters (Persistence) | `ports.py`, `persistence/` | Hexagonal architecture ports for repository and UoW contracts, with three concrete adapter implementations -- ensuring the domain remains blissfully ignorant of whether its results are stored in RAM, SQLite, or artisanal JSON files |
 
 ## Features
 
@@ -232,7 +242,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **SLA Monitoring / PagerDuty-Style Alerting** - Three-pillar SLO tracking (latency, accuracy, availability) with error budgets, burn rate alerts, a four-tier escalation policy, and an on-call rotation that uses modulo arithmetic to determine which engineer from a team of one (1) person is currently responsible -- complete with an ASCII dashboard, ground-truth accuracy verification, and the unshakeable certainty that Bob McFizzington will always be the one who gets paged
 - **In-Memory Caching with Cache Invalidation Protocol** - Four eviction policies (LRU, LFU, FIFO, DramaticRandom), MESI cache coherence state tracking (pointless but thorough), satirical eulogies for evicted entries, a cache warming system that pre-populates results (thereby defeating the entire purpose of caching), TTL-based expiration, thread-safe operations, and an ASCII statistics dashboard -- because the result of `15 % 3` might change between invocations, and we need to be prepared
 - **Database Migration Framework** - Five reversible migrations for in-memory schema management, with dependency tracking, fake SQL logging, ASCII ER diagram visualization, a migration status dashboard, and seed data generation that uses the FizzBuzz engine to populate the FizzBuzz database (the ouroboros pattern) -- all for data structures that exist exclusively in RAM and will vanish the moment you press Ctrl+C. This is by design.
-- **Custom Exception Hierarchy** - 77 exception classes for every conceivable FizzBuzz failure mode
+- **Repository Pattern / Unit of Work** - Three interchangeable persistence backends (in-memory, SQLite, filesystem) with transactional Unit of Work semantics, abstract hexagonal ports, and automatic rollback -- because FizzBuzz results that aren't durably persisted with ACID guarantees are just numbers shouted into the void
+- **Custom Exception Hierarchy** - 81 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -395,6 +406,18 @@ python main.py --cache --cache-stats --chaos --chaos-level 3 --range 1 30
 # Full enterprise stack: caching + SLA + tracing + RBAC (peak over-engineering)
 python main.py --cache --cache-stats --sla --sla-dashboard --trace --user alice --role FIZZBUZZ_SUPERUSER --range 1 20
 
+# Repository Pattern: persist results in-memory (the default, because persistence is aspirational)
+python main.py --repository memory --range 1 20
+
+# Repository Pattern: persist results to SQLite (an actual database, for once)
+python main.py --repository sqlite --db-path fizzbuzz.db --range 1 50
+
+# Repository Pattern: persist results as artisanal JSON files on disk
+python main.py --repository filesystem --results-dir ./fizzbuzz_results --range 1 30
+
+# Repository + full stack: SQLite persistence with tracing, caching, and RBAC
+python main.py --repository sqlite --db-path fizzbuzz.db --trace --cache --user alice --role FIZZBUZZ_SUPERUSER --range 1 20
+
 # Database Migrations: apply all migrations to the in-memory schema (it won't persist)
 python main.py --migrate --range 1 20
 
@@ -456,6 +479,9 @@ python main.py --migrate --migrate-seed --migrate-status --cache --sla --trace -
 --cache-size N       Maximum number of cache entries (default: 1024)
 --cache-stats        Display the cache statistics dashboard after execution
 --cache-warm         Pre-populate the cache before execution (defeats the purpose of caching)
+--repository BACKEND Repository backend: memory, sqlite, filesystem (default: memory)
+--db-path PATH       Path to SQLite database file (only with --repository sqlite)
+--results-dir PATH   Path to results directory (only with --repository filesystem)
 --migrate            Apply all pending database migrations to the in-memory schema (it won't persist)
 --migrate-status     Display the migration status dashboard for the ephemeral database
 --migrate-rollback N Rollback the last N migrations (default: 1). Undo what was never permanent
@@ -1109,6 +1135,67 @@ The `SchemaVisualizer` renders ASCII ER diagrams of the current in-memory schema
 | Custom exceptions | 8 (MigrationError, MigrationNotFoundError, MigrationAlreadyAppliedError, MigrationRollbackError, MigrationDependencyError, MigrationConflictError, SchemaError, SeedDataError) |
 | Actual databases harmed | 0 |
 
+## Persistence Architecture
+
+The Repository Pattern / Unit of Work subsystem implements a production-grade, hexagonal-architecture-compliant data access layer for persisting FizzBuzz evaluation results across three interchangeable storage backends -- because storing results in a Python list was architecturally indistinguishable from shouting into the void, and the Enterprise FizzBuzz Platform demands that its precious modulo outputs survive at least until the next process restart (or, with SQLite, until the heat death of the universe).
+
+The persistence layer follows the **Ports & Adapters** pattern: abstract contracts (`AbstractRepository`, `AbstractUnitOfWork`) live in the application layer as hexagonal ports, while three concrete adapter implementations live in the infrastructure layer. The domain remains blissfully ignorant of whether its results are stored in RAM, a SQLite database, or artisanally serialized JSON files on disk.
+
+```
+    APPLICATION LAYER (Ports)                  INFRASTRUCTURE LAYER (Adapters)
+    =========================                  ==============================
+
+    +---------------------+                    +---------------------+
+    | AbstractRepository  |<---implements------| InMemoryRepository  |
+    |   add()             |                    | (Python dicts)      |
+    |   get()             |                    +---------------------+
+    |   list()            |
+    |   commit()          |<---implements------+---------------------+
+    |   rollback()        |                    | SqliteRepository    |
+    +---------------------+                    | (actual database)   |
+                                               +---------------------+
+    +---------------------+
+    | AbstractUnitOfWork  |<---implements------+---------------------+
+    |   repository        |                    | FilesystemRepository|
+    |   __enter__()       |                    | (JSON files on disk)|
+    |   __exit__()        |                    +---------------------+
+    +---------------------+
+```
+
+### Storage Backends
+
+| Backend | Storage Medium | Durability | When To Use | Enterprise Justification |
+|---------|---------------|------------|-------------|-------------------------|
+| `memory` | Python dict | None (dies with the process) | Default. Fast, ephemeral, and ultimately pointless | The architectural equivalent of writing your grocery list on a napkin in a hurricane |
+| `sqlite` | SQLite database file | Full (survives restarts) | When you need FizzBuzz results to persist across process boundaries | Finally, a real database. Your DBA would be proud, if they knew this existed |
+| `filesystem` | JSON files on disk | Full (one file per result) | When you want artisanal, hand-crafted persistence | Each FizzBuzz result gets its own lovingly serialized JSON file, like a digital snowflake |
+
+### Unit of Work Semantics
+
+The Unit of Work provides transactional boundaries around repository operations. All mutations are buffered until `commit()` is called; if an exception occurs (or you simply forget to commit), `rollback()` is invoked automatically. The UoW assumes the worst about your code, and frankly, it's usually right.
+
+```python
+with uow:
+    uow.repository.add(result1)
+    uow.repository.add(result2)
+    uow.repository.commit()
+# If an exception occurs, rollback is automatic.
+# If you forget to commit, rollback is also automatic.
+# The UoW trusts nothing and no one.
+```
+
+| Spec | Value |
+|------|-------|
+| Storage backends | 3 (in-memory, SQLite, filesystem) |
+| Abstract ports | 2 (AbstractRepository, AbstractUnitOfWork) |
+| Repository operations | 5 (add, get, list, commit, rollback) |
+| Transactional semantics | Buffered writes with explicit commit / automatic rollback |
+| Hexagonal compliance | Full (ports in application layer, adapters in infrastructure) |
+| Thread safety | Backend-dependent (SQLite uses connection-per-UoW) |
+| Custom exceptions | 4 (RepositoryError, ResultNotFoundError, UnitOfWorkError, PersistenceConfigurationError) |
+| Lines of code | ~700 (across 4 modules + ports) |
+| Actual need for 3 backends | 0 (but the architecture is ready for horizontal scaling) |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -1226,7 +1313,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 885 tests
+# Run all 967 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -1243,7 +1330,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 885 tests, 77 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, and nanosecond timing. You tell me.
+A: It has 967 tests, 81 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -1280,6 +1367,9 @@ A: Because the result of `n % 3` might change between invocations. It won't, of 
 
 **Q: Why does FizzBuzz need database migrations?**
 A: Because schema management is a cornerstone of any production system, and the fact that our "database" is a Python dict that will be garbage-collected in 0.1 seconds is no excuse for architectural negligence. The migration framework provides five reversible migrations with dependency tracking, SHA-256 integrity checksums, fake SQL logging, and an ASCII status dashboard -- all for tables that exist exclusively in RAM. The `SeedDataGenerator` uses the FizzBuzz engine to populate the FizzBuzz database with FizzBuzz results, creating a closed loop of enterprise architecture so pure that it achieves the ouroboros pattern: the system consumes its own output to feed its own input. Migration m005 normalizes the schema into third normal form, because even ephemeral data structures deserve relational integrity. The entire framework logs fake SQL statements (`CREATE TABLE fizzbuzz_results ...`, `ALTER TABLE ... ADD COLUMN ...`) for the benefit of DBAs who will never see them, to a schema that will never touch a disk, in a database that does not exist. This is enterprise software at its most philosophically honest.
+
+**Q: Why does FizzBuzz need three storage backends?**
+A: Because the ability to persist FizzBuzz results is a fundamental enterprise requirement, and offering only *one* way to do it would be an architectural monoculture -- a single point of failure in the storage strategy layer. The in-memory backend stores results in a Python dict that evaporates when the process exits, providing the fastest possible persistence at the cost of not actually persisting anything. The SQLite backend uses a real relational database, which is the first time this codebase has touched an actual database, and everyone is very proud. The filesystem backend writes each result as an individually serialized JSON file, because there is something deeply satisfying about `ls`-ing a directory and seeing 100 FizzBuzz results staring back at you, each in its own artisanal file. The Unit of Work pattern wraps all three backends in transactional semantics with automatic rollback, because even storing "Fizz" in a dict deserves ACID guarantees. The abstract ports live in the application layer per hexagonal architecture convention, ensuring that the domain layer remains blissfully ignorant of whether its modulo results are stored in RAM, on disk, or in a SQLite database that will outlive the heat death of the universe. Three backends. Zero business justification. Peak enterprise.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

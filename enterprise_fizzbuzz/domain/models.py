@@ -171,6 +171,12 @@ class EventType(Enum):
     CACHE_COHERENCE_TRANSITION = auto()
     CACHE_EULOGY_COMPOSED = auto()
 
+    # Repository Pattern + Unit of Work events
+    REPOSITORY_RESULT_ADDED = auto()
+    REPOSITORY_COMMITTED = auto()
+    REPOSITORY_ROLLED_BACK = auto()
+    ROLLBACK_FILE_DELETED = auto()
+
     # Database Migration Framework events
     MIGRATION_STARTED = auto()
     MIGRATION_APPLIED = auto()

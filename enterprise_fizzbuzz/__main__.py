@@ -377,6 +377,32 @@ def build_argument_parser() -> argparse.ArgumentParser:
     )
 
     # Database Migration Framework
+    # Repository Pattern + Unit of Work
+    parser.add_argument(
+        "--repository",
+        type=str,
+        choices=["in_memory", "sqlite", "filesystem"],
+        default=None,
+        metavar="BACKEND",
+        help="Enable result persistence via Repository Pattern (in_memory | sqlite | filesystem)",
+    )
+
+    parser.add_argument(
+        "--db-path",
+        type=str,
+        default=None,
+        metavar="PATH",
+        help="Path to SQLite database file (default: from config, only with --repository sqlite)",
+    )
+
+    parser.add_argument(
+        "--results-dir",
+        type=str,
+        default=None,
+        metavar="PATH",
+        help="Path to results directory (default: from config, only with --repository filesystem)",
+    )
+
     parser.add_argument(
         "--migrate",
         action="store_true",
@@ -861,6 +887,37 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # Repository Pattern + Unit of Work setup (opt-in via --repository)
+    # ----------------------------------------------------------------
+    uow = None
+    repo_backend = args.repository or config.repository_backend
+    if repo_backend and repo_backend != "none":
+        from enterprise_fizzbuzz.infrastructure.persistence import (
+            InMemoryUnitOfWork,
+            SqliteUnitOfWork,
+            FileSystemUnitOfWork,
+        )
+
+        if repo_backend == "in_memory":
+            uow = InMemoryUnitOfWork()
+        elif repo_backend == "sqlite":
+            db_path = args.db_path or config.repository_db_path
+            uow = SqliteUnitOfWork(db_path=db_path)
+        elif repo_backend == "filesystem":
+            fs_path = args.results_dir or config.repository_fs_path
+            uow = FileSystemUnitOfWork(base_dir=fs_path)
+
+        if uow is not None:
+            print(
+                "  +---------------------------------------------------------+\n"
+                f"  | REPOSITORY: {repo_backend.upper():<45}|\n"
+                "  | FizzBuzz results will now be persisted via the          |\n"
+                "  | Repository Pattern + Unit of Work, because storing     |\n"
+                "  | modulo results in a variable was insufficiently durable.|\n"
+                "  +---------------------------------------------------------+"
+            )
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
@@ -870,6 +927,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         .with_locale_manager(locale_mgr)
         .with_default_middleware()
     )
+
+    # Add Unit of Work to builder if configured
+    if uow is not None:
+        builder.with_unit_of_work(uow)
 
     # Add auth context to builder
     if auth_context is not None:
