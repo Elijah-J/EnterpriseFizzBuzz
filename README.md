@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**15,300+ lines** across **36 files** with **535 unit tests** and **43 custom exception classes**, because this is an enterprise and we have standards.
+**17,600+ lines** across **38 files** with **604 unit tests** and **48 custom exception classes**, because this is an enterprise and we have standards.
 
 ## Architecture
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                  # CLI entry point with 24 flags
+├── main.py                  # CLI entry point with 28 flags
 ├── config.yaml              # YAML-based configuration with 10 sections
 ├── config.py                # Singleton configuration manager with env var overrides
 ├── models.py                # Dataclasses, enums, and domain models
-├── exceptions.py            # Custom exception hierarchy (43 exception classes)
+├── exceptions.py            # Custom exception hierarchy (48 exception classes)
 ├── interfaces.py            # Abstract base classes for everything
 ├── rules_engine.py          # Four evaluation strategies
 ├── ml_engine.py             # From-scratch neural network (pure stdlib)
@@ -58,6 +58,7 @@ EnterpriseFizzBuzz/
 ├── auth.py                  # RBAC with HMAC-SHA256 token engine and 47-field access denials
 ├── i18n.py                  # Internationalization subsystem with locale fallback chains
 ├── event_sourcing.py        # Event Sourcing + CQRS with command/query buses (~1,500 lines)
+├── chaos.py                 # Chaos Engineering / Fault Injection Framework (~1,200 lines)
 ├── locales/                 # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation   # English (base locale)
 │   ├── de.fizztranslation   # German (Deutsch)
@@ -72,7 +73,8 @@ EnterpriseFizzBuzz/
     ├── test_i18n.py         # 123 internationalization tests
     ├── test_auth.py         # 86 RBAC & authentication tests
     ├── test_tracing.py      # 68 distributed tracing tests
-    └── test_event_sourcing.py  # 98 event sourcing & CQRS tests
+    ├── test_event_sourcing.py  # 98 event sourcing & CQRS tests
+    └── test_chaos.py        # 69 chaos engineering & fault injection tests
 ```
 
 ## Design Patterns
@@ -112,6 +114,9 @@ EnterpriseFizzBuzz/
 | Event Upcasting | `event_sourcing.py` | Schema migration chain for domain events, because even FizzBuzz event schemas evolve |
 | Snapshot / Memento | `event_sourcing.py` | Periodic state snapshots to accelerate event replay, because replaying millions of FizzBuzz events would be unconscionable |
 | Projection / Materialized View | `event_sourcing.py` | Read-side projections rebuilt from the event stream, because querying raw events is for amateurs |
+| Chaos Engineering | `chaos.py` | Deliberate fault injection to prove that FizzBuzz can survive the apocalypse (or at least a corrupted modulo) |
+| Fault Injection | `chaos.py` | Five artisanal failure modes, hand-crafted with love and malice, each with configurable severity |
+| Game Day | `chaos.py` | Structured multi-phase chaos experiments with escalating severity, because "let's break things on purpose" deserves a framework |
 
 ## Features
 
@@ -128,7 +133,8 @@ EnterpriseFizzBuzz/
 - **Distributed Tracing** - OpenTelemetry-inspired span trees with W3C Trace Context IDs, ASCII waterfall visualization, JSON export, and P95/P99 latency percentiles -- for when you need to know exactly which middleware layer added 0.3 microseconds to your modulo operation
 - **Role-Based Access Control (RBAC)** - Five-tier role hierarchy from ANONYMOUS to FIZZBUZZ_SUPERUSER, HMAC-SHA256 token authentication, permission-based number range access, and a sacred 47-field access denied JSON response that includes whether the forbidden number is prime, a motivational quote, and a legal disclaimer
 - **Event Sourcing / CQRS** - Append-only event store with command/query bus separation, temporal queries, event upcasting, periodic snapshots, and materialized projections -- because the ability to reconstruct FizzBuzz state at any point in history is a compliance requirement, not a luxury
-- **Custom Exception Hierarchy** - 43 exception classes for every conceivable FizzBuzz failure mode
+- **Chaos Engineering** - A Chaos Monkey that deliberately corrupts results, injects latency, throws exceptions, sabotages the rule engine, and manipulates ML confidence scores -- with five severity levels ranging from "Gentle Breeze" to "Apocalypse," pre-built Game Day scenarios, and a satirical post-mortem incident report generator that would make any SRE weep with pride
+- **Custom Exception Hierarchy** - 48 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -215,6 +221,24 @@ python main.py --event-sourcing --temporal-query 42 --range 1 50
 
 # Full compliance stack: event sourcing + RBAC + tracing (peak audit)
 python main.py --event-sourcing --user alice --role FIZZBUZZ_SUPERUSER --trace --range 1 20
+
+# Chaos Engineering: unleash the Chaos Monkey (default severity: level 1)
+python main.py --chaos --range 1 30
+
+# Maximum chaos: level 5 apocalypse with post-mortem incident report
+python main.py --chaos --chaos-level 5 --post-mortem --range 1 50
+
+# Game Day: run the "modulo_meltdown" scenario (escalating rule engine failures)
+python main.py --gameday modulo_meltdown --range 1 30
+
+# Game Day: total chaos with all fault types at maximum severity
+python main.py --gameday total_chaos --post-mortem --range 1 20
+
+# Chaos + circuit breaker: watch the monkey trip the breaker
+python main.py --chaos --chaos-level 3 --circuit-breaker --circuit-status --range 1 30
+
+# Full resilience stack: chaos + circuit breaker + ML + tracing (peak entropy)
+python main.py --chaos --chaos-level 4 --circuit-breaker --strategy machine_learning --trace --post-mortem --range 1 20
 ```
 
 ## CLI Options
@@ -244,6 +268,10 @@ python main.py --event-sourcing --user alice --role FIZZBUZZ_SUPERUSER --trace -
 --user USERNAME       Authenticate as the specified user (trust-mode, no token required)
 --role ROLE           Assign RBAC role: ANONYMOUS, FIZZ_READER, BUZZ_ADMIN, NUMBER_AUDITOR, FIZZBUZZ_SUPERUSER
 --token TOKEN         Authenticate using an Enterprise FizzBuzz Platform HMAC-SHA256 token
+--chaos               Enable Chaos Engineering fault injection (the monkey awakens)
+--chaos-level N       Chaos severity level 1-5 (1=gentle breeze, 5=apocalypse)
+--gameday SCENARIO    Run a Game Day chaos scenario (modulo_meltdown, confidence_crisis, slow_burn, total_chaos)
+--post-mortem         Generate a satirical post-mortem incident report after chaos execution
 ```
 
 ## Environment Variables
@@ -262,6 +290,9 @@ EFP_LOCALE=tlh
 EFP_RBAC_SECRET=my-very-secret-fizzbuzz-signing-key
 EFP_EVENT_SOURCING_ENABLED=true
 EFP_EVENT_SOURCING_SNAPSHOT_INTERVAL=10
+EFP_CHAOS_ENABLED=true
+EFP_CHAOS_LEVEL=3
+EFP_CHAOS_SEED=42
 ```
 
 ## Machine Learning Architecture
@@ -499,6 +530,71 @@ For a single evaluation of the number 15, the system emits approximately **7 dom
 | Custom exceptions | 8 (CommandHandlerNotFoundError, EventSequenceError, etc.) |
 | GDPR compliance | No. Events are immutable. Your FizzBuzz history is permanent. |
 
+## Chaos Engineering Architecture
+
+The Chaos Engineering subsystem implements a production-grade fault injection framework for stress-testing the FizzBuzz evaluation pipeline. Because if Netflix can have a Chaos Monkey that randomly terminates production instances, the Enterprise FizzBuzz Platform deserves one that randomly corrupts modulo results.
+
+The framework is built around a singleton **ChaosMonkey** orchestrator that manages a registry of **FaultInjectors** (Strategy Pattern), integrates with the middleware pipeline via **ChaosMiddleware** (priority 3, runs inside the circuit breaker), and supports structured multi-phase **Game Day** scenarios for organized, reproducible destruction.
+
+**Key components:**
+- **ChaosMonkey** - Singleton orchestrator with seeded RNG for reproducible chaos and thread-safe event logging
+- **FaultInjector** - Strategy pattern with five concrete injectors, one per fault type
+- **ChaosMiddleware** - Pipeline integration at priority 3, with pre-eval (exceptions, latency) and post-eval (corruption, confidence) injection phases
+- **GameDayRunner** - Multi-phase chaos experiment orchestrator with four pre-built scenarios
+- **PostMortemGenerator** - Satirical ASCII incident report generator with timeline, impact assessment, root cause analysis ("spoiler: it was the Chaos Monkey"), and action items (none of which will actually be implemented)
+
+### Fault Types
+
+| Fault Type | What It Does | Why It's Necessary |
+|---|---|---|
+| `RESULT_CORRUPTION` | Silently replaces FizzBuzz outputs with wrong values ("Fizz" becomes "Synergy") | Silent data corruption is the most insidious failure mode. Also, "Enterprise" is a valid FizzBuzz output now |
+| `LATENCY_INJECTION` | Adds artificial delays (10-500ms, scaled by severity) | Because if `n % 3` completes in nanoseconds, how will your timeout logic ever get tested? |
+| `EXCEPTION_INJECTION` | Throws exceptions with creative messages ("The modulo operator has achieved sentience") | The most direct form of chaos: throw and see what happens |
+| `RULE_ENGINE_FAILURE` | Clears matched rules, causing outputs to revert to plain numbers | The rule engine appears to work but is secretly broken -- much like most enterprise software |
+| `CONFIDENCE_MANIPULATION` | Depresses ML confidence scores to trigger circuit breaker degradation detection | Because the neural network should not be so sure about whether 15 is divisible by 3 |
+
+### Chaos Levels
+
+| Level | Name | Injection Probability | Vibe |
+|---|---|---|---|
+| 1 | Gentle Breeze | 5% | Your system barely notices |
+| 2 | Stiff Wind | 15% | Systems start to sweat |
+| 3 | Proper Storm | 30% | Dashboards light up |
+| 4 | Hurricane | 50% | Engineers get paged |
+| 5 | Apocalypse | 80% | Update your resume |
+
+### Game Day Scenarios
+
+| Scenario | Phases | Description |
+|---|---|---|
+| `modulo_meltdown` | 3 | Escalating rule engine failures, from intermittent glitches to "mathematics itself has broken" |
+| `confidence_crisis` | 2 | ML confidence degradation spiral -- the neural network begins to doubt itself |
+| `slow_burn` | 3 | Progressive latency injection until `3 % 3` takes longer than compiling the Linux kernel |
+| `total_chaos` | 1 | All fault types at maximum severity. The chaos engineering equivalent of "hold my beer" |
+
+### Post-Mortem Generator
+
+After a chaos session, the `--post-mortem` flag generates a lovingly crafted satirical incident report containing:
+- An executive summary with injection rate statistics
+- A fault type breakdown with ASCII bar charts
+- A timestamped incident timeline (capped at 20 entries for sanity)
+- Impact assessments with appropriate hyperbole (e.g., "light travels approximately 149,896km in that time. Our FizzBuzz results traveled nowhere.")
+- Root cause analysis (randomly selected from a curated list of truths, such as "Someone typed '--chaos' on the command line, fully aware of the consequences")
+- Action items including "Implement a Chaos Monkey for the Chaos Monkey (chaos recursion depth: 2)"
+- A footer confirming "No actual systems were harmed. Only FizzBuzz."
+
+| Spec | Value |
+|------|-------|
+| Fault types | 5 (result corruption, latency, exception, rule engine, confidence) |
+| Severity levels | 5 (Gentle Breeze through Apocalypse) |
+| Game Day scenarios | 4 (modulo_meltdown, confidence_crisis, slow_burn, total_chaos) |
+| Middleware priority | 3 (inside the circuit breaker at -1) |
+| Thread safety | Full (RLock + singleton lock) |
+| Custom exceptions | 5 (ChaosError, ChaosConfigurationError, ChaosExperimentFailedError, ChaosInducedFizzBuzzError, ResultCorruptionDetectedError) |
+| Reproducibility | Seeded RNG for deterministic chaos |
+| Post-mortem action items | 12 (randomly sampled, none actionable) |
+| Compliance | ISO 22301, SOC 2 Type II, PCI DSS (somehow) |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -616,7 +712,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 535 tests
+# Run all 604 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -633,7 +729,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 535 tests, 43 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, and nanosecond timing. You tell me.
+A: It has 604 tests, 48 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -655,6 +751,9 @@ A: Unrestricted modulo arithmetic is a security incident waiting to happen. With
 
 **Q: Why does FizzBuzz need Event Sourcing?**
 A: Because state is a lie. The number 15 doesn't just *become* "FizzBuzz" -- it undergoes a journey. It is received, interrogated for divisibility by 3, interrogated again for divisibility by 5, matched by two rules, assigned a label, and finally completed. That is seven domain events for a single modulo check, and every single one of them deserves to be permanently recorded in an append-only, temporally queryable event log. The CQRS layer ensures that the act of *writing* FizzBuzz results is architecturally decoupled from the act of *reading* them, because in enterprise software, separation of concerns means separating things that were never conjoined. The temporal query engine lets you reconstruct FizzBuzz state at any point in history, which is essential for answering questions like "what was the Fizz count after the 42nd event?" -- a question that no one has ever asked, but which we are now prepared to answer in O(n) time with snapshot acceleration.
+
+**Q: Why does FizzBuzz need chaos engineering?**
+A: Because resilience is not a feature you test after the fact -- it's a culture. Netflix pioneered Chaos Engineering to ensure their streaming platform survives server failures. We pioneered it to ensure our FizzBuzz platform survives the Chaos Monkey deliberately replacing "Fizz" with "Synergy." The five severity levels (from "Gentle Breeze" to "Apocalypse") ensure that you can calibrate exactly how much you want to break your modulo operations. The Game Day scenarios provide structured, multi-phase experiments for when ad-hoc destruction feels insufficiently organized. And the satirical post-mortem generator produces incident reports so elaborate that your SRE team will weep with pride -- complete with root cause analysis ("Someone typed '--chaos' on the command line, fully aware of the consequences") and action items like "Implement a Chaos Monkey for the Chaos Monkey (chaos recursion depth: 2)." ISO 22301 compliance has never been so entertaining.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

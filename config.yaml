@@ -132,6 +132,24 @@ event_sourcing:
   enable_projections: true       # Maintain materialized read-model views
   event_version: 1               # Current event schema version
 
+# Chaos Engineering / Fault Injection configuration
+# Because if your FizzBuzz platform can't survive a monkey
+# randomly corrupting modulo results, injecting latency,
+# and throwing exceptions, is it really enterprise-ready?
+chaos:
+  enabled: false                  # Master switch — opt-in only, we're not monsters
+  level: 1                        # Severity 1-5 (1=gentle breeze, 5=category 5 hurricane)
+  fault_types:                    # Which fault types are armed
+    - "RESULT_CORRUPTION"
+    - "LATENCY_INJECTION"
+    - "EXCEPTION_INJECTION"
+    - "RULE_ENGINE_FAILURE"
+    - "CONFIDENCE_MANIPULATION"
+  latency:
+    min_ms: 10                    # Minimum injected latency
+    max_ms: 500                   # Maximum injected latency
+  seed: null                      # Random seed for reproducibility (null = entropy)
+
 # Observer configuration
 observers:
   console_observer:

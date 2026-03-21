@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typing import Generator, Optional
 
 from config import ConfigurationManager
-from exceptions import InvalidRangeError, ServiceNotInitializedError
+from exceptions import ChaosInducedFizzBuzzError, InvalidRangeError, ServiceNotInitializedError
 from factory import CachingRuleFactory, ConfigurableRuleFactory, StandardRuleFactory
 from formatters import FormatterFactory
 from interfaces import IEventBus, IFormatter, IMiddleware, IRule, IRuleEngine, IRuleFactory
@@ -169,7 +169,26 @@ class FizzBuzzService:
                 self._emit_result_events(result)
                 return ctx
 
-            self._middleware.execute(context, evaluate)
+            try:
+                self._middleware.execute(context, evaluate)
+            except ChaosInducedFizzBuzzError as exc:
+                # During chaos runs, catch injected exceptions so that:
+                # 1. The pipeline continues for remaining numbers
+                # 2. Post-mortem reports can be generated with full fault data
+                # 3. The circuit breaker still sees the failure via the event bus
+                error_result = FizzBuzzResult(
+                    number=number,
+                    output="ERROR",
+                    metadata={
+                        "chaos_error": True,
+                        "error_code": exc.error_code,
+                        "error_message": str(exc),
+                    },
+                )
+                results.append(error_result)
+                logger.warning(
+                    "Chaos fault caught for number %d: %s", number, exc
+                )
 
         total_elapsed_ms = (time.perf_counter_ns() - total_start) / 1_000_000
         self._build_summary(results, session_id, total_elapsed_ms)

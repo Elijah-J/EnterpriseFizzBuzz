@@ -24,6 +24,14 @@ from pathlib import Path
 from typing import Optional
 
 from auth import AuthorizationMiddleware, FizzBuzzTokenEngine, RoleRegistry
+from chaos import (
+    ChaosMiddleware,
+    ChaosMonkey,
+    FaultSeverity,
+    FaultType,
+    GameDayRunner,
+    PostMortemGenerator,
+)
 from blockchain import BlockchainObserver, FizzBuzzBlockchain
 from circuit_breaker import (
     CircuitBreakerDashboard,
@@ -226,6 +234,38 @@ def build_argument_parser() -> argparse.ArgumentParser:
         type=str,
         metavar="TOKEN",
         help="Authenticate using an Enterprise FizzBuzz Platform token",
+    )
+
+    # Chaos Engineering flags
+    parser.add_argument(
+        "--chaos",
+        action="store_true",
+        help="Enable Chaos Engineering fault injection (the monkey awakens)",
+    )
+
+    parser.add_argument(
+        "--chaos-level",
+        type=int,
+        choices=[1, 2, 3, 4, 5],
+        default=None,
+        metavar="N",
+        help="Chaos severity level 1-5 (1=gentle breeze, 5=apocalypse)",
+    )
+
+    parser.add_argument(
+        "--gameday",
+        type=str,
+        nargs="?",
+        const="total_chaos",
+        default=None,
+        metavar="SCENARIO",
+        help="Run a Game Day chaos scenario (modulo_meltdown, confidence_crisis, slow_burn, total_chaos)",
+    )
+
+    parser.add_argument(
+        "--post-mortem",
+        action="store_true",
+        help="Generate a satirical post-mortem incident report after chaos execution",
     )
 
     return parser
@@ -436,6 +476,47 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
         es_middleware = es_system.create_middleware()
 
+    # Chaos Engineering setup
+    chaos_monkey = None
+    chaos_middleware = None
+    if args.chaos or args.gameday:
+        chaos_level = args.chaos_level or config.chaos_level
+        chaos_severity = FaultSeverity(chaos_level)
+
+        # Parse armed fault types from config
+        armed_types = []
+        for ft_name in config.chaos_fault_types:
+            try:
+                armed_types.append(FaultType[ft_name])
+            except KeyError:
+                pass
+        if not armed_types:
+            armed_types = list(FaultType)
+
+        ChaosMonkey.reset()
+        chaos_monkey = ChaosMonkey.initialize(
+            severity=chaos_severity,
+            seed=config.chaos_seed,
+            armed_fault_types=armed_types,
+            latency_min_ms=config.chaos_latency_min_ms,
+            latency_max_ms=config.chaos_latency_max_ms,
+            event_bus=event_bus,
+        )
+        chaos_middleware = ChaosMiddleware(chaos_monkey)
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | WARNING: Chaos Engineering ENABLED                      |\n"
+            f"  | Severity: Level {chaos_level} ({chaos_severity.label})"
+            + " " * (39 - len(f"Level {chaos_level} ({chaos_severity.label})"))
+            + "|\n"
+            f"  | Injection probability: {chaos_severity.probability:.0%}"
+            + " " * (35 - len(f"{chaos_severity.probability:.0%}"))
+            + "|\n"
+            "  | The Chaos Monkey is awake and hungry for modulo ops.    |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
@@ -473,6 +554,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if cb_middleware is not None:
         builder.with_middleware(cb_middleware)
+
+    if chaos_middleware is not None:
+        builder.with_middleware(chaos_middleware)
 
     service = builder.build()
 
@@ -553,6 +637,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if blockchain_observer is not None:
         print(blockchain_observer.get_blockchain().get_chain_summary())
+
+    # Chaos Engineering post-mortem
+    if args.post_mortem and chaos_monkey is not None:
+        scenario_name = args.gameday if args.gameday else None
+        print(PostMortemGenerator.generate(chaos_monkey, scenario_name))
 
     if args.circuit_status and cb_middleware is not None:
         print(CircuitBreakerDashboard.render(cb_middleware.circuit_breaker))

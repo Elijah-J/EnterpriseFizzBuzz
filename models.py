@@ -105,6 +105,15 @@ class EventType(Enum):
     ES_EVENT_REPLAYED = auto()
     ES_TEMPORAL_QUERY_EXECUTED = auto()
 
+    # Chaos Engineering events
+    CHAOS_MONKEY_ACTIVATED = auto()
+    CHAOS_FAULT_INJECTED = auto()
+    CHAOS_RESULT_CORRUPTED = auto()
+    CHAOS_LATENCY_INJECTED = auto()
+    CHAOS_EXCEPTION_INJECTED = auto()
+    CHAOS_GAMEDAY_STARTED = auto()
+    CHAOS_GAMEDAY_ENDED = auto()
+
 
 @dataclass(frozen=True)
 class Permission:

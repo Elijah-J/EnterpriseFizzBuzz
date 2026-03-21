@@ -695,6 +695,104 @@ class EventVersionConflictError(EventStoreError):
         )
 
 
+class ChaosError(FizzBuzzError):
+    """Base exception for all Chaos Engineering errors.
+
+    When your carefully constructed fault injection framework itself
+    encounters a fault, you've achieved a level of meta-chaos that
+    even the most seasoned Site Reliability Engineers can only dream of.
+    It's chaos all the way down.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-CH00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class ChaosInducedFizzBuzzError(ChaosError):
+    """Raised when chaos engineering deliberately corrupts a FizzBuzz result.
+
+    This exception is not a bug — it is a feature. The Chaos Monkey has
+    decided that your FizzBuzz evaluation must suffer, and suffer it shall.
+    Consider this a growth opportunity for your fault-tolerance mechanisms.
+    If your system cannot survive a monkey randomly throwing wrenches into
+    the modulo operator, is it really production-ready?
+    """
+
+    def __init__(self, number: int, original_output: str, corrupted_output: str) -> None:
+        super().__init__(
+            f"Chaos Monkey corrupted FizzBuzz result for number {number}: "
+            f"'{original_output}' -> '{corrupted_output}'. This is intentional. "
+            f"Your system's resilience is being tested. You're welcome.",
+            error_code="EFP-CH01",
+            context={
+                "number": number,
+                "original_output": original_output,
+                "corrupted_output": corrupted_output,
+            },
+        )
+
+
+class ChaosExperimentFailedError(ChaosError):
+    """Raised when a chaos experiment itself fails to execute properly.
+
+    The irony of a fault injection framework encountering its own fault
+    is not lost on us. When chaos cannot even chaos correctly, perhaps
+    the universe is telling you something about the inherent fragility
+    of all software systems — including the ones designed to test fragility.
+    """
+
+    def __init__(self, experiment_name: str, reason: str) -> None:
+        super().__init__(
+            f"Chaos experiment '{experiment_name}' failed to execute: {reason}. "
+            f"The chaos system has experienced an unscheduled self-disruption.",
+            error_code="EFP-CH02",
+            context={"experiment_name": experiment_name, "reason": reason},
+        )
+
+
+class ChaosConfigurationError(ChaosError):
+    """Raised when the chaos engineering configuration is invalid.
+
+    You managed to misconfigure the system designed to misconfigure
+    other systems. This is a special kind of achievement. Perhaps
+    the chaos level was set to 'ludicrous', or the fault probability
+    was configured as a negative number, which would imply that your
+    system becomes MORE reliable under chaos — a mathematical impossibility
+    that we refuse to entertain.
+    """
+
+    def __init__(self, config_key: str, value: Any, reason: str) -> None:
+        super().__init__(
+            f"Chaos configuration error for '{config_key}' = {value!r}: {reason}",
+            error_code="EFP-CH03",
+            context={"config_key": config_key, "value": value, "reason": reason},
+        )
+
+
+class ResultCorruptionDetectedError(ChaosError):
+    """Raised when downstream validation detects chaos-induced corruption.
+
+    A brave validation layer has detected that a FizzBuzz result has been
+    tampered with by the Chaos Monkey. The result claimed to be 'Fizz' but
+    the number was 7, or it claimed to be 'Buzz' for the number 3. Either
+    mathematics has broken down, or someone enabled chaos mode. We're
+    betting on the latter.
+    """
+
+    def __init__(self, number: int, suspicious_output: str) -> None:
+        super().__init__(
+            f"Result corruption detected for number {number}: output "
+            f"'{suspicious_output}' does not pass integrity validation. "
+            f"Chaos Monkey fingerprints detected at the crime scene.",
+            error_code="EFP-CH04",
+            context={"number": number, "suspicious_output": suspicious_output},
+        )
+
+
 class DownstreamFizzBuzzDegradationError(FizzBuzzError):
     """Raised when downstream FizzBuzz evaluation quality degrades.
 
