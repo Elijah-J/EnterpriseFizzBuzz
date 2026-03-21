@@ -23,6 +23,11 @@ import time
 from typing import Optional
 
 from blockchain import BlockchainObserver, FizzBuzzBlockchain
+from circuit_breaker import (
+    CircuitBreakerDashboard,
+    CircuitBreakerMiddleware,
+    CircuitBreakerRegistry,
+)
 from config import ConfigurationManager, _SingletonMeta
 from fizzbuzz_service import FizzBuzzServiceBuilder
 from formatters import FormatterFactory
@@ -134,6 +139,18 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Proof-of-work difficulty for blockchain mining (default: 2)",
     )
 
+    parser.add_argument(
+        "--circuit-breaker",
+        action="store_true",
+        help="Enable circuit breaker with exponential backoff for fault-tolerant FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--circuit-status",
+        action="store_true",
+        help="Display the circuit breaker status dashboard after execution",
+    )
+
     return parser
 
 
@@ -205,6 +222,28 @@ def main(argv: Optional[list[str]] = None) -> int:
         blockchain_observer = BlockchainObserver(blockchain=blockchain)
         event_bus.subscribe(blockchain_observer)
 
+    # Circuit breaker
+    cb_middleware = None
+    if args.circuit_breaker:
+        cb_middleware = CircuitBreakerMiddleware(
+            event_bus=event_bus,
+            failure_threshold=config.circuit_breaker_failure_threshold,
+            success_threshold=config.circuit_breaker_success_threshold,
+            timeout_ms=config.circuit_breaker_timeout_ms,
+            sliding_window_size=config.circuit_breaker_sliding_window_size,
+            half_open_max_calls=config.circuit_breaker_half_open_max_calls,
+            backoff_base_ms=config.circuit_breaker_backoff_base_ms,
+            backoff_max_ms=config.circuit_breaker_backoff_max_ms,
+            backoff_multiplier=config.circuit_breaker_backoff_multiplier,
+            ml_confidence_threshold=config.circuit_breaker_ml_confidence_threshold,
+            call_timeout_ms=config.circuit_breaker_call_timeout_ms,
+        )
+        # Register in global registry for dashboard access
+        registry = CircuitBreakerRegistry.get_instance()
+        registry.get_or_create(
+            cb_middleware.circuit_breaker.name,
+        )
+
     builder = (
         FizzBuzzServiceBuilder()
         .with_config(config)
@@ -213,6 +252,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         .with_output_format(output_format)
         .with_default_middleware()
     )
+
+    if cb_middleware is not None:
+        builder.with_middleware(cb_middleware)
 
     service = builder.build()
 
@@ -243,6 +285,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if blockchain_observer is not None:
         print(blockchain_observer.get_blockchain().get_chain_summary())
+
+    if args.circuit_status and cb_middleware is not None:
+        print(CircuitBreakerDashboard.render(cb_middleware.circuit_breaker))
+    elif args.circuit_status:
+        print("\n  Circuit breaker not enabled. Use --circuit-breaker to enable.\n")
 
     return 0
 

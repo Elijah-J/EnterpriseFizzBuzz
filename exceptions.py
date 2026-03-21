@@ -189,3 +189,70 @@ class BlockchainIntegrityError(FizzBuzzError):
             error_code="EFP-B000",
             context={"block_index": block_index},
         )
+
+
+class CircuitOpenError(FizzBuzzError):
+    """Raised when a request is rejected because the circuit breaker is open.
+
+    In enterprise distributed systems, circuit breakers prevent cascading
+    failures by rejecting requests to unhealthy downstream services. Here,
+    it means FizzBuzz evaluation has been temporarily suspended because
+    too many numbers failed divisibility checks, which is arguably a sign
+    that mathematics itself is experiencing an outage.
+    """
+
+    def __init__(self, circuit_name: str, retry_after_ms: float) -> None:
+        super().__init__(
+            f"Circuit '{circuit_name}' is OPEN. Request rejected. "
+            f"Retry after {retry_after_ms:.0f}ms. "
+            f"FizzBuzz service is currently experiencing degraded modulo operations.",
+            error_code="EFP-CB00",
+            context={"circuit_name": circuit_name, "retry_after_ms": retry_after_ms},
+        )
+        self.circuit_name = circuit_name
+        self.retry_after_ms = retry_after_ms
+
+
+class CircuitBreakerTimeoutError(FizzBuzzError):
+    """Raised when a FizzBuzz evaluation exceeds the circuit breaker timeout.
+
+    If computing n % 3 takes longer than the configured timeout, something
+    has gone catastrophically wrong — or someone set the timeout to zero,
+    which is a configuration error of cosmic proportions.
+    """
+
+    def __init__(self, circuit_name: str, timeout_ms: float, elapsed_ms: float) -> None:
+        super().__init__(
+            f"Circuit '{circuit_name}' call timed out after {elapsed_ms:.2f}ms "
+            f"(limit: {timeout_ms:.0f}ms). The modulo operator appears to be "
+            f"running slower than expected.",
+            error_code="EFP-CB01",
+            context={
+                "circuit_name": circuit_name,
+                "timeout_ms": timeout_ms,
+                "elapsed_ms": elapsed_ms,
+            },
+        )
+
+
+class DownstreamFizzBuzzDegradationError(FizzBuzzError):
+    """Raised when downstream FizzBuzz evaluation quality degrades.
+
+    Monitors ML confidence scores and evaluation latency to detect
+    when the FizzBuzz pipeline is producing results with insufficient
+    conviction. Because a FizzBuzz result delivered without confidence
+    is no FizzBuzz result at all.
+    """
+
+    def __init__(self, metric_name: str, current_value: float, threshold: float) -> None:
+        super().__init__(
+            f"Downstream FizzBuzz degradation detected: {metric_name} "
+            f"at {current_value:.4f} (threshold: {threshold:.4f}). "
+            f"The FizzBuzz pipeline may be experiencing existential doubt.",
+            error_code="EFP-CB02",
+            context={
+                "metric_name": metric_name,
+                "current_value": current_value,
+                "threshold": threshold,
+            },
+        )

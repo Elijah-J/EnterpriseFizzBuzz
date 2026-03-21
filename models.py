@@ -60,6 +60,11 @@ class EventType(Enum):
     MIDDLEWARE_EXITED = auto()
     OUTPUT_FORMATTED = auto()
     ERROR_OCCURRED = auto()
+    CIRCUIT_BREAKER_STATE_CHANGED = auto()
+    CIRCUIT_BREAKER_TRIPPED = auto()
+    CIRCUIT_BREAKER_RECOVERED = auto()
+    CIRCUIT_BREAKER_HALF_OPEN = auto()
+    CIRCUIT_BREAKER_CALL_REJECTED = auto()
 
 
 @dataclass(frozen=True)

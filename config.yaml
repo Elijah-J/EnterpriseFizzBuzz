@@ -67,6 +67,24 @@ plugins:
   plugin_directory: "./plugins"
   enabled_plugins: []
 
+# Circuit breaker configuration
+# Protects the FizzBuzz evaluation pipeline from cascading failures
+# by monitoring error rates and temporarily rejecting requests when
+# the system is unhealthy. Because even modulo arithmetic deserves
+# fault tolerance.
+circuit_breaker:
+  enabled: false
+  failure_threshold: 5          # Number of failures before tripping
+  success_threshold: 3          # Successes needed to close from half-open
+  timeout_ms: 30000             # Time in OPEN state before trying half-open
+  sliding_window_size: 10       # Size of the sliding window for error tracking
+  half_open_max_calls: 3        # Max concurrent calls allowed in half-open
+  backoff_base_ms: 1000         # Base delay for exponential backoff
+  backoff_max_ms: 60000         # Maximum backoff delay
+  backoff_multiplier: 2.0       # Exponential backoff multiplier
+  ml_confidence_threshold: 0.7  # Min ML confidence before counting as degraded
+  call_timeout_ms: 5000         # Per-call timeout in milliseconds
+
 # Observer configuration
 observers:
   console_observer:
