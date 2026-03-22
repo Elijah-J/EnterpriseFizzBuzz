@@ -136,7 +136,9 @@ A bespoke bytecode virtual machine -- the FizzBuzz Virtual Machine (FBVM) -- wit
 
 ---
 
-## Idea 5: FizzBuzz Query Optimizer (Rule Evaluation Planner)
+## ~~Idea 5: FizzBuzz Query Optimizer (Rule Evaluation Planner)~~ DONE
+
+> **Status: IMPLEMENTED** -- Shipped as `enterprise_fizzbuzz/infrastructure/query_optimizer.py` (~1,215 lines) with 88 tests (~734 lines). Eight plan node types (ModuloScan, CacheLookup, MLInference, ComplianceGate, BlockchainVerify, ResultMerge, Filter, Materialize), cost-based plan selection via branch-and-bound enumeration, a five-weight cost model (CPU, cache, ML, compliance, blockchain) fed by a StatisticsCollector, LRU plan cache with automatic invalidation, four optimizer hints (FORCE_ML, PREFER_CACHE, NO_BLOCKCHAIN, NO_ML), PostgreSQL-style EXPLAIN and EXPLAIN ANALYZE with ASCII plan tree rendering, OptimizerMiddleware at priority -3, and an ASCII dashboard with plan cache stats, cost model weights, and recent plan history. CLI flags: `--optimize`, `--explain`, `--explain-analyze`, `--optimizer-hints`, `--optimizer-dashboard`. Slower than just doing the modulo. By design.
 
 ### The Problem
 
@@ -223,7 +225,7 @@ Because Raft already exists in the hot-reload module, and implementing the same 
 | 2 | ~~FizzBuzz-as-a-Service (FBaaS)~~ **DONE** | ~1,031 + 726 tests | 87 | CLI-only FizzBuzz is a pre-cloud relic; SaaS is the future of modulo |
 | 3 | ~~Time-Travel Debugger~~ **DONE** | ~1,166 + 877 tests | 82 | We store every event but cannot navigate them; the data demands a vehicle |
 | 4 | ~~Custom Bytecode VM (FBVM)~~ **DONE** | ~1,450 + 963 tests | 90 | CPython's general-purpose bytecode is an insult to purpose-built modulo |
-| 5 | Query Optimizer / Rule Planner | ~2,450 | ~140 | Treating all evaluations equally is the full-table-scan of FizzBuzz |
+| 5 | ~~Query Optimizer / Rule Planner~~ **DONE** | ~1,215 + 734 tests | 88 | Treating all evaluations equally is the full-table-scan of FizzBuzz |
 | 6 | Distributed Paxos Consensus | ~3,150 | ~160 | Single-node truth is single-point-of-failure truth; quorum is non-negotiable |
 | **Total** | | **~16,430** | **~840** | **Because 108,000 lines was a starting point, not a destination** |
 

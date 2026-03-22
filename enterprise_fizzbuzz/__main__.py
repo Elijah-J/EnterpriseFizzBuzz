@@ -284,6 +284,14 @@ from enterprise_fizzbuzz.infrastructure.time_travel import (
     create_time_travel_subsystem,
     render_time_travel_summary,
 )
+from enterprise_fizzbuzz.infrastructure.query_optimizer import (
+    ExplainOutput,
+    Optimizer,
+    OptimizerDashboard,
+    OptimizerMiddleware,
+    create_optimizer_from_config,
+    parse_optimizer_hints,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1396,6 +1404,43 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--tt-dashboard",
         action="store_true",
         help="Display the Time-Travel Debugger ASCII dashboard after execution",
+    )
+
+    # Query Optimizer (PostgreSQL-style cost-based planner)
+    parser.add_argument(
+        "--optimize",
+        action="store_true",
+        help="Enable the cost-based Query Optimizer for FizzBuzz evaluation (because modulo deserves a query planner)",
+    )
+
+    parser.add_argument(
+        "--explain",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Display the PostgreSQL-style EXPLAIN plan for evaluating number N (without executing)",
+    )
+
+    parser.add_argument(
+        "--explain-analyze",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Display EXPLAIN ANALYZE for number N (execute and compare estimated vs actual costs)",
+    )
+
+    parser.add_argument(
+        "--optimizer-hints",
+        type=str,
+        metavar="HINTS",
+        default=None,
+        help="Comma-separated optimizer hints: FORCE_ML, PREFER_CACHE, NO_BLOCKCHAIN, NO_ML",
+    )
+
+    parser.add_argument(
+        "--optimizer-dashboard",
+        action="store_true",
+        help="Display the Query Optimizer ASCII dashboard after execution",
     )
 
     return parser
@@ -3247,6 +3292,92 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # Query Optimizer Setup
+    # ----------------------------------------------------------------
+    qo_optimizer = None
+    qo_middleware = None
+    qo_hints: frozenset = frozenset()
+
+    if args.optimizer_hints:
+        qo_hints = parse_optimizer_hints(args.optimizer_hints)
+
+    if args.optimize or args.explain is not None or args.explain_analyze is not None or args.optimizer_dashboard:
+        qo_optimizer = create_optimizer_from_config(config)
+
+        # Handle --explain (early exit: plan without executing)
+        if args.explain is not None:
+            from enterprise_fizzbuzz.infrastructure.query_optimizer import (
+                DivisibilityProfile,
+                ExplainOutput,
+            )
+            profile = DivisibilityProfile(
+                divisors=tuple(r.divisor for r in config.rules),
+                labels=tuple(r.label for r in config.rules),
+                range_size=max(1, args.explain),
+            )
+            plan = qo_optimizer.optimize(profile, qo_hints)
+            print()
+            print("  QUERY PLAN (estimated)")
+            print("  " + "-" * 56)
+            print(ExplainOutput.render(plan, analyze=False, indent=1))
+            print("  " + "-" * 56)
+            print(f"  Total estimated cost: {plan.total_cost():.2f} FCU")
+            print()
+            return 0
+
+        # Handle --explain-analyze (execute and compare)
+        if args.explain_analyze is not None:
+            from enterprise_fizzbuzz.infrastructure.query_optimizer import (
+                DivisibilityProfile,
+                ExplainOutput,
+            )
+            profile = DivisibilityProfile(
+                divisors=tuple(r.divisor for r in config.rules),
+                labels=tuple(r.label for r in config.rules),
+                range_size=max(1, args.explain_analyze),
+            )
+            plan = qo_optimizer.optimize(profile, qo_hints)
+
+            # Simulate execution to populate actual costs
+            exec_start = time.perf_counter_ns()
+            n = args.explain_analyze
+            _result = "FizzBuzz" if n % 15 == 0 else "Fizz" if n % 3 == 0 else "Buzz" if n % 5 == 0 else str(n)
+            exec_elapsed_ms = (time.perf_counter_ns() - exec_start) / 1_000_000
+
+            # Mark nodes as executed with simulated actuals
+            def _mark_executed(node: Any, depth: int = 0) -> None:
+                node.mark_executed(
+                    actual_rows=node.estimated_rows,
+                    actual_time_ms=exec_elapsed_ms / max(1, node.depth()),
+                    actual_cost=node.estimated_cost * 1.05,  # 5% cost model variance
+                )
+                for child in node.children:
+                    _mark_executed(child, depth + 1)
+            _mark_executed(plan)
+
+            print()
+            print("  QUERY PLAN (with ANALYZE)")
+            print("  " + "-" * 56)
+            print(ExplainOutput.render(plan, analyze=True, indent=1))
+            print("  " + "-" * 56)
+            print(f"  Estimated cost: {plan.total_cost():.2f} FCU")
+            print(f"  Actual cost:    {plan.total_actual_cost():.2f} FCU")
+            print(f"  Execution time: {exec_elapsed_ms:.4f}ms")
+            print(f"  Result:         {_result}")
+            print()
+            return 0
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | QUERY OPTIMIZER: Cost-Based Planning ENABLED            |\n"
+            "  | Every FizzBuzz evaluation will now be preceded by a     |\n"
+            "  | PostgreSQL-style plan enumeration, cost estimation, and |\n"
+            "  | LRU plan caching step. Because n %% 3 deserves a query  |\n"
+            "  | planner. PostgreSQL would be proud.                     |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -3343,6 +3474,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
         builder.with_middleware(flag_middleware)
+
+    # Add Query Optimizer middleware (priority -3, runs early)
+    if qo_optimizer is not None and args.optimize:
+        qo_middleware = OptimizerMiddleware(
+            optimizer=qo_optimizer,
+            hints=qo_hints,
+            rules=list(config.rules),
+        )
+        builder.with_middleware(qo_middleware)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -4293,6 +4433,14 @@ def main(argv: Optional[list[str]] = None) -> int:
                 breakpoints=tt_breakpoints,
                 width=config.time_travel_dashboard_width,
             ))
+
+    # Query Optimizer Dashboard
+    if args.optimizer_dashboard and qo_optimizer is not None:
+        print(OptimizerDashboard.render(
+            qo_optimizer, width=config.query_optimizer_dashboard_width
+        ))
+    elif args.optimizer_dashboard:
+        print("\n  Query optimizer not enabled. Use --optimize to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

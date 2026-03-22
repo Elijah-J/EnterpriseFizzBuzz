@@ -504,6 +504,13 @@ class EventType(Enum):
     VM_EXECUTION_COMPLETED = auto()
     VM_DASHBOARD_RENDERED = auto()
 
+    # Query Optimizer events
+    OPTIMIZER_PLAN_GENERATED = auto()
+    OPTIMIZER_PLAN_SELECTED = auto()
+    OPTIMIZER_PLAN_CACHED = auto()
+    OPTIMIZER_CACHE_HIT = auto()
+    OPTIMIZER_EXPLAIN_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

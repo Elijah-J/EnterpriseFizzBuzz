@@ -948,6 +948,21 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "query_optimizer": {
+                "enabled": False,
+                "cost_weights": {
+                    "modulo": 1.0,
+                    "cache_miss": 5.0,
+                    "ml": 20.0,
+                    "compliance": 10.0,
+                    "blockchain": 50.0,
+                },
+                "plan_cache_max_size": 256,
+                "max_plans": 16,
+                "dashboard": {
+                    "width": 60,
+                },
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -3467,6 +3482,36 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def vm_dashboard_show_disassembly(self) -> bool:
         self._ensure_loaded()
         return self._raw_config.get("vm", {}).get("dashboard", {}).get("show_disassembly", True)
+
+    # ----------------------------------------------------------------
+    # Query Optimizer properties
+    # ----------------------------------------------------------------
+
+    @property
+    def query_optimizer_enabled(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("query_optimizer", {}).get("enabled", False)
+
+    @property
+    def query_optimizer_cost_weights(self) -> dict[str, float]:
+        self._ensure_loaded()
+        defaults = {"modulo": 1.0, "cache_miss": 5.0, "ml": 20.0, "compliance": 10.0, "blockchain": 50.0}
+        return self._raw_config.get("query_optimizer", {}).get("cost_weights", defaults)
+
+    @property
+    def query_optimizer_plan_cache_max_size(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("query_optimizer", {}).get("plan_cache_max_size", 256)
+
+    @property
+    def query_optimizer_max_plans(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("query_optimizer", {}).get("max_plans", 16)
+
+    @property
+    def query_optimizer_dashboard_width(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("query_optimizer", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
