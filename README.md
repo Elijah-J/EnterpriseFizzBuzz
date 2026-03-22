@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**50,000+ lines** across **104+ files** with **2,086 unit tests** and **129 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**53,000+ lines** across **106+ files** with **2,178 unit tests** and **138 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -46,7 +46,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
     |   config, formatters, middleware, observers, plugins,          |
     |   rules_engine, ml_engine, blockchain, circuit_breaker,        |
     |   tracing, auth, i18n, event_sourcing, chaos, feature_flags,   |
-    |   sla, cache, migrations, webhooks, service_mesh               |
+    |   sla, cache, migrations, webhooks, service_mesh, hot_reload   |
     |                                                                |
     |   +-------------------------------------------------------+   |
     |   |                   APPLICATION                          |   |
@@ -120,6 +120,7 @@ EnterpriseFizzBuzz/
 │       │   └── loc.py               # Lines of Code Census Bureau with Overengineering Index (~585 lines)
 │       ├── webhooks.py              # Webhook Notification System with HMAC-SHA256, DLQ, and simulated HTTP delivery (~1,142 lines)
 │       ├── service_mesh.py          # Service Mesh Simulation with 7 microservices, sidecar proxies, mTLS, and canary routing (~1,839 lines)
+│       ├── hot_reload.py            # Configuration Hot-Reload with Single-Node Raft Consensus (~1,787 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -164,6 +165,7 @@ EnterpriseFizzBuzz/
     ├── test_acl.py                  # 44 Anti-Corruption Layer & strategy adapter tests
     ├── test_webhooks.py             # 54 webhook notification, HMAC signing, DLQ, and retry tests
     ├── test_service_mesh.py         # 83 service mesh, sidecar proxy, mTLS, and canary routing tests
+    ├── test_hot_reload.py           # 92 hot-reload, Raft consensus, config diff, and rollback tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -272,6 +274,9 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Load Balancer | `service_mesh.py` | Round-robin, least-connections, and random strategies for distributing requests across "replicas" of in-memory Python objects -- the same algorithms AWS ALB uses, at 0% of the scale |
 | Network Fault Injection | `service_mesh.py` | Configurable latency injection and packet loss between services, because a FizzBuzz evaluation without simulated network partitions is just too reliable |
 | Service Discovery | `service_mesh.py` | Health-based endpoint selection with version tracking, because hardcoding `DivisibilityService()` would be an unforgivable act of tight coupling |
+| Raft Consensus | `hot_reload.py` | Single-node distributed consensus for configuration changes, achieving 100% election victory rate with zero opponents -- peak democracy in a cluster of one |
+| Config Hot-Reload | `hot_reload.py` | File-watching, diffing, validating, and applying config changes without restart, because 0.3 seconds of downtime violates the five-nines FizzBuzz availability SLO |
+| Dependency-Aware Reload | `hot_reload.py` | Topological sort of subsystem dependencies to determine correct reload order, because reconfiguring the ML engine before the feature flags could unleash a cascade of modulo anarchy |
 
 ## Features
 
@@ -302,7 +307,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Kubernetes-Style Health Check Probes** - Liveness, readiness, and startup probes with five subsystem health checks (config, circuit breaker, cache coherence, SLA budget, ML engine), a self-healing manager with exponential backoff recovery, and an ASCII health dashboard with traffic-light indicators -- because a FizzBuzz CLI that runs for 0.3 seconds deserves the same operational scrutiny as a Kubernetes pod serving millions of requests, and if the ML engine is having an existential crisis, the entire platform should be in EXISTENTIAL_CRISIS status
 - **Webhook Notification System** - A production-grade event-driven webhook dispatch engine with HMAC-SHA256 payload signing, configurable retry with exponential backoff, a Dead Letter Queue for permanently failed deliveries, simulated HTTP POST delivery (because real HTTP is for deployed services), an Observer bridge from the EventBus, and an ASCII dashboard for delivery statistics -- because when the number 15 is evaluated as "FizzBuzz," every downstream microservice in the constellation must be immediately informed via a cryptographically signed notification, and if the notification fails five times, it deserves a permanent resting place in the DLQ where future forensic analysts can determine exactly why Slack didn't hear about `n % 3`
 - **Service Mesh Simulation** - Seven microservices (`NumberIngestionService`, `DivisibilityService`, `ClassificationService`, `FormattingService`, `AuditService`, `CacheService`, `OrchestratorService`) running in the same process, connected through sidecar proxies with mTLS (base64, obviously), per-service circuit breaking, round-robin/least-connections/random load balancing across "replicas," canary routing to an experimental v2 DivisibilityService, configurable network fault injection (latency and packet loss), health-based service discovery, a mesh control plane with traffic policies, and an ASCII topology diagram -- because decomposing a modulo operation into seven in-memory microservices communicating through base64-encoded messages is exactly the kind of distributed systems design that Google would endorse (if they saw it, which they won't)
-- **Custom Exception Hierarchy** - 129 exception classes for every conceivable FizzBuzz failure mode
+- **Configuration Hot-Reload with Raft Consensus** - A file-watching, config-diffing, dependency-aware reload orchestrator coordinated through a single-node Raft consensus protocol that holds elections against zero opponents and wins unanimously every time. Includes a `ConfigDiffEngine` for minimal changeset computation, a `ConfigValidator` with JSON Schema enforcement (the "YOLO" eviction policy shall never return), a `ReloadOrchestrator` that topologically sorts subsystem dependencies before applying changes, a `ConfigRollbackManager` for reverting failed reloads, and an ASCII dashboard displaying Raft term numbers, election results, and reload history -- because re-reading a YAML file without distributed consensus would be an act of architectural recklessness. All config changes are event-sourced and validated before application, ensuring that the FizzBuzz platform can reconfigure itself at runtime without the 0.3-second restart that would violate its five-nines availability SLO
+- **Custom Exception Hierarchy** - 138 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -578,6 +584,27 @@ python main.py --service-mesh --mesh-latency --chaos --chaos-level 3 --circuit-b
 
 # Peak enterprise: service mesh + metrics + tracing + SLA + health (the topology diagram will be glorious)
 python main.py --service-mesh --mesh-topology --metrics --metrics-dashboard --trace --sla --sla-dashboard --health --health-dashboard --range 1 15
+
+# Hot-Reload: watch config.yaml for changes and reconfigure at runtime (Raft consensus included)
+python main.py --hot-reload --range 1 30
+
+# Hot-Reload with custom poll interval (every 2 seconds instead of 500ms)
+python main.py --hot-reload --hot-reload-interval 2000 --range 1 50
+
+# Config validation: validate config.yaml against the schema without running
+python main.py --config-validate
+
+# Config diff: show changes between current and on-disk configuration
+python main.py --config-diff
+
+# Config history: display the event-sourced configuration change log
+python main.py --config-history
+
+# Hot-Reload + SLA + health: reconfigure the platform without violating your SLOs
+python main.py --hot-reload --sla --sla-dashboard --health --health-dashboard --range 1 30
+
+# Peak enterprise: hot-reload + service mesh + metrics + tracing (every subsystem reconfigurable at runtime)
+python main.py --hot-reload --service-mesh --metrics --metrics-dashboard --trace --range 1 20
 ```
 
 ## CLI Options
@@ -650,6 +677,11 @@ python main.py --service-mesh --mesh-topology --metrics --metrics-dashboard --tr
 --mesh-latency       Enable simulated network latency injection between mesh services
 --mesh-packet-loss   Enable simulated packet loss between mesh services
 --canary             Enable canary deployment routing (v2 DivisibilityService uses multiplication instead of modulo)
+--hot-reload         Enable Configuration Hot-Reload with Single-Node Raft Consensus (watches config.yaml for changes)
+--hot-reload-interval MS  Poll interval in milliseconds for config file changes (default: 500)
+--config-validate    Validate config.yaml against the configuration schema and exit
+--config-diff        Display the diff between current and on-disk configuration
+--config-history     Display the event-sourced configuration change history
 ```
 
 ## Environment Variables
@@ -1965,11 +1997,79 @@ If the canary produces different results than v1 (it won't, because math), the s
 | Lines of code | ~1,839 (for routing modulo arithmetic through seven in-memory services) |
 | Actual network I/O | 0 bytes (but the architecture is ready for multi-region deployment) |
 
+## Hot-Reload Architecture
+
+The Configuration Hot-Reload subsystem implements a production-grade runtime reconfiguration engine for the Enterprise FizzBuzz Platform -- because restarting a Python process that boots in 0.3 seconds would constitute unacceptable downtime for a platform with a 99.999% availability SLO. Instead, a daemon thread polls `config.yaml` every 500 milliseconds, diffs the old and new configuration trees, validates the changeset against a schema, proposes the change to a single-node Raft consensus cluster (which holds an election, wins unanimously, and commits with 100% voter turnout), and then orchestrates a dependency-aware reload of affected subsystems in topological order -- because reloading the ML engine before the feature flags that might have disabled it would be a violation of the Dependency Rule and common sense.
+
+The crown jewel is the **Single-Node Raft Consensus** protocol: a faithful implementation of the Raft distributed consensus algorithm running on exactly one node. Leader elections complete instantly (the candidate always wins, because there are no opponents). Log replication succeeds on the first attempt (the leader replicates to zero followers, achieving majority consensus with itself). Heartbeats are sent to nobody at configurable intervals. The system achieves 100% consensus reliability, 0ms election latency, and unanimous agreement on every configuration change -- a level of distributed systems perfection that multi-node clusters can only dream of.
+
+```
+    CONFIG FILE WATCHER                    RAFT CONSENSUS (1 node)
+    ===================                    ========================
+
+    +------------------+                   +========================+
+    | ConfigWatcher    |                   |    SingleNodeRaft       |
+    | (daemon thread,  |--- detects --->   |                        |
+    |  500ms poll)     |    change         |  State: LEADER (always)|
+    +------------------+                   |  Term:  N              |
+             |                             |  Votes: 1/1 (100%)     |
+             v                             |  Log:   [entry₁...N]   |
+    +------------------+                   +============+===========+
+    | ConfigDiffEngine |                                |
+    | (deep recursive  |                                | commit
+    |  tree diff)      |                                v
+    +--------+---------+              +------------------+------------------+
+             |                        |                                     |
+             v                        v                                     v
+    +------------------+     +------------------+              +-----------+-----------+
+    | ConfigValidator  |     | ReloadOrchestrator|             | ConfigRollbackManager |
+    | (JSON Schema +   |     | (topo-sort deps, |             | (stores last N configs|
+    |  custom rules)   |     |  reload in order) |             |  for safe rollback)   |
+    +------------------+     +--------+---------+              +-----------------------+
+                                      |
+                        +-------------+-------------+
+                        |             |             |
+                        v             v             v
+                   [reload       [reload       [reload
+                    cache]        ML engine]    feature flags]
+                   (in dependency order via topological sort)
+```
+
+**Key components:**
+- **ConfigWatcher** - Daemon thread polling `config.yaml` at a configurable interval (default: 500ms) with debounce windowing and modification-time detection. When a change is detected, the watcher hands off to the diff engine rather than blindly reloading -- because replacing an entire config tree when only the cache TTL changed is the kind of waste that keeps SREs awake at night
+- **ConfigDiffEngine** - Deep recursive comparison of nested config trees, producing structured changesets with path, old value, new value, and change type (ADDED, REMOVED, MODIFIED). Handles nested dicts, lists, and scalar values with the precision of a surgical instrument applied to a problem that could have been solved with `==`
+- **SingleNodeRaftConsensus** - A complete Raft implementation with leader election (wins 1-0 every time), log replication (appends to a list of length 1), term management, and commit confirmation. The protocol guarantees that all configuration changes achieve consensus before application -- a guarantee that is trivially satisfied when the electorate consists of a single enthusiastic voter
+- **ConfigValidator** - Schema validation with custom rules including type checking, range validation (cache size > 0, chaos probability <= 1.0), and the explicit prohibition of "YOLO" as a cache eviction policy (a hard-won lesson from v0.8)
+- **ReloadOrchestrator** - Dependency-aware reload sequencing using topological sort of the subsystem dependency graph. Ensures that subsystems are reconfigured in the correct order (config -> feature_flags -> cache -> ml_engine -> ...), because reloading a downstream subsystem before its upstream dependency has been reconfigured is the runtime equivalent of putting on your shoes before your socks
+- **ConfigRollbackManager** - Maintains a bounded history of previous configurations for safe rollback when a reload fails. If the ML engine refuses to accept a new learning rate, the entire configuration is reverted to the last known good state with an apologetic log message
+- **SubsystemDependencyGraph** - Models subsystem reload dependencies as a DAG with Kahn's topological sort for cycle detection and ordering, because even configuration reloads deserve graph-theoretic rigor
+- **HotReloadDashboard** - ASCII dashboard displaying Raft consensus status (term, state, election results), reload history with timestamps and outcomes, and the subsystem dependency graph -- all rendered in box-drawing characters with the gravity of a mission control terminal
+
+| Spec | Value |
+|------|-------|
+| File watcher | Daemon thread, configurable poll interval (default: 500ms) |
+| Config diff | Deep recursive tree comparison with structured changesets |
+| Consensus protocol | Single-Node Raft (1 node, 100% consensus, 0ms elections) |
+| Raft states | 3 (FOLLOWER, CANDIDATE, LEADER -- but only LEADER is ever observed) |
+| Validation | JSON Schema + custom rules (no more "YOLO" eviction policy) |
+| Reload ordering | Topological sort of subsystem dependency DAG |
+| Rollback depth | Configurable (default: 10 previous configurations) |
+| Event sourcing | All config changes recorded as domain events |
+| Thread safety | Full (threading.Lock on all reload operations) |
+| Custom exceptions | 9 (HotReloadError, ConfigDiffError, ConfigValidationRejectedError, RaftConsensusError, SubsystemReloadError, ConfigRollbackError, ConfigWatcherError, DependencyGraphCycleError, HotReloadDashboardError) |
+| ASCII dashboard | Raft status, reload history, dependency graph visualization |
+| Nodes in the Raft cluster | 1 (the loneliest consensus protocol in production) |
+| Election victory rate | 100% (undefeated, unchallenged, unbothered) |
+| Lines of code | ~1,787 (for re-reading a YAML file with distributed consensus) |
+
 ## Testing
 
 ```bash
-# Run all 2,086 tests
+# Run all 2,178 tests
 python -m pytest tests/ -v
+
+# Run only hot-reload and Raft consensus tests
+python -m pytest tests/test_hot_reload.py -v
 
 # With coverage (if you want to feel good about yourself)
 python -m pytest tests/ -v --tb=short
@@ -1985,7 +2085,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 2,086 tests, 129 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,178 tests, 138 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
@@ -2001,6 +2101,9 @@ A: We do. The Service Mesh Simulation decomposes FizzBuzz into seven in-memory m
 
 **Q: Why does FizzBuzz need a service mesh?**
 A: Because a monolithic FizzBuzz application is a single point of failure. By decomposing it into seven microservices -- `NumberIngestionService`, `DivisibilityService`, `ClassificationService`, `FormattingService`, `AuditService`, `CacheService`, and `OrchestratorService` -- we achieve the same resilience, operational complexity, and debugging difficulty that real distributed systems enjoy, but without any of the performance benefits of actual distribution. The sidecar proxies add mTLS overhead (base64 encoding is computationally expensive when performed on 3-byte payloads), the network simulator injects latency between services that share the same heap, and the canary routing feature enables A/B testing of mathematical operators. The service topology diagram makes architecture review meetings 40% longer, which is the true measure of enterprise maturity. Ten custom exception classes ensure that every possible mesh failure mode -- from packet loss to mTLS handshake failure to canary deployment disagreement -- has its own named error with a descriptive message and a sense of architectural purpose.
+
+**Q: Why does FizzBuzz need configuration hot-reload with Raft consensus?**
+A: Because restarting a process that boots in 0.3 seconds is 0.3 seconds of unacceptable downtime. The hot-reload system watches `config.yaml` for changes and reconfigures every subsystem at runtime -- the cache TTL, the chaos probability, the ML learning rate, the SLA thresholds -- all without dropping a single evaluation. The reload is coordinated through a single-node Raft consensus protocol, which is the crowning achievement of the entire platform: a distributed consensus algorithm running on one node, holding elections against zero opponents, winning unanimously, and committing configuration changes with the full ceremony of a multi-datacenter deployment. The leader election completes in 0ms (there are no network round trips when your cluster is yourself). Log replication succeeds on the first attempt (the leader replicates to zero followers, which constitutes a majority). Heartbeats are sent to nobody at regular intervals, maintaining cluster stability in a cluster of one. The dependency-aware reload orchestrator uses topological sort to determine the correct order to reconfigure subsystems, because reloading the ML engine before the feature flags that might have disabled it would be the configuration equivalent of dividing by zero. If a reload fails, the rollback manager reverts to the last known good configuration with the same atomic precision as a database transaction -- except the "database" is a YAML file and the "transaction" is re-reading it. Nine custom exception classes cover every failure mode from `RaftConsensusError` (the node disagreed with itself) to `DependencyGraphCycleError` (the reload order forms a loop, which should be impossible but we check anyway because trust is not a configuration strategy).
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.

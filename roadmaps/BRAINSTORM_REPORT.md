@@ -2,8 +2,8 @@
 
 ## Backlog Status
 - Total ideas: 6
-- Implemented: 4
-- Remaining: 2
+- Implemented: 6
+- Remaining: 0
 
 ## Feature Ideas
 
@@ -96,7 +96,7 @@
 **Estimated complexity:** High
 
 ### 6. Configuration Hot-Reload with Consensus Protocol
-**Status:** PENDING
+**Status:** DONE
 **Tagline:** "Change the FizzBuzz rules at runtime, because restarting the process is for applications that don't respect uptime SLAs."
 **Description:** Implement a configuration hot-reload system that watches `config.yaml` for changes and dynamically reconfigures every subsystem without restarting the process -- because a 0.3-second restart is 0.3 seconds of unacceptable downtime for a FizzBuzz platform with a 99.999% availability SLO. The system includes a file watcher that polls for config changes every 500ms (inotify would be overkill, but polling every 500ms for a config that changes once per quarter is perfectly reasonable), a config diff engine that calculates the minimal set of changes between the old and new configuration, a dependency-aware reload orchestrator that determines the correct order to reconfigure subsystems (you can't reload the ML engine before the feature flags, because the feature flag might have disabled the ML engine), and a rollback mechanism that reverts to the previous configuration if any subsystem fails to reload. To ensure configuration consistency in the face of concurrent evaluations, the reload is coordinated through a single-node Raft consensus protocol -- a distributed consensus algorithm running on one node, achieving unanimous agreement with itself every time. All config changes are recorded as events in the event store and validated against a JSON Schema before application.
 **Why it's enterprise:** In a real distributed system, configuration changes propagate through a control plane and are applied gracefully to avoid disruption. In EnterpriseFizzBuzz, the "control plane" is a while loop that checks the file modification time, and the "disruption" is a Python dictionary being updated. But the principle is the same. The single-node Raft consensus protocol is the crown jewel: it runs leader election (it always wins), replicates the config change to its log (a list of length 1), and commits once a majority of nodes agree (1 out of 1 = 100% consensus). The config diff engine ensures that if you change only the cache TTL, the system doesn't unnecessarily retrain the neural network -- a optimization that saves approximately 0.02 seconds but demonstrates a deep respect for computational resources. The JSON Schema validation prevents invalid configurations like setting the cache eviction policy to "YOLO" (which was, regrettably, a valid option in v0.8).

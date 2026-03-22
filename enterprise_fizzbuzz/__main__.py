@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -106,6 +107,15 @@ from enterprise_fizzbuzz.infrastructure.metrics import (
     MetricRegistry,
     PrometheusTextExporter,
     create_metrics_subsystem,
+)
+from enterprise_fizzbuzz.infrastructure.hot_reload import (
+    ConfigDiffer,
+    ConfigValidator,
+    ConfigWatcher,
+    HotReloadDashboard,
+    ReloadOrchestrator,
+    SingleNodeRaftConsensus,
+    create_hot_reload_subsystem,
 )
 from enterprise_fizzbuzz.infrastructure.service_mesh import (
     MeshMiddleware,
@@ -606,6 +616,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Enable canary deployment routing (v2 DivisibilityService uses advanced formula)",
     )
 
+    # Configuration Hot-Reload with Single-Node Raft Consensus
+    parser.add_argument(
+        "--hot-reload",
+        action="store_true",
+        help="Enable configuration hot-reload with Single-Node Raft Consensus (polls config.yaml for changes)",
+    )
+
+    parser.add_argument(
+        "--reload-status",
+        action="store_true",
+        help="Display the hot-reload Raft consensus dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--config-diff",
+        type=str,
+        metavar="PATH",
+        default=None,
+        help="Compute and display a diff between current config and the specified YAML file",
+    )
+
+    parser.add_argument(
+        "--config-validate",
+        type=str,
+        metavar="PATH",
+        default=None,
+        help="Validate the specified YAML configuration file and exit",
+    )
+
     return parser
 
 
@@ -644,6 +683,78 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Configuration
     config = ConfigurationManager(config_path=args.config)
     config.load()
+
+    # ----------------------------------------------------------------
+    # Configuration Validation (--config-validate, early exit)
+    # ----------------------------------------------------------------
+    if args.config_validate:
+        try:
+            import yaml
+        except ImportError:
+            print("\n  PyYAML not installed. Cannot validate.\n")
+            return 1
+
+        validate_path = Path(args.config_validate)
+        if not validate_path.exists():
+            print(f"\n  Configuration file not found: {validate_path}\n")
+            return 1
+
+        with open(validate_path, "r") as f:
+            validate_config = yaml.safe_load(f) or {}
+
+        errors = ConfigValidator.validate(validate_config)
+        if errors:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | CONFIGURATION VALIDATION: FAILED                        |\n"
+                "  +---------------------------------------------------------+"
+            )
+            for err in errors:
+                print(f"    [X] {err}")
+            print()
+            return 1
+        else:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | CONFIGURATION VALIDATION: PASSED                        |\n"
+                "  | The configuration file is valid. All values are within  |\n"
+                "  | acceptable enterprise parameters. Congratulations on   |\n"
+                "  | authoring a syntactically correct YAML file.           |\n"
+                "  +---------------------------------------------------------+"
+            )
+            return 0
+
+    # ----------------------------------------------------------------
+    # Configuration Diff (--config-diff, early exit)
+    # ----------------------------------------------------------------
+    if args.config_diff:
+        try:
+            import yaml
+        except ImportError:
+            print("\n  PyYAML not installed. Cannot compute diff.\n")
+            return 1
+
+        diff_path = Path(args.config_diff)
+        if not diff_path.exists():
+            print(f"\n  Configuration file not found: {diff_path}\n")
+            return 1
+
+        with open(diff_path, "r") as f:
+            diff_config = yaml.safe_load(f) or {}
+
+        current_config = config._get_raw_config_copy()
+        changeset = ConfigDiffer.diff(current_config, diff_config)
+
+        if changeset.is_empty:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | CONFIGURATION DIFF: No changes detected.               |\n"
+                "  | The files are identical. This diff was anticlimactic.   |\n"
+                "  +---------------------------------------------------------+"
+            )
+        else:
+            print(HotReloadDashboard.render_diff(changeset, width=58))
+        return 0
 
     # ----------------------------------------------------------------
     # Database Migration Framework (opt-in via --migrate flags)
@@ -1182,6 +1293,52 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Service mesh not enabled. Use --service-mesh to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Configuration Hot-Reload with Single-Node Raft Consensus
+    # ----------------------------------------------------------------
+    hot_reload_raft = None
+    hot_reload_orchestrator = None
+    hot_reload_watcher = None
+    hot_reload_dep_graph = None
+    hot_reload_rollback_mgr = None
+
+    if args.hot_reload:
+        config_path = Path(
+            args.config
+            or os.environ.get("EFP_CONFIG_PATH", str(Path(__file__).parent.parent / "config.yaml"))
+        )
+
+        hot_reload_raft, hot_reload_orchestrator, hot_reload_watcher, hot_reload_dep_graph, hot_reload_rollback_mgr = (
+            create_hot_reload_subsystem(
+                config_manager=config,
+                config_path=config_path,
+                poll_interval_seconds=config.hot_reload_poll_interval_seconds,
+                heartbeat_interval_ms=config.hot_reload_raft_heartbeat_interval_ms,
+                election_timeout_ms=config.hot_reload_raft_election_timeout_ms,
+                max_rollback_history=config.hot_reload_max_rollback_history,
+                validate_before_apply=config.hot_reload_validate_before_apply,
+                log_diffs=config.hot_reload_log_diffs,
+                event_bus=event_bus,
+            )
+        )
+
+        # Start the file watcher
+        hot_reload_watcher.start()
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | HOT-RELOAD: Single-Node Raft Consensus ENABLED          |\n"
+            "  | Configuration changes will be detected and applied      |\n"
+            "  | at runtime through a full Raft consensus protocol       |\n"
+            "  | with 1 node. Elections: always unanimous. Heartbeats:   |\n"
+            "  | sent to 0 followers. Consensus latency: 0.000ms.       |\n"
+            "  | Democracy has never been more efficient.                |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.reload_status:
+        print("\n  Hot-reload not enabled. Use --hot-reload to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -1661,6 +1818,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.mesh_topology:
         print("\n  Service mesh not enabled. Use --service-mesh to enable.\n")
+
+    # Hot-reload dashboard
+    if args.reload_status and hot_reload_raft is not None:
+        print(HotReloadDashboard.render(
+            raft=hot_reload_raft,
+            orchestrator=hot_reload_orchestrator,
+            watcher=hot_reload_watcher,
+            dependency_graph=hot_reload_dep_graph,
+            rollback_manager=hot_reload_rollback_mgr,
+            width=config.hot_reload_dashboard_width,
+            show_raft_details=config.hot_reload_dashboard_show_raft_details,
+        ))
+
+    # Stop the hot-reload watcher on exit
+    if hot_reload_watcher is not None and hot_reload_watcher.is_running:
+        hot_reload_watcher.stop()
 
     return 0
 

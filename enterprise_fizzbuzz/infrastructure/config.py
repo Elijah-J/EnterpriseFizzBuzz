@@ -382,6 +382,20 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "hot_reload": {
+                "enabled": False,
+                "poll_interval_seconds": 2.0,
+                "raft_heartbeat_interval_ms": 150,
+                "raft_election_timeout_ms": 300,
+                "max_rollback_history": 10,
+                "validate_before_apply": True,
+                "log_diffs": True,
+                "subsystem_reload_timeout_ms": 5000,
+                "dashboard": {
+                    "width": 60,
+                    "show_raft_details": True,
+                },
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -1374,6 +1388,102 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Time in ms before attempting half-open from open state."""
         self._ensure_loaded()
         return self._raw_config.get("service_mesh", {}).get("circuit_breaker", {}).get("reset_timeout_ms", 5000)
+
+    # ----------------------------------------------------------------
+    # Hot-Reload Configuration Properties
+    # ----------------------------------------------------------------
+
+    @property
+    def hot_reload_enabled(self) -> bool:
+        """Whether the configuration hot-reload subsystem is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("enabled", False)
+
+    @property
+    def hot_reload_poll_interval_seconds(self) -> float:
+        """Polling interval for config file change detection."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("poll_interval_seconds", 2.0)
+
+    @property
+    def hot_reload_raft_heartbeat_interval_ms(self) -> int:
+        """Raft heartbeat interval in milliseconds (to 0 followers)."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("raft_heartbeat_interval_ms", 150)
+
+    @property
+    def hot_reload_raft_election_timeout_ms(self) -> int:
+        """Raft election timeout in milliseconds (always wins immediately)."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("raft_election_timeout_ms", 300)
+
+    @property
+    def hot_reload_max_rollback_history(self) -> int:
+        """Number of previous configs to retain for rollback."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("max_rollback_history", 10)
+
+    @property
+    def hot_reload_validate_before_apply(self) -> bool:
+        """Whether to validate config changes before applying them."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("validate_before_apply", True)
+
+    @property
+    def hot_reload_log_diffs(self) -> bool:
+        """Whether to log configuration diffs on reload."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("log_diffs", True)
+
+    @property
+    def hot_reload_subsystem_reload_timeout_ms(self) -> int:
+        """Timeout for each subsystem to accept new config."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("subsystem_reload_timeout_ms", 5000)
+
+    @property
+    def hot_reload_dashboard_width(self) -> int:
+        """ASCII dashboard width for hot-reload status display."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("dashboard", {}).get("width", 60)
+
+    @property
+    def hot_reload_dashboard_show_raft_details(self) -> bool:
+        """Whether to show Raft consensus details in the dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("hot_reload", {}).get("dashboard", {}).get("show_raft_details", True)
+
+    # ----------------------------------------------------------------
+    # Hot-Reload Mutation Methods
+    # ----------------------------------------------------------------
+
+    def apply_raw_config(self, new_config: dict[str, Any]) -> None:
+        """Apply a new raw configuration dict, replacing the current one.
+
+        This method modifies _raw_config in-place, which is critical for
+        hot-reload because all property accessors read from _raw_config.
+        The caller is responsible for validation before calling this method.
+
+        Args:
+            new_config: The new configuration dictionary to apply.
+        """
+        self._ensure_loaded()
+        self._raw_config.clear()
+        self._raw_config.update(new_config)
+
+    def _get_raw_config_copy(self) -> dict[str, Any]:
+        """Return a deep copy of the current raw configuration.
+
+        Used by the hot-reload subsystem to snapshot configuration state
+        before applying changes, enabling rollback if things go sideways
+        (which, in enterprise software, they inevitably do).
+
+        Returns:
+            A deep copy of the current _raw_config dictionary.
+        """
+        import copy
+        self._ensure_loaded()
+        return copy.deepcopy(self._raw_config)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

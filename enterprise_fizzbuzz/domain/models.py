@@ -246,6 +246,22 @@ class EventType(Enum):
     MESH_FAULT_INJECTED = auto()
     MESH_TOPOLOGY_RENDERED = auto()
 
+    # Configuration Hot-Reload events
+    HOT_RELOAD_FILE_CHANGED = auto()
+    HOT_RELOAD_DIFF_COMPUTED = auto()
+    HOT_RELOAD_VALIDATION_PASSED = auto()
+    HOT_RELOAD_VALIDATION_FAILED = auto()
+    HOT_RELOAD_RAFT_ELECTION_WON = auto()
+    HOT_RELOAD_RAFT_HEARTBEAT = auto()
+    HOT_RELOAD_RAFT_CONSENSUS_REACHED = auto()
+    HOT_RELOAD_SUBSYSTEM_RELOADED = auto()
+    HOT_RELOAD_ROLLBACK_INITIATED = auto()
+    HOT_RELOAD_ROLLBACK_COMPLETED = auto()
+    HOT_RELOAD_COMPLETED = auto()
+    HOT_RELOAD_FAILED = auto()
+    HOT_RELOAD_WATCHER_STARTED = auto()
+    HOT_RELOAD_WATCHER_STOPPED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
