@@ -189,6 +189,10 @@ from enterprise_fizzbuzz.infrastructure.secrets_vault import (
     VaultMiddleware,
     VaultSealManager,
 )
+from enterprise_fizzbuzz.infrastructure.gitops import (
+    GitOpsController,
+    GitOpsDashboard,
+)
 from enterprise_fizzbuzz.infrastructure.data_pipeline import (
     BackfillEngine,
     DataLineageTracker,
@@ -1210,6 +1214,54 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the anomaly detection report after execution (z-score analysis of FizzBuzz event rates)",
     )
 
+    # GitOps Configuration-as-Code Simulator
+    parser.add_argument(
+        "--gitops",
+        action="store_true",
+        help="Enable the GitOps Configuration-as-Code Simulator (version-control your YAML in RAM)",
+    )
+
+    parser.add_argument(
+        "--gitops-commit",
+        type=str,
+        metavar="MESSAGE",
+        default=None,
+        help="Create a GitOps commit with the specified message (requires --gitops)",
+    )
+
+    parser.add_argument(
+        "--gitops-diff",
+        action="store_true",
+        help="Display the diff of the most recent GitOps commit",
+    )
+
+    parser.add_argument(
+        "--gitops-log",
+        action="store_true",
+        help="Display the GitOps commit log for the current branch",
+    )
+
+    parser.add_argument(
+        "--gitops-propose",
+        type=str,
+        metavar="KEY=VALUE",
+        action="append",
+        default=[],
+        help="Propose a configuration change through the GitOps pipeline (e.g. --gitops-propose range.start=5)",
+    )
+
+    parser.add_argument(
+        "--gitops-dashboard",
+        action="store_true",
+        help="Display the GitOps ASCII dashboard with commit log, drift, and proposals",
+    )
+
+    parser.add_argument(
+        "--gitops-drift",
+        action="store_true",
+        help="Detect configuration drift between committed and running state",
+    )
+
     return parser
 
 
@@ -1440,6 +1492,132 @@ def main(argv: Optional[list[str]] = None) -> int:
             print()
 
         return 0
+
+    # ----------------------------------------------------------------
+    # GitOps Configuration-as-Code Simulator
+    # ----------------------------------------------------------------
+    gitops_controller = None
+    if args.gitops or args.gitops_commit or args.gitops_diff or args.gitops_log or args.gitops_propose or args.gitops_dashboard or args.gitops_drift:
+        gitops_controller = GitOpsController(
+            default_branch=config.gitops_default_branch,
+            max_history=config.gitops_max_commit_history,
+            policy_enforcement=config.gitops_policy_enforcement,
+            dry_run_range_start=config.gitops_dry_run_range_start,
+            dry_run_range_end=config.gitops_dry_run_range_end,
+            approval_mode=config.gitops_approval_mode,
+            tracked_subsystems=config.gitops_blast_radius_subsystems,
+        )
+
+        # Initial commit with current config
+        raw_config = config._get_raw_config_copy()
+        gitops_controller.initialize(raw_config, auto_commit=config.gitops_auto_commit_on_load)
+
+        # Handle explicit commit
+        if args.gitops_commit:
+            commit = gitops_controller.repository.commit(
+                tree=raw_config,
+                message=args.gitops_commit,
+            )
+            print(f"\n  [GitOps] Committed {commit.short_sha}: {args.gitops_commit}\n")
+
+        # Handle change proposals
+        if args.gitops_propose:
+            for prop_str in args.gitops_propose:
+                if "=" not in prop_str:
+                    print(f"\n  [GitOps] Invalid proposal format: {prop_str} (expected KEY=VALUE)\n")
+                    continue
+                key, _, value = prop_str.partition("=")
+
+                # Parse value type
+                parsed_value: Any
+                if value.lower() in ("true", "false"):
+                    parsed_value = value.lower() == "true"
+                elif value.isdigit():
+                    parsed_value = int(value)
+                else:
+                    try:
+                        parsed_value = float(value)
+                    except ValueError:
+                        parsed_value = value
+
+                # Build nested change dict from dot-separated key
+                changes: dict[str, Any] = {}
+                parts = key.strip().split(".")
+                current_dict = changes
+                for part in parts[:-1]:
+                    current_dict[part] = {}
+                    current_dict = current_dict[part]
+                current_dict[parts[-1]] = parsed_value
+
+                proposal = gitops_controller.propose_change(
+                    changes=changes,
+                    description=f"Set {key} = {parsed_value}",
+                )
+
+                status_icon = "[OK]" if proposal.status == "applied" else "[XX]"
+                print(f"\n  [GitOps] Proposal {proposal.proposal_id} {status_icon}")
+                for gate, result in proposal.gate_results.items():
+                    gate_icon = "PASS" if gate in proposal.gates_passed else "FAIL"
+                    print(f"    [{gate_icon}] {gate}: {result}")
+                print()
+
+        # Handle diff
+        if args.gitops_diff:
+            diff_entries = gitops_controller.get_diff()
+            if diff_entries:
+                print("\n  [GitOps] Configuration Diff (HEAD vs parent):")
+                for d in diff_entries:
+                    symbol = {"added": "+", "removed": "-", "modified": "~"}.get(d.change_type, "?")
+                    if d.change_type == "modified":
+                        print(f"    [{symbol}] {d.key}: {d.old_value!r} -> {d.new_value!r}")
+                    elif d.change_type == "added":
+                        print(f"    [{symbol}] {d.key}: {d.new_value!r}")
+                    else:
+                        print(f"    [{symbol}] {d.key}: {d.old_value!r}")
+                print()
+            else:
+                print("\n  [GitOps] No diff available (single commit or empty history).\n")
+
+        # Handle log
+        if args.gitops_log:
+            commits = gitops_controller.get_log()
+            print("\n  [GitOps] Commit Log:")
+            for c in commits:
+                ts = c.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+                print(f"    {c.short_sha} {ts} {c.message}")
+            if not commits:
+                print("    (no commits)")
+            print()
+
+        # Handle drift detection
+        if args.gitops_drift:
+            drift = gitops_controller.detect_drift(raw_config)
+            if drift:
+                print(f"\n  [GitOps] DRIFT DETECTED: {len(drift)} key(s) diverged from committed state:")
+                for d in drift:
+                    symbol = {"added": "+", "removed": "-", "modified": "~"}.get(d.change_type, "?")
+                    print(f"    [{symbol}] {d.key}")
+                print()
+            else:
+                print("\n  [GitOps] No drift detected. Running config matches committed state.\n")
+
+        # Handle dashboard
+        if args.gitops_dashboard:
+            dashboard_output = gitops_controller.render_dashboard(
+                running_config=raw_config,
+                width=config.gitops_dashboard_width,
+            )
+            print(dashboard_output)
+
+        # Early exit if only gitops flags
+        if not any([
+            args.range, args.format, args.strategy, args.verbose,
+            args.use_async, args.blockchain,
+        ]) and any([
+            args.gitops_commit, args.gitops_diff, args.gitops_log,
+            args.gitops_propose, args.gitops_dashboard, args.gitops_drift,
+        ]) and not args.gitops:
+            return 0
 
     # Determine parameters (CLI overrides config)
     start = args.range[0] if args.range else config.range_start

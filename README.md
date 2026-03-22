@@ -1,6 +1,6 @@
 # EnterpriseFizzBuzz
 
-### 106,000+ Lines of Code and Counting: A Production-Grade, Enterprise-Ready, Clean-Architecture-Layered FizzBuzz Evaluation Engine -- Now With Load Testing
+### 108,000+ Lines of Code and Counting: A Production-Grade, Enterprise-Ready, Clean-Architecture-Layered FizzBuzz Evaluation Engine -- Now With GitOps
 
 > *Because you can never be too careful when dividing by 3 and 5.*
 
@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**106,000+ lines** across **138+ files** with **3,375 unit tests** and **260 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**108,000+ lines** across **142+ files** with **3,540 unit tests** and **273 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -50,7 +50,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
     |   rate_limiter, compliance, finops, disaster_recovery,          |
     |   ab_testing, data_pipeline, openapi, api_gateway,                |
     |   blue_green, graph_db, genetic_algorithm, nlq,                      |
-    |   load_testing                                                    |
+    |   load_testing, gitops                                              |
     |                                                                |
     |   +-------------------------------------------------------+   |
     |   |                   APPLICATION                          |   |
@@ -74,7 +74,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                          # CLI entry point with 93 flags
+├── main.py                          # CLI entry point with 107 flags
 ├── config.yaml                      # YAML-based configuration with 13 sections
 │
 ├── enterprise_fizzbuzz/             # Clean Architecture package root
@@ -141,6 +141,7 @@ EnterpriseFizzBuzz/
 │       ├── nlq.py              # Natural Language Query Interface: tokenizer, intent classifier, entity extractor, query executor, and ASCII dashboard (~1,341 lines)
 │       ├── load_testing.py    # Load Testing Framework with virtual users, workload profiles, bottleneck analysis, and performance grading (~1,093 lines)
 │       ├── audit_dashboard.py # Unified Audit Dashboard with real-time event streaming, z-score anomaly detection, and temporal correlation (~1,160 lines)
+│       ├── gitops.py        # GitOps Configuration-as-Code Simulator with in-memory Git, change proposals, policy engine, and reconciliation (~1,424 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -166,6 +167,7 @@ EnterpriseFizzBuzz/
 │   ├── blue_green.py → enterprise_fizzbuzz.infrastructure.blue_green
 │   ├── nlq.py → enterprise_fizzbuzz.infrastructure.nlq
 │   ├── audit_dashboard.py → enterprise_fizzbuzz.infrastructure.audit_dashboard
+│   ├── gitops.py → enterprise_fizzbuzz.infrastructure.gitops
 │   └── loc.py → enterprise_fizzbuzz.infrastructure.utils.loc
 │
 ├── locales/                         # Proprietary .fizztranslation locale files
@@ -212,6 +214,7 @@ EnterpriseFizzBuzz/
     ├── test_nlq.py                  # 92 natural language query tokenizer, intent classification, entity extraction, query execution, response formatting, and dashboard tests
     ├── test_load_testing.py         # 67 load testing, virtual user spawning, workload profiles, bottleneck analysis, performance grading, and dashboard tests
     ├── test_audit_dashboard.py      # 87 audit dashboard, event aggregation, anomaly detection, temporal correlation, event streaming, and multi-pane rendering tests
+    ├── test_gitops.py               # 79 GitOps configuration-as-code, in-memory Git, change proposals, policy engine, reconciliation, and dashboard tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -439,6 +442,12 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Temporal Correlation | `audit_dashboard.py` | Groups co-occurring events by correlation ID to discover causal relationships across subsystems -- revealing patterns like "chaos fault injection is followed by SLA breach within 2 seconds in 87% of cases" with the authority of a temporal pattern mining algorithm |
 | Multi-Pane Dashboard | `audit_dashboard.py` | Six-pane ASCII terminal dashboard with live event feed, throughput gauge, classification distribution bar chart, subsystem health matrix, alert ticker, and event rate sparkline -- the NOC (Network Operations Center) experience, rendered entirely in print() statements |
 | Event Streaming | `audit_dashboard.py` | Headless NDJSON exporter that outputs the unified event stream to stdout for integration with external log aggregation tools -- should the operator ever decide that a FizzBuzz engine warrants Splunk |
+| GitOps / Configuration as Code | `gitops.py` | Every configuration change is version-controlled, diffable, policy-checked, dry-run-tested, and approval-gated -- because editing `config.yaml` by hand is the operational equivalent of performing surgery without a checklist |
+| In-Memory Git Simulator | `gitops.py` | A miniature version control system with commit, branch, merge, diff, log, and revert -- implemented from scratch because adding `gitpython` as a dependency would violate the pure-stdlib doctrine |
+| Change Proposal Pipeline | `gitops.py` | Five-gate pipeline (Schema Validation -> Policy Engine -> Dry-Run Simulation -> Approval Gate -> Apply) for config mutations, because modifying a YAML value from 4 to 5 deserves the same ceremony as a production database migration |
+| Desired-State Reconciliation | `gitops.py` | Continuous or on-demand comparison of committed config ("desired state") against running config ("actual state"), with ENFORCE and DETECT modes -- closing the gap between what we committed and what's actually running |
+| Blast Radius Estimation | `gitops.py` | Quantifies the impact of a config change as a risk score by analyzing which subsystems are affected -- transforming a trivial config tweak into a governance event with a formal risk assessment |
+| Config Audit Trail | `gitops.py` | Immutable log of every configuration change with diff, gate verdicts, approval signatures, and blast radius for SOX compliance -- because every FizzBuzz configuration change is as rigorously tracked as a financial transaction |
 
 ## Features
 
@@ -486,7 +495,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Load Testing Framework** - A production-grade load testing framework with ThreadPoolExecutor-based virtual user spawning, five workload profiles (SMOKE, LOAD, STRESS, SPIKE, ENDURANCE), percentile-based latency analysis (p50/p90/p95/p99), bottleneck identification that invariably points to everything except the modulo operation, an SLA validator, a performance grading system from A+ to F, and an ASCII results dashboard -- because you cannot call yourself production-ready if you don't know how many FizzBuzz evaluations per second your system can sustain before the overhead collapses under its own weight. 67 tests verify that the framework correctly measures how slow everything is. Five custom exception classes cover every load testing failure mode from `LoadTestConfigurationError` to `VirtualUserSpawnError`
 - **Audit Dashboard with Real-Time Event Streaming** - A unified six-pane ASCII audit dashboard that aggregates events from every subsystem -- blockchain commits, compliance verdicts, SLA violations, auth token grants, chaos fault injections, cache hits and misses, circuit breaker state transitions, and deployment cutover events -- into a continuously updating terminal interface with z-score anomaly detection, temporal event correlation, subsystem health matrix, classification distribution charts, and an alert ticker. The EventAggregator subscribes to the EventBus and normalizes raw events into canonical `UnifiedAuditEvent` records with microsecond timestamps, severity classification (DEBUG through CRITICAL), and correlation IDs that link the ~23 events generated by a single FizzBuzz evaluation. The AnomalyDetector computes event rate deviations over tumbling time windows against a rolling baseline, firing alerts when the z-score exceeds a configurable threshold -- because a 3 AM spike in modulo operations demands a statistical explanation. The TemporalCorrelator discovers causal relationships across subsystems by grouping co-occurring events, revealing that chaos engineering faults are followed by SLA breaches with 87% confidence. A headless mode (`--audit-stream`) exports the unified event stream as newline-delimited JSON to stdout, enabling integration with external log aggregation tools that nobody will configure for a FizzBuzz engine. Snapshot and replay support enables blameless post-mortems with pre-computed correlations and immutable logs. Six custom exception classes cover every failure mode from `EventAggregationError` to `DashboardRenderError`. 87 tests verify that the dashboard correctly monitors the monitoring of the monitoring. ~1,160 lines of observability for an operation that takes 0.001ms
 - **Graph Database for Relationship Mapping** - An in-memory property graph database that models the hidden social network lurking within the integers 1-100, with labeled nodes (Number, Rule, Classification), typed directed edges (EVALUATED_BY, CLASSIFIED_AS, DIVISIBLE_BY, SHARES_FACTOR_WITH), a CypherLite query language parsed by a recursive descent parser, degree and betweenness centrality analysis, label propagation community detection, force-directed ASCII graph visualization, and an analytics dashboard with "Most Isolated Number" and "Most Connected Number" awards -- because treating numbers as isolated atoms is a relational anti-pattern, and number 15 didn't ask to be the Kevin Bacon of FizzBuzz but graph theory says it is. One custom exception class (`CypherLiteParseError`) covers malformed queries, eleven classes power the engine, and 97 tests verify that the social dynamics of integers 1-100 are correctly modeled
-- **Custom Exception Hierarchy** - 233 exception classes for every conceivable FizzBuzz failure mode
+- **GitOps Configuration-as-Code Simulator** - A full in-memory Git repository for configuration management with SHA-256 hash-chained commits, three-way merges, branch/merge/diff/log/revert operations, a five-gate change proposal pipeline (schema validation, policy engine, dry-run simulation, approval gate, apply), desired-state reconciliation that detects and optionally auto-corrects runtime configuration drift, blast radius estimation that quantifies the impact of changing a single YAML value as a formal risk assessment, and an ASCII dashboard with branch/commit state, pending proposals, drift status, and commit history. The policy engine enforces organizational rules like "chaos.enabled must be false in production" and "blockchain.difficulty must not decrease between commits," because governance over FizzBuzz configuration is a non-negotiable enterprise requirement. The in-memory Git simulator implements version control for configuration inside an application that is already version-controlled by actual Git, creating a recursive layer of version control that would make a category theorist smile. All commits are lost on process exit. All merges are between branches that one person created. All approvals are self-approvals. This is GitOps at its finest. Seven custom exception classes cover every failure mode from `GitOpsBranchNotFoundError` to `GitOpsProposalRejectedError`. 79 tests verify that configuration governance for modulo arithmetic is as rigorous as a Fortune 500 change management process. ~1,424 lines of version-controlled configuration management for a YAML file with 13 sections
+- **Custom Exception Hierarchy** - 273 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -1206,6 +1216,54 @@ python main.py --audit-dashboard --audit-correlations --audit-insights --metrics
 
 # Peak enterprise: audit dashboard + compliance + RBAC + cost tracking (every event is a regulated observation)
 python main.py --audit-dashboard --audit-correlations --compliance --compliance-dashboard --user alice --role FIZZBUZZ_SUPERUSER --cost-tracking --cost-dashboard --range 1 15
+
+# GitOps: enable configuration-as-code with in-memory Git and reconciliation
+python main.py --gitops --range 1 30
+
+# GitOps: commit the current configuration with a descriptive message
+python main.py --gitops --gitops-commit "Tune blockchain difficulty for Q2 performance targets" --range 1 20
+
+# GitOps: create a branch for parallel configuration experiments
+python main.py --gitops --gitops-branch experiment/harder-mining --range 1 20
+
+# GitOps: merge a branch back into main (three-way merge with conflict detection)
+python main.py --gitops --gitops-merge experiment/harder-mining --range 1 30
+
+# GitOps: diff the current config against the last committed state
+python main.py --gitops --gitops-diff --range 1 20
+
+# GitOps: view the configuration commit history
+python main.py --gitops --gitops-log --range 1 20
+
+# GitOps: propose a configuration change through the five-gate pipeline
+python main.py --gitops --gitops-propose "Increase ML learning rate for faster convergence" --range 1 30
+
+# GitOps: approve a pending change proposal
+python main.py --gitops --gitops-approve proposal-001 --range 1 20
+
+# GitOps: apply an approved proposal (commits and triggers reconciliation)
+python main.py --gitops --gitops-apply proposal-001 --range 1 20
+
+# GitOps: run desired-state reconciliation (detect drift between committed and running config)
+python main.py --gitops --gitops-reconcile --range 1 30
+
+# GitOps: check for configuration drift without auto-correcting
+python main.py --gitops --gitops-drift --range 1 20
+
+# GitOps: rollback to a previous commit (revert and reconcile)
+python main.py --gitops --gitops-rollback abc123 --range 1 30
+
+# GitOps: validate proposed changes against organizational policies
+python main.py --gitops --gitops-policy-check --range 1 20
+
+# GitOps: ASCII dashboard with branch state, pending proposals, drift status, and commit history
+python main.py --gitops --gitops-dashboard --range 1 50
+
+# Full GitOps stack: config governance + metrics + tracing + compliance (peak change management)
+python main.py --gitops --gitops-dashboard --metrics --metrics-dashboard --trace --compliance --compliance-dashboard --range 1 20
+
+# Peak enterprise: GitOps + RBAC + SLA + cost tracking (every config change is a regulated governance event)
+python main.py --gitops --gitops-dashboard --user alice --role FIZZBUZZ_SUPERUSER --sla --sla-dashboard --cost-tracking --cost-dashboard --range 1 15
 ```
 
 ## CLI Options
@@ -1408,6 +1466,20 @@ python main.py --audit-dashboard --audit-correlations --compliance --compliance-
 --audit-anomaly-threshold FLOAT  Z-score threshold for anomaly detection (default: 2.0). Higher = fewer alerts, lower = more paranoia
 --audit-correlations       Display temporal correlation insights with confidence scores across subsystem event streams
 --audit-insights           Display synthesized human-readable insights with recommended actions based on detected patterns
+--gitops                   Enable the GitOps Configuration-as-Code Simulator with in-memory Git, change proposals, and reconciliation
+--gitops-commit MESSAGE    Commit the current configuration state with a descriptive message (SHA-256 hash-chained)
+--gitops-branch NAME       Create a named branch for parallel configuration experiments
+--gitops-merge BRANCH      Merge a branch into the current branch with three-way merge and conflict detection
+--gitops-diff              Display a structural diff between the current config and the last committed state
+--gitops-log               Display the chronological configuration commit history with messages, authors, and hashes
+--gitops-propose DESC      Submit a configuration change proposal through the five-gate pipeline (schema, policy, dry-run, approval, apply)
+--gitops-approve ID        Approve a pending change proposal (auto-approved in single-operator mode, because you are also the reviewer)
+--gitops-apply ID          Apply an approved proposal: commit to config history and trigger reconciliation
+--gitops-reconcile         Run desired-state reconciliation: compare committed config against running config and enforce or detect drift
+--gitops-rollback HASH     Revert to a previous commit's configuration state and trigger immediate reconciliation
+--gitops-drift             Display configuration drift report: structural diff between committed (desired) and running (actual) config
+--gitops-dashboard         Display the ASCII GitOps dashboard with branch/commit state, pending proposals, drift status, and commit graph
+--gitops-policy-check      Validate the current configuration against organizational policy rules with PASS/FAIL/WARN verdicts
 ```
 
 ## Environment Variables
@@ -4128,6 +4200,122 @@ The Unified Audit Dashboard aggregates events from every subsystem in the platfo
 
 The Audit Dashboard fills the observability gap that existed between individual subsystem metrics and the operator's understanding of how 14+ subsystems interact during a FizzBuzz evaluation. The correlation detector transforms the dashboard from a passive display into an active diagnostic tool: when the SLA framework fires a breach alert, the correlator can immediately point to the root cause -- usually "chaos engineering injected a fault into the ML forward pass, which cascaded into a blockchain timeout" -- saving operators the effort of manually tracing through 23 correlated events. The snapshot and replay features enable blameless post-mortems, a practice that enterprise organizations aspire to but rarely achieve because someone always deleted the logs. With the audit dashboard, the logs are normalized, the correlations are pre-computed, and the replay is a single CLI flag away.
 
+## GitOps Architecture
+
+The GitOps Configuration-as-Code Simulator implements a full infrastructure-as-code governance layer for the Enterprise FizzBuzz Platform -- because modifying `config.yaml` by hand and restarting is the operational equivalent of performing surgery without a checklist, and the hot-reload module handles the *how* of configuration delivery but not the *governance* of configuration change. Every configuration mutation passes through a version-controlled, policy-checked, dry-run-tested, approval-gated pipeline before reaching the running system.
+
+```
+    +-------------------------------------------------------------------+
+    |                    GitOps Configuration Pipeline                   |
+    +-------------------------------------------------------------------+
+    |                                                                   |
+    |  config.yaml    +================+                                |
+    |  change    ---> | Change Proposal|                                |
+    |                 +================+                                |
+    |                        |                                          |
+    |                        v                                          |
+    |               +------------------+                                |
+    |               | 1. Schema        |  types, ranges, required keys  |
+    |               |    Validation    |                                |
+    |               +--------+---------+                                |
+    |                        |                                          |
+    |                        v                                          |
+    |               +------------------+                                |
+    |               | 2. Policy        |  organizational rules          |
+    |               |    Engine        |  ("chaos.enabled must be       |
+    |               |                  |   false in production")        |
+    |               +--------+---------+                                |
+    |                        |                                          |
+    |                        v                                          |
+    |               +------------------+                                |
+    |               | 3. Dry-Run       |  shadow evaluator comparison   |
+    |               |    Simulation    |  (behavioral change detection) |
+    |               +--------+---------+                                |
+    |                        |                                          |
+    |                        v                                          |
+    |               +------------------+                                |
+    |               | 4. Approval      |  quorum-based gate             |
+    |               |    Gate          |  (auto-approved, team of one)  |
+    |               +--------+---------+                                |
+    |                        |                                          |
+    |                        v                                          |
+    |               +------------------+     +-------------------+      |
+    |               | 5. Apply         |--->| Config Repository |      |
+    |               |    & Commit      |     | (in-memory Git)   |      |
+    |               +--------+---------+     +---+---------------+      |
+    |                        |                   |                      |
+    |                        v                   |  commit chain        |
+    |               +------------------+         |  (SHA-256 linked)    |
+    |               | Reconciliation   |<--------+                      |
+    |               | Loop             |                                |
+    |               | (ENFORCE/DETECT) |                                |
+    |               +------------------+                                |
+    |                        |                                          |
+    |                        v                                          |
+    |               +------------------+                                |
+    |               | Running Platform |  hot-reload propagation        |
+    |               | Configuration    |                                |
+    |               +------------------+                                |
+    +-------------------------------------------------------------------+
+```
+
+**Key components:**
+- **GitOpsController** - Top-level orchestrator managing the config repository, reconciliation loop, proposal pipeline, and dashboard
+- **ConfigRepository** - In-memory Git simulator with commit, branch, merge, diff, log, and revert operations on config trees. Commits are SHA-256 hash-chained in a Merkle-like linked list -- not because we need cryptographic integrity (the blockchain already handles that) but because implementing data structures is the project's raison d'etre
+- **ConfigCommit** - Immutable snapshot of configuration state with content hash, parent reference, message, author, and timestamp
+- **ConfigBranch** - Named mutable pointer to a commit, supporting branch creation, switching, and deletion
+- **ChangeProposalPipeline** - Five-gate pipeline that every config mutation must pass: schema validation, policy engine, dry-run simulation, approval gate, and apply
+- **PolicyEngine** - Evaluates organizational policy rules against proposed changes with PASS/FAIL/WARN verdicts. Rules like "blockchain.difficulty must not decrease between commits" ensure that making mining easier is treated as the governance risk it so clearly is
+- **DryRunSimulator** - Applies proposed config to a shadow FizzBuzz evaluator, runs numbers 1-30, and flags behavioral changes with a side-by-side diff
+- **ApprovalGate** - Collects approvals from operators with configurable quorum. In single-operator mode, proposals are auto-approved because the operator is also the approver, the reviewer, and the on-call engineer
+- **ReconciliationLoop** - Continuous or on-demand desired-state vs. actual-state comparison with ENFORCE (auto-correct) and DETECT (alert-only) modes
+- **BlastRadiusEstimator** - Analyzes which subsystems are affected by a config change and quantifies impact as a risk score. Changing `blockchain.difficulty` has a blast radius of 1; changing `strategy` has a blast radius of 14
+- **GitOpsDashboard** - ASCII dashboard with current branch and commit hash, pending proposals with gate status, drift detection status, and commit history
+
+### In-Memory Git Operations
+
+| Operation | Description | Real Git Equivalent |
+|-----------|-------------|---------------------|
+| `commit` | Snapshot current config with message and SHA-256 content hash | `git commit` |
+| `branch` | Create a named pointer for parallel config experiments | `git branch` |
+| `merge` | Three-way merge with conflict detection | `git merge` |
+| `diff` | Structural comparison producing added/removed/modified changesets | `git diff` |
+| `log` | Chronological list of commits with messages, authors, and hashes | `git log` |
+| `revert` | Reset to a previous commit's config state | `git revert` |
+
+### Change Proposal Gate Verdicts
+
+| Gate | What It Checks | Example Failure |
+|------|---------------|-----------------|
+| Schema Validation | Types, ranges, required keys | `blockchain.difficulty` set to "banana" (must be int in [1, 10]) |
+| Policy Engine | Organizational rules | `chaos.enabled` set to true in production environment |
+| Dry-Run Simulation | Behavioral impact | ML model accuracy changes because learning rate shifted |
+| Approval Gate | Operator quorum | Insufficient approvals (never fails in single-operator mode) |
+| Apply | Commit and reconcile | Merge conflict with concurrent config change |
+
+### Reconciliation Modes
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| `ENFORCE` | Auto-corrects runtime drift by overwriting with committed values | Production: desired state is the single source of truth |
+| `DETECT` | Alerts on drift but does not auto-correct | Staging: visibility without enforcement |
+
+| Spec | Value |
+|------|-------|
+| Git operations | 6 (commit, branch, merge, diff, log, revert) |
+| Proposal gates | 5 (schema, policy, dry-run, approval, apply) |
+| Reconciliation modes | 2 (ENFORCE, DETECT) |
+| Merge strategies | 3 (ours, theirs, manual) |
+| Commit chain integrity | SHA-256 hash-chained (Merkle-like linked list) |
+| Policy rule types | Equality, inequality, range, comparison between commits |
+| Blast radius metrics | Subsystem count, behavioral change count, risk score |
+| Dashboard panes | 5 (branch state, proposals, drift status, apply history, commit log) |
+| Custom exceptions | 7 (GitOpsError, GitOpsBranchNotFoundError, GitOpsCommitNotFoundError, GitOpsDriftDetectedError, GitOpsMergeConflictError, GitOpsPolicyViolationError, GitOpsProposalRejectedError) |
+| Tests | 79 |
+| Lines of code | ~1,424 |
+
+The in-memory Git simulator is the philosophical centerpiece of the GitOps module: it implements version control for configuration inside an application that is already version-controlled by actual Git, creating a recursive layer of version control that would make a category theorist smile. The blast radius estimator is the cherry on top: quantifying the impact of changing a single YAML value from 4 to 5 as "blast radius: 1 subsystem, 0 behavioral changes, risk: LOW" transforms a trivial config tweak into a governance event with a formal risk assessment -- exactly the kind of ceremony that makes enterprise software feel important. All data structures live in RAM. All commits are lost on process exit. All merges are between branches that one person created. All approvals are self-approvals. This is GitOps at its finest.
+
 ## FAQ
 
 **Q: Is this production-ready?**
@@ -4198,6 +4386,9 @@ A: Because "it seems fast enough" is not a performance guarantee, and Enterprise
 
 **Q: Why does FizzBuzz need a unified audit dashboard?**
 A: Because observability is the third pillar of production operations, alongside monitoring and alerting, and EnterpriseFizzBuzz has been observing its 14+ subsystems through individual dashboards like a security guard watching 14 separate monitors instead of a single unified feed. The Audit Dashboard aggregates every event emitted by every subsystem -- blockchain commits, compliance verdicts, SLA violations, chaos fault injections, cache eulogies, circuit breaker state transitions, deployment cutovers, pipeline stage completions, and message queue lag alerts -- into a six-pane ASCII terminal interface that provides the same "wall of screens" aesthetic as a Network Operations Center, but rendered entirely in `print()` statements. The EventAggregator normalizes the ~80 event types emitted across subsystems into a canonical `UnifiedAuditEvent` with microsecond timestamps, severity classification, and correlation IDs that link the ~23 events generated by a single FizzBuzz evaluation -- because observing events without a normalization layer is just eavesdropping without a schema. The AnomalyDetector computes z-scores over tumbling time windows and fires alerts when event rates deviate beyond 2 standard deviations from the rolling average -- essential for catching the 3 AM modulo operation spike that nobody expected and everybody deserves to know about. The TemporalCorrelator is the crown jewel: it groups co-occurring events by correlation ID to discover causal relationships across subsystems, revealing that "chaos fault injection events are followed by SLA breach events within 2 seconds in 87% of cases" -- a correlation so obvious in retrospect that computing it with a temporal pattern mining algorithm feels like using a telescope to read a billboard. The headless NDJSON streaming mode (`--audit-stream`) outputs the unified event stream to stdout for integration with external log aggregation tools like Splunk, Datadog, or a developer's terminal scrolling faster than anyone can read. The snapshot and replay features enable blameless post-mortems: capture the dashboard state as a timestamped JSON document, then replay it later with `--audit-replay` to understand exactly what the anomaly detector noticed when the neural network went rogue at 14:32. Six custom exception classes cover every failure mode from `EventAggregationError` (the observer couldn't subscribe to the bus, which means the bus is broken, which means events are happening without anyone watching, which is the observability equivalent of a tree falling in an empty forest) to `DashboardRenderError` (the six-pane ASCII layout exceeded the terminal width, which says more about the terminal than the dashboard). 87 tests verify that the dashboard correctly monitors the monitoring of the monitoring -- a meta-observability achievement that would make any SRE team proud, confused, and slightly concerned.
+
+**Q: Why does FizzBuzz need GitOps?**
+A: Because modifying `config.yaml` by hand and restarting is the operational equivalent of performing surgery without a checklist. The hot-reload module handles the *how* of configuration delivery, but not the *governance* of configuration change. Without GitOps, anyone with access to the YAML file can change `blockchain.difficulty` from 4 to 7 without schema validation, policy compliance, dry-run testing, or approval -- and nobody would know until the blockchain starts taking 340ms per hash instead of 12ms, the SLA framework fires a latency breach, Bob gets paged, and the post-mortem reveals that someone edited a YAML file at 2 AM without telling anyone. The GitOps simulator closes this gap with a five-gate change proposal pipeline that subjects every configuration mutation to the same governance ceremony as a Fortune 500 production change request: schema validation (is `blockchain.difficulty` actually an integer between 1 and 10, or did someone type "banana"?), policy engine (does this change comply with organizational rules like "chaos.enabled must be false in production"?), dry-run simulation (does this change cause the ML model to produce different results for any of the numbers 1-30?), approval gate (has at least one operator approved this change? -- auto-approved in single-operator mode, because the operator is also the reviewer, the approver, and the on-call engineer who will debug it at 3 AM), and finally apply (commit to the in-memory Git repository and trigger reconciliation). The in-memory Git simulator is the philosophical centerpiece: it implements version control for configuration inside an application that is already version-controlled by actual Git, creating a recursive layer of version control that achieves the inception pattern -- version control within version control, all the way down. The desired-state reconciliation loop ensures that runtime drift is impossible (ENFORCE mode) or at least visible (DETECT mode), because the gap between "what we committed" and "what's actually running" has caused more production incidents in real-world systems than any software bug. The blast radius estimator transforms the act of changing a YAML value from 4 to 5 into a formal governance event with a risk assessment: "blast radius: 1 subsystem, 0 behavioral changes, risk: LOW." Seven custom exception classes cover every failure mode from `GitOpsBranchNotFoundError` (you tried to merge a branch that doesn't exist, probably because you created it in the *actual* Git repository and forgot that this is a *simulated* Git repository) to `GitOpsProposalRejectedError` (your config change was rejected by the policy engine, which means you violated an organizational rule that you yourself wrote, which is the GitOps equivalent of being denied entry to your own house). 79 tests verify that configuration governance for FizzBuzz is as rigorous as any enterprise change management process. All commits are lost on process exit. All approvals are self-approvals. This is the future of configuration management.
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.

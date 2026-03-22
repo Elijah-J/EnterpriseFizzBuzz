@@ -465,6 +465,15 @@ class EventType(Enum):
     AUDIT_STREAM_FLUSHED = auto()
     AUDIT_DASHBOARD_RENDERED = auto()
 
+    # GitOps Configuration-as-Code Simulator events
+    GITOPS_COMMIT_CREATED = auto()
+    GITOPS_BRANCH_CREATED = auto()
+    GITOPS_MERGE_COMPLETED = auto()
+    GITOPS_PROPOSAL_SUBMITTED = auto()
+    GITOPS_DRIFT_DETECTED = auto()
+    GITOPS_RECONCILIATION_COMPLETED = auto()
+    GITOPS_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
