@@ -1579,6 +1579,25 @@ ip_office:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# Distributed Lock Manager (FizzLock) configuration
+# Coordinates concurrent FizzBuzz evaluation across subsystems using
+# hierarchical multi-granularity locking. The five-level resource
+# hierarchy (platform/namespace/subsystem/number/field) ensures that
+# concurrent evaluations of different numbers proceed in parallel
+# while same-number evaluations are properly serialized. Supports
+# wait-die and wound-wait deadlock prevention policies, monotonic
+# fencing tokens, and heap-based lease management.
+distributed_locks:
+  enabled: false                          # Master switch — opt-in via --locks
+  policy: "wait-die"                      # wait-die | wound-wait
+  lease_duration_s: 30.0                  # Lock lease time-to-live in seconds
+  grace_period_s: 5.0                     # Grace period before forced revocation
+  check_interval_s: 1.0                   # Lease reaper check interval
+  acquisition_timeout_s: 5.0             # Maximum time to wait for a lock
+  hot_lock_threshold_ms: 10.0            # Contention threshold for hot-lock detection
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

@@ -1297,6 +1297,18 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "distributed_locks": {
+                "enabled": False,
+                "policy": "wait-die",
+                "lease_duration_s": 30.0,
+                "grace_period_s": 5.0,
+                "check_interval_s": 1.0,
+                "acquisition_timeout_s": 5.0,
+                "hot_lock_threshold_ms": 10.0,
+                "dashboard": {
+                    "width": 60,
+                },
+            },
             "recommendation": {
                 "enabled": False,
                 "collaborative_weight": 0.6,
@@ -5009,6 +5021,58 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Dashboard width for the IP Office dashboard."""
         self._ensure_loaded()
         return self._raw_config.get("ip_office", {}).get("dashboard", {}).get("width", 60)
+
+    # ----------------------------------------------------------------
+    # Distributed Lock Manager (FizzLock) configuration properties
+    # ----------------------------------------------------------------
+
+    @property
+    def distributed_locks_enabled(self) -> bool:
+        """Whether the Distributed Lock Manager is active."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("enabled", False)
+
+    @property
+    def distributed_locks_policy(self) -> str:
+        """Deadlock prevention policy: 'wait-die' or 'wound-wait'."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("policy", "wait-die")
+
+    @property
+    def distributed_locks_lease_duration(self) -> float:
+        """Lock lease time-to-live in seconds."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("lease_duration_s", 30.0)
+
+    @property
+    def distributed_locks_grace_period(self) -> float:
+        """Grace period before forced lease revocation in seconds."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("grace_period_s", 5.0)
+
+    @property
+    def distributed_locks_check_interval(self) -> float:
+        """Lease reaper background check interval in seconds."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("check_interval_s", 1.0)
+
+    @property
+    def distributed_locks_acquisition_timeout(self) -> float:
+        """Maximum time to wait for a lock acquisition in seconds."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("acquisition_timeout_s", 5.0)
+
+    @property
+    def distributed_locks_hot_lock_threshold_ms(self) -> float:
+        """Contention threshold in milliseconds for hot-lock detection."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("hot_lock_threshold_ms", 10.0)
+
+    @property
+    def distributed_locks_dashboard_width(self) -> int:
+        """Dashboard width for the FizzLock dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("distributed_locks", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

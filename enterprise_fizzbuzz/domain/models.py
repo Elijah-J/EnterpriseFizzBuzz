@@ -637,6 +637,19 @@ class EventType(Enum):
     IP_DISPUTE_RESOLVED = auto()
     IP_DASHBOARD_RENDERED = auto()
 
+    # Distributed Lock Manager (FizzLock) events
+    LOCK_ACQUIRED = auto()
+    LOCK_RELEASED = auto()
+    LOCK_UPGRADE_REQUESTED = auto()
+    LOCK_UPGRADE_COMPLETED = auto()
+    LOCK_ACQUISITION_TIMEOUT = auto()
+    LOCK_DEADLOCK_DETECTED = auto()
+    LOCK_TRANSACTION_ABORTED = auto()
+    LOCK_LEASE_EXPIRED = auto()
+    LOCK_LEASE_RENEWED = auto()
+    LOCK_CONTENTION_DETECTED = auto()
+    LOCK_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

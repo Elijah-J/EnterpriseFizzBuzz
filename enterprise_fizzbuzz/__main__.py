@@ -401,6 +401,16 @@ from enterprise_fizzbuzz.infrastructure.dependent_types import (
     ProofEngine,
     TypeDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.distributed_locks import (
+    ContentionProfiler,
+    FencingTokenGenerator,
+    HierarchicalLockManager,
+    LeaseManager,
+    LockDashboard,
+    LockMiddleware,
+    WaitPolicy,
+    WaitPolicyType,
+)
 from enterprise_fizzbuzz.infrastructure.ip_office import (
     CopyrightRegistry,
     IPDisputeTribunal,
@@ -1998,6 +2008,26 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--ip-dashboard",
         action="store_true",
         help="Display the FizzBuzz Intellectual Property Office ASCII dashboard",
+    )
+
+    # FizzLock Distributed Lock Manager
+    parser.add_argument(
+        "--locks",
+        action="store_true",
+        help="Enable FizzLock Distributed Lock Manager: hierarchical multi-granularity locking for concurrent evaluation",
+    )
+
+    parser.add_argument(
+        "--lock-policy",
+        choices=["wait-die", "wound-wait"],
+        default=None,
+        help="Deadlock prevention policy for the lock manager (default: from config)",
+    )
+
+    parser.add_argument(
+        "--lock-dashboard",
+        action="store_true",
+        help="Display the FizzLock ASCII dashboard with active locks, wait-for graph, deadlock history, and contention heatmap",
     )
 
     return parser
@@ -4733,6 +4763,52 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzLock Distributed Lock Manager setup
+    # ----------------------------------------------------------------
+    lock_manager = None
+    lock_middleware_instance = None
+
+    if args.locks or args.lock_dashboard:
+        lock_policy_str = args.lock_policy or config.distributed_locks_policy
+        if lock_policy_str == "wound-wait":
+            policy_type = WaitPolicyType.WOUND_WAIT
+        else:
+            policy_type = WaitPolicyType.WAIT_DIE
+
+        lock_wait_policy = WaitPolicy(policy_type=policy_type)
+        lock_token_gen = FencingTokenGenerator()
+        lock_profiler = ContentionProfiler(
+            hot_lock_threshold_ms=config.distributed_locks_hot_lock_threshold_ms,
+        )
+        lock_lease_mgr = LeaseManager(
+            lease_duration=config.distributed_locks_lease_duration,
+            grace_period=config.distributed_locks_grace_period,
+            check_interval=config.distributed_locks_check_interval,
+        )
+        lock_lease_mgr.start()
+
+        lock_manager = HierarchicalLockManager(
+            wait_policy=lock_wait_policy,
+            token_generator=lock_token_gen,
+            lease_manager=lock_lease_mgr,
+            profiler=lock_profiler,
+        )
+
+        lock_middleware_instance = LockMiddleware(manager=lock_manager)
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZLOCK DISTRIBUTED LOCK MANAGER                       |\n"
+            "  | Hierarchical Multi-Granularity Locking                   |\n"
+            "  | X | S | IS | IX | U  —  5x5 Compatibility Matrix        |\n"
+            f"  | Policy: {lock_policy_str:<48}|\n"
+            f"  | Lease: {config.distributed_locks_lease_duration:.0f}s + {config.distributed_locks_grace_period:.0f}s grace{' ' * 32}|\n"
+            "  | Tarjan SCC Deadlock Detection | Fencing Tokens           |\n"
+            '  | "Serializability for modulo arithmetic."                 |\n'
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # FizzBuzz Intellectual Property Office setup
     # ----------------------------------------------------------------
     ip_trademark_registry = None
@@ -4988,6 +5064,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             rules=list(config.rules),
         )
         builder.with_middleware(qo_middleware)
+
+    # Add Lock middleware (priority 800, before archaeology)
+    if lock_middleware_instance is not None:
+        builder.with_middleware(lock_middleware_instance)
 
     # Add Archaeology middleware (priority 900, near end of chain)
     if arch_middleware is not None:
@@ -6319,6 +6399,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.ip_dashboard:
         print("\n  IP Office not enabled. Use --ip-office to enable.\n")
+
+    # FizzLock Dashboard
+    if args.lock_dashboard and lock_manager is not None:
+        print(LockDashboard.render(
+            manager=lock_manager,
+            width=config.distributed_locks_dashboard_width,
+        ))
+    elif args.lock_dashboard:
+        print("\n  FizzLock not enabled. Use --locks to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
