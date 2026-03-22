@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 3
-- Remaining: 7
+- Implemented: 4
+- Remaining: 6
 
 ---
 
@@ -142,7 +142,7 @@ Note: Some of these flags may not exist or may have different names. The worker 
 
 ### 4. E2E: Multi-Subsystem Combinations (tests/e2e/test_e2e_combinations.py)
 
-**Status:** PENDING
+**Status:** DONE (33 tests)
 **Description:** The real complexity of the platform isn't in any single subsystem; it's in what happens when you turn on five, ten, fifteen of them simultaneously. The middleware pipeline sorts by priority, subsystems publish events that other subsystems consume, and the processing context accumulates metadata from every layer it passes through. No existing test verifies that the full enterprise stack, with all reasonable subsystems enabled, produces correct output and exits cleanly.
 
 Test the following:
