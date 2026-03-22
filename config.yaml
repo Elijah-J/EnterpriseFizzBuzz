@@ -505,6 +505,12 @@ compliance:
       - "SOX Section 404 FizzBuzz Controls Specialist"
       - "GDPR Data Protection FizzBuzz Practitioner"
       - "HIPAA Privacy Officer for Modulo Operations"
+  chatbot:
+    max_history: 20                     # Maximum conversation turns retained in session
+    formality_level: "maximum"          # Response formality: maximum | high | moderate
+    include_article_citations: true     # Cite specific regulatory articles in responses
+    bob_commentary_enabled: true        # Include Bob McFizzington's editorial comments
+    dashboard_width: 60                 # ASCII dashboard width for chatbot dashboard
   dashboard:
     width: 60                           # ASCII dashboard width
 

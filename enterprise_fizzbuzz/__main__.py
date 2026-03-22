@@ -153,6 +153,10 @@ from enterprise_fizzbuzz.infrastructure.compliance import (
     HIPAAGuard,
     SOXAuditor,
 )
+from enterprise_fizzbuzz.infrastructure.compliance_chatbot import (
+    ChatbotDashboard as ComplianceChatbotDashboard,
+    ComplianceChatbot,
+)
 from enterprise_fizzbuzz.infrastructure.finops import (
     CostDashboard,
     CostTracker,
@@ -926,6 +930,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--compliance-dashboard",
         action="store_true",
         help="Display the compliance & regulatory ASCII dashboard after execution",
+    )
+
+    # Compliance Chatbot
+    parser.add_argument(
+        "--chatbot",
+        type=str,
+        metavar="QUESTION",
+        default=None,
+        help='Ask the regulatory compliance chatbot a GDPR/SOX/HIPAA question (e.g. --chatbot "Is erasing FizzBuzz results GDPR compliant?")',
+    )
+
+    parser.add_argument(
+        "--chatbot-interactive",
+        action="store_true",
+        help="Start an interactive compliance chatbot REPL for ongoing regulatory consultations",
+    )
+
+    parser.add_argument(
+        "--chatbot-dashboard",
+        action="store_true",
+        help="Display the compliance chatbot session dashboard after execution",
     )
 
     # FinOps Cost Tracking & Chargeback Engine
@@ -1743,6 +1768,49 @@ def main(argv: Optional[list[str]] = None) -> int:
             except Exception as e:
                 print(f"\n  NLQ Error: {e}\n")
                 return 1
+            return 0
+
+    # ----------------------------------------------------------------
+    # Compliance Chatbot (early exit commands)
+    # ----------------------------------------------------------------
+    if args.chatbot or args.chatbot_interactive or args.chatbot_dashboard:
+        chatbot = ComplianceChatbot(
+            max_history=config.compliance_chatbot_max_history,
+            include_citations=config.compliance_chatbot_include_citations,
+            bob_commentary_enabled=config.compliance_chatbot_bob_commentary,
+            formality_level=config.compliance_chatbot_formality_level,
+            bob_stress_level=config.compliance_officer_stress_level,
+        )
+
+        if args.chatbot_interactive:
+            chatbot.interactive_repl()
+            if args.chatbot_dashboard:
+                print(ComplianceChatbotDashboard.render_session(
+                    chatbot.session,
+                    width=config.compliance_chatbot_dashboard_width,
+                ))
+            return 0
+
+        if args.chatbot:
+            try:
+                response = chatbot.ask(args.chatbot)
+                print(ComplianceChatbotDashboard.render_response(
+                    response,
+                    width=config.compliance_chatbot_dashboard_width,
+                ))
+                print(f"  Bob's stress level: {chatbot.bob_stress_level:.1f}%\n")
+                if args.chatbot_dashboard:
+                    print(ComplianceChatbotDashboard.render_session(
+                        chatbot.session,
+                        width=config.compliance_chatbot_dashboard_width,
+                    ))
+            except Exception as e:
+                print(f"\n  Compliance Chatbot Error: {e}\n")
+                return 1
+            return 0
+
+        if args.chatbot_dashboard:
+            print("\n  No chatbot query provided. Use --chatbot or --chatbot-interactive.\n")
             return 0
 
     # ----------------------------------------------------------------

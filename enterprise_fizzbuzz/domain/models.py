@@ -560,6 +560,12 @@ class EventType(Enum):
     SELF_MODIFY_SAFETY_VIOLATION = auto()
     SELF_MODIFY_DASHBOARD_RENDERED = auto()
 
+    # Compliance Chatbot events
+    CHATBOT_QUERY_RECEIVED = auto()
+    CHATBOT_INTENT_CLASSIFIED = auto()
+    CHATBOT_RESPONSE_GENERATED = auto()
+    CHATBOT_SESSION_STARTED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
