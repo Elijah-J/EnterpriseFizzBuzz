@@ -7178,3 +7178,150 @@ class InterruptConflictError(KernelError):
             },
         )
         self.irq = irq
+
+
+# ---------------------------------------------------------------------------
+# Peer-to-Peer Gossip Network exceptions (EFP-P2P0 through EFP-P2P5)
+# ---------------------------------------------------------------------------
+
+class P2PNetworkError(FizzBuzzError):
+    """Base exception for all Peer-to-Peer Gossip Network errors.
+
+    When your distributed FizzBuzz cluster — which exists entirely in a
+    single Python process and communicates via method calls — encounters
+    a networking error, you know that the concept of "distributed" has
+    been stretched to its absolute breaking point. These exceptions cover
+    everything from node failures to Merkle tree divergence to Kademlia
+    routing mishaps, all without a single TCP socket in sight.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-P2P0"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class NodeUnreachableError(P2PNetworkError):
+    """Raised when a gossip ping or ping-req fails to reach a target node.
+
+    The SWIM failure detector has attempted direct ping and indirect
+    ping-req through intermediaries, but the target node remains
+    stubbornly silent. In a real distributed system, this could mean
+    a network partition, a crashed process, or a misconfigured firewall.
+    Here, it means we called a method on an object and it didn't
+    respond as expected, which is arguably worse.
+    """
+
+    def __init__(self, node_id: str, attempts: int) -> None:
+        super().__init__(
+            f"Node '{node_id[:16]}...' unreachable after {attempts} attempts. "
+            f"The SWIM failure detector has exhausted all contact strategies. "
+            f"The node may have left the cluster or transcended the mortal plane.",
+            error_code="EFP-P2P1",
+            context={"node_id": node_id, "attempts": attempts},
+        )
+        self.node_id = node_id
+
+
+class GossipConvergenceError(P2PNetworkError):
+    """Raised when the gossip protocol fails to converge within the expected rounds.
+
+    In theory, gossip protocols achieve convergence in O(log n) rounds.
+    In practice, in-memory gossip with zero network latency should converge
+    almost instantly. If this exception fires, something has gone deeply
+    wrong with the rumor dissemination algorithm — or someone has configured
+    a cluster with zero nodes, which is the distributed systems equivalent
+    of dividing by zero.
+    """
+
+    def __init__(self, rounds: int, expected_rounds: int, divergent_count: int) -> None:
+        super().__init__(
+            f"Gossip failed to converge after {rounds} rounds "
+            f"(expected ~{expected_rounds}). {divergent_count} node(s) still "
+            f"have divergent state. Epidemic information dissemination has "
+            f"stalled, which should be impossible in a single-process cluster.",
+            error_code="EFP-P2P2",
+            context={
+                "rounds": rounds,
+                "expected_rounds": expected_rounds,
+                "divergent_count": divergent_count,
+            },
+        )
+
+
+class KademliaDHTError(P2PNetworkError):
+    """Raised when a Kademlia DHT operation fails.
+
+    The Distributed Hash Table could not complete the requested operation.
+    Perhaps the k-buckets are empty (unlikely in an in-memory simulation),
+    or the XOR distance metric has suffered an existential crisis and
+    forgotten how to compute exclusive-or. Either way, the key you wanted
+    is somewhere in the hash space, and none of the nodes know where.
+    """
+
+    def __init__(self, operation: str, key: str, reason: str) -> None:
+        super().__init__(
+            f"Kademlia DHT {operation} failed for key '{key[:16]}...': {reason}. "
+            f"The XOR distance metric has been consulted but provided no comfort.",
+            error_code="EFP-P2P3",
+            context={"operation": operation, "key": key, "reason": reason},
+        )
+        self.operation = operation
+        self.key = key
+
+
+class MerkleTreeDivergenceError(P2PNetworkError):
+    """Raised when Merkle tree anti-entropy detects irreconcilable divergence.
+
+    The Merkle trees of two nodes disagree on the state of the FizzBuzz
+    classification store, and the anti-entropy reconciliation has failed
+    to resolve the conflict. In a real distributed database, this would
+    trigger a quorum read or a vector clock comparison. Here, it means
+    two in-memory dicts have different values for the same key, which is
+    a crisis of cosmic proportions.
+    """
+
+    def __init__(self, node_a: str, node_b: str, divergent_keys: int) -> None:
+        super().__init__(
+            f"Merkle divergence between nodes '{node_a[:16]}...' and "
+            f"'{node_b[:16]}...': {divergent_keys} key(s) irreconcilable. "
+            f"The SHA-256 hash tree has spoken, and the trees disagree.",
+            error_code="EFP-P2P4",
+            context={
+                "node_a": node_a,
+                "node_b": node_b,
+                "divergent_keys": divergent_keys,
+            },
+        )
+
+
+class P2PNetworkPartitionError(P2PNetworkError):
+    """Raised when a simulated network partition isolates P2P gossip nodes.
+
+    A network partition has torn your FizzBuzz cluster asunder, creating
+    two (or more) isolated sub-clusters that can no longer gossip with
+    each other. In CAP theorem terms, you must now choose between
+    consistency and availability for your modulo arithmetic results.
+    Choose wisely — the integrity of n % 3 hangs in the balance.
+
+    Not to be confused with the Paxos NetworkPartitionError, which
+    covers consensus-level partitions. This one covers gossip-level
+    partitions, because enterprise FizzBuzz has enough network partition
+    errors to warrant separate exception hierarchies for each protocol.
+    """
+
+    def __init__(self, partition_a: list[str], partition_b: list[str]) -> None:
+        super().__init__(
+            f"P2P gossip partition detected: {len(partition_a)} node(s) in "
+            f"partition A, {len(partition_b)} node(s) in partition B. "
+            f"The CAP theorem has entered the chat. Choose wisely.",
+            error_code="EFP-P2P5",
+            context={
+                "partition_a_size": len(partition_a),
+                "partition_b_size": len(partition_b),
+            },
+        )
+        self.partition_a = partition_a
+        self.partition_b = partition_b

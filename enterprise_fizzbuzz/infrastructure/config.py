@@ -1110,6 +1110,17 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "show_fitness": True,
                 },
             },
+            "p2p": {
+                "enabled": False,
+                "num_nodes": 7,
+                "k_bucket_size": 3,
+                "gossip_fanout": 3,
+                "suspect_timeout_rounds": 3,
+                "max_gossip_rounds": 20,
+                "dashboard": {
+                    "width": 60,
+                },
+            },
             "kernel": {
                 "enabled": False,
                 "scheduler": "rr",
@@ -4102,6 +4113,45 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def kernel_dashboard_show_interrupt_log(self) -> bool:
         self._ensure_loaded()
         return self._raw_config.get("kernel", {}).get("dashboard", {}).get("show_interrupt_log", True)
+
+    # ------------------------------------------------------------------
+    # Peer-to-Peer Gossip Network properties
+    # ------------------------------------------------------------------
+
+    @property
+    def p2p_enabled(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("p2p", {}).get("enabled", False)
+
+    @property
+    def p2p_num_nodes(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("p2p", {}).get("num_nodes", 7)
+
+    @property
+    def p2p_k_bucket_size(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("p2p", {}).get("k_bucket_size", 3)
+
+    @property
+    def p2p_gossip_fanout(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("p2p", {}).get("gossip_fanout", 3)
+
+    @property
+    def p2p_suspect_timeout_rounds(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("p2p", {}).get("suspect_timeout_rounds", 3)
+
+    @property
+    def p2p_max_gossip_rounds(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("p2p", {}).get("max_gossip_rounds", 20)
+
+    @property
+    def p2p_dashboard_width(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("p2p", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

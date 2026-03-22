@@ -1310,6 +1310,27 @@ kernel:
     show_memory_map: true                      # Show virtual memory page map
     show_interrupt_log: true                   # Show interrupt history
 
+# Peer-to-Peer Gossip Network configuration
+# Because the only thing more ambitious than running FizzBuzz on a single
+# machine is pretending to run it across a cluster of 7 simulated peer nodes,
+# each with a 160-bit SHA-1 node ID, Kademlia XOR-distance routing, SWIM
+# failure detection, infection-style rumor dissemination, and Merkle tree
+# anti-entropy synchronization. Every node independently evaluates FizzBuzz
+# and then gossips its results to peers, because a single modulo operation
+# isn't distributed enough unless at least 7 copies of the answer exist
+# in memory simultaneously. No sockets were harmed in the making of this
+# network — it's entirely in-memory, which makes it the fastest WAN in
+# human history (latency: 0.000ms, bandwidth: infinite, packet loss: 0%).
+p2p:
+  enabled: false                               # Master switch — opt-in via --p2p
+  num_nodes: 7                                 # Number of simulated P2P nodes (default: 7)
+  k_bucket_size: 3                             # Kademlia k-bucket capacity
+  gossip_fanout: 3                             # Number of peers contacted per gossip round
+  suspect_timeout_rounds: 3                    # Rounds before a SUSPECT node is declared DEAD
+  max_gossip_rounds: 20                        # Maximum gossip rounds before giving up
+  dashboard:
+    width: 60                                  # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

@@ -349,6 +349,11 @@ from enterprise_fizzbuzz.infrastructure.os_kernel import (
     KernelDashboard,
     KernelMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.p2p_network import (
+    P2PDashboard,
+    P2PMiddleware,
+    P2PNetwork,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -1678,6 +1683,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--kernel-dashboard",
         action="store_true",
         help="Display the FizzBuzz OS Kernel ASCII dashboard after execution",
+    )
+
+    # Peer-to-Peer Gossip Network
+    parser.add_argument(
+        "--p2p",
+        action="store_true",
+        help="Enable the Peer-to-Peer Gossip Network: disseminate FizzBuzz results across 7 simulated nodes via SWIM and Kademlia",
+    )
+
+    parser.add_argument(
+        "--p2p-nodes",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of P2P cluster nodes (default: from config, typically 7)",
+    )
+
+    parser.add_argument(
+        "--p2p-dashboard",
+        action="store_true",
+        help="Display the P2P Gossip Network ASCII dashboard after execution",
     )
 
     return parser
@@ -4028,6 +4054,45 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # Peer-to-Peer Gossip Network setup
+    # ----------------------------------------------------------------
+    p2p_network = None
+    p2p_middleware = None
+
+    if args.p2p or args.p2p_dashboard:
+        p2p_num_nodes = args.p2p_nodes or config.p2p_num_nodes
+
+        p2p_network = P2PNetwork(
+            num_nodes=p2p_num_nodes,
+            k_bucket_size=config.p2p_k_bucket_size,
+            gossip_fanout=config.p2p_gossip_fanout,
+            suspect_timeout_rounds=config.p2p_suspect_timeout_rounds,
+            max_gossip_rounds=config.p2p_max_gossip_rounds,
+            event_bus=event_bus,
+        )
+
+        p2p_network.bootstrap()
+
+        p2p_middleware = P2PMiddleware(
+            network=p2p_network,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | P2P GOSSIP NETWORK: Distributed FizzBuzz ENABLED        |\n"
+            f"  | Nodes: {p2p_num_nodes:<51}|\n"
+            "  | Protocol: SWIM failure detection + Kademlia DHT          |\n"
+            "  | Dissemination: Infection-style rumor propagation          |\n"
+            "  | Anti-entropy: Merkle tree synchronization                 |\n"
+            "  | Network latency: 0.000ms (it's all in RAM, obviously)    |\n"
+            "  | Every evaluation will be gossiped to all peers.           |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.p2p_dashboard:
+        print("\n  P2P network not enabled. Use --p2p to enable.\n")
+
+    # ----------------------------------------------------------------
     # FizzBuzz Operating System Kernel setup
     # ----------------------------------------------------------------
     fizzbuzz_kernel = None
@@ -4192,6 +4257,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if kernel_middleware is not None:
         builder.with_middleware(kernel_middleware)
+
+    if p2p_middleware is not None:
+        builder.with_middleware(p2p_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -5233,6 +5301,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.kernel_dashboard:
         print("\n  Kernel not enabled. Use --kernel to enable.\n")
+
+    # P2P Gossip Network Dashboard
+    if args.p2p_dashboard and p2p_network is not None:
+        print(P2PDashboard.render(
+            p2p_network, width=config.p2p_dashboard_width
+        ))
+    elif args.p2p_dashboard:
+        print("\n  P2P network not enabled. Use --p2p to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

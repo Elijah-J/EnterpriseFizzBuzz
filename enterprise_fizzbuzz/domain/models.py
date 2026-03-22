@@ -578,6 +578,33 @@ class EventType(Enum):
     KERNEL_SHUTDOWN = auto()
     KERNEL_DASHBOARD_RENDERED = auto()
 
+    # Peer-to-Peer Gossip Network events
+    P2P_NODE_JOINED = auto()
+    P2P_GOSSIP_ROUND_COMPLETED = auto()
+    P2P_NODE_STATE_CHANGED = auto()
+    P2P_DHT_STORE = auto()
+    P2P_MERKLE_SYNC = auto()
+    P2P_DASHBOARD_RENDERED = auto()
+
+
+class NodeState(Enum):
+    """Membership states for nodes in the P2P Gossip Network.
+
+    Every node in the Enterprise FizzBuzz Peer-to-Peer Network must
+    exist in one of these states at all times. ALIVE nodes are happily
+    gossiping about FizzBuzz results with their peers. SUSPECT nodes
+    have missed a heartbeat and are being investigated — perhaps they
+    stepped away from the cluster to contemplate the futility of
+    distributed modulo arithmetic. DEAD nodes have been formally
+    pronounced deceased by the failure detector after exhausting all
+    ping-req intermediaries and suspect timers. A moment of silence
+    for the fallen, please.
+    """
+
+    ALIVE = auto()
+    SUSPECT = auto()
+    DEAD = auto()
+
 
 class ProcessState(Enum):
     """Process lifecycle states for the FizzBuzz Operating System Kernel.
