@@ -98,6 +98,15 @@ from enterprise_fizzbuzz.infrastructure.health import (
     SLABudgetHealthCheck,
     StartupProbe,
 )
+from enterprise_fizzbuzz.infrastructure.metrics import (
+    CardinalityDetector,
+    MetricsCollector,
+    MetricsDashboard,
+    MetricsMiddleware,
+    MetricRegistry,
+    PrometheusTextExporter,
+    create_metrics_subsystem,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -482,6 +491,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--self-heal",
         action="store_true",
         help="Enable self-healing: automatically attempt recovery of failing subsystems",
+    )
+
+    # Prometheus-Style Metrics
+    parser.add_argument(
+        "--metrics",
+        action="store_true",
+        help="Enable Prometheus-style metrics collection for FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--metrics-export",
+        action="store_true",
+        help="Export all metrics in Prometheus text exposition format after execution",
+    )
+
+    parser.add_argument(
+        "--metrics-dashboard",
+        action="store_true",
+        help="Display the ASCII Grafana metrics dashboard after execution",
     )
 
     return parser
@@ -899,6 +927,32 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Cache not enabled. Use --cache to enable.\n")
         return 0
 
+    # Prometheus-Style Metrics setup
+    metrics_registry = None
+    metrics_collector = None
+    metrics_middleware = None
+    metrics_cardinality = None
+    if args.metrics or args.metrics_export or args.metrics_dashboard:
+        MetricRegistry.reset()
+        metrics_registry, metrics_collector, metrics_middleware, metrics_cardinality = (
+            create_metrics_subsystem(
+                event_bus=event_bus,
+                bob_initial_stress=config.metrics_bob_stress_level,
+                cardinality_threshold=config.metrics_cardinality_threshold,
+                default_buckets=config.metrics_default_buckets,
+            )
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | PROMETHEUS METRICS: Collection ENABLED                   |\n"
+            "  | Counters, gauges, histograms, and summaries are now      |\n"
+            "  | tracking every aspect of your FizzBuzz evaluations.      |\n"
+            "  | Bob McFizzington's stress level: monitored.              |\n"
+            "  | is_tuesday label: mandatory.                             |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -1024,6 +1078,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if sla_middleware is not None:
         builder.with_middleware(sla_middleware)
+
+    if metrics_middleware is not None:
+        builder.with_middleware(metrics_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -1331,6 +1388,28 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(CacheDashboard.render(stats))
     elif args.cache_stats:
         print("\n  Cache not enabled. Use --cache to enable.\n")
+
+    # Prometheus metrics export
+    if args.metrics_export and metrics_registry is not None:
+        print("\n  +-- PROMETHEUS TEXT EXPOSITION FORMAT --+")
+        print(PrometheusTextExporter.export(metrics_registry))
+        print("  +--------------------------------------+\n")
+    elif args.metrics_export:
+        print("\n  Metrics not enabled. Use --metrics to enable.\n")
+
+    # Metrics dashboard
+    if args.metrics_dashboard and metrics_registry is not None:
+        print(MetricsDashboard.render(metrics_registry, width=config.metrics_dashboard_width))
+        # Run cardinality check
+        if metrics_cardinality is not None:
+            cardinalities = metrics_cardinality.check_all(metrics_registry)
+            print("  Cardinality report:")
+            for name, count in cardinalities.items():
+                status = "OK" if count <= config.metrics_cardinality_threshold else "WARNING"
+                print(f"    {name}: {count} unique label combos [{status}]")
+            print()
+    elif args.metrics_dashboard:
+        print("\n  Metrics not enabled. Use --metrics to enable.\n")
 
     return 0
 

@@ -209,6 +209,13 @@ class EventType(Enum):
     MIGRATION_SEED_COMPLETED = auto()
     MIGRATION_SCHEMA_CHANGED = auto()
 
+    # Prometheus-Style Metrics events
+    METRICS_COLLECTED = auto()
+    METRICS_EXPORTED = auto()
+    METRICS_CARDINALITY_WARNING = auto()
+    METRICS_DASHBOARD_RENDERED = auto()
+    METRICS_REGISTRY_RESET = auto()
+
     # Health Check Probe events
     HEALTH_CHECK_STARTED = auto()
     HEALTH_CHECK_COMPLETED = auto()

@@ -325,6 +325,36 @@ health_check:
     width: 60                        # ASCII dashboard width
     show_details: true               # Show diagnostic details in dashboard
 
+# Prometheus-Style Metrics Exporter configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is collecting Prometheus-style time series data about
+# how you computed it. Every counter increment, every histogram
+# observation, every gauge fluctuation — all rendered in the
+# Prometheus text exposition format that nobody will scrape
+# because this is a CLI tool, not an HTTP server.
+metrics:
+  enabled: false                     # Master switch — opt-in via --metrics
+  export_format: "prometheus"        # prometheus (the only option, but we made it configurable anyway)
+  cardinality_threshold: 100         # Warn when unique label combos exceed this
+  default_buckets:                   # Default histogram bucket boundaries
+    - 0.001
+    - 0.005
+    - 0.01
+    - 0.025
+    - 0.05
+    - 0.1
+    - 0.25
+    - 0.5
+    - 1.0
+    - 2.5
+    - 5.0
+    - 10.0
+  dashboard:
+    width: 60                        # ASCII dashboard width
+    sparkline_length: 20             # Number of data points in sparklines
+  bob_mcfizzington:
+    initial_stress_level: 42.0       # Bob's baseline stress level (it's always 42)
+
 # Observer configuration
 observers:
   console_observer:
