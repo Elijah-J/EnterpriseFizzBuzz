@@ -30,8 +30,8 @@ There is no `docs/` directory, no developer guide, no architecture decision reco
 
 ## Backlog Status
 - Total items: 8
-- Implemented: 5
-- Remaining: 3
+- Implemented: 6
+- Remaining: 2
 
 ## Documentation Items
 
@@ -134,7 +134,8 @@ Write it as a real runbook. Bob is a real engineer. His problems are real proble
 
 ### 6. Architecture Decision Records (docs/adr/)
 
-**Status:** PENDING
+**Status:** DONE
+**Output path:** `docs/adr/ADR-001.md` through `docs/adr/ADR-007.md`
 **Description:** Retroactively document the major design decisions as ADRs using the standard format (Title, Status, Context, Decision, Consequences). One file per decision.
 
 Write the following ADRs:
