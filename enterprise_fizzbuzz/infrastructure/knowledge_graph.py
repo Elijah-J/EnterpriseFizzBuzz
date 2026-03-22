@@ -30,7 +30,7 @@ from enterprise_fizzbuzz.domain.exceptions import (
     OntologyConsistencyError,
 )
 from enterprise_fizzbuzz.domain.interfaces import IMiddleware
-from enterprise_fizzbuzz.domain.models import EventType, ProcessingContext
+from enterprise_fizzbuzz.domain.models import Event, EventType, ProcessingContext
 
 logger = logging.getLogger(__name__)
 
@@ -1159,10 +1159,14 @@ class KnowledgeGraphMiddleware(IMiddleware):
         result.metadata["kg_triple_count"] = self._store.size
 
         if self._event_bus is not None:
-            self._event_bus.publish(EventType.KG_SPARQL_EXECUTED, {
-                "number": context.number,
-                "classifications": result.metadata["kg_classification"],
-            })
+            self._event_bus.publish(Event(
+                event_type=EventType.KG_SPARQL_EXECUTED,
+                payload={
+                    "number": context.number,
+                    "classifications": result.metadata["kg_classification"],
+                },
+                source="KnowledgeGraphMiddleware",
+            ))
 
         return result
 

@@ -371,7 +371,6 @@ class TestDeploymentSubsystems:
         result = run_cli("--gitops", "--range", "1", "20")
         assert_clean_exit(result, "gitops")
 
-    @pytest.mark.skip(reason="Known bug: EventBus.notify() not found in api_gateway.py -- AttributeError in GatewayMiddleware._emit_event")
     def test_api_gateway_boots_and_exits_cleanly(self):
         """The API Gateway with routing, versioning, and request
         transformation for the REST API that doesn't actually exist.
@@ -471,7 +470,6 @@ class TestMetaSubsystems:
     15 mod 3?' but 'what does it mean to divide?'
     """
 
-    @pytest.mark.skip(reason="Known bug: EventBus.publish() signature mismatch in knowledge_graph.py -- TypeError: takes 2 positional args but 3 given")
     def test_ontology_knowledge_graph_boots_and_exits_cleanly(self):
         """The Knowledge Graph & Domain Ontology: FizzBuzz modeled as
         RDF triples with an OWL class hierarchy. The number 15 is

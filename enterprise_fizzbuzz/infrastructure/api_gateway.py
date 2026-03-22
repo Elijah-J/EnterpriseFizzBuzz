@@ -1252,7 +1252,7 @@ class APIGateway:
         """Emit an event if the event bus is available."""
         if self._event_bus is not None:
             from enterprise_fizzbuzz.domain.models import Event
-            self._event_bus.notify(Event(
+            self._event_bus.publish(Event(
                 event_type=event_type,
                 payload=payload,
                 source="APIGateway",
