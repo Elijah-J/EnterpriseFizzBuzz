@@ -796,7 +796,7 @@ class TestFizzDAPDashboard:
         server.initialize()
         output = FizzDAPDashboard.render(server, show_complexity_index=True)
         assert "DEBUG COMPLEXITY INDEX" in output
-        assert "OVER-ENGINEERED" in output
+        assert "COVERAGE" in output
 
     def test_render_no_breakpoints_message(self):
         server = FizzDAPServer()
