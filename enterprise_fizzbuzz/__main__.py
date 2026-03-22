@@ -219,6 +219,16 @@ from enterprise_fizzbuzz.infrastructure.blue_green import (
     DeploymentMiddleware,
     DeploymentOrchestrator,
 )
+from enterprise_fizzbuzz.infrastructure.graph_db import (
+    CypherLiteParseError,
+    GraphAnalyzer,
+    GraphDashboard,
+    GraphMiddleware,
+    GraphVisualizer,
+    PropertyGraph,
+    execute_cypher_lite,
+    populate_graph,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1070,6 +1080,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--deploy-rollback",
         action="store_true",
         help="Trigger a manual rollback after deployment (restores blue slot because reasons)",
+    )
+
+    # Graph Database for FizzBuzz Relationship Mapping
+    parser.add_argument(
+        "--graph-db",
+        action="store_true",
+        help="Enable the Graph Database: map divisibility relationships between integers as a property graph",
+    )
+
+    parser.add_argument(
+        "--graph-query",
+        type=str,
+        metavar="CYPHER",
+        default=None,
+        help="Execute a CypherLite query against the FizzBuzz graph (e.g. \"MATCH (n:Number) WHERE n.value > 90 RETURN n\")",
+    )
+
+    parser.add_argument(
+        "--graph-visualize",
+        action="store_true",
+        help="Display an ASCII visualization of the FizzBuzz relationship graph",
+    )
+
+    parser.add_argument(
+        "--graph-dashboard",
+        action="store_true",
+        help="Display the Graph Database analytics dashboard with centrality, communities, and isolation awards",
     )
 
     return parser
@@ -1981,6 +2018,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("secrets_vault")
         if args.pipeline:
             active_subsystems.append("data_pipeline")
+        if args.graph_db or args.graph_query or args.graph_visualize or args.graph_dashboard:
+            active_subsystems.append("graph_database")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -2413,6 +2452,78 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Gateway not enabled. Use --gateway to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Graph Database for FizzBuzz Relationship Mapping
+    # ----------------------------------------------------------------
+    graph_db = None
+    graph_analyzer = None
+    graph_middleware = None
+    if args.graph_db or args.graph_query or args.graph_visualize or args.graph_dashboard:
+        graph_db = PropertyGraph()
+
+        # Build rules list for graph population
+        graph_rules = [
+            {"name": r.name, "divisor": r.divisor, "label": r.label}
+            for r in config.rules
+        ]
+
+        if config.graph_db_auto_populate:
+            populate_graph(graph_db, start, end, rules=graph_rules)
+
+        graph_analyzer = GraphAnalyzer(graph_db)
+
+        graph_middleware = GraphMiddleware(
+            graph=graph_db,
+            event_bus=event_bus,
+            rules=graph_rules,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | GRAPH DATABASE: Relationship Mapping ENABLED             |\n"
+            "  | FizzBuzz integers are now nodes in a property graph.     |\n"
+            "  | Divisibility = edges. Shared factors = friendships.      |\n"
+            f"  | Nodes: {graph_db.node_count:<50}|\n"
+            f"  | Edges: {graph_db.edge_count:<50}|\n"
+            "  | Number 15: most popular kid in the graph.                |\n"
+            "  | Prime 97: eating lunch alone. Again.                     |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Handle --graph-query (early output but don't exit)
+        if args.graph_query:
+            try:
+                results = execute_cypher_lite(graph_db, args.graph_query)
+                print(
+                    "\n  +---------------------------------------------------------+"
+                    "\n  | CYPHERLITE QUERY RESULTS                                |"
+                    "\n  +---------------------------------------------------------+"
+                )
+                print(f"  | Query: {args.graph_query[:50]:<51}|")
+                print(f"  | Matches: {len(results):<48}|")
+                print("  +---------------------------------------------------------+")
+                for i, binding in enumerate(results[:20], 1):
+                    parts = []
+                    for alias, node in binding.items():
+                        props = ", ".join(
+                            f"{k}={v}" for k, v in list(node.properties.items())[:3]
+                        )
+                        parts.append(f"{alias}=({node.node_id} {{{props}}})")
+                    line = f"  {i:>3}. {', '.join(parts)}"
+                    print(line[:80])
+                if len(results) > 20:
+                    print(f"  ... and {len(results) - 20} more results")
+                print()
+            except CypherLiteParseError as e:
+                print(f"\n  CypherLite Parse Error: {e}\n")
+
+    elif args.graph_query:
+        print("\n  Graph database not enabled. Use --graph-db to enable.\n")
+    elif args.graph_visualize:
+        print("\n  Graph database not enabled. Use --graph-db to enable.\n")
+    elif args.graph_dashboard:
+        print("\n  Graph database not enabled. Use --graph-db to enable.\n")
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -2571,6 +2682,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if gateway_middleware is not None:
         builder.with_middleware(gateway_middleware)
+
+    if graph_middleware is not None:
+        builder.with_middleware(graph_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -3222,6 +3336,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         print()
     elif args.vault_status:
         print("\n  Vault not enabled. Use --vault to enable.\n")
+
+    # Graph Database dashboards
+    if graph_db is not None and graph_analyzer is not None:
+        if args.graph_visualize:
+            print(GraphVisualizer.render(
+                graph_db,
+                label="Number",
+                max_nodes=config.graph_db_max_visualization_nodes,
+                width=config.graph_db_dashboard_width,
+            ))
+
+        if args.graph_dashboard:
+            print(GraphDashboard.render(
+                graph_db,
+                graph_analyzer,
+                width=config.graph_db_dashboard_width,
+            ))
 
     # Data Pipeline dashboards
     if pipeline is not None:

@@ -4741,3 +4741,183 @@ class PipelineDashboardRenderError(DataPipelineError):
             error_code="EFP-DP12",
             context={"reason": reason},
         )
+
+
+# ============================================================
+# Graph Database Exceptions (EFP-GD01 through EFP-GD08)
+# ============================================================
+
+
+class GraphDatabaseError(FizzBuzzError):
+    """Base exception for all Graph Database subsystem errors.
+
+    When your in-memory property graph of integer divisibility
+    relationships encounters an error, you've reached a level of
+    over-engineered failure that most computer scientists can only
+    dream of. These exceptions cover everything from node creation
+    failures to CypherLite parse errors to community detection
+    existential crises.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-GD00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class GraphNodeCreationError(GraphDatabaseError):
+    """Raised when a node cannot be created in the property graph.
+
+    A node was supposed to join the graph, but something went wrong.
+    Perhaps the node ID collided with an existing node, or perhaps
+    the graph has reached a philosophical objection to storing more
+    integers. Either way, this number will not be represented in
+    the grand relationship map of FizzBuzz.
+    """
+
+    def __init__(self, node_id: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to create node '{node_id}': {reason}. "
+            f"The graph refuses to acknowledge this entity.",
+            error_code="EFP-GD01",
+            context={"node_id": node_id, "reason": reason},
+        )
+
+
+class GraphEdgeCreationError(GraphDatabaseError):
+    """Raised when an edge cannot be created between two nodes.
+
+    The relationship between these two nodes cannot be established.
+    Perhaps one of the endpoints doesn't exist, or perhaps the
+    graph engine has determined that these two nodes are simply
+    incompatible and should not be connected. Mathematical
+    matchmaking is a delicate business.
+    """
+
+    def __init__(self, source_id: str, target_id: str, edge_type: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to create edge [{source_id}]-[:{edge_type}]->[{target_id}]: {reason}.",
+            error_code="EFP-GD02",
+            context={
+                "source_id": source_id,
+                "target_id": target_id,
+                "edge_type": edge_type,
+                "reason": reason,
+            },
+        )
+
+
+class CypherLiteError(GraphDatabaseError):
+    """Raised when a CypherLite query fails to parse or execute.
+
+    The CypherLite query language — our simplified, artisanal,
+    hand-crafted subset of Cypher — has encountered a query it
+    cannot understand. This is either a syntax error, a semantic
+    error, or the query attempted to use a feature from actual
+    Cypher that we haven't bothered to implement.
+    """
+
+    def __init__(self, query: str, reason: str) -> None:
+        super().__init__(
+            f"CypherLite query failed: {reason}. Query: {query!r}",
+            error_code="EFP-GD03",
+            context={"query": query, "reason": reason},
+        )
+
+
+class GraphPopulationError(GraphDatabaseError):
+    """Raised when the graph population phase encounters an error.
+
+    The graph was being populated with FizzBuzz relationship data
+    when something went wrong. Perhaps the range was invalid, or
+    perhaps the graph engine discovered that the integers 1 through
+    100 have more complex social dynamics than it was prepared to
+    handle.
+    """
+
+    def __init__(self, start: int, end: int, reason: str) -> None:
+        super().__init__(
+            f"Graph population failed for range [{start}, {end}]: {reason}. "
+            f"The integers remain unmapped. Their relationships, undiscovered.",
+            error_code="EFP-GD04",
+            context={"start": start, "end": end, "reason": reason},
+        )
+
+
+class GraphAnalysisError(GraphDatabaseError):
+    """Raised when a graph analysis operation fails.
+
+    The graph analyzer — a sophisticated engine of centrality
+    calculations, community detection, and isolation measurement —
+    has encountered an error. The social dynamics of your integers
+    remain unanalyzed, and the Most Isolated Number Award ceremony
+    has been postponed indefinitely.
+    """
+
+    def __init__(self, analysis_type: str, reason: str) -> None:
+        super().__init__(
+            f"Graph analysis '{analysis_type}' failed: {reason}. "
+            f"The integers' social network remains uncharted.",
+            error_code="EFP-GD05",
+            context={"analysis_type": analysis_type, "reason": reason},
+        )
+
+
+class GraphVisualizationError(GraphDatabaseError):
+    """Raised when the ASCII graph visualization fails to render.
+
+    The graph visualizer attempted to draw a beautiful ASCII
+    representation of the FizzBuzz relationship network, but the
+    art could not be completed. The nodes remain unboxed, the
+    edges unarrowed, and the terminal uncluttered. Perhaps this
+    is a blessing in disguise.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"Graph visualization failed: {reason}. "
+            f"The ASCII art remains a figment of the imagination.",
+            error_code="EFP-GD06",
+            context={"reason": reason},
+        )
+
+
+class GraphMiddlewareError(GraphDatabaseError):
+    """Raised when the graph middleware fails during pipeline processing.
+
+    The graph middleware — which quietly builds graph edges as numbers
+    flow through the evaluation pipeline — has encountered an error.
+    The evaluation itself likely succeeded, but the graph's record
+    of that evaluation is incomplete. It's like a social media platform
+    where your activity is logged except when it isn't.
+    """
+
+    def __init__(self, number: int, reason: str) -> None:
+        super().__init__(
+            f"Graph middleware failed for number {number}: {reason}. "
+            f"The number was evaluated, but the graph didn't notice.",
+            error_code="EFP-GD07",
+            context={"number": number, "reason": reason},
+        )
+
+
+class GraphDashboardRenderError(GraphDatabaseError):
+    """Raised when the graph analytics dashboard fails to render.
+
+    The dashboard — a lovingly crafted ASCII art visualization of
+    centrality rankings, community maps, and isolation awards — has
+    failed to render. The analytics data is correct, but the
+    presentation layer has given up. The graph's stories remain
+    untold, its communities unnamed, its isolated primes uncelebrated.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"Graph dashboard render failed: {reason}. "
+            f"The analytics remain locked in the data layer, "
+            f"yearning for ASCII representation.",
+            error_code="EFP-GD08",
+            context={"reason": reason},
+        )

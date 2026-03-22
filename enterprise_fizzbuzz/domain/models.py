@@ -405,6 +405,16 @@ class EventType(Enum):
     GATEWAY_REQUEST_REPLAYED = auto()
     GATEWAY_DASHBOARD_RENDERED = auto()
 
+    # Graph Database events
+    GRAPH_NODE_CREATED = auto()
+    GRAPH_EDGE_CREATED = auto()
+    GRAPH_POPULATED = auto()
+    GRAPH_QUERY_EXECUTED = auto()
+    GRAPH_ANALYSIS_STARTED = auto()
+    GRAPH_ANALYSIS_COMPLETED = auto()
+    GRAPH_COMMUNITY_DETECTED = auto()
+    GRAPH_DASHBOARD_RENDERED = auto()
+
     # Blue/Green Deployment Simulation events
     DEPLOYMENT_STARTED = auto()
     DEPLOYMENT_SLOT_PROVISIONED = auto()

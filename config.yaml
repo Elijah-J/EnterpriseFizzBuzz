@@ -852,6 +852,22 @@ blue_green:
   dashboard:
     width: 60                            # ASCII dashboard width
 
+# Graph Database for FizzBuzz Relationship Mapping
+# Because the divisibility relationships between integers 1-100
+# are clearly too complex for the human mind to comprehend without
+# a dedicated property graph database, CypherLite query engine,
+# centrality analysis, and community detection. Number 15 is the
+# most connected node in the graph. Prime numbers sit alone. This
+# is the social network of mathematics, and we've built Neo4j at
+# home to explore it.
+graph_db:
+  enabled: false                         # Master switch — opt-in via --graph-db
+  auto_populate: true                    # Auto-populate graph on startup
+  max_visualization_nodes: 20            # Max nodes to show in ASCII visualization
+  community_max_iterations: 20           # Max iterations for label propagation
+  dashboard:
+    width: 60                            # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:
