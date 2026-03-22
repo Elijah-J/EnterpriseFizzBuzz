@@ -30,8 +30,8 @@ There is no `docs/` directory, no developer guide, no architecture decision reco
 
 ## Backlog Status
 - Total items: 8
-- Implemented: 4
-- Remaining: 4
+- Implemented: 5
+- Remaining: 3
 
 ## Documentation Items
 
@@ -114,7 +114,8 @@ Cover the following:
 
 ### 5. Runbook for Bob (docs/runbook.md)
 
-**Status:** PENDING
+**Status:** DONE
+**Output path:** `docs/runbook.md`
 **Description:** An operational runbook written as if Bob McFizzington is a real on-call engineer responding to real incidents. This document is both functional documentation for the SLA/alerting/chaos subsystems and a continuation of the Bob bit.
 
 Cover the following:
