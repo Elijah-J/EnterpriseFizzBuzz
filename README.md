@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**53,000+ lines** across **106+ files** with **2,178 unit tests** and **138 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**56,000+ lines** across **108+ files** with **2,257 unit tests** and **143 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -46,7 +46,8 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
     |   config, formatters, middleware, observers, plugins,          |
     |   rules_engine, ml_engine, blockchain, circuit_breaker,        |
     |   tracing, auth, i18n, event_sourcing, chaos, feature_flags,   |
-    |   sla, cache, migrations, webhooks, service_mesh, hot_reload   |
+    |   sla, cache, migrations, webhooks, service_mesh, hot_reload,  |
+    |   rate_limiter                                                  |
     |                                                                |
     |   +-------------------------------------------------------+   |
     |   |                   APPLICATION                          |   |
@@ -121,6 +122,7 @@ EnterpriseFizzBuzz/
 │       ├── webhooks.py              # Webhook Notification System with HMAC-SHA256, DLQ, and simulated HTTP delivery (~1,142 lines)
 │       ├── service_mesh.py          # Service Mesh Simulation with 7 microservices, sidecar proxies, mTLS, and canary routing (~1,839 lines)
 │       ├── hot_reload.py            # Configuration Hot-Reload with Single-Node Raft Consensus (~1,787 lines)
+│       ├── rate_limiter.py          # Rate Limiting & API Quota Management with Token Bucket, Sliding Window, and Burst Credits (~1,196 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -166,6 +168,7 @@ EnterpriseFizzBuzz/
     ├── test_webhooks.py             # 54 webhook notification, HMAC signing, DLQ, and retry tests
     ├── test_service_mesh.py         # 83 service mesh, sidecar proxy, mTLS, and canary routing tests
     ├── test_hot_reload.py           # 92 hot-reload, Raft consensus, config diff, and rollback tests
+    ├── test_rate_limiter.py          # 79 rate limiting, token bucket, sliding window, burst credit, and quota reservation tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -277,6 +280,12 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Raft Consensus | `hot_reload.py` | Single-node distributed consensus for configuration changes, achieving 100% election victory rate with zero opponents -- peak democracy in a cluster of one |
 | Config Hot-Reload | `hot_reload.py` | File-watching, diffing, validating, and applying config changes without restart, because 0.3 seconds of downtime violates the five-nines FizzBuzz availability SLO |
 | Dependency-Aware Reload | `hot_reload.py` | Topological sort of subsystem dependencies to determine correct reload order, because reconfiguring the ML engine before the feature flags could unleash a cascade of modulo anarchy |
+| Token Bucket | `rate_limiter.py` | Classic rate limiting algorithm that accumulates tokens at a fixed refill rate up to a maximum capacity -- each FizzBuzz evaluation consumes one token, and when the bucket is empty, the evaluation is denied with a motivational quote about patience |
+| Sliding Window Log | `rate_limiter.py` | Timestamp-based rate tracking with configurable window duration, providing precise per-second/minute rate enforcement with sub-millisecond accuracy -- for when fixed windows are insufficiently rigorous for throttling modulo arithmetic |
+| Fixed Window Counter | `rate_limiter.py` | The simplest rate limiting algorithm, included for algorithmic completeness and backwards compatibility with rate limiting strategies that predate the invention of sliding windows |
+| Burst Credits | `rate_limiter.py` | Unused quota from previous windows carries over as burst credits (up to a configurable maximum), because loyalty should be rewarded even in rate limiting -- the rate-limiting equivalent of airline miles |
+| Quota Reservation | `rate_limiter.py` | Pre-books evaluation capacity for scheduled batch operations with reservation expiry, because spontaneous FizzBuzz is for amateurs who don't plan their modulo operations 30 seconds in advance |
+| Rate Limit Middleware | `rate_limiter.py` | Pipeline middleware that intercepts every evaluation and enforces rate limits before the number reaches the rule engine, because unrestricted access to the modulo operator is a denial-of-service vulnerability |
 
 ## Features
 
@@ -308,7 +317,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Webhook Notification System** - A production-grade event-driven webhook dispatch engine with HMAC-SHA256 payload signing, configurable retry with exponential backoff, a Dead Letter Queue for permanently failed deliveries, simulated HTTP POST delivery (because real HTTP is for deployed services), an Observer bridge from the EventBus, and an ASCII dashboard for delivery statistics -- because when the number 15 is evaluated as "FizzBuzz," every downstream microservice in the constellation must be immediately informed via a cryptographically signed notification, and if the notification fails five times, it deserves a permanent resting place in the DLQ where future forensic analysts can determine exactly why Slack didn't hear about `n % 3`
 - **Service Mesh Simulation** - Seven microservices (`NumberIngestionService`, `DivisibilityService`, `ClassificationService`, `FormattingService`, `AuditService`, `CacheService`, `OrchestratorService`) running in the same process, connected through sidecar proxies with mTLS (base64, obviously), per-service circuit breaking, round-robin/least-connections/random load balancing across "replicas," canary routing to an experimental v2 DivisibilityService, configurable network fault injection (latency and packet loss), health-based service discovery, a mesh control plane with traffic policies, and an ASCII topology diagram -- because decomposing a modulo operation into seven in-memory microservices communicating through base64-encoded messages is exactly the kind of distributed systems design that Google would endorse (if they saw it, which they won't)
 - **Configuration Hot-Reload with Raft Consensus** - A file-watching, config-diffing, dependency-aware reload orchestrator coordinated through a single-node Raft consensus protocol that holds elections against zero opponents and wins unanimously every time. Includes a `ConfigDiffEngine` for minimal changeset computation, a `ConfigValidator` with JSON Schema enforcement (the "YOLO" eviction policy shall never return), a `ReloadOrchestrator` that topologically sorts subsystem dependencies before applying changes, a `ConfigRollbackManager` for reverting failed reloads, and an ASCII dashboard displaying Raft term numbers, election results, and reload history -- because re-reading a YAML file without distributed consensus would be an act of architectural recklessness. All config changes are event-sourced and validated before application, ensuring that the FizzBuzz platform can reconfigure itself at runtime without the 0.3-second restart that would violate its five-nines availability SLO
-- **Custom Exception Hierarchy** - 138 exception classes for every conceivable FizzBuzz failure mode
+- **Rate Limiting & API Quota Management** - Three complementary rate limiting algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter) with a burst credit ledger for carrying over unused quota, a reservation system for pre-booking evaluation capacity, motivational patience quotes in rate limit headers (`X-FizzBuzz-Please-Be-Patient`), per-operation configurable quotas, and an ASCII rate limit dashboard with per-bucket fill levels and quota utilization sparklines -- because unrestricted access to `n % 3` is a denial-of-service vulnerability that no self-respecting enterprise platform can afford to ignore. The motivational quotes are load-bearing
+- **Custom Exception Hierarchy** - 143 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -605,6 +615,24 @@ python main.py --hot-reload --sla --sla-dashboard --health --health-dashboard --
 
 # Peak enterprise: hot-reload + service mesh + metrics + tracing (every subsystem reconfigurable at runtime)
 python main.py --hot-reload --service-mesh --metrics --metrics-dashboard --trace --range 1 20
+
+# Rate limiting: throttle FizzBuzz evaluations with the default token bucket algorithm
+python main.py --rate-limit --range 1 100
+
+# Rate limiting with sliding window algorithm at 30 requests per minute
+python main.py --rate-limit --rate-limit-algo sliding_window --rate-limit-rpm 30 --range 1 50
+
+# Rate limiting with burst credits: carry over unused quota from previous windows
+python main.py --rate-limit --rate-limit-burst-credits --range 1 100
+
+# Rate limit dashboard: see per-bucket fill levels and quota utilization
+python main.py --rate-limit --rate-limit-dashboard --range 1 100
+
+# Reserve evaluation capacity: pre-book 20 evaluations before running
+python main.py --rate-limit --rate-limit-reserve 20 --range 1 50
+
+# Full throttling stack: rate limiting + circuit breaker + SLA + metrics (peak capacity management)
+python main.py --rate-limit --rate-limit-dashboard --rate-limit-burst-credits --circuit-breaker --circuit-status --sla --sla-dashboard --metrics --range 1 30
 ```
 
 ## CLI Options
@@ -682,6 +710,12 @@ python main.py --hot-reload --service-mesh --metrics --metrics-dashboard --trace
 --config-validate    Validate config.yaml against the configuration schema and exit
 --config-diff        Display the diff between current and on-disk configuration
 --config-history     Display the event-sourced configuration change history
+--rate-limit         Enable Rate Limiting & API Quota Management for FizzBuzz evaluations
+--rate-limit-rpm N   Maximum FizzBuzz evaluations per minute (default: 60)
+--rate-limit-algo ALGO  Rate limiting algorithm: token_bucket, sliding_window, fixed_window (default: token_bucket)
+--rate-limit-dashboard  Display the ASCII rate limit dashboard with per-bucket fill levels and quota utilization
+--rate-limit-reserve N  Pre-reserve N evaluation slots before execution (capacity planning for FizzBuzz)
+--rate-limit-burst-credits  Enable burst credit carryover from unused quota (loyalty rewards for patient evaluators)
 ```
 
 ## Environment Variables
@@ -2082,10 +2116,98 @@ python -m pytest tests/ -v --tb=short
 - pytest (for testing)
 - A mass tolerance for over-engineering
 
+## Rate Limiting Architecture
+
+The Rate Limiting & API Quota Management subsystem implements a comprehensive, enterprise-grade throttling framework for the FizzBuzz evaluation pipeline -- because unrestricted access to modulo arithmetic is a denial-of-service vulnerability that no self-respecting enterprise platform can afford to ignore. Three complementary algorithms ensure that no matter how badly you want to evaluate numbers, the platform will ensure you do so at a responsible pace.
+
+```
+    +-------------------+
+    |   Evaluation      |
+    |   Request         |
+    +--------+----------+
+             |
+             v
+    +--------+----------+     +------------------------+
+    | RateLimiterMiddle- |---->| QuotaManager           |
+    | ware (priority 2)  |     |                        |
+    +--------------------+     |  +-----------------+   |
+                               |  | TokenBucket     |   |
+             allowed?          |  | (capacity,      |   |
+          +---yes/no---+       |  |  refill_rate)   |   |
+          |            |       |  +-----------------+   |
+          v            v       |                        |
+    +----------+  +---------+  |  +-----------------+   |
+    | Continue |  | Deny    |  |  | SlidingWindow   |   |
+    | Pipeline |  | + Quote |  |  | Log (window,    |   |
+    +----------+  | + Hdrs  |  |  |  max_requests)  |   |
+                  +---------+  |  +-----------------+   |
+                               |                        |
+                               |  +-----------------+   |
+                               |  | FixedWindow     |   |
+                               |  | Counter         |   |
+                               |  +-----------------+   |
+                               |                        |
+                               |  +-----------------+   |     +-----------------+
+                               |  | BurstCredit     |<--+---->| Reservation     |
+                               |  | Ledger          |   |     | System          |
+                               |  +-----------------+   |     +-----------------+
+                               +------------------------+
+                                          |
+                                          v
+                               +------------------------+
+                               | RateLimitDashboard     |
+                               | (ASCII visualization)  |
+                               +------------------------+
+```
+
+**Key components:**
+- **TokenBucket** - Classic token bucket with configurable capacity and refill rate; uses `time.monotonic()` for clock-skew-immune elapsed time tracking
+- **SlidingWindowLog** - Deque-based timestamp tracking with configurable window duration for precise per-second/minute rate enforcement
+- **FixedWindowCounter** - Simple counter-per-window implementation, included because algorithmic completeness is non-negotiable
+- **BurstCreditLedger** - Tracks unused quota and calculates carryover credits (up to a configurable maximum), because loyalty should be rewarded even in rate limiting
+- **QuotaManager** - Central orchestrator that routes requests through the selected algorithm, manages burst credits and reservations, and generates rate limit headers with motivational patience quotes
+- **RateLimiterMiddleware** - Pipeline middleware (priority 2) that intercepts every evaluation and enforces rate limits before the number reaches the rule engine
+- **RateLimitDashboard** - ASCII dashboard with per-bucket fill levels, recent throttle events, and quota utilization sparklines
+- **RateLimitHeaders** - Generates standard `X-RateLimit-*` headers plus the custom `X-FizzBuzz-Please-Be-Patient` header containing a randomly selected motivational quote about patience
+
+### Rate Limiting Algorithms
+
+| Algorithm | How It Works | Trade-offs |
+|-----------|-------------|------------|
+| Token Bucket | Tokens accumulate at a fixed rate up to a max capacity; each request consumes one token | Smooth, allows controlled bursts up to bucket capacity, the gold standard for API rate limiting |
+| Sliding Window Log | Maintains a deque of request timestamps; counts requests within a rolling time window | Precise per-second enforcement, higher memory usage (stores all timestamps in the window) |
+| Fixed Window Counter | Divides time into fixed windows; increments a counter per window | Simplest algorithm, but allows 2x burst rate at window boundaries -- a feature, not a bug |
+
+### Motivational Patience Quotes
+
+When a rate limit is exceeded, the platform does not simply deny the request. It delivers wisdom. The `X-FizzBuzz-Please-Be-Patient` header contains a randomly selected quote from a curated collection of 20 motivational aphorisms, including:
+
+- *"Patience is not the ability to wait, but the ability to keep a good attitude while waiting for FizzBuzz."*
+- *"A watched token bucket never refills. Actually it does, but it feels slower."*
+- *"Confucius say: developer who exceed rate limit learn value of exponential backoff."*
+- *"You miss 100% of the evaluations you don't wait for. -- Wayne Gretzky -- Michael Scott"*
+
+The quotes are load-bearing. The enterprise requires them.
+
+| Spec | Value |
+|------|-------|
+| Rate limiting algorithms | 3 (Token Bucket, Sliding Window Log, Fixed Window Counter) |
+| Motivational patience quotes | 20 (curated, load-bearing) |
+| Default rate limit | 60 evaluations/minute |
+| Burst credit earn rate | 0.5 credits per unused slot |
+| Maximum burst credits | 30 (configurable) |
+| Reservation TTL | 30 seconds (configurable) |
+| Maximum concurrent reservations | 10 (configurable) |
+| Rate limit headers | 5 standard + 1 custom motivational |
+| Middleware priority | 2 (after auth, before tracing) |
+| Custom exceptions | 2 (RateLimitExceededError, QuotaExhaustedError) |
+| Dashboard | ASCII-art rate limit visualization with fill bars |
+| Clock source | `time.monotonic()` (immune to NTP, leap seconds, and existential time dilation) |
+
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 2,178 tests, 138 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,257 tests, 143 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
@@ -2104,6 +2226,9 @@ A: Because a monolithic FizzBuzz application is a single point of failure. By de
 
 **Q: Why does FizzBuzz need configuration hot-reload with Raft consensus?**
 A: Because restarting a process that boots in 0.3 seconds is 0.3 seconds of unacceptable downtime. The hot-reload system watches `config.yaml` for changes and reconfigures every subsystem at runtime -- the cache TTL, the chaos probability, the ML learning rate, the SLA thresholds -- all without dropping a single evaluation. The reload is coordinated through a single-node Raft consensus protocol, which is the crowning achievement of the entire platform: a distributed consensus algorithm running on one node, holding elections against zero opponents, winning unanimously, and committing configuration changes with the full ceremony of a multi-datacenter deployment. The leader election completes in 0ms (there are no network round trips when your cluster is yourself). Log replication succeeds on the first attempt (the leader replicates to zero followers, which constitutes a majority). Heartbeats are sent to nobody at regular intervals, maintaining cluster stability in a cluster of one. The dependency-aware reload orchestrator uses topological sort to determine the correct order to reconfigure subsystems, because reloading the ML engine before the feature flags that might have disabled it would be the configuration equivalent of dividing by zero. If a reload fails, the rollback manager reverts to the last known good configuration with the same atomic precision as a database transaction -- except the "database" is a YAML file and the "transaction" is re-reading it. Nine custom exception classes cover every failure mode from `RaftConsensusError` (the node disagreed with itself) to `DependencyGraphCycleError` (the reload order forms a loop, which should be impossible but we check anyway because trust is not a configuration strategy).
+
+**Q: Why does FizzBuzz need rate limiting?**
+A: Because unrestricted access to modulo arithmetic is a denial-of-service vulnerability hiding in plain sight. Without rate limiting, a single runaway script could evaluate numbers 1 through 10,000 in rapid succession, overwhelming the blockchain's proof-of-work algorithm, exhausting the neural network's inference budget, and causing the circuit breaker to trip -- a cascading failure scenario that the chaos engineering framework ironically never tested because it was too realistic. The Token Bucket algorithm is the gold standard of rate limiting, originally designed for network traffic shaping and now repurposed for throttling arithmetic operations on integers less than 100. The burst credit system rewards patient evaluators by carrying over unused quota, which is the rate-limiting equivalent of airline miles -- except the only destination is `n % 3`. The quota reservation system allows you to pre-book 20 evaluations for your next batch job, ensuring the token bucket is sufficiently full when the job starts. This level of capacity planning for a FizzBuzz application demonstrates the kind of forward-thinking infrastructure that gets promoted at performance review time. When a rate limit is exceeded, the system delivers a motivational quote about patience via the `X-FizzBuzz-Please-Be-Patient` header, because a cold `429 Too Many Requests` lacks the emotional depth that enterprise users deserve. Twenty hand-curated quotes are available, including "Confucius say: developer who exceed rate limit learn value of exponential backoff" -- wisdom for the ages, delivered at the speed of throttling.
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.

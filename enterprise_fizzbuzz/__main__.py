@@ -108,6 +108,13 @@ from enterprise_fizzbuzz.infrastructure.metrics import (
     PrometheusTextExporter,
     create_metrics_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.rate_limiter import (
+    QuotaManager,
+    RateLimitAlgorithm,
+    RateLimitDashboard,
+    RateLimitPolicy,
+    RateLimiterMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.hot_reload import (
     ConfigDiffer,
     ConfigValidator,
@@ -643,6 +650,41 @@ def build_argument_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         default=None,
         help="Validate the specified YAML configuration file and exit",
+    )
+
+    # Rate Limiting & API Quota Management
+    parser.add_argument(
+        "--rate-limit",
+        action="store_true",
+        help="Enable rate limiting for FizzBuzz evaluations (because unrestricted modulo is dangerous)",
+    )
+
+    parser.add_argument(
+        "--rate-limit-rpm",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Maximum FizzBuzz evaluations per minute (default: from config)",
+    )
+
+    parser.add_argument(
+        "--rate-limit-algo",
+        type=str,
+        choices=["token_bucket", "sliding_window", "fixed_window"],
+        default=None,
+        help="Rate limiting algorithm (default: from config)",
+    )
+
+    parser.add_argument(
+        "--rate-limit-dashboard",
+        action="store_true",
+        help="Display the rate limiting ASCII dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--quota",
+        action="store_true",
+        help="Display quota status summary after execution",
     )
 
     return parser
@@ -1339,6 +1381,56 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Hot-reload not enabled. Use --hot-reload to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Rate Limiting & API Quota Management setup
+    # ----------------------------------------------------------------
+    rate_limit_middleware = None
+    rate_limit_quota_manager = None
+    if args.rate_limit:
+        algo_map = {
+            "token_bucket": RateLimitAlgorithm.TOKEN_BUCKET,
+            "sliding_window": RateLimitAlgorithm.SLIDING_WINDOW,
+            "fixed_window": RateLimitAlgorithm.FIXED_WINDOW,
+        }
+        algo_name = args.rate_limit_algo or config.rate_limiting_algorithm
+        algo = algo_map.get(algo_name, RateLimitAlgorithm.TOKEN_BUCKET)
+        rpm = args.rate_limit_rpm or config.rate_limiting_rpm
+
+        rl_policy = RateLimitPolicy(
+            algorithm=algo,
+            requests_per_minute=float(rpm),
+            burst_credits_enabled=config.rate_limiting_burst_credits_enabled,
+            burst_credits_max=float(config.rate_limiting_burst_credits_max),
+            burst_credits_earn_rate=config.rate_limiting_burst_credits_earn_rate,
+            reservations_enabled=config.rate_limiting_reservations_enabled,
+            reservations_max=config.rate_limiting_reservations_max,
+            reservations_ttl_seconds=config.rate_limiting_reservations_ttl_seconds,
+        )
+
+        rate_limit_quota_manager = QuotaManager(
+            policy=rl_policy,
+            event_bus=event_bus,
+        )
+
+        rate_limit_middleware = RateLimiterMiddleware(
+            quota_manager=rate_limit_quota_manager,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | RATE LIMITING: API Quota Management ENABLED              |\n"
+            f"  | Algorithm: {algo.name:<46}|\n"
+            f"  | RPM Limit: {rpm:<47}|\n"
+            "  | Burst credits: ARMED. Unused quota carries over.        |\n"
+            "  | Motivational quotes: LOADED and READY.                  |\n"
+            "  | Because unrestricted FizzBuzz is a security incident.   |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.rate_limit_dashboard:
+        print("\n  Rate limiting not enabled. Use --rate-limit to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -1470,6 +1562,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if mesh_middleware is not None:
         builder.with_middleware(mesh_middleware)
+
+    if rate_limit_middleware is not None:
+        builder.with_middleware(rate_limit_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -1830,6 +1925,33 @@ def main(argv: Optional[list[str]] = None) -> int:
             width=config.hot_reload_dashboard_width,
             show_raft_details=config.hot_reload_dashboard_show_raft_details,
         ))
+
+    # Rate limiting dashboard
+    if args.rate_limit_dashboard and rate_limit_quota_manager is not None:
+        print(RateLimitDashboard.render(
+            rate_limit_quota_manager,
+            width=config.rate_limiting_dashboard_width,
+        ))
+    elif args.rate_limit_dashboard:
+        print("\n  Rate limiting not enabled. Use --rate-limit to enable.\n")
+
+    # Quota status summary
+    if args.quota and rate_limit_quota_manager is not None:
+        qm = rate_limit_quota_manager
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | QUOTA STATUS SUMMARY                                    |\n"
+            "  +---------------------------------------------------------+\n"
+            f"  | Requests:  {qm.total_allowed} allowed / {qm.total_denied} denied"
+            + " " * max(0, 36 - len(f"{qm.total_allowed} allowed / {qm.total_denied} denied"))
+            + "|\n"
+            f"  | Denial Rate: {qm.denial_rate:.1f}%"
+            + " " * max(0, 44 - len(f"{qm.denial_rate:.1f}%"))
+            + "|\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.quota:
+        print("\n  Rate limiting not enabled. Use --rate-limit to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

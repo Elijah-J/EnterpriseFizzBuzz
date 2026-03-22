@@ -428,6 +428,27 @@ hot_reload:
     width: 60                         # ASCII dashboard width
     show_raft_details: true           # Show Raft consensus details in dashboard
 
+# Rate Limiting & API Quota Management configuration
+# Because unrestricted access to modulo arithmetic is a security
+# vulnerability of the highest order. Without rate limiting, a
+# malicious actor could evaluate FizzBuzz at an unconscionable
+# rate, consuming precious CPU cycles that could be better spent
+# on more important operations, like rate limiting itself.
+rate_limiting:
+  enabled: false                       # Master switch — opt-in via --rate-limit
+  algorithm: "token_bucket"            # token_bucket | sliding_window | fixed_window
+  requests_per_minute: 60             # Maximum FizzBuzz evaluations per minute
+  burst_credits:
+    enabled: true                      # Allow unused quota to carry over as burst credits
+    max_credits: 30                    # Maximum burst credits that can be accumulated
+    earn_rate: 0.5                     # Credits earned per unused evaluation slot
+  reservations:
+    enabled: true                      # Allow pre-reserving evaluation capacity
+    max_reservations: 10               # Maximum concurrent active reservations
+    ttl_seconds: 30                    # How long a reservation remains valid
+  dashboard:
+    width: 60                          # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

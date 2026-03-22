@@ -262,6 +262,18 @@ class EventType(Enum):
     HOT_RELOAD_WATCHER_STARTED = auto()
     HOT_RELOAD_WATCHER_STOPPED = auto()
 
+    # Rate Limiting & API Quota Management events
+    RATE_LIMIT_CHECK_STARTED = auto()
+    RATE_LIMIT_CHECK_PASSED = auto()
+    RATE_LIMIT_CHECK_FAILED = auto()
+    RATE_LIMIT_QUOTA_CONSUMED = auto()
+    RATE_LIMIT_QUOTA_REPLENISHED = auto()
+    RATE_LIMIT_BURST_CREDIT_USED = auto()
+    RATE_LIMIT_BURST_CREDIT_EARNED = auto()
+    RATE_LIMIT_RESERVATION_CREATED = auto()
+    RATE_LIMIT_RESERVATION_EXPIRED = auto()
+    RATE_LIMIT_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
