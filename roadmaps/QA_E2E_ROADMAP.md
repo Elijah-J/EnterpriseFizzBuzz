@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 6
-- Remaining: 4
+- Implemented: 7
+- Remaining: 3
 
 ---
 
@@ -205,7 +205,7 @@ Test the following by instantiating real subsystems with a shared event bus:
 
 ### 7. Integration: The Compliance Paradox (tests/integration/test_compliance_paradox.py)
 
-**Status:** PENDING
+**Status:** DONE (26 tests)
 **Description:** The platform's single most famous architectural conflict: GDPR's right-to-erasure vs. the append-only event store, immutable blockchain, and SOX audit retention requirements. The compliance module documents this paradox. The README devotes an entire FAQ entry to it. But no test actually triggers the full paradox path with all relevant subsystems live and verifies the resulting behavior across the event store, blockchain, cache, and compliance audit trail.
 
 Test the following with real subsystem instances:
