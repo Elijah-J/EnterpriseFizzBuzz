@@ -457,6 +457,14 @@ class EventType(Enum):
     LOAD_TEST_REQUEST_COMPLETED = auto()
     LOAD_TEST_BOTTLENECK_IDENTIFIED = auto()
 
+    # Audit Dashboard & Real-Time Event Streaming events
+    AUDIT_EVENT_AGGREGATED = auto()
+    AUDIT_ANOMALY_DETECTED = auto()
+    AUDIT_CORRELATION_DISCOVERED = auto()
+    AUDIT_STREAM_STARTED = auto()
+    AUDIT_STREAM_FLUSHED = auto()
+    AUDIT_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
@@ -762,6 +770,89 @@ class Event:
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     source: str = "FizzBuzzEngine"
+
+
+class AuditSeverity(Enum):
+    """Severity classification for unified audit events.
+
+    Because every FizzBuzz evaluation deserves a threat-level
+    assessment. TRACE is for the mundane (number processed),
+    INFO is for the noteworthy (Fizz detected), WARNING is for
+    the concerning (anomaly detected), ERROR is for the catastrophic
+    (circuit breaker tripped), and CRITICAL is for the existential
+    (the modulo operator has become self-aware).
+    """
+
+    TRACE = 0
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
+    CRITICAL = 4
+
+
+@dataclass(frozen=True)
+class UnifiedAuditEvent:
+    """A normalized audit event for the Unified Audit Dashboard.
+
+    Every event flowing through the platform is normalized into this
+    canonical form, because raw events are messy and auditors demand
+    consistency. Each UnifiedAuditEvent carries a severity, a
+    human-readable summary, and an optional correlation_id for
+    temporal cross-referencing. The fact that we're auditing FizzBuzz
+    evaluations with the same rigor as financial transactions is
+    a feature, not a cry for help.
+    """
+
+    event_id: str
+    timestamp: datetime
+    event_type: str
+    severity: AuditSeverity
+    source: str
+    summary: str
+    correlation_id: Optional[str] = None
+    payload: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class CorrelationInsight:
+    """A discovered correlation between co-occurring audit events.
+
+    When multiple events share a correlation_id, the Temporal
+    Correlator groups them into a CorrelationInsight — a fancy name
+    for "these things happened together." In a real enterprise
+    system this would drive root-cause analysis. Here, it tells
+    you that evaluating 15 triggered both FIZZ_DETECTED and
+    BUZZ_DETECTED within the same nanosecond, which is groundbreaking
+    intelligence for absolutely no one.
+    """
+
+    correlation_id: str
+    event_count: int
+    event_types: list[str]
+    first_seen: datetime
+    last_seen: datetime
+    duration_ms: float
+
+
+@dataclass(frozen=True)
+class AnomalyAlert:
+    """An anomaly detected by the z-score statistical analysis engine.
+
+    When the rate of a particular event type deviates significantly
+    from its historical mean, the AnomalyDetector raises an
+    AnomalyAlert. This is the FizzBuzz equivalent of a SIEM alert:
+    technically correct, practically useless, and guaranteed to
+    trigger an on-call page at 3 AM for Bob McFizzington.
+    """
+
+    alert_id: str
+    timestamp: datetime
+    event_type: str
+    observed_rate: float
+    expected_rate: float
+    z_score: float
+    severity: AuditSeverity
+    message: str
 
 
 @dataclass

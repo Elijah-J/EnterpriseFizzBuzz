@@ -243,6 +243,9 @@ from enterprise_fizzbuzz.infrastructure.load_testing import (
     WorkloadProfile,
     run_load_test,
 )
+from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
+    UnifiedAuditDashboard,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1188,6 +1191,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the full ASCII load test dashboard after execution",
     )
 
+    # Audit Dashboard & Real-Time Event Streaming
+    parser.add_argument(
+        "--audit-dashboard",
+        action="store_true",
+        help="Display the Unified Audit Dashboard: six-pane ASCII telemetry for FizzBuzz observability-of-observability",
+    )
+
+    parser.add_argument(
+        "--audit-stream",
+        action="store_true",
+        help="Stream all events as NDJSON to stdout (structured logging for the structurally inclined)",
+    )
+
+    parser.add_argument(
+        "--audit-anomalies",
+        action="store_true",
+        help="Display the anomaly detection report after execution (z-score analysis of FizzBuzz event rates)",
+    )
+
     return parser
 
 
@@ -1451,6 +1473,31 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.verbose:
         console_observer = ConsoleObserver(verbose=True)
         event_bus.subscribe(console_observer)
+
+    # Audit Dashboard setup
+    audit_dashboard = None
+    if args.audit_dashboard or args.audit_stream or args.audit_anomalies:
+        audit_dashboard = UnifiedAuditDashboard(
+            buffer_size=config.audit_dashboard_buffer_size,
+            anomaly_window_seconds=config.audit_dashboard_anomaly_window_seconds,
+            z_score_threshold=config.audit_dashboard_z_score_threshold,
+            anomaly_min_samples=config.audit_dashboard_anomaly_min_samples,
+            correlation_window_seconds=config.audit_dashboard_correlation_window_seconds,
+            correlation_min_events=config.audit_dashboard_correlation_min_events,
+            stream_include_payload=config.audit_dashboard_stream_include_payload,
+            enable_anomaly_detection=config.audit_dashboard_anomaly_enabled,
+            enable_correlation=config.audit_dashboard_correlation_enabled,
+        )
+        event_bus.subscribe(audit_dashboard.aggregator)
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | UNIFIED AUDIT DASHBOARD: Event Telemetry ENABLED        |\n"
+            "  | All events will be aggregated, normalized, and analyzed  |\n"
+            "  | with z-score anomaly detection and temporal correlation. |\n"
+            "  | Because monitoring FizzBuzz is serious business.        |\n"
+            "  +---------------------------------------------------------+"
+        )
 
     blockchain_observer = None
     if args.blockchain:
@@ -3599,6 +3646,21 @@ def main(argv: Optional[list[str]] = None) -> int:
                 width=config.genetic_algorithm_dashboard_width,
                 chart_height=config.genetic_algorithm_fitness_chart_height,
             ))
+
+    # ----------------------------------------------------------------
+    # Audit Dashboard post-execution rendering
+    # ----------------------------------------------------------------
+    if audit_dashboard is not None:
+        if args.audit_dashboard:
+            print(audit_dashboard.render_dashboard(width=config.audit_dashboard_width))
+
+        if args.audit_stream:
+            stream_output = audit_dashboard.render_stream()
+            if stream_output:
+                print(stream_output)
+
+        if args.audit_anomalies:
+            print(audit_dashboard.render_anomalies())
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

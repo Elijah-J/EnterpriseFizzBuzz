@@ -943,6 +943,43 @@ load_testing:
     width: 60                            # ASCII dashboard width
     histogram_buckets: 10                # Number of histogram bars in latency distribution
 
+# Audit Dashboard & Real-Time Event Streaming configuration
+# Because the only thing more important than observing FizzBuzz
+# evaluations is observing the observations themselves. The Unified
+# Audit Dashboard aggregates every event from every subsystem into
+# a single, overwhelming ASCII dashboard with six panes of real-time
+# telemetry that nobody asked for. It features z-score anomaly
+# detection (because a spike in Fizz evaluations at 3 AM is
+# definitely suspicious), temporal correlation (because events that
+# happen together might be related — groundbreaking), and NDJSON
+# streaming to stdout (because structured logging is the new
+# unstructured logging).
+audit_dashboard:
+  enabled: false                         # Master switch — opt-in via --audit-dashboard
+  buffer_size: 500                       # Maximum events in the rolling buffer (deque maxlen)
+  anomaly_detection:
+    enabled: true                        # Enable z-score anomaly detection
+    window_seconds: 10.0                 # Tumbling window duration for rate computation
+    z_score_threshold: 2.0               # Standard deviations before alerting
+    min_samples: 5                       # Minimum samples before z-score is meaningful
+  correlation:
+    enabled: true                        # Enable temporal event correlation
+    window_seconds: 5.0                  # Time window for grouping correlated events
+    min_events: 2                        # Minimum events to form a correlation insight
+  stream:
+    format: "ndjson"                     # Output format for event streaming (ndjson only, naturally)
+    include_payload: true                # Include full event payload in stream output
+  dashboard:
+    width: 80                            # ASCII dashboard width (minimum 60, because dignity)
+    refresh_summary: true                # Show summary counts in dashboard header
+    panes:                               # Which dashboard panes to render (all by default)
+      - "live_feed"
+      - "throughput"
+      - "classification"
+      - "health_matrix"
+      - "alert_ticker"
+      - "event_rate"
+
 # Observer configuration
 observers:
   console_observer:
