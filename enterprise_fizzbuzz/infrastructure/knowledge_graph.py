@@ -956,7 +956,7 @@ class OntologyVisualizer:
             lines.append("|" + " The MRO is: FizzBuzz -> Fizz -> Buzz -> Number".ljust(width - 2) + "|")
             lines.append(border)
 
-        return "\n".join(lines)
+        return "\n".join("  " + ln if ln else ln for ln in lines)
 
     @staticmethod
     def _render_node(
@@ -980,7 +980,10 @@ class OntologyVisualizer:
         if len(parents) > 1:
             parent_note = f" [multiple inheritance: {', '.join(parents)}]"
 
-        lines.append(f"{prefix}{connector}{class_uri}{parent_note}")
+        node_line = f"{prefix}{connector}{class_uri}{parent_note}"
+        if len(node_line) > 56:
+            node_line = node_line[:53] + "..."
+        lines.append(node_line)
 
         children = hierarchy.get_children(class_uri)
         for i, child in enumerate(children):
@@ -1093,7 +1096,15 @@ class KnowledgeDashboard:
         lines.append("|" + " Tim Berners-Lee would be proud. Probably.".center(width - 2) + "|")
         lines.append(border)
 
-        return "\n".join(lines)
+        # Flatten any multi-line entries (e.g. embedded class tree)
+        flat: list[str] = []
+        for entry in lines:
+            for sub in entry.split("\n"):
+                flat.append(sub)
+        return "\n".join(
+            "  " + ln if ln and not ln.startswith("  ") else ln
+            for ln in flat
+        )
 
 
 # ════════════════════════════════════════════════════════════════════

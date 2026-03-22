@@ -1562,7 +1562,7 @@ class KernelDashboard:
         lines.append(center("Linus would be proud. Or horrified."))
         lines.append(border)
 
-        return "\n".join(lines)
+        return "\n".join("  " + ln for ln in lines)
 
 
 # ── Kernel Middleware ─────────────────────────────────────────────

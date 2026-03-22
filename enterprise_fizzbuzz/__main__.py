@@ -362,13 +362,13 @@ logger = logging.getLogger(__name__)
 BANNER = r"""
   +===========================================================+
   |                                                           |
-  |   FFFFFFFF II ZZZZZZZ ZZZZZZZ BBBBB   UU   UU ZZZZZZZ   |
-  |   FF       II      ZZ      ZZ BB  BB  UU   UU      ZZ    |
-  |   FFFFFF   II    ZZ      ZZ   BBBBB   UU   UU    ZZ      |
-  |   FF       II   ZZ      ZZ   BB  BB  UU   UU   ZZ        |
-  |   FF       II ZZZZZZZ ZZZZZZZ BBBBB   UUUUUU ZZZZZZZ    |
+  |   FFFFFFFF II ZZZZZZZ ZZZZZZZ BBBBB   UU   UU ZZZZZZZ     |
+  |   FF       II      ZZ      ZZ BB  BB  UU   UU      ZZ     |
+  |   FFFFFF   II    ZZ      ZZ   BBBBB   UU   UU    ZZ       |
+  |   FF       II   ZZ      ZZ   BB  BB  UU   UU   ZZ         |
+  |   FF       II ZZZZZZZ ZZZZZZZ BBBBB   UUUUUU ZZZZZZZ      |
   |                                                           |
-  |         E N T E R P R I S E   E D I T I O N              |
+  |         E N T E R P R I S E   E D I T I O N               |
   |                    v1.0.0                                 |
   |                                                           |
   +===========================================================+
@@ -1900,8 +1900,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+\n"
                 "  | CONFIGURATION VALIDATION: PASSED                        |\n"
                 "  | The configuration file is valid. All values are within  |\n"
-                "  | acceptable enterprise parameters. Congratulations on   |\n"
-                "  | authoring a syntactically correct YAML file.           |\n"
+                "  | acceptable enterprise parameters. Congratulations on    |\n"
+                "  | authoring a syntactically correct YAML file.            |\n"
                 "  +---------------------------------------------------------+"
             )
             return 0
@@ -1927,7 +1927,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             method_name, prop_name = prop_map[args.verify_property]
             print(
                 "  +---------------------------------------------------------+\n"
-                f"  | FORMAL VERIFICATION: {prop_name:<35}|\n"
+                f"  | FORMAL VERIFICATION: {prop_name:<36}|\n"
                 "  | Verifying property against StandardRuleEngine oracle... |\n"
                 "  +---------------------------------------------------------+"
             )
@@ -1958,10 +1958,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         # Full verification
         print(
             "  +---------------------------------------------------------+\n"
-            "  | ENTERPRISE FIZZBUZZ FORMAL VERIFICATION ENGINE           |\n"
-            "  | Constructing proofs of totality, determinism,            |\n"
-            "  | completeness, and correctness via structural induction.  |\n"
-            "  | Because trust is earned, not assumed.                    |\n"
+            "  | ENTERPRISE FIZZBUZZ FORMAL VERIFICATION ENGINE          |\n"
+            "  | Constructing proofs of totality, determinism,           |\n"
+            "  | completeness, and correctness via structural induction. |\n"
+            "  | Because trust is earned, not assumed.                   |\n"
             "  +---------------------------------------------------------+"
         )
         print()
@@ -2013,7 +2013,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         if changeset.is_empty:
             print(
                 "  +---------------------------------------------------------+\n"
-                "  | CONFIGURATION DIFF: No changes detected.               |\n"
+                "  | CONFIGURATION DIFF: No changes detected.                |\n"
                 "  | The files are identical. This diff was anticlimactic.   |\n"
                 "  +---------------------------------------------------------+"
             )
@@ -2268,8 +2268,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | UNIFIED AUDIT DASHBOARD: Event Telemetry ENABLED        |\n"
-            "  | All events will be aggregated, normalized, and analyzed  |\n"
-            "  | with z-score anomaly detection and temporal correlation. |\n"
+            "  | All events will be aggregated, normalized, and analyzed |\n"
+            "  | with z-score anomaly detection and temporal correlation.|\n"
             "  | Because monitoring FizzBuzz is serious business.        |\n"
             "  +---------------------------------------------------------+"
         )
@@ -2383,8 +2383,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  | WARNING: Trust-mode authentication enabled.             |\n"
             "  | The user's identity has not been cryptographically      |\n"
             "  | verified. This is the security equivalent of writing    |\n"
-            "  | your password on a Post-It note and sticking it to     |\n"
-            "  | your monitor. Proceed with existential dread.          |\n"
+            "  | your password on a Post-It note and sticking it to      |\n"
+            "  | your monitor. Proceed with existential dread.           |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -2538,8 +2538,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | CACHING: In-Memory Cache Layer ENABLED                  |\n"
-            f"  | Policy: {eviction_policy.get_name():<49}|\n"
-            f"  | Max Size: {cache_max_size:<48}|\n"
+            f"  | Policy: {eviction_policy.get_name():<48}|\n"
+            f"  | Max Size: {cache_max_size:<46}|\n"
             "  | MESI coherence protocol: ACTIVE (pointlessly)           |\n"
             "  | Every eviction will be mourned with a eulogy.           |\n"
             "  +---------------------------------------------------------+"
@@ -2566,11 +2566,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | PROMETHEUS METRICS: Collection ENABLED                   |\n"
-            "  | Counters, gauges, histograms, and summaries are now      |\n"
-            "  | tracking every aspect of your FizzBuzz evaluations.      |\n"
-            "  | Bob McFizzington's stress level: monitored.              |\n"
-            "  | is_tuesday label: mandatory.                             |\n"
+            "  | PROMETHEUS METRICS: Collection ENABLED                  |\n"
+            "  | Counters, gauges, histograms, and summaries are now     |\n"
+            "  | tracking every aspect of your FizzBuzz evaluations.     |\n"
+            "  | Bob McFizzington's stress level: monitored.             |\n"
+            "  | is_tuesday label: mandatory.                            |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -2624,10 +2624,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | WEBHOOKS: Notification System ENABLED                    |\n"
-            "  | All matching events will be dispatched to registered     |\n"
-            "  | endpoints via simulated HTTP POST with HMAC-SHA256       |\n"
-            "  | signatures. No actual HTTP requests will be made.        |\n"
+            "  | WEBHOOKS: Notification System ENABLED                   |\n"
+            "  | All matching events will be dispatched to registered    |\n"
+            "  | endpoints via simulated HTTP POST with HMAC-SHA256      |\n"
+            "  | signatures. No actual HTTP requests will be made.       |\n"
             "  | X-FizzBuzz-Seriousness-Level: MAXIMUM                   |\n"
             "  +---------------------------------------------------------+"
         )
@@ -2693,9 +2693,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | SERVICE MESH: 7 Microservices ENABLED                    |\n"
-            "  | FizzBuzz has been decomposed into:                       |\n"
-            "  |   1. NumberIngestionService                              |\n"
+            "  | SERVICE MESH: 7 Microservices ENABLED                   |\n"
+            "  | FizzBuzz has been decomposed into:                      |\n"
+            "  |   1. NumberIngestionService                             |\n"
             "  |   2. DivisibilityService                                |\n"
             "  |   3. ClassificationService                              |\n"
             "  |   4. FormattingService                                  |\n"
@@ -2747,7 +2747,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  | Configuration changes will be detected and applied      |\n"
             "  | at runtime through a full Raft consensus protocol       |\n"
             "  | with 1 node. Elections: always unanimous. Heartbeats:   |\n"
-            "  | sent to 0 followers. Consensus latency: 0.000ms.       |\n"
+            "  | sent to 0 followers. Consensus latency: 0.000ms.        |\n"
             "  | Democracy has never been more efficient.                |\n"
             "  +---------------------------------------------------------+"
         )
@@ -2793,9 +2793,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | RATE LIMITING: API Quota Management ENABLED              |\n"
-            f"  | Algorithm: {algo.name:<46}|\n"
-            f"  | RPM Limit: {rpm:<47}|\n"
+            "  | RATE LIMITING: API Quota Management ENABLED             |\n"
+            f"  | Algorithm: {algo.name:<45}|\n"
+            f"  | RPM Limit: {rpm:<45}|\n"
             "  | Burst credits: ARMED. Unused quota carries over.        |\n"
             "  | Motivational quotes: LOADED and READY.                  |\n"
             "  | Because unrestricted FizzBuzz is a security incident.   |\n"
@@ -2845,13 +2845,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | COMPLIANCE: SOX/GDPR/HIPAA Framework ENABLED            |\n"
-            "  | Segregation of duties: ENFORCED (no dual FizzBuzz roles) |\n"
+            "  | Segregation of duties: ENFORCED (no dual FizzBuzz roles)|\n"
             "  | GDPR consent: AUTO-GRANTED (for convenience)            |\n"
             "  | HIPAA encryption: MILITARY-GRADE BASE64                 |\n"
             "  | Compliance Officer: Bob McFizzington (UNAVAILABLE)      |\n"
-            f"  | Bob's stress level: {config.compliance_officer_stress_level:.1f}%"
-            + " " * max(0, 37 - len(f"{config.compliance_officer_stress_level:.1f}%"))
-            + "|\n"
+            f"  | Bob's stress level: {f'{config.compliance_officer_stress_level:.1f}%':<36}|\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -2977,10 +2975,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+\n"
             "  | FINOPS: Cost Tracking & Chargeback Engine ENABLED       |\n"
             "  | Every FizzBuzz evaluation now has a price tag.          |\n"
-            f"  | {f'Currency: FizzBuck ({config.finops_currency})':<57}|\n"
-            "  | Tax rates: 3% Fizz / 5% Buzz / 15% FizzBuzz            |\n"
-            "  | Friday premium: 50% surcharge (TGIF costs extra)       |\n"
-            "  | Chaos injection: FB$0.00 (chaos is free)               |\n"
+            f"  | {f'Currency: FizzBuck ({config.finops_currency})':<56}|\n"
+            "  | Tax rates: 3% Fizz / 5% Buzz / 15% FizzBuzz             |\n"
+            "  | Friday premium: 50% surcharge (TGIF costs extra)        |\n"
+            "  | Chaos injection: FB$0.00 (chaos is free)                |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -3019,12 +3017,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | DISASTER RECOVERY: Backup/Restore ENABLED               |\n"
-            "  | Write-Ahead Log: SHA-256 checksummed (in RAM)            |\n"
-            "  | Snapshots: Point-in-time state capture (in RAM)          |\n"
-            "  | PITR: Recover to any microsecond (from RAM)              |\n"
-            "  | Retention: 24h/7d/4w/12m (for a <1s process)             |\n"
-            "  | WARNING: ALL BACKUPS STORED IN-MEMORY.                   |\n"
-            "  | A process restart destroys ALL recovery data.            |\n"
+            "  | Write-Ahead Log: SHA-256 checksummed (in RAM)           |\n"
+            "  | Snapshots: Point-in-time state capture (in RAM)         |\n"
+            "  | PITR: Recover to any microsecond (from RAM)             |\n"
+            "  | Retention: 24h/7d/4w/12m (for a <1s process)            |\n"
+            "  | WARNING: ALL BACKUPS STORED IN-MEMORY.                  |\n"
+            "  | A process restart destroys ALL recovery data.           |\n"
             "  +---------------------------------------------------------+"
         )
     elif args.dr_dashboard:
@@ -3052,11 +3050,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         running = ab_registry.get_running_experiments()
         print(
             "  +---------------------------------------------------------+\n"
-            "  | A/B TESTING: Experiment Framework ENABLED                |\n"
-            f"  | Running experiments: {len(running):<36}|\n"
-            "  | Traffic is being split between evaluation strategies.    |\n"
-            "  | The modulo operator is about to embarrass the            |\n"
-            "  | competition. Again.                                      |\n"
+            "  | A/B TESTING: Experiment Framework ENABLED               |\n"
+            f"  | Running experiments: {len(running):<35}|\n"
+            "  | Traffic is being split between evaluation strategies.   |\n"
+            "  | The modulo operator is about to embarrass the           |\n"
+            "  | competition. Again.                                     |\n"
             "  +---------------------------------------------------------+"
         )
     elif args.ab_report:
@@ -3090,11 +3088,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | MESSAGE QUEUE: Kafka-Style Topics ENABLED                |\n"
-            "  | Every 'partition' is a Python list. Every 'broker' is    |\n"
+            "  | MESSAGE QUEUE: Kafka-Style Topics ENABLED               |\n"
+            "  | Every 'partition' is a Python list. Every 'broker' is   |\n"
             "  | a dict. Every 'consumer group rebalance' is a dict      |\n"
             "  | key reassignment. Exactly-once delivery: SHA-256 + set. |\n"
-            "  | The fizzbuzz.feelings topic exists. Nobody subscribes.   |\n"
+            "  | The fizzbuzz.feelings topic exists. Nobody subscribes.  |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -3229,7 +3227,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(
                 "  +---------------------------------------------------------+\n"
                 "  | WARNING: VAULT IS SEALED                                |\n"
-                "  | The vault requires 3-of-5 unseal shares to operate.    |\n"
+                "  | The vault requires 3-of-5 unseal shares to operate.     |\n"
                 "  | Use --vault-unseal to auto-submit shares.               |\n"
                 "  | Vault-dependent operations will be skipped.             |\n"
                 "  | The FizzBuzz secrets remain imprisoned.                 |\n"
@@ -3310,14 +3308,14 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | DATA PIPELINE: ETL Framework ENABLED                     |\n"
-            "  | 5-stage DAG: Extract -> Validate -> Transform ->         |\n"
-            "  |              Enrich -> Load                              |\n"
-            f"  | Source: {source.get_name():<49}|\n"
-            f"  | Sink:   {sink.get_name():<49}|\n"
-            "  | Topological sort: Kahn's algorithm (maximally pointless) |\n"
-            "  | Enrichments: Fibonacci, primality, Roman numerals,       |\n"
-            "  |              emotional valence                           |\n"
+            "  | DATA PIPELINE: ETL Framework ENABLED                    |\n"
+            "  | 5-stage DAG: Extract -> Validate -> Transform ->        |\n"
+            "  |              Enrich -> Load                             |\n"
+            f"  | Source: {source.get_name():<48}|\n"
+            f"  | Sink:   {sink.get_name():<48}|\n"
+            "  | Topological sort: Kahn's algorithm (maximally pointless)|\n"
+            "  | Enrichments: Fibonacci, primality, Roman numerals,      |\n"
+            "  |              emotional valence                          |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -3361,13 +3359,13 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+\n"
                 "  | API KEY GENERATED                                       |\n"
                 "  +---------------------------------------------------------+\n"
-                f"  | Key: {key:<52}|\n"
+                f"  | Key: {key:<51}|\n"
                 "  +---------------------------------------------------------+\n"
                 "  | Store this key securely. We recommend:                  |\n"
-                "  |   1. A Post-It note on your monitor                    |\n"
-                "  |   2. A plaintext file called passwords.txt             |\n"
-                "  |   3. The company Slack #general channel                |\n"
-                "  | Enterprise security best practices at their finest.    |\n"
+                "  |   1. A Post-It note on your monitor                     |\n"
+                "  |   2. A plaintext file called passwords.txt              |\n"
+                "  |   3. The company Slack #general channel                 |\n"
+                "  | Enterprise security best practices at their finest.     |\n"
                 "  +---------------------------------------------------------+"
             )
             return 0
@@ -3375,13 +3373,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         api_version = args.api_version or config.api_gateway_default_version
         print(
             "  +---------------------------------------------------------+\n"
-            "  | API GATEWAY: Routing & Versioning ENABLED                |\n"
-            f"  | API Version: {api_version:<44}|\n"
+            "  | API GATEWAY: Routing & Versioning ENABLED               |\n"
+            f"  | API Version: {api_version:<43}|\n"
             "  | Routes: Registered and ready (for a server that doesn't |\n"
             "  |         exist on a port bound to the void)              |\n"
             "  | Request Transformation: Normalizer, Enricher, Validator |\n"
             "  | Response Transformation: Compressor (-847% savings),    |\n"
-            "  |   PaginationWrapper (page 1 of 1), HATEOAS (/feelings) |\n"
+            "  |   PaginationWrapper (page 1 of 1), HATEOAS (/feelings)  |\n"
             "  | Request ID: 340 characters of pure enterprise identity  |\n"
             "  +---------------------------------------------------------+"
         )
@@ -3417,13 +3415,13 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | GRAPH DATABASE: Relationship Mapping ENABLED             |\n"
-            "  | FizzBuzz integers are now nodes in a property graph.     |\n"
-            "  | Divisibility = edges. Shared factors = friendships.      |\n"
-            f"  | Nodes: {graph_db.node_count:<50}|\n"
-            f"  | Edges: {graph_db.edge_count:<50}|\n"
-            "  | Number 15: most popular kid in the graph.                |\n"
-            "  | Prime 97: eating lunch alone. Again.                     |\n"
+            "  | GRAPH DATABASE: Relationship Mapping ENABLED            |\n"
+            "  | FizzBuzz integers are now nodes in a property graph.    |\n"
+            "  | Divisibility = edges. Shared factors = friendships.     |\n"
+            f"  | Nodes: {graph_db.node_count:<49}|\n"
+            f"  | Edges: {graph_db.edge_count:<49}|\n"
+            "  | Number 15: most popular kid in the graph.               |\n"
+            "  | Prime 97: eating lunch alone. Again.                    |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -3436,8 +3434,8 @@ def main(argv: Optional[list[str]] = None) -> int:
                     "\n  | CYPHERLITE QUERY RESULTS                                |"
                     "\n  +---------------------------------------------------------+"
                 )
-                print(f"  | Query: {args.graph_query[:50]:<51}|")
-                print(f"  | Matches: {len(results):<48}|")
+                print(f"  | Query: {args.graph_query[:49]:<49}|")
+                print(f"  | Matches: {len(results):<47}|")
                 print("  +---------------------------------------------------------+")
                 for i, binding in enumerate(results[:20], 1):
                     parts = []
@@ -3504,14 +3502,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | FBAAS: FizzBuzz-as-a-Service ENABLED                    |\n"
-            f"  | Tier: {fbaas_tier.name:<51}|\n"
-            f"  | Tenant: {fbaas_tenant.tenant_id:<49}|\n"
-            f"  | SLA Uptime: {sla.uptime_target:.2%}"
-            + " " * max(0, 44 - len(f"{sla.uptime_target:.2%}"))
-            + "|\n"
-            "  | Watermark: "
-            + ("ACTIVE (Free tier)" if fbaas_tier == SubscriptionTier.FREE else "DISABLED").ljust(46)
-            + "|\n"
+            f"  | Tier: {fbaas_tier.name:<50}|\n"
+            f"  | Tenant: {fbaas_tenant.tenant_id:<48}|\n"
+            f"  | SLA Uptime: {f'{sla.uptime_target:.2%}':<44}|\n"
+            f"  | Watermark: {('ACTIVE (Free tier)' if fbaas_tier == SubscriptionTier.FREE else 'DISABLED'):<45}|\n"
             "  | Billing: Simulated Stripe (in-memory ledger)            |\n"
             "  | Every evaluation is metered. Nothing is real.           |\n"
             "  +---------------------------------------------------------+"
@@ -3552,12 +3546,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | WARNING: Chaos Engineering ENABLED                      |\n"
-            f"  | Severity: Level {chaos_level} ({chaos_severity.label})"
-            + " " * (39 - len(f"Level {chaos_level} ({chaos_severity.label})"))
-            + "|\n"
-            f"  | Injection probability: {chaos_severity.probability:.0%}"
-            + " " * (35 - len(f"{chaos_severity.probability:.0%}"))
-            + "|\n"
+            f"  | Severity: {f'Level {chaos_level} ({chaos_severity.label})':<46}|\n"
+            f"  | Injection probability: {f'{chaos_severity.probability:.0%}':<33}|\n"
             "  | The Chaos Monkey is awake and hungry for modulo ops.    |\n"
             "  +---------------------------------------------------------+"
         )
@@ -3586,9 +3576,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         if uow is not None:
             print(
                 "  +---------------------------------------------------------+\n"
-                f"  | REPOSITORY: {repo_backend.upper():<45}|\n"
+                f"  | REPOSITORY: {repo_backend.upper():<44}|\n"
                 "  | FizzBuzz results will now be persisted via the          |\n"
-                "  | Repository Pattern + Unit of Work, because storing     |\n"
+                "  | Repository Pattern + Unit of Work, because storing      |\n"
                 "  | modulo results in a variable was insufficiently durable.|\n"
                 "  +---------------------------------------------------------+"
             )
@@ -3620,10 +3610,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  | TIME-TRAVEL DEBUGGER ENABLED                            |\n"
             "  | Every FizzBuzz evaluation will be captured in a         |\n"
             "  | SHA-256 integrity-verified snapshot for bidirectional   |\n"
-            "  | temporal navigation. Because debugging forward-only    |\n"
+            "  | temporal navigation. Because debugging forward-only     |\n"
             "  | is for temporally challenged mortals.                   |\n"
-            f"  | Breakpoints: {bp_count:<44}|\n"
-            f"  | Max snapshots: {config.time_travel_max_snapshots:<42}|\n"
+            f"  | Breakpoints: {bp_count:<43}|\n"
+            f"  | Max snapshots: {config.time_travel_max_snapshots:<41}|\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -3755,9 +3745,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | PAXOS CONSENSUS: Distributed FizzBuzz ENABLED           |\n"
-            f"  | Nodes: {num_nodes:<51}|\n"
-            f"  | Quorum: {paxos_cluster.quorum_size:<50}|\n"
-            f"  | Byzantine traitor: {byz_status:<38}|\n"
+            f"  | Nodes: {num_nodes:<49}|\n"
+            f"  | Quorum: {paxos_cluster.quorum_size:<48}|\n"
+            f"  | Byzantine traitor: {byz_status:<37}|\n"
             "  | Every number will be evaluated by ALL nodes and then    |\n"
             "  | ratified through Lamport's Paxos protocol. Because one  |\n"
             "  | modulo operation is never enough for enterprise.        |\n"
@@ -3820,9 +3810,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | FEDERATED LEARNING: Privacy-Preserving Modulo Training  |\n"
-            f"  | Clients: {len(fed_clients):<48}|\n"
-            f"  | Rounds: {fed_num_rounds:<49}|\n"
-            f"  | Strategy: {fed_agg_strategy.upper():<47}|\n"
+            f"  | Clients: {len(fed_clients):<47}|\n"
+            f"  | Rounds: {fed_num_rounds:<48}|\n"
+            f"  | Strategy: {fed_agg_strategy.upper():<46}|\n"
             f"  | Privacy: {'ENABLED (epsilon=' + f'{config.federated_learning_dp_epsilon:.1f}' + ')' if fed_dp else 'DISABLED':<47}|\n"
             "  | Each client trains on a biased subset of integers,      |\n"
             "  | because collaborative modulo learning is the future.    |\n"
@@ -3873,14 +3863,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | QUANTUM COMPUTING: Shor's Algorithm ENABLED             |\n"
-            f"  | Qubits: {qubits:<49}|\n"
-            f"  | Hilbert Space: {hilbert_dim} dimensions"
-            + " " * max(0, 41 - len(f"{hilbert_dim} dimensions"))
-            + "|\n"
-            "  | Divisibility will be checked via quantum period-finding  |\n"
-            "  | using a simplified Shor's algorithm. Classical fallback  |\n"
+            f"  | Qubits: {qubits:<48}|\n"
+            f"  | Hilbert Space: {f'{hilbert_dim} dimensions':<41}|\n"
+            "  | Divisibility will be checked via quantum period-finding |\n"
+            "  | using a simplified Shor's algorithm. Classical fallback |\n"
             "  | is armed, because quantum supremacy is aspirational.    |\n"
-            "  | Quantum Advantage Ratio: NEGATIVE (as expected)          |\n"
+            "  | Quantum Advantage Ratio: NEGATIVE (as expected)         |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -3962,10 +3950,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | KNOWLEDGE GRAPH: Semantic Web for FizzBuzz ENABLED      |\n"
-            f"  | Triples: {kg_store.size:<48}|\n"
-            f"  | Inferred: {inferred:<47}|\n"
-            f"  | Classes: {len(kg_hierarchy.get_all_classes()):<48}|\n"
-            "  | Every integer is now an RDF resource with formal class   |\n"
+            f"  | Triples: {kg_store.size:<47}|\n"
+            f"  | Inferred: {inferred:<46}|\n"
+            f"  | Classes: {len(kg_hierarchy.get_all_classes()):<47}|\n"
+            "  | Every integer is now an RDF resource with formal class  |\n"
             "  | membership, divisibility properties, and an OWL class   |\n"
             "  | hierarchy featuring diamond inheritance. Linked Data!   |\n"
             "  +---------------------------------------------------------+"
@@ -4041,10 +4029,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | SELF-MODIFYING CODE: Rules That Rewrite Themselves      |\n"
-            f"  | Mutation Rate: {sm_rate:<42.1%}|\n"
-            f"  | Safety Floor: {config.self_modifying_correctness_floor:<43.1%}|\n"
-            f"  | Kill Switch: {'ARMED' if config.self_modifying_kill_switch else 'DISABLED':<44}|\n"
-            f"  | Operators: {len(config.self_modifying_enabled_operators):<46}|\n"
+            f"  | Mutation Rate: {sm_rate:<41.1%}|\n"
+            f"  | Safety Floor: {config.self_modifying_correctness_floor:<42.1%}|\n"
+            f"  | Kill Switch: {'ARMED' if config.self_modifying_kill_switch else 'DISABLED':<43}|\n"
+            f"  | Operators: {len(config.self_modifying_enabled_operators):<45}|\n"
             "  | The rules now inspect and rewrite their own ASTs at     |\n"
             "  | runtime. The SafetyGuard prevents catastrophic          |\n"
             "  | mutations. Probably.                                    |\n"
@@ -4079,12 +4067,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | P2P GOSSIP NETWORK: Distributed FizzBuzz ENABLED        |\n"
-            f"  | Nodes: {p2p_num_nodes:<51}|\n"
-            "  | Protocol: SWIM failure detection + Kademlia DHT          |\n"
-            "  | Dissemination: Infection-style rumor propagation          |\n"
-            "  | Anti-entropy: Merkle tree synchronization                 |\n"
-            "  | Network latency: 0.000ms (it's all in RAM, obviously)    |\n"
-            "  | Every evaluation will be gossiped to all peers.           |\n"
+            f"  | Nodes: {p2p_num_nodes:<49}|\n"
+            "  | Protocol: SWIM failure detection + Kademlia DHT         |\n"
+            "  | Dissemination: Infection-style rumor propagation        |\n"
+            "  | Anti-entropy: Merkle tree synchronization               |\n"
+            "  | Network latency: 0.000ms (it's all in RAM, obviously)   |\n"
+            "  | Every evaluation will be gossiped to all peers.         |\n"
             "  +---------------------------------------------------------+"
         )
     elif args.p2p_dashboard:
@@ -4134,14 +4122,12 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+\n"
             "  | FIZZBUZZ OS KERNEL: BOOTED                              |\n"
             "  | Every FizzBuzz evaluation is now a kernel process with  |\n"
-            "  | PID, PCB, virtual memory, and CPU registers.           |\n"
-            f"  | Scheduler: {fizzbuzz_kernel.scheduler_name:<46}|\n"
-            f"  | Boot time: {fizzbuzz_kernel._boot_time_ns / 1_000_000:<9.2f}ms"
-            + " " * (37 - len(f"{fizzbuzz_kernel._boot_time_ns / 1_000_000:.2f}"))
-            + "|\n"
-            "  | IRQ vectors: 16 (Fizz=IRQ4, Buzz=IRQ5, FizzBuzz=IRQ6) |\n"
-            "  | Virtual Memory: TLB + page table + swap                |\n"
-            "  | Linus would be proud. Or horrified.                    |\n"
+            "  | PID, PCB, virtual memory, and CPU registers.            |\n"
+            f"  | Scheduler: {fizzbuzz_kernel.scheduler_name:<45}|\n"
+            f"  | Boot time: {f'{fizzbuzz_kernel._boot_time_ns / 1_000_000:.2f}ms':<45}|\n"
+            "  | IRQ vectors: 16 (Fizz=IRQ4, Buzz=IRQ5, FizzBuzz=IRQ6)   |\n"
+            "  | Virtual Memory: TLB + page table + swap                 |\n"
+            "  | Linus would be proud. Or horrified.                     |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -4412,9 +4398,9 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(
             "  +---------------------------------------------------------+\n"
             "  | HEALTH CHECKS: Kubernetes-Style Probes ENABLED          |\n"
-            "  | Liveness, readiness, and startup probes are now active.  |\n"
+            "  | Liveness, readiness, and startup probes are now active. |\n"
             "  | The platform's vital signs are being monitored with     |\n"
-            "  | the same rigor as a Kubernetes pod in production.        |\n"
+            "  | the same rigor as a Kubernetes pod in production.       |\n"
             "  +---------------------------------------------------------+"
         )
 
@@ -4494,8 +4480,8 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +==========================================================+\n"
-            "  | BLUE/GREEN DEPLOYMENT SIMULATION                         |\n"
-            "  | Zero-downtime deployment for a process with zero uptime  |\n"
+            "  | BLUE/GREEN DEPLOYMENT SIMULATION                        |\n"
+            "  | Zero-downtime deployment for a process with zero uptime |\n"
             "  +==========================================================+"
         )
         print()
@@ -4565,10 +4551,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | FBVM: FizzBuzz Bytecode Virtual Machine ENABLED          |\n"
-            f"  | Rules compiled: {len(vm_rules):<42}|\n"
-            f"  | Instructions: {len(vm_program.instructions):<44}|\n"
-            f"  | Optimized: {'Yes' if vm_program.optimized else 'No':<47}|\n"
+            "  | FBVM: FizzBuzz Bytecode Virtual Machine ENABLED         |\n"
+            f"  | Rules compiled: {len(vm_rules):<40}|\n"
+            f"  | Instructions: {len(vm_program.instructions):<42}|\n"
+            f"  | Optimized: {'Yes' if vm_program.optimized else 'No':<45}|\n"
             "  | Because Python was too efficient for modulo arithmetic. |\n"
             "  +---------------------------------------------------------+"
         )
@@ -4675,7 +4661,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                 args.temporal_query
             )
             print("  +===========================================================+")
-            print("  |             TEMPORAL QUERY RESULT                          |")
+            print("  |             TEMPORAL QUERY RESULT                         |")
             print("  +===========================================================+")
             print(f"  |  As-of sequence    : {args.temporal_query:<37}|")
             print(f"  |  Events processed  : {temporal_state['events_processed']:<37}|")
@@ -4804,12 +4790,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+\n"
             "  | QUOTA STATUS SUMMARY                                    |\n"
             "  +---------------------------------------------------------+\n"
-            f"  | Requests:  {qm.total_allowed} allowed / {qm.total_denied} denied"
-            + " " * max(0, 36 - len(f"{qm.total_allowed} allowed / {qm.total_denied} denied"))
-            + "|\n"
-            f"  | Denial Rate: {qm.denial_rate:.1f}%"
-            + " " * max(0, 44 - len(f"{qm.denial_rate:.1f}%"))
-            + "|\n"
+            f"  | Requests:  {f'{qm.total_allowed} allowed / {qm.total_denied} denied':<45}|\n"
+            f"  | Denial Rate: {f'{qm.denial_rate:.1f}%':<43}|\n"
             "  +---------------------------------------------------------+"
         )
     elif args.quota:
@@ -4839,11 +4821,16 @@ def main(argv: Optional[list[str]] = None) -> int:
                 assignments = entry.get("assignments", {})
                 segregated = entry.get("segregation_satisfied", False)
                 status = "OK" if segregated else "VIOLATION"
-                print(f"  | Number {entry.get('number', '?'):>5} [{status}]")
+                num_val = entry.get("number", "?")
+                sox_line = f"Number {num_val:>5} [{status}]"
+                print(f"  | {sox_line:<57}|")
                 for role, person in assignments.items():
-                    print(f"  |   {role}: {person.get('name', '?')}")
+                    person_name = person.get("name", "?")
+                    role_line = f"  {role}: {person_name}"
+                    print(f"  | {role_line:<57}|")
             if len(sox_trail) > 10:
-                print(f"  | ... and {len(sox_trail) - 10} more entries")
+                more_line = f"... and {len(sox_trail) - 10} more entries"
+                print(f"  | {more_line:<57}|")
             print("  +---------------------------------------------------------+")
             print()
         else:
@@ -4857,11 +4844,11 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+\n"
                 "  | HIPAA PHI ACCESS LOG & ENCRYPTION STATISTICS            |\n"
                 "  +---------------------------------------------------------+\n"
-                f"  | PHI Encryptions:    {hipaa_stats.get('phi_encryptions', 0):<37}|\n"
-                f"  | PHI Redactions:     {hipaa_stats.get('phi_redactions', 0):<37}|\n"
-                f"  | PHI Access Events:  {hipaa_stats.get('phi_access_events', 0):<37}|\n"
-                f"  | Algorithm:          {hipaa_stats.get('encryption_algorithm', 'N/A'):<37}|\n"
-                f"  | Actual Security:    {hipaa_stats.get('actual_security_provided', 'None'):<37}|\n"
+                f"  | PHI Encryptions:    {hipaa_stats.get('phi_encryptions', 0):<36}|\n"
+                f"  | PHI Redactions:     {hipaa_stats.get('phi_redactions', 0):<36}|\n"
+                f"  | PHI Access Events:  {hipaa_stats.get('phi_access_events', 0):<36}|\n"
+                f"  | Algorithm:          {hipaa_stats.get('encryption_algorithm', 'N/A'):<36}|\n"
+                f"  | Actual Security:    {hipaa_stats.get('actual_security_provided', 'None'):<36}|\n"
                 "  +---------------------------------------------------------+"
             )
             print()
@@ -4992,19 +4979,17 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+\n"
             "  | VAULT STATUS                                            |\n"
             "  +---------------------------------------------------------+\n"
-            f"  | Status:     {seal_status:<45}|\n"
-            f"  | Initialized: {init_status:<44}|\n"
-            f"  | Shares:     {vault_seal_manager.shares_submitted}/{vault_seal_manager.shares_required}"
-            + " " * max(0, 44 - len(f"{vault_seal_manager.shares_submitted}/{vault_seal_manager.shares_required}"))
-            + "|\n"
+            f"  | Status:     {seal_status:<44}|\n"
+            f"  | Initialized: {init_status:<43}|\n"
+            f"  | Shares:     {f'{vault_seal_manager.shares_submitted}/{vault_seal_manager.shares_required}':<44}|\n"
             "  +---------------------------------------------------------+"
         )
         if vault_secret_store is not None:
-            print(f"  | Secrets:    {vault_secret_store.total_secrets:<45}|")
-            print(f"  | Versions:   {vault_secret_store.total_versions:<45}|")
+            print(f"  | Secrets:    {vault_secret_store.total_secrets:<44}|")
+            print(f"  | Versions:   {vault_secret_store.total_versions:<44}|")
             print("  +---------------------------------------------------------+")
         if vault_audit_log is not None:
-            print(f"  | Audit Entries: {vault_audit_log.total_entries:<42}|")
+            print(f"  | Audit Entries: {vault_audit_log.total_entries:<41}|")
             print("  +---------------------------------------------------------+")
         print()
     elif args.vault_status:
@@ -5075,8 +5060,8 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         print(
             "  +---------------------------------------------------------+\n"
-            "  | ENTERPRISE FIZZBUZZ LOAD TESTING FRAMEWORK               |\n"
-            "  | Stress-testing modulo arithmetic since 2026              |\n"
+            "  | ENTERPRISE FIZZBUZZ LOAD TESTING FRAMEWORK              |\n"
+            "  | Stress-testing modulo arithmetic since 2026             |\n"
             "  +---------------------------------------------------------+"
         )
         print(f"  Profile: {profile_name.upper()} | VUs: {lt_vus}")

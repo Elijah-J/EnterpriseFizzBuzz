@@ -1473,7 +1473,7 @@ class SelfModifyingDashboard:
                     lines.append(cls._pad(stat_line[:inner_w], inner_w, width))
                 lines.append(border)
 
-        return "\n".join(lines)
+        return "\n".join("  " + ln if ln else ln for ln in lines)
 
     @classmethod
     def _center(cls, text: str, width: int) -> str:

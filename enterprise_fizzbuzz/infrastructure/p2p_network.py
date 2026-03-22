@@ -1078,7 +1078,7 @@ class P2PDashboard:
         lines.append(f"|{bootstrap_line:<{width - 2}}|")
         lines.append(hr)
 
-        return "\n".join(lines)
+        return "\n".join("  " + ln for ln in lines)
 
 
 # ---------------------------------------------------------------------------

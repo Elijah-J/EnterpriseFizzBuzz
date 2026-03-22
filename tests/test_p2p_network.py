@@ -728,10 +728,10 @@ class TestP2PDashboard:
         assert "[X]" in output
 
     def test_render_with_custom_width(self, full_network):
-        """Dashboard should respect custom width."""
+        """Dashboard should respect custom width (plus 2-char indent)."""
         output = P2PDashboard.render(full_network, width=80)
         for line in output.split("\n"):
-            assert len(line) <= 80
+            assert len(line) <= 82  # width + 2-space indent
 
     def test_render_all_dead_cluster(self):
         """Dashboard should handle all-dead cluster gracefully."""
