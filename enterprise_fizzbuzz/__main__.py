@@ -86,6 +86,8 @@ from enterprise_fizzbuzz.infrastructure.migrations import (
     SeedDataGenerator,
 )
 
+logger = logging.getLogger(__name__)
+
 
 BANNER = r"""
   +===========================================================+

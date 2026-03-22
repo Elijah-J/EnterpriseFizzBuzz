@@ -24,8 +24,8 @@ The platform has 14 test files covering the major subsystems (auth, cache, chaos
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 8
-- Remaining: 2
+- Implemented: 9
+- Remaining: 1
 
 ## Test Items
 
@@ -188,7 +188,7 @@ Test the following:
 
 ### 9. End-to-End CLI Tests (tests/test_e2e.py)
 
-**Status:** PENDING
+**Status:** DONE (42 tests)
 **Description:** There are no end-to-end tests that invoke `main.py` as a subprocess and verify the output. The CLI has 39 flags and countless combinations. An e2e suite that exercises the most important flag combinations would catch integration issues that unit tests miss.
 
 Test the following by running `python main.py` as a subprocess and checking stdout/stderr/exit code:
