@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 1
-- Remaining: 9
+- Implemented: 2
+- Remaining: 8
 
 ---
 
@@ -73,7 +73,7 @@ Test the following by invoking `main.py` as a subprocess:
 
 ### 2. Comprehensive E2E: Output Formats and Locales (tests/e2e/test_e2e_output.py)
 
-**Status:** PENDING
+**Status:** DONE (55 tests)
 **Description:** The platform supports four output formats (plain, json, xml, csv) and seven locales (en, de, fr, ja, tlh, sjn, qya). The existing e2e tests cover the four formats but none of the non-English locales through the full CLI path. Locales interact with formatters (a JSON-formatted Klingon FizzBuzz is a valid use case that nobody has tested).
 
 Test the following:
