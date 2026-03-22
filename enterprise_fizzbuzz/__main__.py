@@ -233,6 +233,10 @@ from enterprise_fizzbuzz.infrastructure.genetic_algorithm import (
     EvolutionDashboard,
     GeneticAlgorithmEngine,
 )
+from enterprise_fizzbuzz.infrastructure.nlq import (
+    NLQDashboard,
+    NLQEngine,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1134,6 +1138,21 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the Genetic Algorithm evolution dashboard after execution",
     )
 
+    # Natural Language Query Interface
+    parser.add_argument(
+        "--nlq",
+        type=str,
+        metavar="QUERY",
+        default=None,
+        help='Execute a natural language FizzBuzz query (e.g. --nlq "Is 15 FizzBuzz?")',
+    )
+
+    parser.add_argument(
+        "--nlq-interactive",
+        action="store_true",
+        help="Start the NLQ interactive REPL for conversational FizzBuzz queries",
+    )
+
     return parser
 
 
@@ -1191,6 +1210,38 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.openapi_dashboard:
         print(OpenAPIDashboard.render(width=config.openapi_dashboard_width))
         return 0
+
+    # ----------------------------------------------------------------
+    # Natural Language Query Interface (early exit commands)
+    # ----------------------------------------------------------------
+    if args.nlq or args.nlq_interactive:
+        from enterprise_fizzbuzz.infrastructure.rules_engine import ConcreteRule
+
+        # Build rules from config (config.rules returns RuleDefinition objects)
+        nlq_rules = [ConcreteRule(rd) for rd in config.rules]
+
+        nlq_engine = NLQEngine(
+            rules=nlq_rules,
+            max_results=config.nlq_max_results,
+            max_query_length=config.nlq_max_query_length,
+            history_size=config.nlq_history_size,
+        )
+
+        if args.nlq_interactive:
+            nlq_engine.interactive_repl()
+            return 0
+
+        if args.nlq:
+            try:
+                response = nlq_engine.process_query(args.nlq)
+                print()
+                print(f"  [{response.intent.name}] (executed in {response.execution_time_ms:.2f}ms)")
+                print(response.result_text)
+                print()
+            except Exception as e:
+                print(f"\n  NLQ Error: {e}\n")
+                return 1
+            return 0
 
     # ----------------------------------------------------------------
     # Configuration Validation (--config-validate, early exit)

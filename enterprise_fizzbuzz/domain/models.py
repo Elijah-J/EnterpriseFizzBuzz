@@ -441,6 +441,14 @@ class EventType(Enum):
     DEPLOYMENT_ROLLBACK_COMPLETED = auto()
     DEPLOYMENT_DASHBOARD_RENDERED = auto()
 
+    # Natural Language Query Interface events
+    NLQ_QUERY_RECEIVED = auto()
+    NLQ_TOKENIZATION_COMPLETED = auto()
+    NLQ_INTENT_CLASSIFIED = auto()
+    NLQ_ENTITIES_EXTRACTED = auto()
+    NLQ_QUERY_EXECUTED = auto()
+    NLQ_SESSION_STARTED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

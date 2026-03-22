@@ -856,6 +856,15 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "reset_timeout_ms": 5000,
                 },
             },
+            "nlq": {
+                "enabled": False,
+                "max_query_length": 500,
+                "max_results": 1000,
+                "history_size": 50,
+                "dashboard": {
+                    "width": 60,
+                },
+            },
         }
 
     def _apply_environment_overrides(self) -> None:
@@ -2865,6 +2874,40 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Height of the fitness sparkline chart."""
         self._ensure_loaded()
         return self._raw_config.get("genetic_algorithm", {}).get("dashboard", {}).get("fitness_chart_height", 10)
+
+    # ----------------------------------------------------------------
+    # Natural Language Query Interface configuration properties
+    # ----------------------------------------------------------------
+
+    @property
+    def nlq_enabled(self) -> bool:
+        """Whether the Natural Language Query Interface is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("nlq", {}).get("enabled", False)
+
+    @property
+    def nlq_max_query_length(self) -> int:
+        """Maximum allowed query string length."""
+        self._ensure_loaded()
+        return self._raw_config.get("nlq", {}).get("max_query_length", 500)
+
+    @property
+    def nlq_max_results(self) -> int:
+        """Maximum number of results for LIST queries."""
+        self._ensure_loaded()
+        return self._raw_config.get("nlq", {}).get("max_results", 1000)
+
+    @property
+    def nlq_history_size(self) -> int:
+        """Number of queries to retain in session history."""
+        self._ensure_loaded()
+        return self._raw_config.get("nlq", {}).get("history_size", 50)
+
+    @property
+    def nlq_dashboard_width(self) -> int:
+        """ASCII dashboard width for NLQ output."""
+        self._ensure_loaded()
+        return self._raw_config.get("nlq", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
