@@ -214,6 +214,11 @@ from enterprise_fizzbuzz.infrastructure.api_gateway import (
     GatewayMiddleware,
     create_api_gateway,
 )
+from enterprise_fizzbuzz.infrastructure.blue_green import (
+    DeploymentDashboard,
+    DeploymentMiddleware,
+    DeploymentOrchestrator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1046,6 +1051,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--gateway-dashboard",
         action="store_true",
         help="Display the API Gateway ASCII dashboard after execution",
+    )
+
+    # Blue/Green Deployment Simulation
+    parser.add_argument(
+        "--deploy",
+        action="store_true",
+        help="Run a Blue/Green Deployment Simulation (zero-downtime deployment for a 0.8s process)",
+    )
+
+    parser.add_argument(
+        "--deploy-dashboard",
+        action="store_true",
+        help="Display the Blue/Green Deployment ASCII dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--deploy-rollback",
+        action="store_true",
+        help="Trigger a manual rollback after deployment (restores blue slot because reasons)",
     )
 
     return parser
@@ -2751,6 +2775,70 @@ def main(argv: Optional[list[str]] = None) -> int:
     pipeline_records = None
     if pipeline is not None and args.pipeline:
         pipeline_records = pipeline.run(start, end)
+
+    # ----------------------------------------------------------------
+    # Blue/Green Deployment Simulation
+    # ----------------------------------------------------------------
+    deployment_summary = None
+    if args.deploy:
+        deploy_orchestrator = DeploymentOrchestrator(
+            rules=[r.get_definition() for r in service._rules],
+            shadow_traffic_count=config.blue_green_shadow_traffic_count,
+            smoke_test_numbers=config.blue_green_smoke_test_numbers,
+            bake_period_ms=config.blue_green_bake_period_ms,
+            bake_period_evaluations=config.blue_green_bake_period_evaluations,
+            cutover_delay_ms=config.blue_green_cutover_delay_ms,
+            auto_rollback=config.blue_green_rollback_auto,
+            event_emitter=lambda e: event_bus.publish(e),
+        )
+
+        print(
+            "  +==========================================================+\n"
+            "  | BLUE/GREEN DEPLOYMENT SIMULATION                         |\n"
+            "  | Zero-downtime deployment for a process with zero uptime  |\n"
+            "  +==========================================================+"
+        )
+        print()
+
+        deployment_summary = deploy_orchestrator.deploy()
+
+        state_display = deployment_summary["state"]
+        duration_display = f"{deployment_summary['total_duration_ms']:.2f}ms"
+        active_display = deployment_summary.get("active_slot", "N/A")
+        print(f"  Deployment {state_display} in {duration_display}")
+        print(f"  Active slot: {active_display}")
+        print()
+
+        if args.deploy_rollback:
+            from enterprise_fizzbuzz.infrastructure.blue_green import RollbackManager
+            rollback_mgr = RollbackManager(event_emitter=lambda e: event_bus.publish(e))
+            try:
+                rollback_mgr.execute_rollback(
+                    deploy_orchestrator.cutover_manager,
+                    reason="Manual rollback requested via --deploy-rollback",
+                )
+                deployment_summary["rollback"] = {
+                    "rolled_back": True,
+                    "reason": "Manual rollback requested via --deploy-rollback",
+                }
+                print("  Rollback completed. Blue slot restored.")
+                print("  Zero users impacted. (There was one user.)")
+                print()
+            except Exception as e:
+                print(f"  Rollback failed: {e}")
+                print()
+
+        if args.deploy_dashboard:
+            print(DeploymentDashboard.render(
+                deployment_summary,
+                width=config.blue_green_dashboard_width,
+            ))
+
+    elif args.deploy_dashboard:
+        print("\n  Deployment not active. Use --deploy to enable.\n")
+
+    elif args.deploy_rollback:
+        print("\n  Deployment not active. Use --deploy to enable.\n")
 
     boot_time = time.perf_counter()
 

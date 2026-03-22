@@ -405,6 +405,22 @@ class EventType(Enum):
     GATEWAY_REQUEST_REPLAYED = auto()
     GATEWAY_DASHBOARD_RENDERED = auto()
 
+    # Blue/Green Deployment Simulation events
+    DEPLOYMENT_STARTED = auto()
+    DEPLOYMENT_SLOT_PROVISIONED = auto()
+    DEPLOYMENT_SHADOW_TRAFFIC_STARTED = auto()
+    DEPLOYMENT_SHADOW_TRAFFIC_COMPLETED = auto()
+    DEPLOYMENT_SMOKE_TEST_STARTED = auto()
+    DEPLOYMENT_SMOKE_TEST_PASSED = auto()
+    DEPLOYMENT_SMOKE_TEST_FAILED = auto()
+    DEPLOYMENT_BAKE_PERIOD_STARTED = auto()
+    DEPLOYMENT_BAKE_PERIOD_COMPLETED = auto()
+    DEPLOYMENT_CUTOVER_INITIATED = auto()
+    DEPLOYMENT_CUTOVER_COMPLETED = auto()
+    DEPLOYMENT_ROLLBACK_INITIATED = auto()
+    DEPLOYMENT_ROLLBACK_COMPLETED = auto()
+    DEPLOYMENT_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

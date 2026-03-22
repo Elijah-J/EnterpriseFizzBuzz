@@ -826,6 +826,32 @@ api_gateway:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# Blue/Green Deployment Simulation configuration
+# Because deploying a FizzBuzz CLI tool that runs for 0.8 seconds
+# requires the same zero-downtime deployment ceremony as a fleet
+# of microservices serving millions of requests per second. The
+# blue slot runs the current production FizzBuzz. The green slot
+# runs the exact same FizzBuzz. Shadow traffic confirms they are
+# identical (they always are). Smoke tests verify that 15 is still
+# FizzBuzz (it always is). The cutover is a single variable assignment
+# logged as three separate events for maximum dramatic effect.
+# Zero users are impacted by the deployment. (There is one user.)
+blue_green:
+  enabled: false                         # Master switch — opt-in via --deploy
+  shadow_traffic_count: 10               # Numbers to evaluate on both slots for comparison
+  smoke_test_numbers:                    # Canary numbers for deployment verification
+    - 3
+    - 5
+    - 15
+    - 42
+    - 97
+  bake_period_ms: 50                     # Post-cutover observation window (milliseconds)
+  bake_period_evaluations: 5             # Number of evaluations during bake period
+  cutover_delay_ms: 10                   # Dramatic pause before the atomic variable assignment
+  rollback_auto: false                   # Automatically rollback on bake period failure
+  dashboard:
+    width: 60                            # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:
