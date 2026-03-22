@@ -39,7 +39,9 @@ Because 3,690 tests prove FizzBuzz works for *finitely many* inputs. Mathematica
 
 ---
 
-## Idea 2: FizzBuzz-as-a-Service (FBaaS) -- Multi-Tenant SaaS Simulator
+## ~~Idea 2: FizzBuzz-as-a-Service (FBaaS) -- Multi-Tenant SaaS Simulator~~ DONE
+
+> **Status: IMPLEMENTED** -- Shipped as `enterprise_fizzbuzz/infrastructure/fbaas.py` (~1,031 lines) with 87 tests (~726 lines). Three subscription tiers (Free/Pro/Enterprise), per-tenant API keys, daily evaluation quotas, usage metering, simulated Stripe billing (charges, subscriptions, refunds), ASCII onboarding wizard, feature gates, Free-tier watermarking, FBaaS middleware at priority -1, and an ASCII dashboard with MRR tracking. CLI flags: `--fbaas`, `--fbaas-tenant`, `--fbaas-tier`, `--fbaas-dashboard`, `--fbaas-onboard`, `--fbaas-billing-log`, `--fbaas-usage`. No actual HTTP. No actual payments. Maximum ceremony.
 
 ### The Problem
 
@@ -214,7 +216,7 @@ Because Raft already exists in the hot-reload module, and implementing the same 
 | # | Idea | New Lines (est.) | New Tests (est.) | Enterprise Justification |
 |---|------|------------------|-----------------|--------------------------|
 | 1 | ~~Formal Verification / Proof System~~ **DONE** | ~1,400 + 855 tests | 76 | Tests prove FizzBuzz works for finite inputs; proofs prove it for all inputs |
-| 2 | FizzBuzz-as-a-Service (FBaaS) | ~2,530 | ~140 | CLI-only FizzBuzz is a pre-cloud relic; SaaS is the future of modulo |
+| 2 | ~~FizzBuzz-as-a-Service (FBaaS)~~ **DONE** | ~1,031 + 726 tests | 87 | CLI-only FizzBuzz is a pre-cloud relic; SaaS is the future of modulo |
 | 3 | Time-Travel Debugger | ~2,600 | ~130 | We store every event but cannot navigate them; the data demands a vehicle |
 | 4 | Custom Bytecode VM (FBVM) | ~3,000 | ~150 | CPython's general-purpose bytecode is an insult to purpose-built modulo |
 | 5 | Query Optimizer / Rule Planner | ~2,450 | ~140 | Treating all evaluations equally is the full-table-scan of FizzBuzz |

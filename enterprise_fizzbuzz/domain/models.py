@@ -482,6 +482,14 @@ class EventType(Enum):
     VERIFICATION_COMPLETED = auto()
     VERIFICATION_DASHBOARD_RENDERED = auto()
 
+    # FizzBuzz-as-a-Service (FBaaS) events
+    FBAAS_TENANT_CREATED = auto()
+    FBAAS_TENANT_SUSPENDED = auto()
+    FBAAS_QUOTA_CHECKED = auto()
+    FBAAS_QUOTA_EXCEEDED = auto()
+    FBAAS_BILLING_CHARGED = auto()
+    FBAAS_WATERMARK_APPLIED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

@@ -194,6 +194,18 @@ from enterprise_fizzbuzz.infrastructure.formal_verification import (
     PropertyVerifier,
     VerificationDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.fbaas import (
+    BillingEngine,
+    FBaaSDashboard,
+    FBaaSMiddleware,
+    FizzStripeClient,
+    OnboardingWizard,
+    ServiceLevelAgreement,
+    SubscriptionTier,
+    TenantManager,
+    UsageMeter,
+    create_fbaas_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.gitops import (
     GitOpsController,
     GitOpsDashboard,
@@ -1293,6 +1305,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--verify-dashboard",
         action="store_true",
         help="Display the Formal Verification ASCII dashboard with QED status and proof obligations",
+    )
+
+    # FizzBuzz-as-a-Service (FBaaS)
+    parser.add_argument(
+        "--fbaas",
+        action="store_true",
+        help="Enable FizzBuzz-as-a-Service: multi-tenant SaaS with usage metering, billing, and watermarks",
+    )
+
+    parser.add_argument(
+        "--fbaas-tier",
+        type=str,
+        choices=["free", "pro", "enterprise"],
+        default=None,
+        help="FBaaS subscription tier for the default tenant (default: free)",
+    )
+
+    parser.add_argument(
+        "--fbaas-onboard",
+        action="store_true",
+        help="Display the FBaaS onboarding wizard with ASCII art and API key",
+    )
+
+    parser.add_argument(
+        "--fbaas-billing",
+        action="store_true",
+        help="Display the FBaaS billing ledger and dashboard after execution",
     )
 
     return parser
@@ -2472,6 +2511,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("data_pipeline")
         if args.graph_db or args.graph_query or args.graph_visualize or args.graph_dashboard:
             active_subsystems.append("graph_database")
+        if args.fbaas:
+            active_subsystems.append("fbaas_metering")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -2976,6 +3017,66 @@ def main(argv: Optional[list[str]] = None) -> int:
     elif args.graph_dashboard:
         print("\n  Graph database not enabled. Use --graph-db to enable.\n")
 
+    # ----------------------------------------------------------------
+    # FizzBuzz-as-a-Service (FBaaS) setup
+    # ----------------------------------------------------------------
+    fbaas_tenant_manager = None
+    fbaas_usage_meter = None
+    fbaas_stripe_client = None
+    fbaas_billing_engine = None
+    fbaas_tenant = None
+    fbaas_middleware = None
+
+    if args.fbaas or args.fbaas_onboard or args.fbaas_billing:
+        tier_map = {
+            "free": SubscriptionTier.FREE,
+            "pro": SubscriptionTier.PRO,
+            "enterprise": SubscriptionTier.ENTERPRISE,
+        }
+        fbaas_tier = tier_map.get(args.fbaas_tier or config.fbaas_default_tier, SubscriptionTier.FREE)
+        fbaas_watermark = config.fbaas_free_watermark
+
+        (
+            fbaas_tenant_manager,
+            fbaas_usage_meter,
+            fbaas_stripe_client,
+            fbaas_billing_engine,
+            fbaas_tenant,
+            fbaas_middleware,
+        ) = create_fbaas_subsystem(
+            event_bus=event_bus,
+            tenant_name="CLI Tenant",
+            tier=fbaas_tier,
+            watermark=fbaas_watermark,
+        )
+
+        # Show onboarding wizard
+        if args.fbaas_onboard:
+            print(OnboardingWizard.render(fbaas_tenant, fbaas_tier))
+
+        # Show SLA for the selected tier
+        sla = ServiceLevelAgreement.for_tier(fbaas_tier)
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FBAAS: FizzBuzz-as-a-Service ENABLED                    |\n"
+            f"  | Tier: {fbaas_tier.name:<51}|\n"
+            f"  | Tenant: {fbaas_tenant.tenant_id:<49}|\n"
+            f"  | SLA Uptime: {sla.uptime_target:.2%}"
+            + " " * max(0, 44 - len(f"{sla.uptime_target:.2%}"))
+            + "|\n"
+            "  | Watermark: "
+            + ("ACTIVE (Free tier)" if fbaas_tier == SubscriptionTier.FREE else "DISABLED").ljust(46)
+            + "|\n"
+            "  | Billing: Simulated Stripe (in-memory ledger)            |\n"
+            "  | Every evaluation is metered. Nothing is real.           |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    elif args.fbaas_billing:
+        print("\n  FBaaS not enabled. Use --fbaas to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -3137,6 +3238,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if graph_middleware is not None:
         builder.with_middleware(graph_middleware)
+
+    if fbaas_middleware is not None:
+        builder.with_middleware(fbaas_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -3955,6 +4059,22 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.audit_anomalies:
             print(audit_dashboard.render_anomalies())
+
+    # FBaaS dashboard and billing
+    if args.fbaas_billing and fbaas_stripe_client is not None:
+        print(FBaaSDashboard.render(
+            fbaas_tenant_manager,
+            fbaas_usage_meter,
+            fbaas_billing_engine,
+            fbaas_stripe_client,
+            width=config.fbaas_dashboard_width,
+        ))
+        print(FBaaSDashboard.render_billing_log(
+            fbaas_stripe_client,
+            width=config.fbaas_dashboard_width,
+        ))
+    elif args.fbaas_billing:
+        print("\n  FBaaS not enabled. Use --fbaas to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
