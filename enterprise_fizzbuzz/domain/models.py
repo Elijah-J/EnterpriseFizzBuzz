@@ -234,6 +234,18 @@ class EventType(Enum):
     HEALTH_STARTUP_MILESTONE = auto()
     HEALTH_SELF_HEAL_ATTEMPTED = auto()
 
+    # Service Mesh Simulation events
+    MESH_REQUEST_SENT = auto()
+    MESH_RESPONSE_RECEIVED = auto()
+    MESH_MTLS_HANDSHAKE = auto()
+    MESH_SIDECAR_INTERCEPT = auto()
+    MESH_SERVICE_DISCOVERED = auto()
+    MESH_LOAD_BALANCED = auto()
+    MESH_CIRCUIT_TRIPPED = auto()
+    MESH_CANARY_ROUTED = auto()
+    MESH_FAULT_INJECTED = auto()
+    MESH_TOPOLOGY_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

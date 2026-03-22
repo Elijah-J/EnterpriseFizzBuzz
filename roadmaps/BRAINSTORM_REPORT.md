@@ -2,8 +2,8 @@
 
 ## Backlog Status
 - Total ideas: 6
-- Implemented: 3
-- Remaining: 3
+- Implemented: 4
+- Remaining: 2
 
 ## Feature Ideas
 
@@ -78,7 +78,7 @@
 **Estimated complexity:** Medium
 
 ### 5. Service Mesh Simulation
-**Status:** PENDING
+**Status:** DONE
 **Tagline:** "FizzBuzz as a distributed system of one, because microservices are a state of mind."
 **Description:** Decompose the monolithic FizzBuzz application into a simulated service mesh of 7 "microservices" -- `NumberIngestionService`, `DivisibilityService`, `ClassificationService`, `FormattingService`, `AuditService`, `CacheService`, and `OrchestratorService` -- all running in the same process, communicating through an in-memory sidecar proxy that simulates network latency, packet loss, and service discovery. Each "service" has its own simulated container with resource limits (CPU: 0.001 cores, Memory: 256 bytes), a sidecar proxy that handles mTLS termination (simulated by base64-encoding inter-service messages, which is basically encryption if you squint), circuit breaking per service pair, and load balancing across "replicas" (multiple instances of the same class with round-robin dispatch). The mesh control plane manages service registration, health checking (integrated with the K8s-style probes), traffic policies (canary routing: send 10% of numbers to the experimental `DivisibilityService` v2 that uses multiplication instead of modulo), and a full service topology visualization rendered in ASCII art showing request flows between services with latency annotations.
 **Why it's enterprise:** Everyone knows that a 100-line Python script becomes more reliable when you decompose it into 7 services communicating over a simulated network with configurable packet loss. The service mesh pattern adds critical capabilities: mTLS ensures that the `DivisibilityService` can trust that the incoming modulo request actually came from the `ClassificationService` and not from a rogue `ChaosMonkey` (which, to be fair, it might have). Traffic policies enable sophisticated deployment strategies like canary routing, where you send 10% of numbers to a new version of the service and compare results -- if the canary service says 15 is "Buzz," you know to roll back immediately. The service topology diagram makes architecture review meetings 40% longer, which is the true measure of enterprise maturity.

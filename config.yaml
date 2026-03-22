@@ -385,6 +385,31 @@ webhooks:
   dashboard:
     width: 60                           # ASCII dashboard width
 
+# Service Mesh Simulation configuration
+# Because the only thing better than a monolithic FizzBuzz application
+# is decomposing it into seven microservices, each with its own sidecar
+# proxy, mTLS encryption (base64, naturally), circuit breakers, and
+# canary deployments. If Google needs a service mesh for Gmail, surely
+# our modulo arithmetic deserves one too.
+service_mesh:
+  enabled: false                        # Master switch — opt-in via --service-mesh
+  mtls:
+    enabled: true                       # Enable "military-grade" mTLS (base64 encode/decode)
+    log_handshakes: true                # Log every mTLS handshake for compliance theatre
+  fault_injection:
+    latency_enabled: false              # Inject simulated network latency between services
+    latency_min_ms: 1                   # Minimum injected latency (milliseconds)
+    latency_max_ms: 10                  # Maximum injected latency (milliseconds)
+    packet_loss_enabled: false          # Simulate packet loss between services
+    packet_loss_rate: 0.05              # Probability of dropping a request (0.0 - 1.0)
+  canary:
+    enabled: false                      # Enable canary deployments for v2 services
+    traffic_percentage: 20              # Percentage of traffic routed to canary (v2)
+  circuit_breaker:
+    enabled: true                       # Enable per-service mesh circuit breakers
+    failure_threshold: 3                # Failures before tripping the mesh circuit
+    reset_timeout_ms: 5000              # Time before attempting half-open
+
 # Observer configuration
 observers:
   console_observer:

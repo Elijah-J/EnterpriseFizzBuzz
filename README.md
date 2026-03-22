@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**45,000+ lines** across **100+ files** with **2,003 unit tests** and **119 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**50,000+ lines** across **104+ files** with **2,086 unit tests** and **129 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -46,7 +46,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
     |   config, formatters, middleware, observers, plugins,          |
     |   rules_engine, ml_engine, blockchain, circuit_breaker,        |
     |   tracing, auth, i18n, event_sourcing, chaos, feature_flags,   |
-    |   sla, cache, migrations, webhooks                             |
+    |   sla, cache, migrations, webhooks, service_mesh               |
     |                                                                |
     |   +-------------------------------------------------------+   |
     |   |                   APPLICATION                          |   |
@@ -80,7 +80,7 @@ EnterpriseFizzBuzz/
 │   ├── domain/                      # THE INNER CIRCLE (no outward dependencies)
 │   │   ├── __init__.py
 │   │   ├── models.py                # Dataclasses, enums, and domain models
-│   │   ├── exceptions.py            # Custom exception hierarchy (114 exception classes)
+│   │   ├── exceptions.py            # Custom exception hierarchy (129 exception classes)
 │   │   └── interfaces.py            # Abstract base classes for everything
 │   │
 │   ├── application/                 # USE CASES (depends only on domain)
@@ -119,6 +119,7 @@ EnterpriseFizzBuzz/
 │       │   ├── __init__.py
 │       │   └── loc.py               # Lines of Code Census Bureau with Overengineering Index (~585 lines)
 │       ├── webhooks.py              # Webhook Notification System with HMAC-SHA256, DLQ, and simulated HTTP delivery (~1,142 lines)
+│       ├── service_mesh.py          # Service Mesh Simulation with 7 microservices, sidecar proxies, mTLS, and canary routing (~1,839 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -162,6 +163,7 @@ EnterpriseFizzBuzz/
     ├── test_repository.py           # 40 repository pattern & unit of work tests (3 backends)
     ├── test_acl.py                  # 44 Anti-Corruption Layer & strategy adapter tests
     ├── test_webhooks.py             # 54 webhook notification, HMAC signing, DLQ, and retry tests
+    ├── test_service_mesh.py         # 83 service mesh, sidecar proxy, mTLS, and canary routing tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -263,6 +265,13 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Dead Letter Queue | `webhooks.py` | Permanent storage for undeliverable webhook payloads, because even failed notifications deserve a dignified afterlife and eventual forensic analysis |
 | Retry with Exponential Backoff | `webhooks.py` | Configurable retry policy with exponential backoff and jitter for webhook deliveries, because the first four failures are just the system building character |
 | Simulated HTTP Client | `webhooks.py` | A fully featured HTTP client that never actually sends HTTP requests, providing all the ceremony of distributed communication with none of the network I/O |
+| Service Mesh | `service_mesh.py` | Seven microservices in a single process, connected via sidecar proxies with circuit breaking, load balancing, and a control plane -- because monoliths are a state of mind, not an architectural constraint |
+| Sidecar Proxy | `service_mesh.py` | Per-service proxies handling routing, mTLS termination, retry, timeout, and circuit breaking -- the same pattern Istio uses for Google-scale services, applied with a straight face to modulo arithmetic |
+| mTLS Simulation | `service_mesh.py` | Base64-encodes inter-service payloads and calls it "mutual TLS," providing all the security of real encryption with none of the cryptography |
+| Canary Deployment | `service_mesh.py` | Routes a configurable percentage of traffic to the experimental DivisibilityService v2, which uses multiplication instead of modulo -- because even division strategies deserve a progressive rollout |
+| Load Balancer | `service_mesh.py` | Round-robin, least-connections, and random strategies for distributing requests across "replicas" of in-memory Python objects -- the same algorithms AWS ALB uses, at 0% of the scale |
+| Network Fault Injection | `service_mesh.py` | Configurable latency injection and packet loss between services, because a FizzBuzz evaluation without simulated network partitions is just too reliable |
+| Service Discovery | `service_mesh.py` | Health-based endpoint selection with version tracking, because hardcoding `DivisibilityService()` would be an unforgivable act of tight coupling |
 
 ## Features
 
@@ -292,7 +301,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Prometheus-Style Metrics Exporter** - Four Prometheus-compatible metric types (Counter, Gauge, Histogram, Summary) with a thread-safe MetricRegistry, automatic label injection (strategy, locale, chaos_enabled, is_tuesday), Prometheus text exposition format export that nobody will ever scrape, a cardinality explosion detector that prevents you from creating more time series than integers, and an ASCII Grafana-style dashboard with sparklines and bar charts -- because the only thing more important than computing `n % 3` correctly is collecting time-series data about *how* you computed it. Bob McFizzington's stress level is tracked as a Gauge, starting at 42.0 (it's always 42)
 - **Kubernetes-Style Health Check Probes** - Liveness, readiness, and startup probes with five subsystem health checks (config, circuit breaker, cache coherence, SLA budget, ML engine), a self-healing manager with exponential backoff recovery, and an ASCII health dashboard with traffic-light indicators -- because a FizzBuzz CLI that runs for 0.3 seconds deserves the same operational scrutiny as a Kubernetes pod serving millions of requests, and if the ML engine is having an existential crisis, the entire platform should be in EXISTENTIAL_CRISIS status
 - **Webhook Notification System** - A production-grade event-driven webhook dispatch engine with HMAC-SHA256 payload signing, configurable retry with exponential backoff, a Dead Letter Queue for permanently failed deliveries, simulated HTTP POST delivery (because real HTTP is for deployed services), an Observer bridge from the EventBus, and an ASCII dashboard for delivery statistics -- because when the number 15 is evaluated as "FizzBuzz," every downstream microservice in the constellation must be immediately informed via a cryptographically signed notification, and if the notification fails five times, it deserves a permanent resting place in the DLQ where future forensic analysts can determine exactly why Slack didn't hear about `n % 3`
-- **Custom Exception Hierarchy** - 108 exception classes for every conceivable FizzBuzz failure mode
+- **Service Mesh Simulation** - Seven microservices (`NumberIngestionService`, `DivisibilityService`, `ClassificationService`, `FormattingService`, `AuditService`, `CacheService`, `OrchestratorService`) running in the same process, connected through sidecar proxies with mTLS (base64, obviously), per-service circuit breaking, round-robin/least-connections/random load balancing across "replicas," canary routing to an experimental v2 DivisibilityService, configurable network fault injection (latency and packet loss), health-based service discovery, a mesh control plane with traffic policies, and an ASCII topology diagram -- because decomposing a modulo operation into seven in-memory microservices communicating through base64-encoded messages is exactly the kind of distributed systems design that Google would endorse (if they saw it, which they won't)
+- **Custom Exception Hierarchy** - 129 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -547,6 +557,27 @@ python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --web
 
 # Full notification stack: webhooks + metrics + tracing + chaos (peak telemetry)
 python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --webhook-log --metrics --trace --chaos --range 1 20
+
+# Service mesh: decompose FizzBuzz into 7 microservices with sidecar proxies
+python main.py --service-mesh --range 1 20
+
+# Service mesh with ASCII topology diagram: see the request flow between services
+python main.py --service-mesh --mesh-topology --range 1 15
+
+# Service mesh with network fault injection: add latency and packet loss
+python main.py --service-mesh --mesh-latency --mesh-packet-loss --range 1 30
+
+# Canary deployment: route traffic to experimental DivisibilityService v2
+python main.py --service-mesh --canary --range 1 20
+
+# Full service mesh stack: latency + packet loss + canary + topology (peak microservices)
+python main.py --service-mesh --mesh-latency --mesh-packet-loss --canary --mesh-topology --range 1 20
+
+# Service mesh + chaos + circuit breaker: maximum distributed systems entropy
+python main.py --service-mesh --mesh-latency --chaos --chaos-level 3 --circuit-breaker --circuit-status --range 1 20
+
+# Peak enterprise: service mesh + metrics + tracing + SLA + health (the topology diagram will be glorious)
+python main.py --service-mesh --mesh-topology --metrics --metrics-dashboard --trace --sla --sla-dashboard --health --health-dashboard --range 1 15
 ```
 
 ## CLI Options
@@ -614,6 +645,11 @@ python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --web
 --webhook-test       Send a test webhook to all registered endpoints and exit
 --webhook-log        Display the webhook delivery log after execution
 --webhook-dlq        Display the Dead Letter Queue contents after execution
+--service-mesh       Enable the Service Mesh Simulation: decompose FizzBuzz into 7 microservices with sidecar proxies
+--mesh-topology      Display the ASCII service mesh topology diagram after execution
+--mesh-latency       Enable simulated network latency injection between mesh services
+--mesh-packet-loss   Enable simulated packet loss between mesh services
+--canary             Enable canary deployment routing (v2 DivisibilityService uses multiplication instead of modulo)
 ```
 
 ## Environment Variables
@@ -1826,10 +1862,113 @@ Every webhook delivery includes a signed JSON payload with enterprise-grade head
 | ASCII dashboard | Delivery statistics, endpoint status, delivery log, DLQ viewer |
 | Actual HTTP requests sent | 0 (but the architecture is ready) |
 
+## Service Mesh Architecture
+
+The Service Mesh Simulation decomposes the monolithic FizzBuzz evaluation into seven "microservices" -- all running in the same process, communicating through sidecar proxies that simulate mTLS encryption (base64 encoding), network latency, packet loss, service discovery, and circuit breaking per service pair. Because everyone knows that a 100-line Python script becomes more reliable when you decompose it into 7 services communicating over a simulated network with configurable fault injection.
+
+Each service is wrapped in a `SidecarProxy` that handles mTLS termination (base64 encode/decode, which is basically encryption if you squint), retries, and circuit breaking. The mesh control plane manages service registration, health-based endpoint selection, traffic policies (canary routing, latency injection, packet loss), and load balancing across "replicas" (multiple instances of the same class with round-robin, least-connections, or random dispatch).
+
+```
+    MESH CONTROL PLANE
+    ==================
+
+    +==================================================================+
+    |                    SERVICE MESH TOPOLOGY                          |
+    +==================================================================+
+    |                                                                    |
+    |   +------------------+         +-----------------------+          |
+    |   | NumberIngestion  |-------->| DivisibilityService   |          |
+    |   | Service          |  mTLS   | (v1: modulo)          |          |
+    |   +------------------+  proxy  | (v2: multiplication)  | <-canary |
+    |          |                     +-----------+-----------+          |
+    |          |                                 |                      |
+    |          v                                 v                      |
+    |   +------------------+         +-----------------------+          |
+    |   | AuditService     |         | ClassificationService |          |
+    |   | (compliance log) |         | (maps to labels)      |          |
+    |   +------------------+         +-----------+-----------+          |
+    |                                            |                      |
+    |          +------------------+              v                      |
+    |          | CacheService     |    +-----------------------+        |
+    |          | (result cache)   |<---| FormattingService     |        |
+    |          +------------------+    | (output string)       |        |
+    |                                  +-----------+-----------+        |
+    |                                              |                    |
+    |                                              v                    |
+    |                                  +-----------------------+        |
+    |                                  | OrchestratorService   |        |
+    |                                  | (coordinates pipeline)|        |
+    |                                  +-----------------------+        |
+    |                                                                    |
+    |   [SidecarProxy] -- each service wrapped in a sidecar proxy       |
+    |   [mTLS] --------- base64 "encryption" for inter-service comms    |
+    |   [LB] ----------- round-robin / least-conn / random              |
+    |   [CB] ----------- per-service-pair circuit breakers               |
+    +==================================================================+
+```
+
+**The Seven Sacred Microservices:**
+
+| Service | Responsibility | Why It's a Separate Service |
+|---------|---------------|----------------------------|
+| `NumberIngestionService` | Validates and ingests the number | Because accepting a number without a dedicated ingestion service would be reckless |
+| `DivisibilityService` | Computes `n % d == 0` | The core mathematical operation, now available as a service with mTLS |
+| `ClassificationService` | Maps divisibility results to Fizz/Buzz/FizzBuzz labels | Because mapping booleans to strings requires service-level isolation |
+| `FormattingService` | Formats the output string | String concatenation as a service |
+| `AuditService` | Logs everything for compliance | SOX Section 404 demands a separate audit microservice |
+| `CacheService` | Caches results | Caching as a service, because the cache middleware wasn't enough abstraction |
+| `OrchestratorService` | Coordinates the entire pipeline | The service that calls the other services that do what one function used to do |
+
+**Key components:**
+- **ServiceRegistry** - Service discovery with health-based endpoint selection, version tracking, and metadata
+- **SidecarProxy** - Per-service proxy handling routing, mTLS (base64), retry, timeout, and circuit breaking
+- **MeshControlPlane** - Centralized configuration for traffic policies, rate limits, and security policies
+- **TrafficPolicy** - Rules for canary routing, traffic splitting, fault injection, and request mirroring
+- **LoadBalancer** - Round-robin, least-connections, and random strategies for "replica" selection
+- **mTLSSimulator** - Base64-encodes inter-service payloads and calls it "mutual TLS" with a straight face
+- **NetworkSimulator** - Configurable latency injection and packet loss between services
+- **ServiceTopologyRenderer** - ASCII art visualization of the service mesh with request flow arrows
+- **MeshMiddleware** - Pipeline integration that routes evaluations through the service mesh
+
+### mTLS Security Model
+
+Inter-service communication is "encrypted" using base64 encoding. This provides:
+- **Confidentiality**: Anyone who can't decode base64 cannot read the messages (this excludes essentially no one)
+- **Integrity**: The messages are JSON, so they're self-validating (they aren't)
+- **Authentication**: Each service has a name, and that name is included in the message (this is not authentication)
+
+The mTLS handshake is logged with the gravity of a real TLS negotiation, including "certificate" exchange and "cipher suite" selection. The cipher suite is always `BASE64-WITH-JSON-PAYLOAD-256`, which is not a real cipher suite but sounds enterprise enough to pass a compliance audit conducted entirely via email.
+
+### Canary Deployment
+
+The canary routing feature sends a configurable percentage of traffic to the experimental `DivisibilityService` v2, which uses multiplication instead of modulo to determine divisibility (checking `n / d * d == n`). This enables A/B testing of mathematical operators:
+
+- **v1 (stable)**: Uses `n % d == 0` (the modulo approach, battle-tested since the 3rd century BC)
+- **v2 (canary)**: Uses `n / d * d == n` (the multiplication approach, mathematically equivalent but architecturally adventurous)
+
+If the canary produces different results than v1 (it won't, because math), the system logs a disagreement event and initiates a rollback discussion with itself.
+
+| Spec | Value |
+|------|-------|
+| Microservices | 7 (NumberIngestion, Divisibility, Classification, Formatting, Audit, Cache, Orchestrator) |
+| Sidecar proxies | 7 (one per service, because the sidecar pattern demands it) |
+| mTLS algorithm | BASE64-WITH-JSON-PAYLOAD-256 (not a real cipher suite) |
+| Load balancing strategies | 3 (round-robin, least-connections, random) |
+| Network fault injection | Configurable latency (ms) and packet loss (%) |
+| Canary routing | Configurable traffic split to v2 DivisibilityService |
+| Circuit breakers | Per-service-pair, with configurable failure thresholds |
+| Service discovery | Health-based endpoint selection with version tracking |
+| Middleware priority | Configurable (integrates with existing pipeline) |
+| Thread safety | Full (threading.Lock on all mesh operations) |
+| Custom exceptions | 10 (ServiceMeshError, ServiceNotFoundError, MeshMTLSError, SidecarProxyError, MeshCircuitOpenError, MeshLatencyInjectionError, MeshPacketLossError, CanaryDeploymentError, LoadBalancerError, MeshTopologyError) |
+| ASCII topology | Full service mesh visualization with request flow arrows |
+| Lines of code | ~1,839 (for routing modulo arithmetic through seven in-memory services) |
+| Actual network I/O | 0 bytes (but the architecture is ready for multi-region deployment) |
+
 ## Testing
 
 ```bash
-# Run all 2,003 tests
+# Run all 2,086 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -1846,7 +1985,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 2,003 tests, 119 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,086 tests, 129 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
@@ -1858,7 +1997,10 @@ A: Observability is the third pillar of enterprise reliability, alongside loggin
 A: Because when `evaluate(15)` returns `"FizzBuzz"`, the event cannot simply be logged and forgotten. Downstream systems -- Slack channels, PagerDuty integrations, CI/CD pipelines, executive dashboards, and the intern's personal Grafana instance -- all need to be immediately notified via cryptographically signed HTTP POST requests. The HMAC-SHA256 payload signatures protect against the devastating scenario where an attacker intercepts a webhook and modifies it to claim that 15 is "Fizz" instead of "FizzBuzz," an event that would constitute both a data integrity breach and an affront to modular arithmetic. The exponential backoff retry policy ensures that transient failures are handled with grace and patience -- each retry doubling the wait time, giving the simulated network infrastructure ample time to recover from its simulated outage. Permanently failed deliveries are preserved in the Dead Letter Queue, where future forensic analysts can reconstruct the exact sequence of events that led to Slack not hearing about `n % 3`. The deliveries are entirely simulated, of course. No actual HTTP requests leave the process. But the signatures are real, the retry math is correct, and the Dead Letter Queue faithfully stores every failure with the same gravity as a real distributed notification system. Six custom exception classes ensure that every conceivable webhook failure mode has its own named error, because `raise Exception("webhook failed")` is an act of engineering negligence.
 
 **Q: Why not use microservices?**
-A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
+A: We do. The Service Mesh Simulation decomposes FizzBuzz into seven in-memory microservices communicating through sidecar proxies with base64 "mTLS," circuit breaking, load balancing, and canary routing. They all run in the same process, share the same memory, and have zero network I/O, but architecturally they are as distributed as anything in Google's fleet. The `DivisibilityService` has its own sidecar proxy, its own circuit breaker, and a canary v2 deployment that uses multiplication instead of modulo -- because even mathematical operators deserve a progressive rollout strategy. The only thing missing is actual containers, an actual network, and an actual reason to do any of this. v2.0 will add Kubernetes manifests, at which point we will have fully containerized the act of computing `n % 3`.
+
+**Q: Why does FizzBuzz need a service mesh?**
+A: Because a monolithic FizzBuzz application is a single point of failure. By decomposing it into seven microservices -- `NumberIngestionService`, `DivisibilityService`, `ClassificationService`, `FormattingService`, `AuditService`, `CacheService`, and `OrchestratorService` -- we achieve the same resilience, operational complexity, and debugging difficulty that real distributed systems enjoy, but without any of the performance benefits of actual distribution. The sidecar proxies add mTLS overhead (base64 encoding is computationally expensive when performed on 3-byte payloads), the network simulator injects latency between services that share the same heap, and the canary routing feature enables A/B testing of mathematical operators. The service topology diagram makes architecture review meetings 40% longer, which is the true measure of enterprise maturity. Ten custom exception classes ensure that every possible mesh failure mode -- from packet loss to mTLS handshake failure to canary deployment disagreement -- has its own named error with a descriptive message and a sense of architectural purpose.
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.

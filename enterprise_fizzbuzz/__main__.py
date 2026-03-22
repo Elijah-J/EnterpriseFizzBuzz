@@ -107,6 +107,11 @@ from enterprise_fizzbuzz.infrastructure.metrics import (
     PrometheusTextExporter,
     create_metrics_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.service_mesh import (
+    MeshMiddleware,
+    MeshTopologyVisualizer,
+    create_service_mesh,
+)
 from enterprise_fizzbuzz.infrastructure.webhooks import (
     DeadLetterQueue,
     RetryPolicy,
@@ -568,6 +573,37 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--webhook-dlq",
         action="store_true",
         help="Display the Dead Letter Queue contents after execution",
+    )
+
+    # Service Mesh Simulation
+    parser.add_argument(
+        "--service-mesh",
+        action="store_true",
+        help="Enable the Service Mesh Simulation: decompose FizzBuzz into 7 microservices",
+    )
+
+    parser.add_argument(
+        "--mesh-topology",
+        action="store_true",
+        help="Display the ASCII service mesh topology diagram after execution",
+    )
+
+    parser.add_argument(
+        "--mesh-latency",
+        action="store_true",
+        help="Enable simulated network latency injection between mesh services",
+    )
+
+    parser.add_argument(
+        "--mesh-packet-loss",
+        action="store_true",
+        help="Enable simulated packet loss between mesh services",
+    )
+
+    parser.add_argument(
+        "--canary",
+        action="store_true",
+        help="Enable canary deployment routing (v2 DivisibilityService uses advanced formula)",
     )
 
     return parser
@@ -1098,6 +1134,54 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Webhooks not enabled. Use --webhooks to enable.\n")
         return 0
 
+    # Service Mesh Simulation setup
+    mesh_middleware = None
+    mesh_control_plane = None
+    if args.service_mesh:
+        mesh_control_plane, mesh_orchestrator = create_service_mesh(
+            mtls_enabled=config.service_mesh_mtls_enabled,
+            log_handshakes=config.service_mesh_mtls_log_handshakes,
+            latency_enabled=args.mesh_latency or config.service_mesh_latency_enabled,
+            latency_min_ms=config.service_mesh_latency_min_ms,
+            latency_max_ms=config.service_mesh_latency_max_ms,
+            packet_loss_enabled=args.mesh_packet_loss or config.service_mesh_packet_loss_enabled,
+            packet_loss_rate=config.service_mesh_packet_loss_rate,
+            canary_enabled=args.canary or config.service_mesh_canary_enabled,
+            canary_percentage=config.service_mesh_canary_traffic_percentage / 100.0,
+            circuit_breaker_enabled=config.service_mesh_circuit_breaker_enabled,
+            circuit_breaker_threshold=config.service_mesh_circuit_breaker_failure_threshold,
+            event_bus=event_bus,
+        )
+
+        # Build divisor info from config rules
+        divisors = [r.divisor for r in config.rules]
+        divisor_labels = {str(r.divisor): r.label for r in config.rules}
+
+        mesh_middleware = MeshMiddleware(
+            control_plane=mesh_control_plane,
+            divisors=divisors,
+            divisor_labels=divisor_labels,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | SERVICE MESH: 7 Microservices ENABLED                    |\n"
+            "  | FizzBuzz has been decomposed into:                       |\n"
+            "  |   1. NumberIngestionService                              |\n"
+            "  |   2. DivisibilityService                                |\n"
+            "  |   3. ClassificationService                              |\n"
+            "  |   4. FormattingService                                  |\n"
+            "  |   5. AuditService                                       |\n"
+            "  |   6. CacheService                                       |\n"
+            "  |   7. OrchestratorService                                |\n"
+            "  | mTLS (base64): ARMED. Military-grade encryption active. |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.mesh_topology:
+        print("\n  Service mesh not enabled. Use --service-mesh to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -1226,6 +1310,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if metrics_middleware is not None:
         builder.with_middleware(metrics_middleware)
+
+    if mesh_middleware is not None:
+        builder.with_middleware(mesh_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -1565,6 +1652,15 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if args.webhook_dlq and webhook_manager is not None:
         print(WebhookDashboard.render_dlq(webhook_manager))
+
+    # Service mesh topology
+    if args.mesh_topology and mesh_control_plane is not None:
+        print(MeshTopologyVisualizer.render(
+            mesh_control_plane.registry,
+            mesh_control_plane,
+        ))
+    elif args.mesh_topology:
+        print("\n  Service mesh not enabled. Use --service-mesh to enable.\n")
 
     return 0
 
