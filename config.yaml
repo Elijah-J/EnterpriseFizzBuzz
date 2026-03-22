@@ -355,6 +355,36 @@ metrics:
   bob_mcfizzington:
     initial_stress_level: 42.0       # Bob's baseline stress level (it's always 42)
 
+# Webhook Notification System configuration
+# Because the only thing more important than computing FizzBuzz
+# is immediately notifying every downstream system that you computed
+# FizzBuzz. In a real microservices architecture, webhooks enable
+# event-driven integration. Here, they enable simulated HTTP POST
+# requests to fictional endpoints about modulo arithmetic results.
+# The deliveries are not real. The HMAC signatures are.
+webhooks:
+  enabled: false                        # Master switch — opt-in via --webhooks
+  endpoints: []                         # List of webhook endpoint URLs
+  secret: "enterprise-fizzbuzz-webhook-secret-do-not-share"  # HMAC-SHA256 signing secret
+  subscribed_events:                    # Event types that trigger webhook dispatch
+    - "FIZZ_DETECTED"
+    - "BUZZ_DETECTED"
+    - "FIZZBUZZ_DETECTED"
+    - "SESSION_STARTED"
+    - "SESSION_ENDED"
+    - "ERROR_OCCURRED"
+  retry:
+    max_retries: 3                      # Maximum delivery attempts before DLQ
+    backoff_base_ms: 1000               # Base delay for exponential backoff
+    backoff_multiplier: 2.0             # Exponential backoff multiplier
+    backoff_max_ms: 30000               # Maximum backoff delay
+  dead_letter_queue:
+    max_size: 100                       # Maximum entries in the DLQ
+  simulated_client:
+    success_rate_percent: 80            # Deterministic success threshold (hash-based)
+  dashboard:
+    width: 60                           # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

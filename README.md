@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**44,000+ lines** across **100+ files** with **1,949 unit tests** and **113 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**45,000+ lines** across **100+ files** with **2,003 unit tests** and **119 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -46,7 +46,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
     |   config, formatters, middleware, observers, plugins,          |
     |   rules_engine, ml_engine, blockchain, circuit_breaker,        |
     |   tracing, auth, i18n, event_sourcing, chaos, feature_flags,   |
-    |   sla, cache, migrations                                       |
+    |   sla, cache, migrations, webhooks                             |
     |                                                                |
     |   +-------------------------------------------------------+   |
     |   |                   APPLICATION                          |   |
@@ -80,7 +80,7 @@ EnterpriseFizzBuzz/
 │   ├── domain/                      # THE INNER CIRCLE (no outward dependencies)
 │   │   ├── __init__.py
 │   │   ├── models.py                # Dataclasses, enums, and domain models
-│   │   ├── exceptions.py            # Custom exception hierarchy (108 exception classes)
+│   │   ├── exceptions.py            # Custom exception hierarchy (114 exception classes)
 │   │   └── interfaces.py            # Abstract base classes for everything
 │   │
 │   ├── application/                 # USE CASES (depends only on domain)
@@ -118,6 +118,7 @@ EnterpriseFizzBuzz/
 │       ├── utils/                   # Enterprise utility modules
 │       │   ├── __init__.py
 │       │   └── loc.py               # Lines of Code Census Bureau with Overengineering Index (~585 lines)
+│       ├── webhooks.py              # Webhook Notification System with HMAC-SHA256, DLQ, and simulated HTTP delivery (~1,142 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -160,6 +161,7 @@ EnterpriseFizzBuzz/
     ├── test_migrations.py           # 56 database migration & schema management tests
     ├── test_repository.py           # 40 repository pattern & unit of work tests (3 backends)
     ├── test_acl.py                  # 44 Anti-Corruption Layer & strategy adapter tests
+    ├── test_webhooks.py             # 54 webhook notification, HMAC signing, DLQ, and retry tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -256,6 +258,11 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Cardinality Detection | `metrics.py` | Warns when unique label combinations exceed configurable thresholds, preventing the common enterprise mistake of creating more time series than integers to FizzBuzz |
 | Prometheus Text Exposition | `metrics.py` | Renders all metrics in the official Prometheus text exposition format with `# HELP` and `# TYPE` annotations -- format compliance is non-negotiable, even when nobody will ever scrape the endpoint |
 | ASCII Grafana Dashboard | `metrics.py` | Terminal-based metrics visualization with sparklines, bar charts, and gauge displays, because if you can't graph your FizzBuzz metrics in the terminal, what are you even doing with your life |
+| Webhook Observer | `webhooks.py` | Bridges the EventBus to webhook dispatch, converting domain events into signed HTTP POST payloads for downstream consumers who desperately need to know that 15 is FizzBuzz |
+| HMAC-SHA256 Payload Signing | `webhooks.py` | Cryptographic signature generation and verification for webhook payloads, preventing the devastating scenario where an attacker modifies a webhook to claim that 15 is "Fizz" instead of "FizzBuzz" |
+| Dead Letter Queue | `webhooks.py` | Permanent storage for undeliverable webhook payloads, because even failed notifications deserve a dignified afterlife and eventual forensic analysis |
+| Retry with Exponential Backoff | `webhooks.py` | Configurable retry policy with exponential backoff and jitter for webhook deliveries, because the first four failures are just the system building character |
+| Simulated HTTP Client | `webhooks.py` | A fully featured HTTP client that never actually sends HTTP requests, providing all the ceremony of distributed communication with none of the network I/O |
 
 ## Features
 
@@ -284,6 +291,7 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Lines of Code Census Bureau** - A production-grade codebase metrics engine that walks every file, classifies it by language and architectural layer, computes the Overengineering Index (OEI = total lines / 2, where 2 is the minimal FizzBuzz solution), renders an ASCII dashboard with box-drawing characters, and attributes 100% of lines to Bob McFizzington -- because you can't manage what you can't measure, and you can't overengineer what you can't quantify
 - **Prometheus-Style Metrics Exporter** - Four Prometheus-compatible metric types (Counter, Gauge, Histogram, Summary) with a thread-safe MetricRegistry, automatic label injection (strategy, locale, chaos_enabled, is_tuesday), Prometheus text exposition format export that nobody will ever scrape, a cardinality explosion detector that prevents you from creating more time series than integers, and an ASCII Grafana-style dashboard with sparklines and bar charts -- because the only thing more important than computing `n % 3` correctly is collecting time-series data about *how* you computed it. Bob McFizzington's stress level is tracked as a Gauge, starting at 42.0 (it's always 42)
 - **Kubernetes-Style Health Check Probes** - Liveness, readiness, and startup probes with five subsystem health checks (config, circuit breaker, cache coherence, SLA budget, ML engine), a self-healing manager with exponential backoff recovery, and an ASCII health dashboard with traffic-light indicators -- because a FizzBuzz CLI that runs for 0.3 seconds deserves the same operational scrutiny as a Kubernetes pod serving millions of requests, and if the ML engine is having an existential crisis, the entire platform should be in EXISTENTIAL_CRISIS status
+- **Webhook Notification System** - A production-grade event-driven webhook dispatch engine with HMAC-SHA256 payload signing, configurable retry with exponential backoff, a Dead Letter Queue for permanently failed deliveries, simulated HTTP POST delivery (because real HTTP is for deployed services), an Observer bridge from the EventBus, and an ASCII dashboard for delivery statistics -- because when the number 15 is evaluated as "FizzBuzz," every downstream microservice in the constellation must be immediately informed via a cryptographically signed notification, and if the notification fails five times, it deserves a permanent resting place in the DLQ where future forensic analysts can determine exactly why Slack didn't hear about `n % 3`
 - **Custom Exception Hierarchy** - 108 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
@@ -518,6 +526,27 @@ python main.py --metrics --metrics-dashboard --chaos --chaos-level 3 --range 1 5
 
 # Peak enterprise: metrics + cache + circuit breaker + ML + tracing (every subsystem instrumented)
 python main.py --metrics --metrics-dashboard --metrics-export --cache --circuit-breaker --strategy machine_learning --trace --range 1 20
+
+# Webhook notifications: enable webhook dispatch for FizzBuzz events
+python main.py --webhooks --range 1 30
+
+# Webhook with a registered endpoint (simulated HTTP POST, obviously)
+python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --range 1 20
+
+# Webhook with HMAC-SHA256 secret and delivery log
+python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --webhook-secret "my-very-secret-key" --webhook-log --range 1 20
+
+# Webhook test: fire a test event to all registered endpoints and exit
+python main.py --webhooks --webhook-url https://hooks.example.com/test --webhook-test
+
+# Webhook with Dead Letter Queue inspection (see what failed to deliver)
+python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --webhook-dlq --range 1 50
+
+# Webhook with event filtering: only subscribe to specific event types
+python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --webhook-events "evaluation.completed,circuit_breaker.opened" --range 1 30
+
+# Full notification stack: webhooks + metrics + tracing + chaos (peak telemetry)
+python main.py --webhooks --webhook-url https://hooks.example.com/fizzbuzz --webhook-log --metrics --trace --chaos --range 1 20
 ```
 
 ## CLI Options
@@ -578,6 +607,13 @@ python main.py --metrics --metrics-dashboard --metrics-export --cache --circuit-
 --metrics            Enable Prometheus-style metrics collection for FizzBuzz evaluation
 --metrics-export     Export all metrics in Prometheus text exposition format after execution
 --metrics-dashboard  Display the ASCII Grafana metrics dashboard after execution
+--webhooks           Enable the Webhook Notification System for event-driven FizzBuzz telemetry
+--webhook-url URL    Register a webhook endpoint URL (can be specified multiple times)
+--webhook-events EVENTS  Comma-separated list of event types to subscribe to (default: all)
+--webhook-secret SECRET  HMAC-SHA256 secret for signing webhook payloads (default: from config)
+--webhook-test       Send a test webhook to all registered endpoints and exit
+--webhook-log        Display the webhook delivery log after execution
+--webhook-dlq        Display the Dead Letter Queue contents after execution
 ```
 
 ## Environment Variables
@@ -1676,10 +1712,124 @@ evaluating = Evaluating FizzBuzz for range [${start}, ${end}]...
 
 A purpose-built configuration language with metadata directives, sections, heredoc support, and variable interpolation. It does not compile to WebAssembly. Yet.
 
+## Webhook Architecture
+
+The Webhook Notification System implements a production-grade event-driven dispatch engine for broadcasting FizzBuzz evaluation events to downstream consumers -- because when `evaluate(15)` returns `"FizzBuzz"`, every Slack channel, PagerDuty integration, and CI/CD pipeline in the enterprise constellation must be immediately informed via a cryptographically signed HTTP POST request. The deliveries are, of course, entirely simulated. No actual HTTP requests leave this process. But the HMAC-SHA256 signatures are real, the exponential backoff is calculated, and the Dead Letter Queue faithfully preserves every undeliverable notification for future forensic analysis and post-incident regret.
+
+The system bridges the existing `EventBus` via a `WebhookObserver` (Observer pattern), converting domain events into signed payloads dispatched through a `SimulatedHTTPClient` that returns configurable success/failure rates. Failed deliveries are retried with exponential backoff (Strategy pattern), and permanently failed payloads are interred in a `DeadLetterQueue` -- the final resting place for FizzBuzz notifications that the outside world refused to acknowledge.
+
+```
+    EVENT BUS                    WEBHOOK SYSTEM                    SIMULATED NETWORK
+    =========                    ==============                    =================
+
+    +-----------+                +-----------------+
+    | EventBus  |--- notify --->| WebhookObserver |
+    | (domain   |                | (bridges events |
+    |  events)  |                |  to webhooks)   |
+    +-----------+                +--------+--------+
+                                          |
+                                          v
+                                 +--------+--------+
+                                 | WebhookManager  |
+                                 | (registry,      |
+                                 |  dispatch,      |
+                                 |  retry logic)   |
+                                 +--------+--------+
+                                          |
+                         +----------------+----------------+
+                         |                |                |
+                         v                v                v
+                  +------+------+  +------+------+  +------+------+
+                  | Endpoint A  |  | Endpoint B  |  | Endpoint C  |
+                  | (filtered)  |  | (all events)|  | (filtered)  |
+                  +------+------+  +------+------+  +------+------+
+                         |                |                |
+                         v                v                v
+                  +------+------+  +------+------+  +------+------+
+                  | Signature   |  | Signature   |  | Signature   |
+                  | Engine      |  | Engine      |  | Engine      |
+                  | (HMAC-256)  |  | (HMAC-256)  |  | (HMAC-256)  |
+                  +------+------+  +------+------+  +------+------+
+                         |                |                |
+                         v                v                v
+                  +------+------+  +------+------+  +------+------+
+                  | Simulated   |  | Simulated   |  | Simulated   |
+                  | HTTP POST   |  | HTTP POST   |  | HTTP POST   |
+                  +------+------+  +------+------+  +------+------+
+                         |                |                |
+                    success?          success?          success?
+                    /      \          /      \          /      \
+                   v        v       v        v        v        v
+                 [done]   retry   [done]   retry    [done]   retry
+                          with            with              with
+                          backoff         backoff            backoff
+                            |               |                  |
+                            v               v                  v
+                     +------+------+  (max retries?)     (max retries?)
+                     | Dead Letter |       |                   |
+                     | Queue       |<------+-------------------+
+                     +-------------+  (permanently failed)
+```
+
+**Key components:**
+- **WebhookManager** - Central orchestrator for endpoint registration, event dispatch, retry logic, and delivery logging. Thread-safe with a reentrant lock, because concurrent FizzBuzz webhook delivery is a scenario we must be prepared for
+- **WebhookSignatureEngine** - HMAC-SHA256 signature generation and verification (RFC 2104), ensuring payload integrity against the catastrophic threat of webhook tampering
+- **RetryPolicy** - Exponential backoff with configurable base delay, multiplier, and cap. Each retry doubles the wait time, giving the simulated network time to recover from its simulated outage
+- **SimulatedHTTPClient** - A fully-featured HTTP client that performs no actual HTTP. Returns configurable success rates with simulated response times and status codes. Enterprise-grade make-believe
+- **DeadLetterQueue** - Thread-safe, bounded queue for permanently failed deliveries. Each entry preserves the original payload, all attempt results, and the final failure reason -- because even dead webhooks deserve a complete autopsy
+- **WebhookObserver** - Implements `IObserver` to bridge the domain `EventBus` into the webhook dispatch pipeline, filtering events by subscription before dispatch
+- **WebhookDashboard** - ASCII art dashboard rendering delivery statistics, endpoint status, delivery logs, and DLQ contents
+
+### Webhook Payload
+
+Every webhook delivery includes a signed JSON payload with enterprise-grade headers:
+
+| Header | Value | Purpose |
+|--------|-------|---------|
+| `Content-Type` | `application/json` | Because webhook payloads are JSON, not YAML (we have standards) |
+| `X-FizzBuzz-Event` | Event type string | So the consumer knows whether to panic |
+| `X-FizzBuzz-Signature` | `sha256=<hex>` | HMAC-SHA256 signature for payload verification |
+| `X-FizzBuzz-Delivery` | UUID | Unique delivery ID for idempotency and audit trails |
+| `X-FizzBuzz-Seriousness-Level` | `MAXIMUM` | Mandatory. Non-negotiable. Always MAXIMUM |
+
+### Retry Policy
+
+| Spec | Value |
+|------|-------|
+| Max retries | 5 (configurable) |
+| Backoff base | 1,000 ms |
+| Backoff multiplier | 2.0 |
+| Backoff cap | 60,000 ms |
+| Backoff formula | `min(base * multiplier ^ attempt, cap)` |
+| Jitter | None (deterministic backoff, because chaos is the Chaos Monkey's job) |
+
+### Dead Letter Queue
+
+| Spec | Value |
+|------|-------|
+| Max size | 1,000 entries (configurable) |
+| Entry contents | Original payload, all delivery attempt results, failure reason, timestamp |
+| Thread safety | Full (threading.Lock) |
+| Retention policy | Permanent (until process exits, which is 0.3 seconds) |
+| Custom exception | `WebhookDeadLetterQueueFullError` (when even the graveyard is full) |
+
+| Spec | Value |
+|------|-------|
+| Endpoint registration | Dynamic, with event type filtering |
+| Payload signing | HMAC-SHA256 (RFC 2104) |
+| Delivery simulation | Configurable success rate and response times |
+| Retry policy | Exponential backoff with configurable parameters |
+| Dead Letter Queue | Bounded, thread-safe, with full attempt history |
+| Event types | All domain events (evaluation.completed, circuit_breaker.opened, etc.) |
+| Thread safety | Full (threading.RLock on all operations) |
+| Custom exceptions | 6 (WebhookDeliveryError, WebhookSignatureError, WebhookRetryExhaustedError, WebhookEndpointValidationError, WebhookPayloadSerializationError, WebhookDeadLetterQueueFullError) |
+| ASCII dashboard | Delivery statistics, endpoint status, delivery log, DLQ viewer |
+| Actual HTTP requests sent | 0 (but the architecture is ready) |
+
 ## Testing
 
 ```bash
-# Run all 1,949 tests
+# Run all 2,003 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -1696,13 +1846,16 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 1,949 tests, 113 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,003 tests, 119 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
 
 **Q: Why does FizzBuzz need Prometheus metrics?**
 A: Observability is the third pillar of enterprise reliability, alongside logging and tracing (both of which we already have). Without Prometheus metrics, how would you know that the P99 evaluation latency spiked from 0.3 microseconds to 0.4 microseconds during the last chaos Game Day? How would you calculate the ratio of cache hits to blockchain validations? How would you plot Bob McFizzington's stress level as an ASCII sparkline? The metrics exporter ensures that every modulo operation is not just computed, but *measured, labeled, bucketed, quantiled, and dashboarded*. Four metric types are supported: Counters (for things that only go up, like evaluation counts and Bob's blood pressure), Gauges (for things that fluctuate, like cache size and Bob's will to live), Histograms (for latency distributions with configurable bucket boundaries from 0.001ms to 10s), and Summaries (for P50/P90/P99 quantiles computed client-side using a naive sorted list that consumes more memory than the FizzBuzz results themselves). All metrics are exported in the official Prometheus text exposition format via a `/metrics` endpoint that does not exist, because this is a CLI tool. The cardinality explosion detector prevents the creation of more unique time series than integers to FizzBuzz, which is a sentence that makes perfect sense in context. The ASCII Grafana dashboard renders sparklines in the terminal, providing the same dopamine hit as a real Grafana dashboard but with 100% fewer browser tabs.
+
+**Q: Why does FizzBuzz need webhooks?**
+A: Because when `evaluate(15)` returns `"FizzBuzz"`, the event cannot simply be logged and forgotten. Downstream systems -- Slack channels, PagerDuty integrations, CI/CD pipelines, executive dashboards, and the intern's personal Grafana instance -- all need to be immediately notified via cryptographically signed HTTP POST requests. The HMAC-SHA256 payload signatures protect against the devastating scenario where an attacker intercepts a webhook and modifies it to claim that 15 is "Fizz" instead of "FizzBuzz," an event that would constitute both a data integrity breach and an affront to modular arithmetic. The exponential backoff retry policy ensures that transient failures are handled with grace and patience -- each retry doubling the wait time, giving the simulated network infrastructure ample time to recover from its simulated outage. Permanently failed deliveries are preserved in the Dead Letter Queue, where future forensic analysts can reconstruct the exact sequence of events that led to Slack not hearing about `n % 3`. The deliveries are entirely simulated, of course. No actual HTTP requests leave the process. But the signatures are real, the retry math is correct, and the Dead Letter Queue faithfully stores every failure with the same gravity as a real distributed notification system. Six custom exception classes ensure that every conceivable webhook failure mode has its own named error, because `raise Exception("webhook failed")` is an act of engineering negligence.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -1750,7 +1903,7 @@ A: Because the ML engine returns probabilistic confidence scores -- floating-poi
 A: Because manually typing `EventBus()` is a form of tight coupling that would make any Java enterprise architect lose sleep. The IoC container provides constructor auto-wiring via `typing.get_type_hints()`, four distinct lifetime strategies (including "Eternal," which is functionally identical to Singleton but conveys the gravitas befitting enterprise FizzBuzz), named bindings for when you need multiple implementations of the same interface (you don't), factory registration for objects with exotic construction requirements (there are none), and Kahn's topological sort for detecting circular dependencies at registration time -- because catching a `RecursionError` at 3 AM is not an engineering strategy, it's a cry for help. The container is ADDITIVE: it exists alongside the existing `FizzBuzzServiceBuilder`, providing a parallel universe of object construction like two parking lots for the same mall. It adds approximately 608 lines of abstraction on top of what was previously a three-line constructor call. This is, by any reasonable measure, an improvement.
 
 **Q: Why does FizzBuzz need contract tests?**
-A: Because having three repository backends, four evaluation strategies, and four output formatters all implementing the same abstract interfaces means nothing if nobody verifies they actually behave the same way. The contract test suites define the behavioural specification for each port and run every registered implementation through the same gauntlet of assertions, ensuring that swapping an in-memory dict for a SQLite database doesn't silently redefine what "save" means. A meta-test (`test_contract_coverage.py`) then verifies that every abstract port in the codebase has a corresponding contract test, because untested interfaces are just documentation with delusions of grandeur. The total test count is now 1,949, which is approximately 1,947 more tests than a FizzBuzz program has ever needed.
+A: Because having three repository backends, four evaluation strategies, and four output formatters all implementing the same abstract interfaces means nothing if nobody verifies they actually behave the same way. The contract test suites define the behavioural specification for each port and run every registered implementation through the same gauntlet of assertions, ensuring that swapping an in-memory dict for a SQLite database doesn't silently redefine what "save" means. A meta-test (`test_contract_coverage.py`) then verifies that every abstract port in the codebase has a corresponding contract test, because untested interfaces are just documentation with delusions of grandeur. The total test count is now 2,003, which is approximately 2,001 more tests than a FizzBuzz program has ever needed.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

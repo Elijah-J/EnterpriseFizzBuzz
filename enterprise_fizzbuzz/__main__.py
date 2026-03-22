@@ -107,6 +107,15 @@ from enterprise_fizzbuzz.infrastructure.metrics import (
     PrometheusTextExporter,
     create_metrics_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.webhooks import (
+    DeadLetterQueue,
+    RetryPolicy,
+    SimulatedHTTPClient,
+    WebhookDashboard,
+    WebhookManager,
+    WebhookObserver,
+    WebhookSignatureEngine,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -510,6 +519,55 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--metrics-dashboard",
         action="store_true",
         help="Display the ASCII Grafana metrics dashboard after execution",
+    )
+
+    # Webhook Notification System
+    parser.add_argument(
+        "--webhooks",
+        action="store_true",
+        help="Enable the Webhook Notification System for event-driven FizzBuzz telemetry",
+    )
+
+    parser.add_argument(
+        "--webhook-url",
+        action="append",
+        metavar="URL",
+        default=[],
+        help="Register a webhook endpoint URL (can be specified multiple times)",
+    )
+
+    parser.add_argument(
+        "--webhook-events",
+        type=str,
+        metavar="EVENTS",
+        default=None,
+        help="Comma-separated list of event types to subscribe to (default: from config)",
+    )
+
+    parser.add_argument(
+        "--webhook-secret",
+        type=str,
+        metavar="SECRET",
+        default=None,
+        help="HMAC-SHA256 secret for signing webhook payloads (default: from config)",
+    )
+
+    parser.add_argument(
+        "--webhook-test",
+        action="store_true",
+        help="Send a test webhook to all registered endpoints and exit",
+    )
+
+    parser.add_argument(
+        "--webhook-log",
+        action="store_true",
+        help="Display the webhook delivery log after execution",
+    )
+
+    parser.add_argument(
+        "--webhook-dlq",
+        action="store_true",
+        help="Display the Dead Letter Queue contents after execution",
     )
 
     return parser
@@ -952,6 +1010,93 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  | is_tuesday label: mandatory.                             |\n"
             "  +---------------------------------------------------------+"
         )
+
+    # Webhook Notification System setup
+    webhook_manager = None
+    webhook_observer = None
+    if args.webhooks or args.webhook_url or args.webhook_test:
+        webhook_secret = args.webhook_secret or config.webhooks_secret
+        sig_engine = WebhookSignatureEngine(webhook_secret)
+
+        success_rate = config.webhooks_simulated_success_rate
+        http_client = SimulatedHTTPClient(success_rate_percent=success_rate)
+
+        retry_policy = RetryPolicy(
+            max_retries=config.webhooks_retry_max_retries,
+            backoff_base_ms=config.webhooks_retry_backoff_base_ms,
+            backoff_multiplier=config.webhooks_retry_backoff_multiplier,
+            backoff_max_ms=config.webhooks_retry_backoff_max_ms,
+        )
+
+        dlq = DeadLetterQueue(max_size=config.webhooks_dlq_max_size)
+
+        webhook_manager = WebhookManager(
+            signature_engine=sig_engine,
+            http_client=http_client,
+            retry_policy=retry_policy,
+            dead_letter_queue=dlq,
+            event_bus=event_bus,
+        )
+
+        # Register endpoints from CLI
+        for url in args.webhook_url:
+            webhook_manager.register_endpoint(url)
+
+        # Register endpoints from config
+        for url in config.webhooks_endpoints:
+            webhook_manager.register_endpoint(url)
+
+        # Determine subscribed events
+        if args.webhook_events:
+            subscribed = set(args.webhook_events.split(","))
+        else:
+            subscribed = set(config.webhooks_subscribed_events)
+
+        # Create and subscribe the observer
+        webhook_observer = WebhookObserver(
+            webhook_manager=webhook_manager,
+            subscribed_events=subscribed,
+        )
+        event_bus.subscribe(webhook_observer)
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | WEBHOOKS: Notification System ENABLED                    |\n"
+            "  | All matching events will be dispatched to registered     |\n"
+            "  | endpoints via simulated HTTP POST with HMAC-SHA256       |\n"
+            "  | signatures. No actual HTTP requests will be made.        |\n"
+            "  | X-FizzBuzz-Seriousness-Level: MAXIMUM                   |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Handle --webhook-test
+        if args.webhook_test:
+            from enterprise_fizzbuzz.domain.models import Event, EventType
+            test_event = Event(
+                event_type=EventType.SESSION_STARTED,
+                payload={"test": True, "message": "Webhook connectivity test"},
+                source="WebhookTestRunner",
+            )
+            print("\n  Sending test webhook to all registered endpoints...\n")
+            results = webhook_manager.dispatch(test_event)
+            success_count = sum(1 for r in results if r.success)
+            print(
+                f"\n  Test complete: {success_count}/{len(results)} endpoints "
+                f"accepted the test webhook.\n"
+            )
+            if args.webhook_dlq:
+                print(WebhookDashboard.render_dlq(webhook_manager))
+            return 0
+
+    elif args.webhook_test:
+        print("\n  Webhooks not enabled. Use --webhooks to enable.\n")
+        return 0
+    elif args.webhook_log:
+        print("\n  Webhooks not enabled. Use --webhooks to enable.\n")
+        return 0
+    elif args.webhook_dlq:
+        print("\n  Webhooks not enabled. Use --webhooks to enable.\n")
+        return 0
 
     # Chaos Engineering setup
     chaos_monkey = None
@@ -1410,6 +1555,16 @@ def main(argv: Optional[list[str]] = None) -> int:
             print()
     elif args.metrics_dashboard:
         print("\n  Metrics not enabled. Use --metrics to enable.\n")
+
+    # Webhook dashboard and logs
+    if webhook_manager is not None:
+        print(WebhookDashboard.render(webhook_manager))
+
+    if args.webhook_log and webhook_manager is not None:
+        print(WebhookDashboard.render_delivery_log(webhook_manager))
+
+    if args.webhook_dlq and webhook_manager is not None:
+        print(WebhookDashboard.render_dlq(webhook_manager))
 
     return 0
 

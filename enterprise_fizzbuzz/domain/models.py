@@ -216,6 +216,14 @@ class EventType(Enum):
     METRICS_DASHBOARD_RENDERED = auto()
     METRICS_REGISTRY_RESET = auto()
 
+    # Webhook Notification System events
+    WEBHOOK_DISPATCHED = auto()
+    WEBHOOK_DELIVERY_SUCCESS = auto()
+    WEBHOOK_DELIVERY_FAILED = auto()
+    WEBHOOK_RETRY_SCHEDULED = auto()
+    WEBHOOK_DEAD_LETTERED = auto()
+    WEBHOOK_SIGNATURE_GENERATED = auto()
+
     # Health Check Probe events
     HEALTH_CHECK_STARTED = auto()
     HEALTH_CHECK_COMPLETED = auto()
