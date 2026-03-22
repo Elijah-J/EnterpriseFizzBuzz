@@ -1156,6 +1156,25 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "histogram_buckets": 20,
                 },
             },
+            "fizzlang": {
+                "enabled": False,
+                "max_program_length": 10000,
+                "max_rules": 50,
+                "max_let_bindings": 100,
+                "strict_type_checking": True,
+                "stdlib_enabled": True,
+                "repl": {
+                    "prompt": "fizz> ",
+                    "history_size": 100,
+                    "show_tokens": False,
+                    "show_ast": False,
+                },
+                "dashboard": {
+                    "width": 60,
+                    "show_source_stats": True,
+                    "show_complexity_index": True,
+                },
+            },
         }
 
     def _apply_environment_overrides(self) -> None:
@@ -4220,6 +4239,75 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def digital_twin_histogram_buckets(self) -> int:
         self._ensure_loaded()
         return self._raw_config.get("digital_twin", {}).get("dashboard", {}).get("histogram_buckets", 20)
+
+    # ------------------------------------------------------------------
+    # FizzLang DSL properties
+    # ------------------------------------------------------------------
+
+    @property
+    def fizzlang_enabled(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("enabled", False)
+
+    @property
+    def fizzlang_max_program_length(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("max_program_length", 10000)
+
+    @property
+    def fizzlang_max_rules(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("max_rules", 50)
+
+    @property
+    def fizzlang_max_let_bindings(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("max_let_bindings", 100)
+
+    @property
+    def fizzlang_strict_type_checking(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("strict_type_checking", True)
+
+    @property
+    def fizzlang_stdlib_enabled(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("stdlib_enabled", True)
+
+    @property
+    def fizzlang_repl_prompt(self) -> str:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("repl", {}).get("prompt", "fizz> ")
+
+    @property
+    def fizzlang_repl_history_size(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("repl", {}).get("history_size", 100)
+
+    @property
+    def fizzlang_repl_show_tokens(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("repl", {}).get("show_tokens", False)
+
+    @property
+    def fizzlang_repl_show_ast(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("repl", {}).get("show_ast", False)
+
+    @property
+    def fizzlang_dashboard_width(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("dashboard", {}).get("width", 60)
+
+    @property
+    def fizzlang_dashboard_show_source_stats(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("dashboard", {}).get("show_source_stats", True)
+
+    @property
+    def fizzlang_dashboard_show_complexity_index(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("fizzlang", {}).get("dashboard", {}).get("show_complexity_index", True)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

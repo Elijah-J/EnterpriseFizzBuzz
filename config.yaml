@@ -1353,6 +1353,33 @@ digital_twin:
     show_drift_gauge: true                     # Show drift gauge in dashboard
     histogram_buckets: 20                      # Number of histogram buckets for Monte Carlo distribution
 
+# FizzLang Domain-Specific Language configuration
+# Because the only thing missing from the Enterprise FizzBuzz Platform
+# was its own programming language. FizzLang is a purpose-built,
+# Turing-INCOMPLETE DSL designed exclusively for expressing FizzBuzz
+# rules. It features a hand-written lexer, recursive-descent parser,
+# AST-based type checker, and tree-walking interpreter — all to
+# evaluate n % 3. The language intentionally lacks loops, recursion,
+# and user-defined functions, because those features would make it
+# useful for something other than FizzBuzz, and that would undermine
+# the entire enterprise value proposition.
+fizzlang:
+  enabled: false                            # Master switch — opt-in via --fizzlang
+  max_program_length: 10000                 # Maximum source code length in characters
+  max_rules: 50                             # Maximum number of rule definitions per program
+  max_let_bindings: 100                     # Maximum number of let bindings per program
+  strict_type_checking: true                # Enable the overzealous type checker
+  stdlib_enabled: true                      # Enable the 3-function standard library (is_prime, fizzbuzz, range)
+  repl:
+    prompt: "fizz> "                        # REPL prompt string (the most important configuration)
+    history_size: 100                       # Maximum REPL history entries
+    show_tokens: false                      # Display token stream in REPL by default
+    show_ast: false                         # Display AST in REPL by default
+  dashboard:
+    width: 60                               # ASCII dashboard width
+    show_source_stats: true                 # Show source code statistics in dashboard
+    show_complexity_index: true             # Show Language Complexity Index (always below Brainfuck)
+
 # Observer configuration
 observers:
   console_observer:

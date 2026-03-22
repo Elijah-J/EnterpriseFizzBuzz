@@ -364,6 +364,12 @@ from enterprise_fizzbuzz.infrastructure.digital_twin import (
     StateSync,
     WhatIfSimulator,
 )
+from enterprise_fizzbuzz.infrastructure.fizzlang import (
+    FizzLangDashboard,
+    FizzLangREPL,
+    compile_program,
+    run_program,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -1737,6 +1743,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the Digital Twin ASCII dashboard with Monte Carlo histogram and drift gauge",
     )
 
+    # FizzLang Domain-Specific Language
+    parser.add_argument(
+        "--fizzlang",
+        type=str,
+        metavar="PROGRAM",
+        default=None,
+        help='Execute a FizzLang program inline (e.g., --fizzlang \'rule fizz when n %% 3 == 0 emit "Fizz"\\nevaluate 1 to 20\')',
+    )
+
+    parser.add_argument(
+        "--fizzlang-file",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help="Execute a FizzLang program from a .fizz file",
+    )
+
+    parser.add_argument(
+        "--fizzlang-repl",
+        action="store_true",
+        help="Start the FizzLang interactive REPL — the Turing-incomplete experience",
+    )
+
+    parser.add_argument(
+        "--fizzlang-dashboard",
+        action="store_true",
+        help="Display the FizzLang ASCII dashboard with source stats and Language Complexity Index",
+    )
+
     return parser
 
 
@@ -1820,6 +1855,68 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if args.openapi_dashboard:
         print(OpenAPIDashboard.render(width=config.openapi_dashboard_width))
+        return 0
+
+    # ----------------------------------------------------------------
+    # FizzLang DSL (early exit commands)
+    # ----------------------------------------------------------------
+    if args.fizzlang or args.fizzlang_file or args.fizzlang_repl:
+        if args.fizzlang_repl:
+            repl = FizzLangREPL(
+                prompt=config.fizzlang_repl_prompt,
+                show_tokens=config.fizzlang_repl_show_tokens,
+                show_ast=config.fizzlang_repl_show_ast,
+                stdlib_enabled=config.fizzlang_stdlib_enabled,
+            )
+            repl.run()
+            return 0
+
+        # Load source from inline arg or file
+        source = None
+        if args.fizzlang_file:
+            try:
+                with open(args.fizzlang_file, "r") as f:
+                    source = f.read()
+            except FileNotFoundError:
+                print(f"\n  FizzLang file not found: {args.fizzlang_file}\n")
+                return 1
+            except Exception as e:
+                print(f"\n  Error reading FizzLang file: {e}\n")
+                return 1
+        elif args.fizzlang:
+            source = args.fizzlang
+
+        if source is not None:
+            try:
+                unit = compile_program(
+                    source,
+                    strict_type_checking=config.fizzlang_strict_type_checking,
+                    max_program_length=config.fizzlang_max_program_length,
+                )
+
+                from enterprise_fizzbuzz.infrastructure.fizzlang import Interpreter
+
+                interpreter = Interpreter(stdlib_enabled=config.fizzlang_stdlib_enabled)
+                results = interpreter.interpret(unit.ast)
+
+                for result in results:
+                    print(result.output)
+
+                if args.fizzlang_dashboard:
+                    print()
+                    print(FizzLangDashboard.render(
+                        source,
+                        unit=unit,
+                        results=results,
+                        width=config.fizzlang_dashboard_width,
+                        show_source_stats=config.fizzlang_dashboard_show_source_stats,
+                        show_complexity_index=config.fizzlang_dashboard_show_complexity_index,
+                    ))
+
+            except Exception as e:
+                print(f"\n  FizzLang Error: {e}\n")
+                return 1
+
         return 0
 
     # ----------------------------------------------------------------
