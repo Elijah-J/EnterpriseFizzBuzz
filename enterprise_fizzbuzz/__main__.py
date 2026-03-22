@@ -339,6 +339,10 @@ from enterprise_fizzbuzz.infrastructure.knowledge_graph import (
     execute_fizzsparql,
     populate_fizzbuzz_domain,
 )
+from enterprise_fizzbuzz.infrastructure.package_manager import (
+    FizzPMDashboard,
+    FizzPMManager,
+)
 from enterprise_fizzbuzz.infrastructure.self_modifying import (
     SelfModifyingDashboard,
     SelfModifyingMiddleware,
@@ -1878,6 +1882,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzkube-dashboard",
         action="store_true",
         help="Display the FizzKube Container Orchestration ASCII dashboard after execution",
+    )
+
+    # FizzPM Package Manager
+    parser.add_argument(
+        "--fizzpm",
+        action="store_true",
+        help="Enable FizzPM Package Manager: SAT-based dependency resolution for the FizzBuzz ecosystem",
+    )
+
+    parser.add_argument(
+        "--fizzpm-install",
+        type=str,
+        metavar="PACKAGE",
+        default=None,
+        help="Install a FizzPM package and resolve dependencies via DPLL SAT solver (e.g. --fizzpm-install fizzbuzz-enterprise)",
+    )
+
+    parser.add_argument(
+        "--fizzpm-audit",
+        action="store_true",
+        help="Run a vulnerability audit against all installed/available FizzPM packages",
+    )
+
+    parser.add_argument(
+        "--fizzpm-dashboard",
+        action="store_true",
+        help="Display the FizzPM Package Manager ASCII dashboard after execution",
     )
 
     return parser
@@ -4612,6 +4643,42 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # FizzPM Package Manager setup
+    # ----------------------------------------------------------------
+    fizzpm_manager = None
+
+    if args.fizzpm or args.fizzpm_install or args.fizzpm_audit or args.fizzpm_dashboard:
+        fizzpm_manager = FizzPMManager(
+            audit_on_install=config.fizzpm_audit_on_install,
+            lockfile_path=config.fizzpm_lockfile_path,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FIZZPM PACKAGE MANAGER: SAT-POWERED DEPENDENCIES        |\n"
+            "  | 8 packages | DPLL solver | Semantic versioning          |\n"
+            "  | Vulnerability scanning | Deterministic lockfile         |\n"
+            '  | "npm install but the registry is a Python dict."        |\n'
+            "  | Your dependency graph is NP-complete. You're welcome.   |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        if args.fizzpm_install:
+            result = fizzpm_manager.install(args.fizzpm_install)
+            print(fizzpm_manager.render_install_summary(result))
+
+            if config.fizzpm_audit_on_install and fizzpm_manager.vulnerabilities:
+                print(fizzpm_manager.render_audit_report())
+        else:
+            # Install default packages
+            for pkg_name in config.fizzpm_default_packages:
+                fizzpm_manager.install(pkg_name)
+
+        if args.fizzpm_audit:
+            fizzpm_manager.audit()
+            print(fizzpm_manager.render_audit_report())
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -5823,6 +5890,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.fizzkube_dashboard:
         print("\n  FizzKube not enabled. Use --fizzkube to enable.\n")
+
+    # FizzPM Package Manager Dashboard
+    if args.fizzpm_dashboard and fizzpm_manager is not None:
+        print(fizzpm_manager.render_dashboard(
+            width=config.fizzpm_dashboard_width,
+        ))
+    elif args.fizzpm_dashboard:
+        print("\n  FizzPM not enabled. Use --fizzpm to enable.\n")
 
     # FizzBuzz OS Kernel Dashboard
     if args.kernel_dashboard and fizzbuzz_kernel is not None:
