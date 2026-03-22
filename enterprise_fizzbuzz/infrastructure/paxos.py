@@ -1194,11 +1194,10 @@ class ConsensusDashboard:
             lines.append(f"  | {'Consensus Rounds':^{inner_w}} |")
             lines.append(f"  {separator}")
 
-            # Header
-            hdr = f"  | {'#':<4} {'Num':<6} {'Result':<12} {'Votes':<8} {'Time':>8} {'Status':<10} |"
-            if len(hdr) > width + 2:
-                hdr = hdr[:width + 1] + " |"
-            lines.append(hdr)
+            # Header - pad to fill inner_w so row matches border width
+            status_col = inner_w - 4 - 1 - 6 - 1 - 12 - 1 - 8 - 1 - 8 - 1
+            hdr_content = f"{'#':<4} {'Num':<6} {'Result':<12} {'Votes':<8} {'Time':>8} {'Status':<{status_col}}"
+            lines.append(f"  | {hdr_content} |")
             lines.append(f"  {separator}")
 
             for entry in log[-20:]:  # Show last 20 rounds
@@ -1216,10 +1215,10 @@ class ConsensusDashboard:
                 if byz_count > 0:
                     status = f"BYZ({byz_count})"
 
-                row = f"  | {d:<4} {num:<6} {chosen:<12} {accepted}/{q:<5} {elapsed_us:>6.1f}us {status:<10} |"
-                if len(row) > width + 2:
-                    row = row[:width + 1] + " |"
-                lines.append(row)
+                vote_str = f"{accepted}/{q}"
+                time_str = f"{elapsed_us:.1f}us"
+                row_content = f"{d:<4} {num:<6} {chosen:<12} {vote_str:<8} {time_str:>8} {status:<{status_col}}"
+                lines.append(f"  | {row_content} |")
 
             lines.append(f"  {separator}")
 

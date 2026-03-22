@@ -657,7 +657,7 @@ class TestMetricsCollector:
             payload={"classification": "fizz"},
         ))
 
-        total = registry.get_metric("efp_evaluations_total")
+        total = registry.get_metric("efp_evaluations")
         # Check that some label combination has been incremented
         samples = total.collect()
         assert len(samples) > 0
@@ -667,21 +667,21 @@ class TestMetricsCollector:
         collector = MetricsCollector(registry=registry)
         collector.on_event(Event(event_type=EventType.FIZZ_DETECTED))
 
-        matches = registry.get_metric("efp_rule_matches_total")
+        matches = registry.get_metric("efp_rule_matches")
         assert matches.get(labels={"classification": "fizz"}) == 1.0
 
     def test_buzz_detected_increments_rule_matches(self, registry):
         collector = MetricsCollector(registry=registry)
         collector.on_event(Event(event_type=EventType.BUZZ_DETECTED))
 
-        matches = registry.get_metric("efp_rule_matches_total")
+        matches = registry.get_metric("efp_rule_matches")
         assert matches.get(labels={"classification": "buzz"}) == 1.0
 
     def test_fizzbuzz_detected_increments_and_stresses_bob(self, registry):
         collector = MetricsCollector(registry=registry, bob_initial_stress=42.0)
         collector.on_event(Event(event_type=EventType.FIZZBUZZ_DETECTED))
 
-        matches = registry.get_metric("efp_rule_matches_total")
+        matches = registry.get_metric("efp_rule_matches")
         assert matches.get(labels={"classification": "fizzbuzz"}) == 1.0
 
         bob = registry.get_metric("efp_bob_mcfizzington_stress_level")
@@ -697,7 +697,7 @@ class TestMetricsCollector:
         bob = registry.get_metric("efp_bob_mcfizzington_stress_level")
         assert bob.get() == 47.0  # 42 + 5
 
-        errors = registry.get_metric("efp_errors_total")
+        errors = registry.get_metric("efp_errors")
         assert errors.get(labels={"error_type": "test_error"}) == 1.0
 
     def test_number_processed_with_timing(self, registry):
@@ -726,7 +726,7 @@ class TestMetricsCollector:
         event_bus.publish(Event(event_type=EventType.BUZZ_DETECTED))
         event_bus.publish(Event(event_type=EventType.FIZZBUZZ_DETECTED))
 
-        matches = registry.get_metric("efp_rule_matches_total")
+        matches = registry.get_metric("efp_rule_matches")
         assert matches.get(labels={"classification": "fizz"}) == 1.0
         assert matches.get(labels={"classification": "buzz"}) == 1.0
         assert matches.get(labels={"classification": "fizzbuzz"}) == 1.0
@@ -735,7 +735,7 @@ class TestMetricsCollector:
         collector = MetricsCollector(registry=registry)
         collector.on_event(Event(event_type=EventType.PLAIN_NUMBER_DETECTED))
 
-        matches = registry.get_metric("efp_rule_matches_total")
+        matches = registry.get_metric("efp_rule_matches")
         assert matches.get(labels={"classification": "plain"}) == 1.0
 
 
@@ -917,7 +917,7 @@ class TestMetricsIntegration:
         ))
 
         # Verify metrics were collected
-        matches = registry.get_metric("efp_rule_matches_total")
+        matches = registry.get_metric("efp_rule_matches")
         fizz_count = matches.get(labels={"classification": "fizz"})
         buzz_count = matches.get(labels={"classification": "buzz"})
         assert fizz_count > 0

@@ -2302,6 +2302,18 @@ def main(argv: Optional[list[str]] = None) -> int:
             cb_middleware.circuit_breaker.name,
         )
 
+        timeout_str = f"{config.circuit_breaker_timeout_ms}ms"
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | CIRCUIT BREAKER: Fault-Tolerant FizzBuzz ENABLED        |\n"
+            f"  | Failure Threshold: {config.circuit_breaker_failure_threshold:<36}|\n"
+            f"  | Success Threshold: {config.circuit_breaker_success_threshold:<36}|\n"
+            f"  | Timeout: {timeout_str:<47}|\n"
+            "  | Backoff: Exponential with jitter.                       |\n"
+            "  | Because even FizzBuzz deserves graceful degradation.    |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Internationalization (i18n) setup
     locale_mgr = None
     locale = args.locale or config.i18n_locale
@@ -4723,9 +4735,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     # Prometheus metrics export
     if args.metrics_export and metrics_registry is not None:
-        print("\n  +-- PROMETHEUS TEXT EXPOSITION FORMAT --+")
+        print("\n  +-- PROMETHEUS TEXT EXPOSITION FORMAT ---------------------+")
         print(PrometheusTextExporter.export(metrics_registry))
-        print("  +--------------------------------------+\n")
+        print("  +---------------------------------------------------------+\n")
     elif args.metrics_export:
         print("\n  Metrics not enabled. Use --metrics to enable.\n")
 

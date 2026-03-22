@@ -1074,7 +1074,7 @@ class FizzBuzzKernel:
 
         self._boot_log.append(f"[BOOT] Kernel boot completed in {self._boot_time_ns / 1_000_000:.2f}ms")
         self._boot_log.append(f"[BOOT] {len(self._rules)} FizzBuzz rules loaded")
-        self._boot_log.append("[BOOT] System ready. May your modulo operations be swift and accurate.")
+        self._boot_log.append("[BOOT] System ready. May your modulo ops be swift!")
 
         self._emit(EventType.KERNEL_BOOT_COMPLETED, boot_time_ms=self._boot_time_ns / 1_000_000)
 

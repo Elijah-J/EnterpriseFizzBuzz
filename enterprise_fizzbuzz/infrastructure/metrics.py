@@ -826,10 +826,10 @@ class MetricsCollector(IObserver):
     because consistency in over-engineering is a virtue.
 
     Predefined metrics include:
-        - efp_evaluations_total: Total FizzBuzz evaluations (counter)
+        - efp_evaluations: Total FizzBuzz evaluations (counter, exported as _total)
         - efp_evaluation_duration_seconds: Evaluation latency (histogram)
-        - efp_rule_matches_total: Rule matches by type (counter)
-        - efp_errors_total: Total errors (counter)
+        - efp_rule_matches: Rule matches by type (counter, exported as _total)
+        - efp_errors: Total errors (counter, exported as _total)
         - efp_session_duration_seconds: Session duration (summary)
         - efp_bob_mcfizzington_stress_level: Bob's stress (gauge)
         - efp_active_sessions: Currently active sessions (gauge)
@@ -850,7 +850,7 @@ class MetricsCollector(IObserver):
 
         # Register predefined metrics
         self._evaluations_total = Counter(
-            "efp_evaluations_total",
+            "efp_evaluations",
             "Total number of FizzBuzz evaluations performed",
             label_names=("classification", "is_tuesday"),
         )
@@ -865,14 +865,14 @@ class MetricsCollector(IObserver):
         self._registry.register(self._evaluation_duration)
 
         self._rule_matches_total = Counter(
-            "efp_rule_matches_total",
+            "efp_rule_matches",
             "Total number of rule matches by classification",
             label_names=("classification",),
         )
         self._registry.register(self._rule_matches_total)
 
         self._errors_total = Counter(
-            "efp_errors_total",
+            "efp_errors",
             "Total number of errors encountered during FizzBuzz evaluation",
             label_names=("error_type",),
         )

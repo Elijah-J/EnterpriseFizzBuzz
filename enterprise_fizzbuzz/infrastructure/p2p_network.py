@@ -971,7 +971,7 @@ class P2PDashboard:
         topo = network.get_topology_summary()
         lines.append(f"|{'--- CLUSTER TOPOLOGY ---':^{width - 2}}|")
         lines.append(
-            f"|  Total Nodes: {topo['total_nodes']:<{width - 18}}|"
+            f"|  Total Nodes: {topo['total_nodes']:<{width - 17}}|"
         )
 
         state_str = (
@@ -979,7 +979,7 @@ class P2PDashboard:
             f"SUSPECT={topo['suspect']}  "
             f"DEAD={topo['dead']}"
         )
-        lines.append(f"|  States: {state_str:<{width - 13}}|")
+        lines.append(f"|  States: {state_str:<{width - 12}}|")
 
         lines.append(f"|{'':<{width - 2}}|")
 
@@ -1003,18 +1003,18 @@ class P2PDashboard:
         # Gossip stats
         lines.append(f"|{'--- GOSSIP STATISTICS ---':^{width - 2}}|")
         lines.append(
-            f"|  Rounds completed: {topo['gossip_rounds']:<{width - 23}}|"
+            f"|  Rounds completed: {topo['gossip_rounds']:<{width - 22}}|"
         )
         lines.append(
-            f"|  Total pings: {topo['total_pings']:<{width - 18}}|"
+            f"|  Total pings: {topo['total_pings']:<{width - 17}}|"
         )
         lines.append(
-            f"|  Total ping-reqs: {topo['total_ping_reqs']:<{width - 22}}|"
+            f"|  Total ping-reqs: {topo['total_ping_reqs']:<{width - 21}}|"
         )
 
         total_rumors = sum(n.rumors_propagated for n in network.nodes)
         lines.append(
-            f"|  Rumors propagated: {total_rumors:<{width - 24}}|"
+            f"|  Rumors propagated: {total_rumors:<{width - 23}}|"
         )
 
         lines.append(f"|{'':<{width - 2}}|")
@@ -1022,16 +1022,16 @@ class P2PDashboard:
         # DHT stats
         lines.append(f"|{'--- KADEMLIA DHT ---':^{width - 2}}|")
         lines.append(
-            f"|  Lookups: {topo['dht_lookups']:<{width - 14}}|"
+            f"|  Lookups: {topo['dht_lookups']:<{width - 13}}|"
         )
         lines.append(
-            f"|  Stores: {topo['dht_stores']:<{width - 13}}|"
+            f"|  Stores: {topo['dht_stores']:<{width - 12}}|"
         )
         lines.append(
-            f"|  Gets: {topo['dht_gets']:<{width - 11}}|"
+            f"|  Gets: {topo['dht_gets']:<{width - 10}}|"
         )
         lines.append(
-            f"|  Unique classifications: {topo['unique_classifications']:<{width - 29}}|"
+            f"|  Unique classifications: {topo['unique_classifications']:<{width - 28}}|"
         )
 
         lines.append(f"|{'':<{width - 2}}|")

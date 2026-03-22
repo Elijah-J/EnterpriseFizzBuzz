@@ -1292,10 +1292,10 @@ class ComplianceDashboard:
         bar = "#" * filled + "-" * (bar_width - filled)
         lines.append(f"  | Rate: [{bar}] {rate:5.1f}% |")
 
-        lines.append(f"  | Total Checks:    {total:<{width - 22}}|")
-        lines.append(f"  | Compliant:       {compliant:<{width - 22}}|")
-        lines.append(f"  | Non-Compliant:   {non_compliant:<{width - 22}}|")
-        lines.append(f"  | Paradoxes:       {paradoxes:<{width - 22}}|")
+        lines.append(f"  | Total Checks:    {total:<{width - 20}}|")
+        lines.append(f"  | Compliant:       {compliant:<{width - 20}}|")
+        lines.append(f"  | Non-Compliant:   {non_compliant:<{width - 20}}|")
+        lines.append(f"  | Paradoxes:       {paradoxes:<{width - 20}}|")
 
         # Bob McFizzington's stress level
         lines.append(f"  {thin_hr}")
@@ -1303,7 +1303,7 @@ class ComplianceDashboard:
         lines.append(f"  {thin_hr}")
 
         stress = posture["bob_stress_level"]
-        stress_bar_width = width - 24
+        stress_bar_width = width - 22
         stress_filled = min(int(stress_bar_width * stress / 150), stress_bar_width)
         stress_bar = "!" * stress_filled + "." * (stress_bar_width - stress_filled)
         lines.append(f"  | Stress: [{stress_bar}] {stress:5.1f}% |")
@@ -1319,9 +1319,9 @@ class ComplianceDashboard:
         else:
             mood = "BEYOND HELP - Send chocolate"
 
-        mood_str = f"  | Mood: {mood:<{width - 11}}|"
+        mood_str = f"  | Mood: {mood:<{width - 9}}|"
         lines.append(mood_str)
-        lines.append(f"  | Available: {'No (never)' :<{width - 16}}|")
+        lines.append(f"  | Available: {'No (never)' :<{width - 14}}|")
 
         # Classification breakdown
         class_stats = posture.get("classification_stats", {})
@@ -1332,8 +1332,8 @@ class ComplianceDashboard:
             lines.append(f"  {thin_hr}")
             for level_name, count in by_level.items():
                 if count > 0:
-                    label = f"  | {level_name}:"
-                    lines.append(f"{label:<{width - len(str(count)) - 1}}{count} |")
+                    content = f"{level_name}: {count}"
+                    lines.append(f"  | {content:<{width - 4}} |")
 
         # GDPR stats
         gdpr_stats = posture.get("gdpr_stats", {})
@@ -1341,9 +1341,9 @@ class ComplianceDashboard:
             lines.append(f"  {thin_hr}")
             lines.append(f"  |{'GDPR STATUS':^{width - 2}}|")
             lines.append(f"  {thin_hr}")
-            lines.append(f"  | Consents Granted: {gdpr_stats.get('consents_granted', 0):<{width - 23}}|")
-            lines.append(f"  | Erasure Requests: {gdpr_stats.get('erasure_requests', 0):<{width - 23}}|")
-            lines.append(f"  | Paradoxes:        {gdpr_stats.get('paradoxes_encountered', 0):<{width - 23}}|")
+            lines.append(f"  | Consents Granted: {gdpr_stats.get('consents_granted', 0):<{width - 21}}|")
+            lines.append(f"  | Erasure Requests: {gdpr_stats.get('erasure_requests', 0):<{width - 21}}|")
+            lines.append(f"  | Paradoxes:        {gdpr_stats.get('paradoxes_encountered', 0):<{width - 21}}|")
 
         # HIPAA stats
         hipaa_stats = posture.get("hipaa_stats", {})
@@ -1351,11 +1351,11 @@ class ComplianceDashboard:
             lines.append(f"  {thin_hr}")
             lines.append(f"  |{'HIPAA STATUS':^{width - 2}}|")
             lines.append(f"  {thin_hr}")
-            lines.append(f"  | PHI Encryptions:  {hipaa_stats.get('phi_encryptions', 0):<{width - 23}}|")
+            lines.append(f"  | PHI Encryptions:  {hipaa_stats.get('phi_encryptions', 0):<{width - 21}}|")
             encryption_algo = hipaa_stats.get('encryption_algorithm', 'N/A')
-            lines.append(f"  | Algorithm:        {encryption_algo:<{width - 23}}|")
+            lines.append(f"  | Algorithm:        {encryption_algo:<{width - 21}}|")
             actual_sec = hipaa_stats.get('actual_security_provided', 'None')
-            lines.append(f"  | Actual Security:  {actual_sec:<{width - 23}}|")
+            lines.append(f"  | Actual Security:  {actual_sec:<{width - 21}}|")
 
         # SOX stats
         sox_trail = posture.get("sox_stats", [])
@@ -1363,12 +1363,12 @@ class ComplianceDashboard:
             lines.append(f"  {thin_hr}")
             lines.append(f"  |{'SOX AUDIT TRAIL':^{width - 2}}|")
             lines.append(f"  {thin_hr}")
-            lines.append(f"  | Duty Assignments:  {len(sox_trail):<{width - 24}}|")
+            lines.append(f"  | Duty Assignments:  {len(sox_trail):<{width - 22}}|")
             violations = sum(
                 1 for entry in sox_trail
                 if not entry.get("segregation_satisfied", True)
             )
-            lines.append(f"  | Violations:        {violations:<{width - 24}}|")
+            lines.append(f"  | Violations:        {violations:<{width - 22}}|")
 
         lines.append(f"  {hr}")
         lines.append("")

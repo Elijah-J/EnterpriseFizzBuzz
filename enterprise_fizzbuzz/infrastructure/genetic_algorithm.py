@@ -1273,7 +1273,9 @@ class EvolutionDashboard:
 
             axis_line = " " * 6 + "+" + "-" * len(sampled)
             lines.append(text_line(axis_line))
-            gen_label = " " * 7 + f"Gen 1{' ' * max(0, len(sampled) - 8)}Gen {len(history)}"
+            end_label = f"Gen {len(history)}"
+            spacing = max(1, len(sampled) - 5 - len(end_label))
+            gen_label = " " * 7 + f"Gen 1{' ' * spacing}{end_label}"
             lines.append(text_line(gen_label))
             lines.append(text_line(""))
 
