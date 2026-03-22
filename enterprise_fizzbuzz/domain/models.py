@@ -246,6 +246,18 @@ class EventType(Enum):
     MESH_FAULT_INJECTED = auto()
     MESH_TOPOLOGY_RENDERED = auto()
 
+    # A/B Testing Framework events
+    AB_TEST_EXPERIMENT_CREATED = auto()
+    AB_TEST_EXPERIMENT_STARTED = auto()
+    AB_TEST_EXPERIMENT_STOPPED = auto()
+    AB_TEST_VARIANT_ASSIGNED = auto()
+    AB_TEST_METRIC_RECORDED = auto()
+    AB_TEST_SIGNIFICANCE_REACHED = auto()
+    AB_TEST_RAMP_ADVANCED = auto()
+    AB_TEST_AUTO_ROLLBACK = auto()
+    AB_TEST_REPORT_GENERATED = auto()
+    AB_TEST_VERDICT_REACHED = auto()
+
     # Configuration Hot-Reload events
     HOT_RELOAD_FILE_CHANGED = auto()
     HOT_RELOAD_DIFF_COMPUTED = auto()

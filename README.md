@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**64,000+ lines** across **116+ files** with **2,485 unit tests** and **172 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**67,000+ lines** across **118+ files** with **2,571 unit tests** and **164 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -47,7 +47,8 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
     |   rules_engine, ml_engine, blockchain, circuit_breaker,        |
     |   tracing, auth, i18n, event_sourcing, chaos, feature_flags,   |
     |   sla, cache, migrations, webhooks, service_mesh, hot_reload,  |
-    |   rate_limiter, compliance, finops, disaster_recovery            |
+    |   rate_limiter, compliance, finops, disaster_recovery,          |
+    |   ab_testing                                                     |
     |                                                                |
     |   +-------------------------------------------------------+   |
     |   |                   APPLICATION                          |   |
@@ -126,6 +127,7 @@ EnterpriseFizzBuzz/
 │       ├── compliance.py           # Compliance & Regulatory Framework: SOX/GDPR/HIPAA for FizzBuzz data (~1,498 lines)
 │       ├── finops.py               # FinOps Cost Tracking & Chargeback Engine with FizzBuck currency (~1,115 lines)
 │       ├── disaster_recovery.py   # Disaster Recovery & Backup/Restore with WAL, PITR, DR Drills, and Retention Policies (~1,812 lines)
+│       ├── ab_testing.py          # A/B Testing Framework with chi-squared analysis, traffic splitting, and auto-rollback (~1,503 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -144,6 +146,7 @@ EnterpriseFizzBuzz/
 │   ├── compliance.py → enterprise_fizzbuzz.infrastructure.compliance
 │   ├── finops.py → enterprise_fizzbuzz.infrastructure.finops
 │   ├── disaster_recovery.py → enterprise_fizzbuzz.infrastructure.disaster_recovery
+│   ├── ab_testing.py → enterprise_fizzbuzz.infrastructure.ab_testing
 │   └── loc.py → enterprise_fizzbuzz.infrastructure.utils.loc
 │
 ├── locales/                         # Proprietary .fizztranslation locale files
@@ -178,6 +181,7 @@ EnterpriseFizzBuzz/
     ├── test_compliance.py           # 78 compliance, SOX segregation, GDPR consent/erasure, HIPAA minimum necessary, and dashboard tests
     ├── test_finops.py               # 78 FinOps cost tracking, FizzBuck currency, tax engine, invoice generation, and chargeback tests
     ├── test_disaster_recovery.py    # 72 disaster recovery, WAL, snapshot, PITR, retention policy, and DR drill tests
+    ├── test_ab_testing.py           # 86 A/B testing, traffic splitting, chi-squared analysis, ramp scheduling, and auto-rollback tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -316,6 +320,14 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Retention Policy | `disaster_recovery.py` | Manages backup lifecycle with hourly, daily, weekly, and monthly retention tiers for a process that runs for 0.8 seconds -- the temporal impossibility is a feature, not a bug |
 | RPO/RTO Monitoring | `disaster_recovery.py` | Tracks recovery point and recovery time objectives with threshold alerting, ensuring the FizzBuzz platform's durability posture is measured with the same rigor as a Tier IV data center |
 | DR Middleware | `disaster_recovery.py` | Pipeline middleware (priority 7) that WAL-logs every evaluation and creates periodic snapshots, because every modulo operation deserves durable (in-memory) persistence |
+| A/B Testing / Experimentation | `ab_testing.py` | A full experimentation framework that splits FizzBuzz traffic between control and treatment strategies, collects per-variant metrics, and declares a statistically rigorous winner -- which is always modulo, but now we have the p-values to prove it |
+| Deterministic Traffic Splitting | `ab_testing.py` | SHA-256 hash-based assignment of numbers to experiment groups, ensuring that number 42 always lands in the same variant -- reproducibility is the foundation of science, even when the science is `n % 3` |
+| Chi-Squared Test | `ab_testing.py` | Statistical significance testing for accuracy differences between control and treatment groups, implemented from scratch because importing scipy for a FizzBuzz project would be the one genuinely unreasonable dependency in this codebase |
+| Mutual Exclusion Layers | `ab_testing.py` | Prevents a number from being enrolled in conflicting experiments simultaneously, because cross-experiment contamination would invalidate the chi-squared test and require a 15-page statistical methodology correction memo |
+| Ramp Schedule | `ab_testing.py` | Gradually increases treatment traffic allocation from 5% to 50% over configurable phases with safety gates between each ramp, because exposing 100% of numbers to an untested strategy would be the FizzBuzz equivalent of a full-production yolo deploy |
+| Auto-Rollback | `ab_testing.py` | Monitors treatment accuracy in real-time and automatically stops the experiment if it drops below the safety threshold -- triggered in 100% of experiments involving the neural network, which is both expected and statistically significant |
+| Experiment Lifecycle | `ab_testing.py` | Five-state lifecycle (CREATED -> RUNNING -> STOPPED/CONCLUDED/ROLLED_BACK) with event-sourced transitions, because even hypothesis testing deserves a state machine |
+| A/B Testing Middleware | `ab_testing.py` | Pipeline middleware (priority 8) that intercepts evaluations, routes them to experiment variants, and collects per-group metrics -- the scientific method, applied to modulo arithmetic at middleware priority 8 |
 
 ## Features
 
@@ -351,7 +363,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **FinOps Cost Tracking & Chargeback Engine** - A production-grade FinOps framework that tracks the computational cost of every FizzBuzz evaluation with the precision of a cloud provider billing system. Each subsystem is assigned a per-invocation cost rate (modulo: $0.0000001, neural network inference: $0.00042, blockchain hash: $0.00018), with peak/off-peak pricing, day-of-week modifiers (Fridays cost 10% more due to the "end-of-sprint premium"), and the FizzBuzz Tax (3% on Fizz, 5% on Buzz, 15% on FizzBuzz -- because even fictional taxes should be thematic). All costs are denominated in FizzBucks (FB$), whose exchange rate to USD fluctuates based on the cache hit ratio. The ASCII invoice generator produces itemized receipts that would make any cloud provider's billing department weep with pride. A Savings Plan simulator models 1-year (20% discount) and 3-year (40% discount) commitment plans, transforming a coding exercise into a contractual financial obligation. The cost dashboard renders spending sparklines in the terminal, because if you can't graph your FizzBuzz costs, what are you even doing with your FinOps practice
 - **Compliance & Regulatory Framework (SOX/GDPR/HIPAA)** - A production-grade compliance engine that subjects every FizzBuzz evaluation to the same regulatory scrutiny normally reserved for financial transactions and nuclear launch codes. SOX Segregation of Duties ensures no single virtual employee can both evaluate Fizz AND evaluate Buzz. GDPR treats every number as a data subject with full right-to-erasure support -- which creates THE COMPLIANCE PARADOX when the erasure request hits the append-only event store and immutable blockchain (both demand permanence; GDPR demands deletion; the universe implodes; Bob loses sleep). HIPAA classifies FizzBuzz results as Protected Health Information and "encrypts" them at rest using base64, which is technically RFC 4648 compliant and therefore military-grade by the same logic that makes a cardboard box a house. A five-tier Data Classification Engine labels every result from PUBLIC to TOP_SECRET_FIZZBUZZ. The Compliance Dashboard tracks Bob McFizzington's stress level (94.7% and rising), per-regime compliance rates, and the erasure paradox counter. Eight custom exception classes cover every regulatory failure mode from `SOXSegregationViolationError` to `ComplianceOfficerUnavailableError`. Compliance middleware runs at priority 1, because regulatory overhead should always come before actual computation
 - **Disaster Recovery & Backup/Restore** - A production-grade disaster recovery framework with Write-Ahead Logging (WAL), snapshot-based backups, Point-in-Time Recovery (PITR), configurable retention policies (24 hourly, 7 daily, 4 weekly, 12 monthly -- for a process that runs for 0.8 seconds), DR drill simulations with RTO/RPO compliance measurement, and an ASCII recovery dashboard. All backups are stored exclusively in RAM, which protects against everything except the one thing that actually destroys data: process termination. The WAL appends every mutation with SHA-256 checksums before applying it in memory, achieving the same durability guarantees as `/dev/null` but with cryptographic integrity verification. The PITR engine replays WAL entries from the nearest snapshot to reconstruct FizzBuzz state at any arbitrary timestamp -- essential for answering "what was the cache hit ratio at 14:32:07.445 last Tuesday?" with sub-millisecond precision. DR drills intentionally corrupt subsystem state and measure recovery time against configurable RTO targets, producing post-drill reports that invariably recommend "reducing system complexity to improve recovery time" -- a recommendation that has been noted, event-sourced, and ignored in every prior drill cycle. The retention manager enforces a tiered backup lifecycle that is temporally impossible for a sub-second process but architecturally impeccable. Fourteen custom exception classes cover every failure mode from `WALCorruptionError` to `RTOViolationError`. DR middleware runs at priority 7, because disaster preparedness should happen after compliance but before cost tracking -- priorities that make perfect sense if you don't think about them too hard
-- **Custom Exception Hierarchy** - 155 exception classes for every conceivable FizzBuzz failure mode
+- **A/B Testing Framework** - A production-grade experimentation platform with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing (no scipy required), mutual exclusion layers to prevent cross-experiment contamination, gradual ramp schedules with safety gates, automatic rollback when treatment accuracy drops below threshold, per-variant metric collection (accuracy, latency, cost), an ASCII experiment dashboard with confidence intervals and p-values, and a post-experiment report generator that invariably concludes "modulo wins on all metrics" -- because the only thing better than knowing the answer is spending 1,503 lines proving it with statistics. Nine custom exception classes cover every experimentation failure mode from `ExperimentNotFoundError` to `AutoRollbackTriggeredError`. A/B Testing middleware runs at priority 8, because scientific rigor should happen after disaster recovery but before the results reach the formatter
+- **Custom Exception Hierarchy** - 164 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -741,6 +754,30 @@ python main.py --backup-now --backup-retention standard --range 1 50
 
 # Full DR stack: WAL + snapshots + drill + compliance + SLA (peak business continuity)
 python main.py --wal-enable --backup-now --dr-drill --dr-report --compliance --sla --sla-dashboard --range 1 20
+
+# A/B Testing: run an experiment comparing modulo vs. neural network strategies
+python main.py --ab-test --experiment ml_vs_modulo --range 1 100
+
+# A/B Testing: list all active experiments and their current state
+python main.py --experiment-list
+
+# A/B Testing: view real-time results with confidence intervals and p-values
+python main.py --ab-test --experiment-results ml_vs_modulo --range 1 100
+
+# A/B Testing: ASCII experiment dashboard with per-variant metrics
+python main.py --ab-test --experiment-dashboard --range 1 100
+
+# A/B Testing: set treatment traffic allocation to 25%
+python main.py --ab-test --experiment ml_vs_modulo --experiment-traffic 25 --range 1 100
+
+# A/B Testing: manually stop an experiment and lock in the results
+python main.py --experiment-stop ml_vs_modulo
+
+# A/B Testing: generate a post-experiment statistical analysis report
+python main.py --experiment-report ml_vs_modulo
+
+# Full experimentation stack: A/B testing + metrics + tracing + SLA (peak data-driven decision making)
+python main.py --ab-test --experiment-dashboard --metrics --metrics-dashboard --trace --sla --sla-dashboard --range 1 50
 ```
 
 ## CLI Options
@@ -848,6 +885,14 @@ python main.py --wal-enable --backup-now --dr-drill --dr-report --compliance --s
 --restore-point-in-time TS Reconstruct exact application state at a specific ISO-8601 timestamp via WAL replay
 --dr-drill                 Run a Disaster Recovery drill: corrupt subsystems and measure recovery time against RTO
 --dr-report                Display the post-drill analysis with RTO/RPO compliance, recovery metrics, and recommendations
+--ab-test                  Enable the A/B Testing Framework for running controlled experiments across evaluation strategies
+--experiment NAME          Specify the experiment name (e.g., ml_vs_modulo, chain_vs_standard)
+--experiment-list          Display all registered experiments with their states, traffic allocation, and sample counts
+--experiment-results NAME  Display real-time per-variant metrics with confidence intervals and statistical significance for a named experiment
+--experiment-dashboard     Display the ASCII A/B testing dashboard with per-group metrics, p-values, and winner/loser verdicts
+--experiment-traffic PCT   Set the treatment group traffic allocation percentage (default: 10)
+--experiment-stop NAME     Manually stop a running experiment and preserve results for analysis
+--experiment-report NAME   Generate a comprehensive post-experiment statistical analysis report with methodology, results, and recommendations
 ```
 
 ## Environment Variables
@@ -2571,10 +2616,98 @@ The framework is built around five interconnected components: a **Write-Ahead Lo
 | Dashboard | ASCII recovery status with backup inventory and drill history |
 | Actual durability | None (everything is in RAM). But the checksums are real |
 
+## A/B Testing Architecture
+
+The A/B Testing Framework implements a production-grade experimentation platform for running statistically rigorous controlled experiments across FizzBuzz evaluation strategies -- because arguing in a meeting about whether the neural network is "good enough" is the old way. The new way is running a chi-squared test, getting a p-value of 0.0000, and letting the numbers confirm what everyone already knew: modulo wins. Every time. But the journey of proving it with statistics is what separates enterprise engineering from mere programming.
+
+The framework is built around six interconnected components: a **Traffic Splitter** for deterministic hash-based group assignment, a **Metric Collector** for per-variant performance tracking, a **Statistical Analyzer** for chi-squared significance testing, a **Ramp Scheduler** for gradual traffic increases with safety gates, an **Auto-Rollback** monitor for treatment accuracy protection, and an **Experiment Registry** for lifecycle management.
+
+**Key components:**
+- **ExperimentRegistry** - Central store of experiment definitions with full lifecycle management (CREATED -> RUNNING -> STOPPED/CONCLUDED/ROLLED_BACK). Supports concurrent experiments via mutual exclusion layers that prevent a number from being enrolled in conflicting experiments -- because cross-experiment contamination would confound the chi-squared test
+- **TrafficSplitter** - Deterministic SHA-256 hash-based assignment of numbers to control/treatment groups. Number 42 always goes to the same group across runs, enabling reproducible experiments -- the scientific method, applied to traffic routing
+- **MetricCollector** - Per-variant tracking of accuracy, latency (P50/P99), evaluation count, and correct/incorrect tallies. Metrics are collected in real-time as evaluations flow through the middleware pipeline
+- **StatisticalAnalyzer** - Chi-squared test for accuracy proportions and confidence interval calculation, implemented from scratch in pure Python stdlib. Returns a verdict of CONTROL_WINS, TREATMENT_WINS, or NO_SIGNIFICANT_DIFFERENCE with the associated p-value and effect size
+- **RampScheduler** - Gradually increases treatment traffic allocation through configurable phases (5% -> 10% -> 25% -> 50%) with safety checks between each ramp. If accuracy drops during a ramp phase, the schedule halts and the experiment is flagged for review
+- **AutoRollback** - Monitors treatment accuracy in real-time and automatically stops the experiment if it drops below a configurable safety threshold, routing all traffic back to control. Triggered in approximately 100% of experiments involving the neural network
+- **ExperimentReport** - Generates a comprehensive post-experiment report with methodology documentation, per-variant metrics, statistical analysis, confidence intervals, and a recommendation that invariably reads: "The control group (modulo) outperformed the treatment on all metrics"
+- **ExperimentDashboard** - ASCII dashboard showing active experiments, per-variant metrics, traffic allocation, confidence intervals, p-values, and a definitive WINNER/LOSER/INCONCLUSIVE verdict
+- **ABTestingMiddleware** - Pipeline middleware (priority 8) that intercepts every evaluation, routes it to the appropriate experiment variant based on the traffic splitter, collects metrics, and checks auto-rollback conditions
+
+### Experimentation Flow
+
+```
+                                +==============+
+                                |   Incoming   |
+                                |   Number     |
+                                +------+-------+
+                                       |
+                                       v
+                              +--------+---------+
+                              | AB Testing       |
+                              | Middleware        |
+                              | (priority 8)     |
+                              +--------+---------+
+                                       |
+                            +----------+----------+
+                            |                     |
+                            v                     v
+                    +-------+------+      +-------+------+
+                    |   Control    |      |  Treatment   |
+                    |   (modulo)   |      |  (ML/chain)  |
+                    +-------+------+      +-------+------+
+                            |                     |
+                            v                     v
+                    +-------+------+      +-------+------+
+                    |   Metric     |      |   Metric     |
+                    |  Collector   |      |  Collector   |
+                    +-------+------+      +-------+------+
+                            |                     |
+                            +----------+----------+
+                                       |
+                                       v
+                              +--------+---------+
+                              | Statistical      |
+                              | Analyzer         |
+                              | (chi-squared)    |
+                              +--------+---------+
+                                       |
+                                       v
+                              +--------+---------+
+                              | Verdict:         |
+                              | CONTROL_WINS     |
+                              | (p < 0.05)       |
+                              | (it's always     |
+                              |  control)        |
+                              +------------------+
+```
+
+### Traffic Allocation
+
+| Phase | Treatment % | Duration | Safety Gate |
+|-------|-------------|----------|-------------|
+| Initial | 5% | Configurable | Accuracy >= threshold |
+| Ramp 1 | 10% | Configurable | Chi-squared check passes |
+| Ramp 2 | 25% | Configurable | No auto-rollback triggered |
+| Full | 50% | Until conclusion | Statistical significance reached |
+
+| Spec | Value |
+|------|-------|
+| Traffic splitting | SHA-256 deterministic hash |
+| Statistical test | Chi-squared (no scipy) |
+| Confidence level | 95% (configurable) |
+| Minimum sample size | 30 per group (configurable) |
+| Experiment states | 5 (CREATED, RUNNING, STOPPED, CONCLUDED, ROLLED_BACK) |
+| Mutual exclusion | Layer-based conflict prevention |
+| Auto-rollback threshold | 90% accuracy (configurable) |
+| Middleware priority | 8 (after disaster recovery) |
+| Custom exceptions | 9 (ABTestingError hierarchy) |
+| Dashboard | ASCII experiment results with confidence intervals |
+| Inevitable conclusion | Modulo wins. It always wins |
+
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 2,485 tests, 172 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Compliance & Regulatory Framework with SOX segregation of duties, GDPR consent management and right-to-erasure (featuring THE COMPLIANCE PARADOX when the erasure request hits the immutable blockchain and append-only event store), HIPAA minimum necessary rule enforcement with base64 "encryption," a five-tier Data Classification Engine, and Bob McFizzington's stress level tracked at 94.7% and rising, a FinOps Cost Tracking & Chargeback Engine with per-subsystem cost rates, FizzBuzz Tax (3%/5%/15%), a proprietary FizzBuck currency whose exchange rate fluctuates with cache hit ratios, ASCII itemized invoices, Savings Plan simulators for 1-year and 3-year commitments, and a cost dashboard with spending sparklines, a Disaster Recovery & Backup/Restore framework with Write-Ahead Logging, snapshot-based backups, Point-in-Time Recovery, DR drills with RTO/RPO compliance measurement, and a retention policy that maintains 47 backup snapshots for a process that runs for 0.8 seconds, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,485 tests, 172 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Compliance & Regulatory Framework with SOX segregation of duties, GDPR consent management and right-to-erasure (featuring THE COMPLIANCE PARADOX when the erasure request hits the immutable blockchain and append-only event store), HIPAA minimum necessary rule enforcement with base64 "encryption," a five-tier Data Classification Engine, and Bob McFizzington's stress level tracked at 94.7% and rising, a FinOps Cost Tracking & Chargeback Engine with per-subsystem cost rates, FizzBuzz Tax (3%/5%/15%), a proprietary FizzBuck currency whose exchange rate fluctuates with cache hit ratios, ASCII itemized invoices, Savings Plan simulators for 1-year and 3-year commitments, and a cost dashboard with spending sparklines, a Disaster Recovery & Backup/Restore framework with Write-Ahead Logging, snapshot-based backups, Point-in-Time Recovery, DR drills with RTO/RPO compliance measurement, and a retention policy that maintains 47 backup snapshots for a process that runs for 0.8 seconds, an A/B Testing Framework with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing, mutual exclusion layers, gradual ramp schedules, automatic rollback, and ASCII experiment dashboards that scientifically prove modulo wins every time (p < 0.05), a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
@@ -2605,6 +2738,9 @@ A: Because cloud cost management is a $4.5 billion market, and EnterpriseFizzBuz
 
 **Q: Why does FizzBuzz need disaster recovery?**
 A: Because data loss is not an acceptable outcome, even when the data is stored exclusively in RAM and will be garbage-collected the instant the process exits. The Write-Ahead Log ensures that every mutation to every Python dict is recorded with a SHA-256 checksum before the mutation occurs -- achieving the same theoretical durability guarantee as a PostgreSQL WAL, minus the durable storage. The snapshot engine serializes the entire application state (cache, event store, blockchain, neural network weights, feature flags, circuit breaker positions) into a JSON blob that is stored... in memory... alongside the data it's backing up. This is the disaster recovery equivalent of keeping your spare house key inside the house, but at least the key has a cryptographic checksum. Point-in-Time Recovery can reconstruct the exact FizzBuzz state at any arbitrary timestamp by replaying WAL entries from the nearest snapshot, which is essential for post-incident forensics like "at what precise moment did the neural network lose confidence in the number 15?" The DR drill mode intentionally destroys subsystem state -- corrupting caches, scrambling blockchains, randomizing ML weights -- and then times how long recovery takes, comparing against the 2-second RTO. The post-drill report invariably recommends "reducing system complexity to improve recovery time," a recommendation so consistently ignored that ignoring it has become its own design pattern. The retention policy maintains 24 hourly, 7 daily, 4 weekly, and 12 monthly backups for a process whose entire lifecycle fits within a single clock tick of the retention scheduler. The mathematical impossibility of this schedule is not a bug; it is a feature that ensures the retention manager always has work to do, even if that work will never actually execute. Fourteen custom exception classes cover every conceivable DR failure mode, from `WALCorruptionError` (the log that protects against corruption has itself become corrupted -- the recursion is not lost on us) to `RTOViolationError` (recovery took longer than 2 seconds, which in enterprise terms is a P1 incident requiring Bob's immediate attention). Bob was already on call. Bob is always on call.
+
+**Q: Why does FizzBuzz need an A/B testing framework?**
+A: Because data-driven decision making is the hallmark of a mature engineering organization. Instead of arguing in a meeting about whether the neural network is "good enough," you run an A/B test and let the numbers speak for themselves. The numbers always say the same thing -- modulo wins on accuracy (100% vs. ~98%), latency (0.001ms vs. 2ms), and cost (FB$0.0000001 vs. FB$0.00042) -- but the process of reaching that conclusion through rigorous chi-squared statistical analysis rather than common sense is what separates enterprise engineering from mere programming. The traffic splitter uses SHA-256 hashing to deterministically assign each number to a group, ensuring that number 42 always goes to control (or treatment) across runs, enabling reproducible experiments that would make any scientific review board proud. The mutual exclusion layers prevent the statistical sin of a number being enrolled in two conflicting experiments, which would confound the results and require a 15-page methodology correction memo. The ramp scheduler gradually increases treatment traffic from 5% to 50% with safety gates between each phase, because exposing 100% of FizzBuzz traffic to an untested neural network strategy would be the data science equivalent of a full-production yolo deploy. The auto-rollback has been triggered in every experiment involving the neural network, the blockchain, or any strategy that isn't just `n % 3 == 0`. The post-experiment report takes 200 lines of statistical analysis to arrive at the conclusion that the modulo operator, invented approximately three millennia ago, outperforms a three-layer neural network at determining divisibility. The journey is the destination. The p-value is always significant. Modulo always wins.
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.

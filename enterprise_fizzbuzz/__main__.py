@@ -162,6 +162,13 @@ from enterprise_fizzbuzz.infrastructure.disaster_recovery import (
     DRSystem,
     RecoveryDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.ab_testing import (
+    ABTestingMiddleware,
+    ExperimentDashboard,
+    ExperimentRegistry,
+    ExperimentReport,
+    create_ab_testing_subsystem,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -816,6 +823,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--retention-status",
         action="store_true",
         help="Display the backup retention policy status (24h/7d/4w/12m for a <1s process)",
+    )
+
+    # A/B Testing Framework
+    parser.add_argument(
+        "--ab-test",
+        action="store_true",
+        help="Enable the A/B Testing Framework for evaluation strategy comparison",
+    )
+
+    parser.add_argument(
+        "--experiment",
+        type=str,
+        metavar="NAME",
+        default=None,
+        help="Run a specific named experiment (default: all configured experiments)",
+    )
+
+    parser.add_argument(
+        "--ab-report",
+        action="store_true",
+        help="Display the A/B testing experiment report after execution",
+    )
+
+    parser.add_argument(
+        "--ab-dashboard",
+        action="store_true",
+        help="Display the A/B testing dashboard after execution",
     )
 
     return parser
@@ -1700,6 +1734,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("hot_reload_check")
         if args.dr:
             active_subsystems.append("disaster_recovery")
+        if args.ab_test:
+            active_subsystems.append("ab_testing")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -1778,6 +1814,35 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
     elif args.retention_status:
         print("\n  DR not enabled. Use --dr to enable.\n")
+        return 0
+
+    # ----------------------------------------------------------------
+    # A/B Testing Framework setup
+    # ----------------------------------------------------------------
+    ab_registry = None
+    ab_middleware = None
+    if args.ab_test or args.ab_report or args.ab_dashboard:
+        ab_registry, ab_middleware = create_ab_testing_subsystem(
+            config=config,
+            event_bus=event_bus,
+            experiment_name=args.experiment,
+        )
+
+        running = ab_registry.get_running_experiments()
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | A/B TESTING: Experiment Framework ENABLED                |\n"
+            f"  | Running experiments: {len(running):<36}|\n"
+            "  | Traffic is being split between evaluation strategies.    |\n"
+            "  | The modulo operator is about to embarrass the            |\n"
+            "  | competition. Again.                                      |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.ab_report:
+        print("\n  A/B testing not enabled. Use --ab-test to enable.\n")
+        return 0
+    elif args.ab_dashboard:
+        print("\n  A/B testing not enabled. Use --ab-test to enable.\n")
         return 0
 
     # Chaos Engineering setup
@@ -1923,6 +1988,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if dr_middleware is not None:
         builder.with_middleware(dr_middleware)
+
+    if ab_middleware is not None:
+        builder.with_middleware(ab_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -2442,6 +2510,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         # Retention status
         if args.retention_status:
             print(dr_system.render_retention_status())
+
+    # A/B Testing report and dashboard
+    if ab_registry is not None:
+        # Conclude all running experiments after evaluation
+        for exp_name in list(ab_registry.get_running_experiments()):
+            ab_registry.conclude_experiment(exp_name)
+
+        if args.ab_report:
+            for exp_name in ab_registry.get_all_experiments():
+                print(ExperimentReport.render(
+                    ab_registry, exp_name, width=config.ab_testing_dashboard_width
+                ))
+
+        if args.ab_dashboard:
+            print(ExperimentDashboard.render(
+                ab_registry, width=config.ab_testing_dashboard_width
+            ))
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
