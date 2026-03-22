@@ -98,7 +98,9 @@ An interactive time-travel debugger that treats the event log as a navigable tim
 
 ---
 
-## Idea 4: Custom Bytecode VM for Rule Evaluation
+## ~~Idea 4: Custom Bytecode VM for Rule Evaluation~~ DONE
+
+> **Status: IMPLEMENTED** -- Shipped as `enterprise_fizzbuzz/infrastructure/bytecode_vm.py` (~1,450 lines) with 90 tests (~963 lines). Twenty-opcode ISA (LOAD_N, MOD, CMP_ZERO, PUSH_LABEL, EMIT_RESULT, HALT, and 14 more), three-phase compilation pipeline (code generation, label resolution, peephole optimization), 8-register execution engine with zero flag, label stack, data stack, and configurable cycle limits, bytecode disassembler, `.fzbc` binary serializer with "FZBC" magic header, and an ASCII dashboard with register file snapshot, disassembly listing, and execution statistics. CLI flags: `--vm`, `--vm-disasm`, `--vm-trace`, `--vm-dashboard`. Slower than CPython. By design.
 
 ### The Problem
 
@@ -220,7 +222,7 @@ Because Raft already exists in the hot-reload module, and implementing the same 
 | 1 | ~~Formal Verification / Proof System~~ **DONE** | ~1,400 + 855 tests | 76 | Tests prove FizzBuzz works for finite inputs; proofs prove it for all inputs |
 | 2 | ~~FizzBuzz-as-a-Service (FBaaS)~~ **DONE** | ~1,031 + 726 tests | 87 | CLI-only FizzBuzz is a pre-cloud relic; SaaS is the future of modulo |
 | 3 | ~~Time-Travel Debugger~~ **DONE** | ~1,166 + 877 tests | 82 | We store every event but cannot navigate them; the data demands a vehicle |
-| 4 | Custom Bytecode VM (FBVM) | ~3,000 | ~150 | CPython's general-purpose bytecode is an insult to purpose-built modulo |
+| 4 | ~~Custom Bytecode VM (FBVM)~~ **DONE** | ~1,450 + 963 tests | 90 | CPython's general-purpose bytecode is an insult to purpose-built modulo |
 | 5 | Query Optimizer / Rule Planner | ~2,450 | ~140 | Treating all evaluations equally is the full-table-scan of FizzBuzz |
 | 6 | Distributed Paxos Consensus | ~3,150 | ~160 | Single-node truth is single-point-of-failure truth; quorum is non-negotiable |
 | **Total** | | **~16,430** | **~840** | **Because 108,000 lines was a starting point, not a destination** |

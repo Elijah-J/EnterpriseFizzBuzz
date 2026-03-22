@@ -497,6 +497,13 @@ class EventType(Enum):
     TIME_TRAVEL_ANOMALY_DETECTED = auto()
     TIME_TRAVEL_DASHBOARD_RENDERED = auto()
 
+    # Custom Bytecode VM events
+    VM_COMPILATION_STARTED = auto()
+    VM_COMPILATION_COMPLETED = auto()
+    VM_EXECUTION_STARTED = auto()
+    VM_EXECUTION_COMPLETED = auto()
+    VM_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

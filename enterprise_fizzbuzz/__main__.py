@@ -189,6 +189,15 @@ from enterprise_fizzbuzz.infrastructure.secrets_vault import (
     VaultMiddleware,
     VaultSealManager,
 )
+from enterprise_fizzbuzz.infrastructure.bytecode_vm import (
+    BytecodeSerializer,
+    Disassembler,
+    FBVMCompiler,
+    FizzBuzzVM,
+    PeepholeOptimizer,
+    VMDashboard,
+    compile_rules,
+)
 from enterprise_fizzbuzz.infrastructure.formal_verification import (
     PropertyType,
     PropertyVerifier,
@@ -1340,6 +1349,31 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fbaas-billing",
         action="store_true",
         help="Display the FBaaS billing ledger and dashboard after execution",
+    )
+
+    # Custom Bytecode VM (FBVM)
+    parser.add_argument(
+        "--vm",
+        action="store_true",
+        help="Execute FizzBuzz using the Custom Bytecode VM (FBVM) instead of Python — because direct execution was too efficient",
+    )
+
+    parser.add_argument(
+        "--vm-disasm",
+        action="store_true",
+        help="Display the FBVM disassembly listing of compiled bytecode before execution",
+    )
+
+    parser.add_argument(
+        "--vm-trace",
+        action="store_true",
+        help="Enable instruction-level execution tracing in the FBVM (log every fetch-decode-execute cycle)",
+    )
+
+    parser.add_argument(
+        "--vm-dashboard",
+        action="store_true",
+        help="Display the FBVM ASCII dashboard with register file, disassembly, and execution stats",
     )
 
     # Time-Travel Debugger
@@ -3577,6 +3611,93 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     elif args.deploy_rollback:
         print("\n  Deployment not active. Use --deploy to enable.\n")
+
+    # ----------------------------------------------------------------
+    # Custom Bytecode VM (FBVM) Execution Path
+    # ----------------------------------------------------------------
+    # When --vm is active, we compile the rules to FBVM bytecode and
+    # execute them through our custom virtual machine instead of using
+    # the standard Python-based rule engine. This adds approximately
+    # 700 lines of infrastructure to compute n % 3 == 0, which is
+    # exactly the kind of engineering decision this platform celebrates.
+    # ----------------------------------------------------------------
+    if args.vm or args.vm_disasm or args.vm_trace or args.vm_dashboard:
+        from enterprise_fizzbuzz.domain.models import RuleDefinition as _RuleDef
+
+        vm_rules = config.rules
+        vm_trace = args.vm_trace or config.vm_trace_execution
+        vm_optimize = config.vm_enable_optimizer
+
+        # Compile rules to bytecode
+        vm_program, vm_compiler = compile_rules(
+            vm_rules,
+            enable_optimizer=vm_optimize,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FBVM: FizzBuzz Bytecode Virtual Machine ENABLED          |\n"
+            f"  | Rules compiled: {len(vm_rules):<42}|\n"
+            f"  | Instructions: {len(vm_program.instructions):<44}|\n"
+            f"  | Optimized: {'Yes' if vm_program.optimized else 'No':<47}|\n"
+            "  | Because Python was too efficient for modulo arithmetic. |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Show disassembly if requested
+        if args.vm_disasm:
+            print()
+            print(Disassembler.disassemble(vm_program))
+
+        # Execute via VM
+        vm_instance = FizzBuzzVM(
+            cycle_limit=config.vm_cycle_limit,
+            trace_execution=vm_trace,
+            register_count=config.vm_register_count,
+            event_bus=event_bus,
+        )
+
+        boot_time = time.perf_counter()
+        vm_results_output = []
+
+        for number in range(start, end + 1):
+            result_str = vm_instance.execute(vm_program, number)
+            vm_results_output.append(f"  {result_str}")
+
+        wall_time_ms = (time.perf_counter() - boot_time) * 1000
+
+        # Print results
+        print()
+        for line in vm_results_output:
+            print(line)
+        print()
+
+        print(f"  FBVM evaluated {end - start + 1} numbers in {wall_time_ms:.2f}ms")
+        print(f"  Average cycles per number: {vm_instance.state.cycles}")
+
+        # Show trace if requested
+        if vm_trace and vm_instance.execution_traces:
+            print()
+            print(VMDashboard.render_trace(
+                vm_instance.execution_traces,
+                width=config.vm_dashboard_width,
+            ))
+
+        # Show dashboard if requested
+        if args.vm_dashboard:
+            print()
+            print(VMDashboard.render(
+                vm_program,
+                vm_instance,
+                width=config.vm_dashboard_width,
+                show_registers=config.vm_dashboard_show_registers,
+                show_disassembly=config.vm_dashboard_show_disassembly,
+            ))
+
+        # If --vm was the only mode, skip the normal execution path
+        if args.vm and not args.use_async:
+            return 0
 
     boot_time = time.perf_counter()
 
