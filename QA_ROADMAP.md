@@ -24,8 +24,8 @@ The platform has 14 test files covering the major subsystems (auth, cache, chaos
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 4
-- Remaining: 6
+- Implemented: 5
+- Remaining: 5
 
 ## Test Items
 
@@ -114,7 +114,7 @@ Focus on the pipeline mechanics and the middlewares that don't have coverage els
 
 ### 5. Observer / Event Bus (tests/test_observers.py)
 
-**Status:** PENDING
+**Status:** DONE (42 tests)
 **Description:** The event bus is the platform's publish-subscribe backbone. Every FizzBuzz event (evaluation started, rule matched, result produced) flows through it. Observers subscribe and react. No tests.
 
 Test the following:
