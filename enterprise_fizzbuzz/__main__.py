@@ -169,6 +169,14 @@ from enterprise_fizzbuzz.infrastructure.ab_testing import (
     ExperimentReport,
     create_ab_testing_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.message_queue import (
+    MQDashboard,
+    MQMiddleware,
+    MessageBroker,
+    MessageQueueBridge,
+    Producer,
+    create_message_queue_subsystem,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -850,6 +858,31 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--ab-dashboard",
         action="store_true",
         help="Display the A/B testing dashboard after execution",
+    )
+
+    # Message Queue & Event Bus
+    parser.add_argument(
+        "--mq",
+        action="store_true",
+        help="Enable the Kafka-style Message Queue backed by Python lists",
+    )
+
+    parser.add_argument(
+        "--mq-dashboard",
+        action="store_true",
+        help="Display the message queue ASCII dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--mq-topics",
+        action="store_true",
+        help="Display all message queue topics and exit",
+    )
+
+    parser.add_argument(
+        "--mq-lag",
+        action="store_true",
+        help="Display consumer lag report after execution",
     )
 
     return parser
@@ -1736,6 +1769,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("disaster_recovery")
         if args.ab_test:
             active_subsystems.append("ab_testing")
+        if args.mq:
+            active_subsystems.append("message_queue")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -1843,6 +1878,53 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
     elif args.ab_dashboard:
         print("\n  A/B testing not enabled. Use --ab-test to enable.\n")
+        return 0
+
+    # ----------------------------------------------------------------
+    # Message Queue & Event Bus setup
+    # ----------------------------------------------------------------
+    mq_broker = None
+    mq_producer = None
+    mq_middleware = None
+    mq_bridge = None
+    if args.mq or args.mq_dashboard or args.mq_topics or args.mq_lag:
+        mq_broker, mq_producer, mq_middleware, mq_bridge = create_message_queue_subsystem(
+            event_bus=event_bus,
+            default_partitions=config.mq_default_partitions,
+            partitioner_strategy=config.mq_partitioner_strategy,
+            enable_schema_validation=config.mq_enable_schema_validation,
+            enable_idempotency=config.mq_enable_idempotency,
+            max_poll_records=config.mq_max_poll_records,
+            topic_configs=config.mq_topics,
+            consumer_group_configs=config.mq_consumer_groups,
+        )
+
+        # Subscribe the bridge to the event bus
+        event_bus.subscribe(mq_bridge)
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | MESSAGE QUEUE: Kafka-Style Topics ENABLED                |\n"
+            "  | Every 'partition' is a Python list. Every 'broker' is    |\n"
+            "  | a dict. Every 'consumer group rebalance' is a dict      |\n"
+            "  | key reassignment. Exactly-once delivery: SHA-256 + set. |\n"
+            "  | The fizzbuzz.feelings topic exists. Nobody subscribes.   |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Handle --mq-topics (early exit)
+        if args.mq_topics:
+            print(MQDashboard.render_topics(mq_broker, width=config.mq_dashboard_width + 4))
+            return 0
+
+    elif args.mq_topics:
+        print("\n  Message queue not enabled. Use --mq to enable.\n")
+        return 0
+    elif args.mq_dashboard:
+        print("\n  Message queue not enabled. Use --mq to enable.\n")
+        return 0
+    elif args.mq_lag:
+        print("\n  Message queue not enabled. Use --mq to enable.\n")
         return 0
 
     # Chaos Engineering setup
@@ -1991,6 +2073,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if ab_middleware is not None:
         builder.with_middleware(ab_middleware)
+
+    if mq_middleware is not None:
+        builder.with_middleware(mq_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -2527,6 +2612,14 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(ExperimentDashboard.render(
                 ab_registry, width=config.ab_testing_dashboard_width
             ))
+
+    # Message Queue dashboards
+    if mq_broker is not None:
+        if args.mq_dashboard:
+            print(MQDashboard.render(mq_broker, width=config.mq_dashboard_width + 4))
+
+        if args.mq_lag:
+            print(MQDashboard.render_lag(mq_broker, width=config.mq_dashboard_width + 4))
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

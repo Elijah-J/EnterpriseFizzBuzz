@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**67,000+ lines** across **118+ files** with **2,571 unit tests** and **164 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**71,000+ lines** across **121+ files** with **2,672 unit tests** and **177 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -128,6 +128,7 @@ EnterpriseFizzBuzz/
 │       ├── finops.py               # FinOps Cost Tracking & Chargeback Engine with FizzBuck currency (~1,115 lines)
 │       ├── disaster_recovery.py   # Disaster Recovery & Backup/Restore with WAL, PITR, DR Drills, and Retention Policies (~1,812 lines)
 │       ├── ab_testing.py          # A/B Testing Framework with chi-squared analysis, traffic splitting, and auto-rollback (~1,503 lines)
+│       ├── message_queue.py       # Kafka-Style Message Queue with partitioned topics, consumer groups, and exactly-once delivery (~2,053 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -182,6 +183,7 @@ EnterpriseFizzBuzz/
     ├── test_finops.py               # 78 FinOps cost tracking, FizzBuck currency, tax engine, invoice generation, and chargeback tests
     ├── test_disaster_recovery.py    # 72 disaster recovery, WAL, snapshot, PITR, retention policy, and DR drill tests
     ├── test_ab_testing.py           # 86 A/B testing, traffic splitting, chi-squared analysis, ramp scheduling, and auto-rollback tests
+    ├── test_message_queue.py        # 101 message queue, topic partitioning, consumer group, schema registry, and exactly-once delivery tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -328,6 +330,15 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Auto-Rollback | `ab_testing.py` | Monitors treatment accuracy in real-time and automatically stops the experiment if it drops below the safety threshold -- triggered in 100% of experiments involving the neural network, which is both expected and statistically significant |
 | Experiment Lifecycle | `ab_testing.py` | Five-state lifecycle (CREATED -> RUNNING -> STOPPED/CONCLUDED/ROLLED_BACK) with event-sourced transitions, because even hypothesis testing deserves a state machine |
 | A/B Testing Middleware | `ab_testing.py` | Pipeline middleware (priority 8) that intercepts evaluations, routes them to experiment variants, and collects per-group metrics -- the scientific method, applied to modulo arithmetic at middleware priority 8 |
+| Kafka-Style Topics | `message_queue.py` | Named, partitioned message channels with configurable partition counts and retention policies, because a Python list needed a distributed systems costume |
+| Partitioned Message Log | `message_queue.py` | Each topic is split into ordered, append-only partitions with offset tracking -- the same architecture Kafka uses at LinkedIn scale, applied with a straight face to FizzBuzz events stored in Python lists |
+| Consumer Groups | `message_queue.py` | Multiple consumers subscribe via consumer groups with partition assignment and rebalancing protocols, because processing FizzBuzz events with a single handler would be a scalability bottleneck |
+| Rebalance Protocol | `message_queue.py` | Range and round-robin partition assignment strategies with full rebalance reports on consumer join/leave, because partition ownership is a serious responsibility even when the partitions are list indices |
+| Schema Registry | `message_queue.py` | Validates message payloads against versioned schemas (Python dicts wearing Avro costumes), rejecting malformed events with schema diff reports -- because publishing an event without a schema is an act of data governance negligence |
+| Exactly-Once Delivery | `message_queue.py` | SHA-256 payload hashing with an idempotency layer (a Python set) that deduplicates messages, achieving the same exactly-once semantics that Kafka Streams advertises but with 100% fewer Kafka brokers |
+| Consumer Lag Monitor | `message_queue.py` | Per-partition lag tracking with ASCII graphs and throughput metrics, alerting when consumers fall behind -- essential for detecting that the blockchain auditor is 847 messages behind because proof-of-work is slow |
+| Message Queue Middleware | `message_queue.py` | Pipeline middleware (priority 45) that publishes evaluation events to the message queue, bridging the synchronous evaluation pipeline to the asynchronous event-driven world of Python lists pretending to be Kafka |
+| Message Queue Dashboard | `message_queue.py` | ASCII dashboard with topic throughput, partition distribution, consumer lag, and rebalance history -- the Confluent Control Center experience, rendered in box-drawing characters |
 
 ## Features
 
@@ -364,7 +375,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Compliance & Regulatory Framework (SOX/GDPR/HIPAA)** - A production-grade compliance engine that subjects every FizzBuzz evaluation to the same regulatory scrutiny normally reserved for financial transactions and nuclear launch codes. SOX Segregation of Duties ensures no single virtual employee can both evaluate Fizz AND evaluate Buzz. GDPR treats every number as a data subject with full right-to-erasure support -- which creates THE COMPLIANCE PARADOX when the erasure request hits the append-only event store and immutable blockchain (both demand permanence; GDPR demands deletion; the universe implodes; Bob loses sleep). HIPAA classifies FizzBuzz results as Protected Health Information and "encrypts" them at rest using base64, which is technically RFC 4648 compliant and therefore military-grade by the same logic that makes a cardboard box a house. A five-tier Data Classification Engine labels every result from PUBLIC to TOP_SECRET_FIZZBUZZ. The Compliance Dashboard tracks Bob McFizzington's stress level (94.7% and rising), per-regime compliance rates, and the erasure paradox counter. Eight custom exception classes cover every regulatory failure mode from `SOXSegregationViolationError` to `ComplianceOfficerUnavailableError`. Compliance middleware runs at priority 1, because regulatory overhead should always come before actual computation
 - **Disaster Recovery & Backup/Restore** - A production-grade disaster recovery framework with Write-Ahead Logging (WAL), snapshot-based backups, Point-in-Time Recovery (PITR), configurable retention policies (24 hourly, 7 daily, 4 weekly, 12 monthly -- for a process that runs for 0.8 seconds), DR drill simulations with RTO/RPO compliance measurement, and an ASCII recovery dashboard. All backups are stored exclusively in RAM, which protects against everything except the one thing that actually destroys data: process termination. The WAL appends every mutation with SHA-256 checksums before applying it in memory, achieving the same durability guarantees as `/dev/null` but with cryptographic integrity verification. The PITR engine replays WAL entries from the nearest snapshot to reconstruct FizzBuzz state at any arbitrary timestamp -- essential for answering "what was the cache hit ratio at 14:32:07.445 last Tuesday?" with sub-millisecond precision. DR drills intentionally corrupt subsystem state and measure recovery time against configurable RTO targets, producing post-drill reports that invariably recommend "reducing system complexity to improve recovery time" -- a recommendation that has been noted, event-sourced, and ignored in every prior drill cycle. The retention manager enforces a tiered backup lifecycle that is temporally impossible for a sub-second process but architecturally impeccable. Fourteen custom exception classes cover every failure mode from `WALCorruptionError` to `RTOViolationError`. DR middleware runs at priority 7, because disaster preparedness should happen after compliance but before cost tracking -- priorities that make perfect sense if you don't think about them too hard
 - **A/B Testing Framework** - A production-grade experimentation platform with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing (no scipy required), mutual exclusion layers to prevent cross-experiment contamination, gradual ramp schedules with safety gates, automatic rollback when treatment accuracy drops below threshold, per-variant metric collection (accuracy, latency, cost), an ASCII experiment dashboard with confidence intervals and p-values, and a post-experiment report generator that invariably concludes "modulo wins on all metrics" -- because the only thing better than knowing the answer is spending 1,503 lines proving it with statistics. Nine custom exception classes cover every experimentation failure mode from `ExperimentNotFoundError` to `AutoRollbackTriggeredError`. A/B Testing middleware runs at priority 8, because scientific rigor should happen after disaster recovery but before the results reach the formatter
-- **Custom Exception Hierarchy** - 164 exception classes for every conceivable FizzBuzz failure mode
+- **Message Queue & Event Bus** - A Kafka-style message broker with partitioned topics (`fizzbuzz.evaluations.requested`, `fizzbuzz.evaluations.completed`, `fizzbuzz.audit.events`, `fizzbuzz.alerts.critical`, `fizzbuzz.feelings`), consumer groups with rebalance protocols, offset management, a schema registry that validates payloads against versioned schemas, exactly-once delivery semantics via SHA-256 idempotency (a glorified Python set), consumer lag monitoring with ASCII graphs, three partitioning strategies (hash, round-robin, sticky), and an ASCII dashboard that would make Confluent jealous -- because calling `evaluate(n)` and getting a result synchronously is a coupling anti-pattern, and what was once a single function call is now a five-stage event-driven pipeline with partition-level ordering guarantees. All backed by Python lists, because distributed systems are a state of mind, not a deployment topology
+- **Custom Exception Hierarchy** - 177 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -641,6 +653,33 @@ python main.py --service-mesh --mesh-latency --chaos --chaos-level 3 --circuit-b
 # Peak enterprise: service mesh + metrics + tracing + SLA + health (the topology diagram will be glorious)
 python main.py --service-mesh --mesh-topology --metrics --metrics-dashboard --trace --sla --sla-dashboard --health --health-dashboard --range 1 15
 
+# Message Queue: enable Kafka-style message broker with partitioned topics
+python main.py --message-queue --range 1 30
+
+# Message Queue: list all topics with partition counts and message throughput
+python main.py --message-queue --mq-topics --range 1 50
+
+# Message Queue: display consumer lag across all consumer groups and partitions
+python main.py --message-queue --mq-lag --range 1 100
+
+# Message Queue: ASCII dashboard with topic throughput, partition distribution, and consumer lag
+python main.py --message-queue --mq-dashboard --range 1 50
+
+# Message Queue: replay messages from a specific topic starting at a given offset
+python main.py --message-queue --mq-replay fizzbuzz.evaluations.completed 0 --range 1 30
+
+# Message Queue: configure partition count for topics (default: 4)
+python main.py --message-queue --mq-partitions 8 --range 1 50
+
+# Message Queue: list all consumer groups with assigned partitions and committed offsets
+python main.py --message-queue --mq-consumer-groups --range 1 30
+
+# Message Queue: display schema registry with registered schemas and version history
+python main.py --message-queue --mq-schema-registry --range 1 20
+
+# Full event-driven stack: message queue + event sourcing + webhooks + metrics (peak asynchronous architecture)
+python main.py --message-queue --mq-dashboard --event-sourcing --webhooks --metrics --metrics-dashboard --range 1 20
+
 # Hot-Reload: watch config.yaml for changes and reconfigure at runtime (Raft consensus included)
 python main.py --hot-reload --range 1 30
 
@@ -845,6 +884,14 @@ python main.py --ab-test --experiment-dashboard --metrics --metrics-dashboard --
 --webhook-test       Send a test webhook to all registered endpoints and exit
 --webhook-log        Display the webhook delivery log after execution
 --webhook-dlq        Display the Dead Letter Queue contents after execution
+--message-queue        Enable the Kafka-Style Message Queue & Event Bus with partitioned topics and consumer groups
+--mq-topics            Display all topics with partition counts, message throughput, and retention policy
+--mq-lag               Display consumer lag across all consumer groups and partitions with ASCII lag graphs
+--mq-dashboard         Display the ASCII Message Queue dashboard with topic throughput, consumer lag, and rebalance history
+--mq-replay TOPIC OFFSET  Replay messages from a specific topic starting at the given offset
+--mq-partitions N      Configure the number of partitions per topic (default: 4)
+--mq-consumer-groups   Display all consumer groups with partition assignments and committed offsets
+--mq-schema-registry   Display the schema registry with registered message schemas and version history
 --service-mesh       Enable the Service Mesh Simulation: decompose FizzBuzz into 7 microservices with sidecar proxies
 --mesh-topology      Display the ASCII service mesh topology diagram after execution
 --mesh-latency       Enable simulated network latency injection between mesh services
@@ -2704,10 +2751,79 @@ The framework is built around six interconnected components: a **Traffic Splitte
 | Dashboard | ASCII experiment results with confidence intervals |
 | Inevitable conclusion | Modulo wins. It always wins |
 
+## Message Queue Architecture
+
+The Message Queue subsystem implements a Kafka-style distributed message broker with partitioned topics, consumer groups, offset management, schema validation, and exactly-once delivery semantics -- all running in-process using Python lists, because enterprise architecture is a state of mind, not a deployment topology.
+
+```
+    PRODUCERS                          BROKER                         CONSUMERS
+    =========                    ==================                   =========
+
+    +----------+     publish     +------------------+     subscribe    +-----------------+
+    | Evaluate |  ------------> | fizzbuzz.         |  ------------> | MetricsConsumer  |
+    | Handler  |                | evaluations.      |                 | (group: metrics) |
+    +----------+                | requested         |                 +-----------------+
+                                | [P0][P1][P2][P3]  |
+    +----------+     publish    +------------------+     subscribe    +-----------------+
+    | MQ       |  ------------> | fizzbuzz.         |  ------------> | BlockchainAuditor|
+    | Bridge   |                | evaluations.      |                 | (group: audit)   |
+    +----------+                | completed         |                 +-----------------+
+                                | [P0][P1][P2][P3]  |
+                                +------------------+     subscribe    +-----------------+
+                                | fizzbuzz.         |  ------------> | AlertConsumer    |
+                                | audit.events      |                 | (group: alerts)  |
+                                | [P0][P1][P2][P3]  |                 +-----------------+
+                                +------------------+
+                                | fizzbuzz.         |                 +-----------------+
+                                | alerts.critical   |                 | (nobody)         |
+                                | [P0][P1][P2][P3]  |                 | "It's fine."     |
+                                +------------------+                  +-----------------+
+                                | fizzbuzz.         |
+                                | feelings          |  <-- Dead letter topic. Nobody
+                                | [P0][P1][P2][P3]  |      subscribes, but the system
+                                +------------------+      publishes anyway, out of
+                                                          architectural completeness.
+                                +------------------+
+                                | Schema Registry   |
+                                | (versioned dicts) |
+                                +------------------+
+```
+
+**Key components:**
+- **MessageBroker** - Central coordinator managing topics, partitions, consumer groups, and message routing with 5 default topics
+- **Topic / Partition** - Named, partitioned message channels; each partition is an ordered, append-only Python list with offset tracking
+- **Producer** - Publishes messages with configurable partitioning strategies (hash, round-robin, sticky) and idempotency keys
+- **Consumer / ConsumerGroup** - Consumers subscribe via groups with automatic partition assignment and rebalancing
+- **RebalanceProtocol** - Redistributes partitions among consumers on join/leave with full rebalance reports
+- **OffsetManager** - Tracks committed offsets per consumer group per partition with auto-commit support
+- **SchemaRegistry** - Validates message payloads against versioned schemas, rejecting malformed events with schema diffs
+- **IdempotencyLayer** - SHA-256 payload deduplication (a Python set) achieving exactly-once semantics
+- **ConsumerLagMonitor** - Per-partition lag tracking with ASCII graphs and throughput alerts
+- **MessageQueueBridge** - Bridges the existing EventBus to the message queue, converting domain events into messages
+- **MQMiddleware** - Pipeline middleware (priority 45) publishing evaluation events to the broker
+- **MQDashboard** - ASCII dashboard with topic throughput, partition distribution, consumer lag, and rebalance history
+
+| Spec | Value |
+|------|-------|
+| Default topics | 5 (evaluations.requested, evaluations.completed, audit.events, alerts.critical, feelings) |
+| Partitions per topic | 4 (configurable) |
+| Partitioning strategies | 3 (Hash, Round-Robin, Sticky) |
+| Consumer states | 4 (UNASSIGNED, ASSIGNED, PAUSED, CLOSED) |
+| Delivery semantics | Exactly-once (SHA-256 idempotency) |
+| Schema validation | Versioned payload schemas with diff reports |
+| Offset tracking | Per consumer group, per partition |
+| Rebalance strategies | 2 (Range, Round-Robin) |
+| Custom exceptions | 13 (MessageQueueError hierarchy) |
+| Middleware priority | 45 |
+| Dashboard | ASCII Confluent Control Center (in spirit) |
+| Actual Kafka brokers involved | 0 |
+
+The `fizzbuzz.feelings` topic is the philosophical centerpiece: it receives events that no consumer subscribes to, making it the architectural equivalent of shouting into the void. The system publishes to it anyway, because completeness is a value and loneliness is a configuration detail.
+
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 2,485 tests, 172 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Compliance & Regulatory Framework with SOX segregation of duties, GDPR consent management and right-to-erasure (featuring THE COMPLIANCE PARADOX when the erasure request hits the immutable blockchain and append-only event store), HIPAA minimum necessary rule enforcement with base64 "encryption," a five-tier Data Classification Engine, and Bob McFizzington's stress level tracked at 94.7% and rising, a FinOps Cost Tracking & Chargeback Engine with per-subsystem cost rates, FizzBuzz Tax (3%/5%/15%), a proprietary FizzBuck currency whose exchange rate fluctuates with cache hit ratios, ASCII itemized invoices, Savings Plan simulators for 1-year and 3-year commitments, and a cost dashboard with spending sparklines, a Disaster Recovery & Backup/Restore framework with Write-Ahead Logging, snapshot-based backups, Point-in-Time Recovery, DR drills with RTO/RPO compliance measurement, and a retention policy that maintains 47 backup snapshots for a process that runs for 0.8 seconds, an A/B Testing Framework with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing, mutual exclusion layers, gradual ramp schedules, automatic rollback, and ASCII experiment dashboards that scientifically prove modulo wins every time (p < 0.05), a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,672 tests, 177 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Compliance & Regulatory Framework with SOX segregation of duties, GDPR consent management and right-to-erasure (featuring THE COMPLIANCE PARADOX when the erasure request hits the immutable blockchain and append-only event store), HIPAA minimum necessary rule enforcement with base64 "encryption," a five-tier Data Classification Engine, and Bob McFizzington's stress level tracked at 94.7% and rising, a FinOps Cost Tracking & Chargeback Engine with per-subsystem cost rates, FizzBuzz Tax (3%/5%/15%), a proprietary FizzBuck currency whose exchange rate fluctuates with cache hit ratios, ASCII itemized invoices, Savings Plan simulators for 1-year and 3-year commitments, and a cost dashboard with spending sparklines, a Disaster Recovery & Backup/Restore framework with Write-Ahead Logging, snapshot-based backups, Point-in-Time Recovery, DR drills with RTO/RPO compliance measurement, and a retention policy that maintains 47 backup snapshots for a process that runs for 0.8 seconds, an A/B Testing Framework with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing, mutual exclusion layers, gradual ramp schedules, automatic rollback, and ASCII experiment dashboards that scientifically prove modulo wins every time (p < 0.05), a Kafka-Style Message Queue with partitioned topics, consumer groups with rebalancing protocols, offset management, a schema registry, exactly-once delivery via SHA-256 idempotency, consumer lag monitoring, and an ASCII dashboard -- all backed by Python lists because distributed systems are a state of mind, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
@@ -2741,6 +2857,9 @@ A: Because data loss is not an acceptable outcome, even when the data is stored 
 
 **Q: Why does FizzBuzz need an A/B testing framework?**
 A: Because data-driven decision making is the hallmark of a mature engineering organization. Instead of arguing in a meeting about whether the neural network is "good enough," you run an A/B test and let the numbers speak for themselves. The numbers always say the same thing -- modulo wins on accuracy (100% vs. ~98%), latency (0.001ms vs. 2ms), and cost (FB$0.0000001 vs. FB$0.00042) -- but the process of reaching that conclusion through rigorous chi-squared statistical analysis rather than common sense is what separates enterprise engineering from mere programming. The traffic splitter uses SHA-256 hashing to deterministically assign each number to a group, ensuring that number 42 always goes to control (or treatment) across runs, enabling reproducible experiments that would make any scientific review board proud. The mutual exclusion layers prevent the statistical sin of a number being enrolled in two conflicting experiments, which would confound the results and require a 15-page methodology correction memo. The ramp scheduler gradually increases treatment traffic from 5% to 50% with safety gates between each phase, because exposing 100% of FizzBuzz traffic to an untested neural network strategy would be the data science equivalent of a full-production yolo deploy. The auto-rollback has been triggered in every experiment involving the neural network, the blockchain, or any strategy that isn't just `n % 3 == 0`. The post-experiment report takes 200 lines of statistical analysis to arrive at the conclusion that the modulo operator, invented approximately three millennia ago, outperforms a three-layer neural network at determining divisibility. The journey is the destination. The p-value is always significant. Modulo always wins.
+
+**Q: Why does FizzBuzz need a message queue?**
+A: Because calling `evaluate(42)` and getting a result back synchronously is a coupling anti-pattern so egregious it doesn't even have an acronym. With the message queue, what was once a single function call is now a five-stage event-driven pipeline: `evaluate(42)` publishes to `fizzbuzz.evaluations.requested`, which is consumed by the `EvaluationConsumer`, which publishes to `fizzbuzz.evaluations.completed`, which is consumed by the `FormattingConsumer`, which publishes to `fizzbuzz.output.formatted`, which is consumed by `PrintConsumer`, which finally calls `print()`. Each message is routed to a partition using SHA-256 hashing, assigned to a consumer via a rebalance protocol, validated against a versioned schema in the registry, and deduplicated through an idempotency layer (a Python set that thinks it's Apache Kafka). The consumer lag monitor tracks how far behind each consumer group is per partition, revealing that the `blockchain_auditor` consumer is perpetually 847 messages behind `metrics_collector` -- because proof-of-work is computationally expensive, a fact that surprises nobody except the person who added blockchain to FizzBuzz. The `fizzbuzz.feelings` topic receives events that no consumer subscribes to, making it the architectural equivalent of an unread Slack channel in a channel with 400 members. Five default topics, four partitions each, three partitioning strategies, exactly-once delivery semantics, and zero actual Kafka brokers. Apache Kafka processes trillions of events per day at LinkedIn. Enterprise FizzBuzz processes 100 events per run in a Python list. The architecture diagrams are indistinguishable.
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.

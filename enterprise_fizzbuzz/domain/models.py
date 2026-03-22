@@ -274,6 +274,22 @@ class EventType(Enum):
     HOT_RELOAD_WATCHER_STARTED = auto()
     HOT_RELOAD_WATCHER_STOPPED = auto()
 
+    # Message Queue & Event Bus events
+    MQ_MESSAGE_PUBLISHED = auto()
+    MQ_MESSAGE_CONSUMED = auto()
+    MQ_MESSAGE_ACKNOWLEDGED = auto()
+    MQ_TOPIC_CREATED = auto()
+    MQ_PARTITION_ASSIGNED = auto()
+    MQ_CONSUMER_GROUP_JOINED = auto()
+    MQ_CONSUMER_GROUP_LEFT = auto()
+    MQ_REBALANCE_STARTED = auto()
+    MQ_REBALANCE_COMPLETED = auto()
+    MQ_OFFSET_COMMITTED = auto()
+    MQ_SCHEMA_VALIDATED = auto()
+    MQ_SCHEMA_VALIDATION_FAILED = auto()
+    MQ_DUPLICATE_DETECTED = auto()
+    MQ_DASHBOARD_RENDERED = auto()
+
     # Rate Limiting & API Quota Management events
     RATE_LIMIT_CHECK_STARTED = auto()
     RATE_LIMIT_CHECK_PASSED = auto()
