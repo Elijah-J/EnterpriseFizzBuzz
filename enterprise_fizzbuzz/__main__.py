@@ -20,6 +20,7 @@ import asyncio
 import copy
 import logging
 import os
+import random
 import sys
 import time
 from pathlib import Path
@@ -311,6 +312,16 @@ from enterprise_fizzbuzz.infrastructure.quantum import (
     QuantumFizzBuzzEngine,
     QuantumMiddleware,
     build_qft_circuit,
+)
+from enterprise_fizzbuzz.infrastructure.federated_learning import (
+    FedAvgAggregator,
+    FedProxAggregator,
+    FederatedClient,
+    FederatedDashboard,
+    FederatedMiddleware,
+    FederatedServer,
+    DifferentialPrivacyManager,
+    NonIIDSimulator,
 )
 
 logger = logging.getLogger(__name__)
@@ -1535,6 +1546,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--compile-dashboard",
         action="store_true",
         help="Display the Cross-Compiler ASCII dashboard with overhead metrics and enterprise analysis",
+    )
+
+    # Federated Learning
+    parser.add_argument(
+        "--federated",
+        action="store_true",
+        help="Enable Federated Learning: train 5 non-IID clients to collaboratively learn modulo arithmetic",
+    )
+
+    parser.add_argument(
+        "--fed-rounds",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of federation rounds (default: from config)",
+    )
+
+    parser.add_argument(
+        "--fed-dashboard",
+        action="store_true",
+        help="Display the Federated Learning ASCII dashboard after execution",
     )
 
     return parser
@@ -3558,6 +3590,75 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
 
     # ----------------------------------------------------------------
+    # Federated Learning setup
+    # ----------------------------------------------------------------
+    federated_server = None
+    federated_middleware = None
+
+    if args.federated or args.fed_dashboard:
+        fed_num_rounds = args.fed_rounds or config.federated_learning_num_rounds
+        fed_lr = config.federated_learning_learning_rate
+        fed_local_epochs = config.federated_learning_local_epochs
+        fed_agg_strategy = config.federated_learning_aggregation_strategy
+
+        # Use the first rule's divisor for federation training
+        fed_divisor = config.rules[0].divisor if config.rules else 3
+
+        # Create non-IID clients
+        fed_clients = NonIIDSimulator.create_clients(
+            divisor=fed_divisor,
+            data_range=60,
+            rng=random.Random(42),
+        )
+
+        # Select aggregation strategy
+        if fed_agg_strategy == "fedprox":
+            fed_aggregator = FedProxAggregator(mu=config.federated_learning_fedprox_mu)
+        else:
+            fed_aggregator = FedAvgAggregator()
+
+        # Set up differential privacy
+        fed_dp = None
+        if config.federated_learning_dp_enabled:
+            fed_dp = DifferentialPrivacyManager(
+                epsilon_budget=config.federated_learning_dp_epsilon,
+                delta=config.federated_learning_dp_delta,
+                noise_multiplier=config.federated_learning_dp_noise_multiplier,
+                max_grad_norm=config.federated_learning_dp_max_grad_norm,
+            )
+
+        federated_server = FederatedServer(
+            clients=fed_clients,
+            aggregator=fed_aggregator,
+            dp_manager=fed_dp,
+            learning_rate=fed_lr,
+            local_epochs=fed_local_epochs,
+            target_accuracy=config.federated_learning_convergence_target,
+            patience=config.federated_learning_convergence_patience,
+            event_bus=event_bus,
+        )
+
+        # Run federated training
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FEDERATED LEARNING: Privacy-Preserving Modulo Training  |\n"
+            f"  | Clients: {len(fed_clients):<48}|\n"
+            f"  | Rounds: {fed_num_rounds:<49}|\n"
+            f"  | Strategy: {fed_agg_strategy.upper():<47}|\n"
+            f"  | Privacy: {'ENABLED (epsilon=' + f'{config.federated_learning_dp_epsilon:.1f}' + ')' if fed_dp else 'DISABLED':<47}|\n"
+            "  | Each client trains on a biased subset of integers,      |\n"
+            "  | because collaborative modulo learning is the future.    |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        federated_server.train(fed_num_rounds)
+
+        federated_middleware = FederatedMiddleware(
+            server=federated_server,
+            event_bus=event_bus,
+        )
+
+    # ----------------------------------------------------------------
     # Quantum Computing Simulator setup
     # ----------------------------------------------------------------
     quantum_engine = None
@@ -3717,6 +3818,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if quantum_middleware is not None:
         builder.with_middleware(quantum_middleware)
+
+    if federated_middleware is not None:
+        builder.with_middleware(federated_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -4709,6 +4813,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.optimizer_dashboard:
         print("\n  Query optimizer not enabled. Use --optimize to enable.\n")
+
+    # Federated Learning Dashboard
+    if args.fed_dashboard and federated_server is not None:
+        print(FederatedDashboard.render(
+            federated_server,
+            width=config.federated_learning_dashboard_width,
+            show_convergence=config.federated_learning_dashboard_show_convergence,
+            show_clients=config.federated_learning_dashboard_show_clients,
+        ))
+    elif args.fed_dashboard:
+        print("\n  Federated learning not enabled. Use --federated to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

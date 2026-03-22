@@ -535,6 +535,15 @@ class EventType(Enum):
     COMPILER_ROUND_TRIP_FAILED = auto()
     COMPILER_DASHBOARD_RENDERED = auto()
 
+    # Federated Learning events
+    FEDERATION_ROUND_STARTED = auto()
+    FEDERATION_ROUND_COMPLETED = auto()
+    FEDERATION_CLIENT_TRAINED = auto()
+    FEDERATION_WEIGHTS_AGGREGATED = auto()
+    FEDERATION_PRIVACY_BUDGET_UPDATED = auto()
+    FEDERATION_CONVERGENCE_ACHIEVED = auto()
+    FEDERATION_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

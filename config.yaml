@@ -1187,6 +1187,38 @@ cross_compiler:
     width: 60                                  # ASCII dashboard width
     show_ir: false                             # Show IR instructions in dashboard
 
+# Federated Learning configuration
+# Because training a single neural network to learn modulo arithmetic
+# was insufficiently distributed, we now train FIVE neural networks —
+# each on a carefully curated, non-IID shard of integers — and
+# aggregate their weight deltas via Federated Averaging (McMahan et al.,
+# 2017). Differential privacy ensures that the sacred divisibility
+# properties of individual integers are never exposed to the central
+# server. The privacy budget is tracked in epsilon, because nothing
+# says "enterprise ML" like calibrated Gaussian noise over modulo
+# gradients.
+federated_learning:
+  enabled: false                              # Master switch — opt-in via --federated
+  num_rounds: 10                              # Number of federation rounds
+  num_clients: 5                              # Number of federated clients
+  local_epochs: 3                             # Local training epochs per client per round
+  learning_rate: 0.5                          # Client-side learning rate
+  aggregation_strategy: "fedavg"              # fedavg | fedprox
+  fedprox_mu: 0.01                            # Proximal term coefficient for FedProx
+  differential_privacy:
+    enabled: true                             # Enable calibrated Gaussian noise injection
+    epsilon_budget: 10.0                      # Total privacy budget (epsilon)
+    delta: 1.0e-5                             # Privacy failure probability
+    noise_multiplier: 1.0                     # Noise scaling factor
+    max_grad_norm: 1.0                        # Gradient clipping norm
+  convergence:
+    target_accuracy: 95.0                     # Stop when global accuracy exceeds this
+    patience: 3                               # Rounds without improvement before early stopping
+  dashboard:
+    width: 60                                 # ASCII dashboard width
+    show_convergence_curve: true              # Show ASCII convergence plot
+    show_client_details: true                 # Show per-client training metrics
+
 # Observer configuration
 observers:
   console_observer:
