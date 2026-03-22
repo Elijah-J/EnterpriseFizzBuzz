@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 9
-- Remaining: 1
+- Implemented: 10
+- Remaining: 0
 
 ---
 
@@ -275,7 +275,7 @@ Test the following:
 
 ### 10. Contract Tests: Newer Interfaces (tests/contracts/test_middleware_contract.py, tests/contracts/test_engine_contract.py)
 
-**Status:** PENDING
+**Status:** DONE (250 tests: 216 middleware + 34 engine)
 **Description:** The existing contract test suite covers formatters, repositories, and strategies. But the `IMiddleware` interface (implemented by 20+ middleware classes) and the various engine interfaces have no contract tests. Every class that implements `IMiddleware` should honor the same behavioral contract: `process()` receives a context and a next_handler, calls next_handler at some point (or doesn't, if short-circuiting), and returns a `ProcessingContext`. Every class that implements `IRuleEngine` should accept a number and return a result with the correct classification.
 
 Test the following:

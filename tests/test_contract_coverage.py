@@ -149,3 +149,63 @@ class TestContractCoverageCompleteness:
                 f"{fmt_class.__name__} has no contract test. "
                 f"A formatter without a contract is just free text."
             )
+
+    def test_middleware_contract_tests_exist(self) -> None:
+        """Verify that the middleware contract test module exists and defines tests."""
+        from tests.contracts import test_middleware_contract
+        assert hasattr(test_middleware_contract, "TestMiddlewareDiscovery")
+        assert hasattr(test_middleware_contract, "TestMiddlewareGetNameContract")
+        assert hasattr(test_middleware_contract, "TestMiddlewareGetPriorityContract")
+        assert hasattr(test_middleware_contract, "TestMiddlewareProcessContract")
+        assert hasattr(test_middleware_contract, "TestMiddlewareIsIMiddleware")
+        assert hasattr(test_middleware_contract, "TestMiddlewarePipelineConsistency")
+
+    def test_engine_contract_tests_exist(self) -> None:
+        """Verify that the engine contract test module exists and defines tests."""
+        from tests.contracts import test_engine_contract
+        assert hasattr(test_engine_contract, "TestEngineDiscovery")
+        assert hasattr(test_engine_contract, "TestEngineEvaluationContract")
+        assert hasattr(test_engine_contract, "TestEngineConsistency")
+        assert hasattr(test_engine_contract, "TestEngineIsIRuleEngine")
+
+    def test_middleware_contract_dynamically_discovers_implementations(self) -> None:
+        """The middleware contract suite must discover at least 20 IMiddleware implementations."""
+        from tests.contracts.test_middleware_contract import ALL_MIDDLEWARE_CLASSES
+        assert len(ALL_MIDDLEWARE_CLASSES) >= 20, (
+            f"Middleware contract suite discovered only {len(ALL_MIDDLEWARE_CLASSES)} "
+            f"implementations. Expected at least 20. The discovery engine is "
+            f"underperforming."
+        )
+
+    def test_engine_contract_dynamically_discovers_implementations(self) -> None:
+        """The engine contract suite must discover at least 4 IRuleEngine implementations."""
+        from tests.contracts.test_engine_contract import ALL_ENGINE_CLASSES
+        assert len(ALL_ENGINE_CLASSES) >= 4, (
+            f"Engine contract suite discovered only {len(ALL_ENGINE_CLASSES)} "
+            f"implementations. Expected at least 4. The discovery engine is "
+            f"not trying hard enough."
+        )
+
+    def test_all_iruleengine_implementations_have_contracts(self) -> None:
+        """Every IRuleEngine implementation must be covered by contract tests."""
+        from enterprise_fizzbuzz.infrastructure.rules_engine import (
+            StandardRuleEngine,
+            ChainOfResponsibilityEngine,
+            ParallelAsyncEngine,
+        )
+        from enterprise_fizzbuzz.infrastructure.ml_engine import MachineLearningEngine
+        from tests.contracts.test_engine_contract import ALL_ENGINE_CLASSES
+
+        expected_engines = {
+            StandardRuleEngine,
+            ChainOfResponsibilityEngine,
+            ParallelAsyncEngine,
+            MachineLearningEngine,
+        }
+        discovered = set(ALL_ENGINE_CLASSES)
+        missing = expected_engines - discovered
+        assert not missing, (
+            f"The following engines have no contract coverage: "
+            f"{[c.__name__ for c in missing]}. "
+            f"Engines without contracts are a danger to the platform."
+        )
