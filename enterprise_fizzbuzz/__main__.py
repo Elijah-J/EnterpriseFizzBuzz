@@ -85,6 +85,19 @@ from enterprise_fizzbuzz.infrastructure.migrations import (
     SchemaVisualizer,
     SeedDataGenerator,
 )
+from enterprise_fizzbuzz.infrastructure.health import (
+    CacheCoherenceHealthCheck,
+    CircuitBreakerHealthCheck,
+    ConfigHealthCheck,
+    HealthCheckRegistry,
+    HealthDashboard,
+    LivenessProbe,
+    MLEngineHealthCheck,
+    ReadinessProbe,
+    SelfHealingManager,
+    SLABudgetHealthCheck,
+    StartupProbe,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -432,6 +445,43 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--migrate-seed",
         action="store_true",
         help="Generate FizzBuzz seed data using the FizzBuzz engine (the ouroboros)",
+    )
+
+    # Health Check Probes
+    parser.add_argument(
+        "--health",
+        action="store_true",
+        help="Enable Kubernetes-style health check probes for the FizzBuzz platform",
+    )
+
+    parser.add_argument(
+        "--liveness",
+        action="store_true",
+        help="Run a liveness probe (canary evaluation of 15 must equal FizzBuzz)",
+    )
+
+    parser.add_argument(
+        "--readiness",
+        action="store_true",
+        help="Run a readiness probe (aggregate subsystem health assessment)",
+    )
+
+    parser.add_argument(
+        "--startup-probe",
+        action="store_true",
+        help="Display the startup probe status (boot milestone tracking)",
+    )
+
+    parser.add_argument(
+        "--health-dashboard",
+        action="store_true",
+        help="Display the comprehensive health check dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--self-heal",
+        action="store_true",
+        help="Enable self-healing: automatically attempt recovery of failing subsystems",
     )
 
     return parser
@@ -1038,6 +1088,112 @@ def main(argv: Optional[list[str]] = None) -> int:
     if auth_context is not None:
         print(f"  Authenticated as: {auth_context.user} ({auth_context.role.name})")
 
+    # ----------------------------------------------------------------
+    # Health Check Probes (Kubernetes-style)
+    # ----------------------------------------------------------------
+    health_registry = None
+    startup_probe = None
+    liveness_probe_inst = None
+    readiness_probe_inst = None
+    self_healing_mgr = None
+
+    if args.health or args.liveness or args.readiness or args.startup_probe or args.health_dashboard or args.self_heal:
+        HealthCheckRegistry.reset()
+        health_registry = HealthCheckRegistry.get_instance()
+
+        # Register subsystem health checks
+        health_registry.register(ConfigHealthCheck(config))
+        health_registry.register(CircuitBreakerHealthCheck(
+            registry=CircuitBreakerRegistry.get_instance() if args.circuit_breaker else None,
+        ))
+        health_registry.register(CacheCoherenceHealthCheck(
+            cache_store=cache_store,
+        ))
+        health_registry.register(SLABudgetHealthCheck(
+            sla_monitor=sla_monitor,
+        ))
+
+        # ML engine health check — only if using ML strategy
+        if strategy == EvaluationStrategy.MACHINE_LEARNING:
+            health_registry.register(MLEngineHealthCheck(
+                engine=rule_engine,
+                rules=service._rules,
+            ))
+        else:
+            health_registry.register(MLEngineHealthCheck())
+
+        # Create probes
+        def _evaluate_canary(n: int) -> str:
+            """Evaluate a single number for liveness check."""
+            results = service.run(n, n)
+            return results[0].output if results else ""
+
+        liveness_probe_inst = LivenessProbe(
+            evaluate_fn=_evaluate_canary,
+            canary_number=config.health_check_canary_number,
+            canary_expected=config.health_check_canary_expected,
+            event_bus=event_bus,
+        )
+
+        readiness_probe_inst = ReadinessProbe(
+            registry=health_registry,
+            degraded_is_ready=config.health_check_degraded_is_ready,
+            event_bus=event_bus,
+        )
+
+        startup_probe = StartupProbe(
+            milestones=config.health_check_startup_milestones,
+            timeout_seconds=config.health_check_startup_timeout,
+            event_bus=event_bus,
+        )
+
+        # Record startup milestones that have already been reached
+        startup_probe.record_milestone("config_loaded")
+        startup_probe.record_milestone("rules_initialized")
+        startup_probe.record_milestone("engine_created")
+        startup_probe.record_milestone("middleware_assembled")
+        startup_probe.record_milestone("service_built")
+
+        if args.self_heal:
+            self_healing_mgr = SelfHealingManager(
+                registry=health_registry,
+                max_retries=config.health_check_self_healing_max_retries,
+                backoff_base_ms=config.health_check_self_healing_backoff_ms,
+                event_bus=event_bus,
+            )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | HEALTH CHECKS: Kubernetes-Style Probes ENABLED          |\n"
+            "  | Liveness, readiness, and startup probes are now active.  |\n"
+            "  | The platform's vital signs are being monitored with     |\n"
+            "  | the same rigor as a Kubernetes pod in production.        |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # Handle standalone probe commands (run and exit)
+    if args.liveness and liveness_probe_inst is not None:
+        report = liveness_probe_inst.probe()
+        print(HealthDashboard.render(report, show_details=config.health_check_dashboard_show_details))
+        if not (args.readiness or args.startup_probe):
+            return 0 if report.overall_status.name == "UP" else 1
+
+    if args.readiness and readiness_probe_inst is not None:
+        report = readiness_probe_inst.probe()
+        if self_healing_mgr is not None and report.overall_status.name not in ("UP",):
+            healing_results = self_healing_mgr.heal_all_unhealthy(report.subsystem_checks)
+            if any(healing_results.values()):
+                # Re-probe after healing
+                report = readiness_probe_inst.probe()
+        print(HealthDashboard.render(report, show_details=config.health_check_dashboard_show_details))
+        if not args.startup_probe:
+            return 0 if report.overall_status.name in ("UP", "DEGRADED") else 1
+
+    if args.startup_probe and startup_probe is not None:
+        report = startup_probe.probe()
+        print(HealthDashboard.render(report, show_details=config.health_check_dashboard_show_details))
+        return 0 if report.overall_status.name == "UP" else 1
+
     # Cache warming (pre-populate cache, defeating the purpose)
     if args.cache_warm and cache_store is not None:
         cache_warmer = CacheWarmer(
@@ -1157,6 +1313,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     # On-call status (when combined with --sla)
     if args.on_call and sla_monitor is not None:
         print(SLADashboard.render_on_call(sla_monitor))
+
+    # Health check dashboard (post-execution)
+    if args.health_dashboard and readiness_probe_inst is not None:
+        report = readiness_probe_inst.probe()
+        if self_healing_mgr is not None and report.overall_status.name not in ("UP",):
+            healing_results = self_healing_mgr.heal_all_unhealthy(report.subsystem_checks)
+            if any(healing_results.values()):
+                report = readiness_probe_inst.probe()
+        print(HealthDashboard.render(report, show_details=config.health_check_dashboard_show_details))
+    elif args.health_dashboard:
+        print("\n  Health checks not enabled. Use --health to enable.\n")
 
     # Cache statistics dashboard
     if args.cache_stats and cache_store is not None:

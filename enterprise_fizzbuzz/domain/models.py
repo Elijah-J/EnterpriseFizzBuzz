@@ -209,6 +209,119 @@ class EventType(Enum):
     MIGRATION_SEED_COMPLETED = auto()
     MIGRATION_SCHEMA_CHANGED = auto()
 
+    # Health Check Probe events
+    HEALTH_CHECK_STARTED = auto()
+    HEALTH_CHECK_COMPLETED = auto()
+    HEALTH_LIVENESS_PASSED = auto()
+    HEALTH_LIVENESS_FAILED = auto()
+    HEALTH_READINESS_PASSED = auto()
+    HEALTH_READINESS_FAILED = auto()
+    HEALTH_STARTUP_MILESTONE = auto()
+    HEALTH_SELF_HEAL_ATTEMPTED = auto()
+
+
+class ProbeType(Enum):
+    """Kubernetes-style health check probe classification.
+
+    Because even a FizzBuzz platform deserves the same level of
+    operational scrutiny as a Kubernetes pod running in a multi-region
+    cluster. If Google does it for their microservices, surely our
+    modulo arithmetic deserves liveness, readiness, and startup probes.
+
+    LIVENESS:  Is the platform still alive? Can it still evaluate 15
+               and get "FizzBuzz"? If not, it should be restarted —
+               a drastic measure for an arithmetic failure.
+    READINESS: Is the platform ready to accept traffic? Are all
+               subsystems initialized and coherent? Is the ML engine
+               confident enough in its ability to count by threes?
+    STARTUP:   Has the platform completed its boot sequence? In
+               enterprise software, startup can take minutes. In
+               FizzBuzz, it takes milliseconds, but we track every
+               milestone anyway because observability is non-negotiable.
+    """
+
+    LIVENESS = auto()
+    READINESS = auto()
+    STARTUP = auto()
+
+
+class HealthStatus(Enum):
+    """Health status classification for Enterprise FizzBuzz subsystems.
+
+    UP:                  All systems nominal. The modulo operator is
+                         functioning within acceptable parameters.
+    DOWN:                The subsystem is non-functional. FizzBuzz
+                         evaluation has been compromised at a fundamental
+                         level. Page the on-call engineer immediately.
+    DEGRADED:            The subsystem is technically working but with
+                         reduced capability. Perhaps the cache hit rate
+                         is below target, or the circuit breaker is
+                         oscillating nervously between states.
+    EXISTENTIAL_CRISIS:  The ML engine has forgotten how modulo
+                         arithmetic works, or is producing results with
+                         confidence levels suggesting deep mathematical
+                         uncertainty. This is worse than DOWN — it is
+                         the machine learning equivalent of an identity crisis.
+    UNKNOWN:             The subsystem's health cannot be determined.
+                         It exists in a quantum superposition of healthy
+                         and unhealthy until observed, at which point it
+                         collapses into one of the above states.
+    """
+
+    UP = auto()
+    DOWN = auto()
+    DEGRADED = auto()
+    EXISTENTIAL_CRISIS = auto()
+    UNKNOWN = auto()
+
+
+@dataclass(frozen=True)
+class SubsystemCheck:
+    """The result of a single subsystem health check.
+
+    Captures the health status, response time, and any diagnostic
+    details for one subsystem. Frozen because health check results
+    are historical facts — you cannot retroactively make a failed
+    health check pass, no matter how hard you try.
+
+    Attributes:
+        subsystem_name: The name of the subsystem that was checked.
+        status: The health status determined by the check.
+        response_time_ms: How long the check took in milliseconds.
+        details: Diagnostic information about the check result.
+        checked_at: When the check was performed (UTC).
+    """
+
+    subsystem_name: str
+    status: HealthStatus
+    response_time_ms: float = 0.0
+    details: str = ""
+    checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+@dataclass
+class HealthReport:
+    """Comprehensive health report aggregating all subsystem checks.
+
+    This is the enterprise equivalent of asking "are you okay?" but
+    with significantly more ceremony, data structures, and ASCII art.
+
+    Attributes:
+        probe_type: Which type of probe generated this report.
+        overall_status: The worst status across all subsystem checks.
+        subsystem_checks: Individual check results for each subsystem.
+        timestamp: When this report was generated (UTC).
+        report_id: Unique identifier for audit trail purposes.
+        canary_value: The canary evaluation result (liveness only).
+    """
+
+    probe_type: ProbeType
+    overall_status: HealthStatus
+    subsystem_checks: list[SubsystemCheck] = field(default_factory=list)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    report_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    canary_value: Optional[str] = None
+
 
 class CacheCoherenceState(Enum):
     """MESI cache coherence protocol states for Enterprise FizzBuzz caching.

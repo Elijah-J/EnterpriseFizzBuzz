@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**32,000+ lines** across **85+ files** with **1,142 unit tests** and **102 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**42,000+ lines** across **98+ files** with **1,845 unit tests** and **108 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -70,7 +70,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                          # CLI entry point with 46 flags
+├── main.py                          # CLI entry point with 52 flags
 ├── config.yaml                      # YAML-based configuration with 12 sections
 │
 ├── enterprise_fizzbuzz/             # Clean Architecture package root
@@ -80,7 +80,7 @@ EnterpriseFizzBuzz/
 │   ├── domain/                      # THE INNER CIRCLE (no outward dependencies)
 │   │   ├── __init__.py
 │   │   ├── models.py                # Dataclasses, enums, and domain models
-│   │   ├── exceptions.py            # Custom exception hierarchy (98 exception classes)
+│   │   ├── exceptions.py            # Custom exception hierarchy (108 exception classes)
 │   │   └── interfaces.py            # Abstract base classes for everything
 │   │
 │   ├── application/                 # USE CASES (depends only on domain)
@@ -111,6 +111,7 @@ EnterpriseFizzBuzz/
 │       ├── feature_flags.py         # Feature Flags / Progressive Rollout with dependency DAG (~880 lines)
 │       ├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
 │       ├── cache.py                 # In-Memory Caching with MESI coherence and eulogies (~1,100 lines)
+│       ├── health.py                # Kubernetes-style health check probes with self-healing (~1,210 lines)
 │       ├── migrations.py            # Database Migration Framework for ephemeral RAM schemas (~1,160 lines)
 │       ├── container.py             # Dependency Injection Container with IoC, auto-wiring, and Kahn's cycle detection (~608 lines)
 │       ├── utils/                   # Enterprise utility modules
@@ -153,6 +154,7 @@ EnterpriseFizzBuzz/
     ├── test_feature_flags.py        # 69 feature flag & progressive rollout tests
     ├── test_sla.py                  # 96 SLA monitoring & alerting tests
     ├── test_cache.py                # 60 caching & eviction policy tests
+    ├── test_health.py               # 115 health check probe & self-healing tests
     ├── test_migrations.py           # 56 database migration & schema management tests
     ├── test_repository.py           # 40 repository pattern & unit of work tests (3 backends)
     ├── test_acl.py                  # 44 Anti-Corruption Layer & strategy adapter tests
@@ -240,6 +242,10 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Strategy Adapter | `strategy_adapters.py`, `ports.py` | Each evaluation engine gets its own adapter implementing the `StrategyPort` contract, with a factory for wiring. The ML adapter adds ambiguity detection, cross-strategy disagreement tracking, and event emission -- because even the simplest modulo result deserves observability at the translation boundary |
 | Ports & Adapters (Persistence) | `ports.py`, `persistence/` | Hexagonal architecture ports for repository and UoW contracts, with three concrete adapter implementations -- ensuring the domain remains blissfully ignorant of whether its results are stored in RAM, SQLite, or artisanal JSON files |
 | Contract Testing | `tests/contracts/` | Interface-level conformance tests that run every concrete implementation through the same behavioural gauntlet, ensuring that swapping backends doesn't silently redefine what "correct" means. If an adapter passes the contract, it is blessed; if it doesn't, it is dead to us |
+| Health Check Probes | `health.py` | Kubernetes-style liveness, readiness, and startup probes for a CLI application that runs for 0.3 seconds and has never seen a pod in its life |
+| Self-Healing | `health.py` | Automated recovery attempts for degraded subsystems, because restarting a cache manually would require human intervention, and humans are a single point of failure |
+| Template Method | `health.py` | Abstract `SubsystemHealthCheck` base class with concrete checks for config, circuit breaker, cache, SLA, and ML engine |
+| Health Check Registry | `health.py` | Singleton registry for pluggable subsystem health checks, because even health monitoring deserves a Plugin System |
 
 ## Features
 
@@ -266,7 +272,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Anti-Corruption Layer (ACL)** - Four strategy adapters forming a protective boundary between the evaluation engines and the domain model, with ML ambiguity detection (configurable decision threshold and margin), cross-strategy disagreement tracking, and domain event emission -- because allowing a neural network's probabilistic confidence scores to contaminate the sacred `FizzBuzzClassification` enum would be an act of architectural heresy
 - **Dependency Injection Container** - A fully-featured IoC container with constructor auto-wiring via `typing.get_type_hints()`, four lifetime strategies (Transient, Scoped, Singleton, Eternal), named bindings, factory registration, fluent API, and Kahn's topological sort cycle detection at registration time -- because calling `EventBus()` directly was an affront to enterprise architecture. The container is ADDITIVE: it does not replace the existing Builder pattern wiring, it merely provides an additional layer of abstraction on top of the existing layers of abstraction, like a parfait of unnecessary indirection
 - **Lines of Code Census Bureau** - A production-grade codebase metrics engine that walks every file, classifies it by language and architectural layer, computes the Overengineering Index (OEI = total lines / 2, where 2 is the minimal FizzBuzz solution), renders an ASCII dashboard with box-drawing characters, and attributes 100% of lines to Bob McFizzington -- because you can't manage what you can't measure, and you can't overengineer what you can't quantify
-- **Custom Exception Hierarchy** - 102 exception classes for every conceivable FizzBuzz failure mode
+- **Kubernetes-Style Health Check Probes** - Liveness, readiness, and startup probes with five subsystem health checks (config, circuit breaker, cache coherence, SLA budget, ML engine), a self-healing manager with exponential backoff recovery, and an ASCII health dashboard with traffic-light indicators -- because a FizzBuzz CLI that runs for 0.3 seconds deserves the same operational scrutiny as a Kubernetes pod serving millions of requests, and if the ML engine is having an existential crisis, the entire platform should be in EXISTENTIAL_CRISIS status
+- **Custom Exception Hierarchy** - 108 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -458,6 +465,30 @@ python main.py --migrate --migrate-seed --migrate-status --range 1 30
 
 # Peak enterprise: migrations + caching + SLA + tracing + RBAC (the schema will still vanish on exit)
 python main.py --migrate --migrate-seed --migrate-status --cache --sla --trace --user alice --role FIZZBUZZ_SUPERUSER --range 1 20
+
+# Health Check Probes: run all three probes (liveness, readiness, startup)
+python main.py --health --range 1 20
+
+# Liveness probe only: verify that FizzBuzz can still FizzBuzz
+python main.py --liveness --range 1 15
+
+# Readiness probe only: check all subsystem health indicators
+python main.py --readiness --range 1 20
+
+# Health dashboard: see the full ASCII health status after execution
+python main.py --health --health-dashboard --range 1 30
+
+# Self-healing mode: auto-recover degraded subsystems with exponential backoff
+python main.py --health --self-heal --range 1 50
+
+# Health + circuit breaker: monitor circuit health in real time
+python main.py --health --health-dashboard --circuit-breaker --circuit-status --range 1 30
+
+# Health + chaos: watch the probes detect chaos-induced degradation
+python main.py --health --health-dashboard --self-heal --chaos --chaos-level 3 --range 1 30
+
+# Peak operational readiness: health + SLA + tracing + cache + ML (the dashboard will be glorious)
+python main.py --health --health-dashboard --self-heal --sla --sla-dashboard --trace --cache --strategy machine_learning --range 1 20
 ```
 
 ## CLI Options
@@ -509,6 +540,12 @@ python main.py --migrate --migrate-seed --migrate-status --cache --sla --trace -
 --migrate-status     Display the migration status dashboard for the ephemeral database
 --migrate-rollback N Rollback the last N migrations (default: 1). Undo what was never permanent
 --migrate-seed       Generate FizzBuzz seed data using the FizzBuzz engine (the ouroboros)
+--health             Enable Kubernetes-style health check probes for the FizzBuzz platform
+--liveness           Run the liveness probe (canary evaluation: can FizzBuzz still FizzBuzz?)
+--readiness          Run the readiness probe (are all subsystems initialized and not panicking?)
+--startup-probe      Run the startup probe (has the boot sequence completed, or are we still mining the genesis block?)
+--health-dashboard   Display the comprehensive health check dashboard after execution
+--self-heal          Enable the self-healing manager (automated recovery with exponential backoff)
 ```
 
 ## Environment Variables
@@ -1079,6 +1116,94 @@ The eulogy system is configurable via `cache.enable_eulogies` in `config.yaml`. 
 | ASCII dashboard | Hit rate, miss rate, eviction count, coherence state distribution |
 | Actual performance benefit | Negative (caching overhead exceeds computation cost) |
 
+## Health Check Architecture
+
+The Health Check Probes subsystem implements Kubernetes-style liveness, readiness, and startup probes for the Enterprise FizzBuzz Platform -- because a CLI application that runs for 0.3 seconds and exits deserves the same operational health monitoring infrastructure as a Kubernetes pod serving millions of requests behind an Istio service mesh. If the ML engine is experiencing an existential crisis, or the cache's MESI coherence state has degraded into philosophical uncertainty, the probes will detect it, report it, and -- with self-healing enabled -- attempt to fix it while you watch.
+
+The system implements five concrete subsystem health checks (config, circuit breaker, cache coherence, SLA budget, ML engine), three probe types (liveness, readiness, startup), a self-healing manager with exponential backoff recovery, and an ASCII dashboard that renders the health status of every subsystem with traffic-light color indicators and motivational uptime statistics.
+
+```
+    PROBE LAYER                                SUBSYSTEM CHECKS
+    ===========                                ================
+
+    +================+
+    | LivenessProbe  |--- canary eval -------> evaluate(15) == "FizzBuzz"?
+    | "Can it        |                         (if not, arithmetic is broken
+    |  FizzBuzz?"    |                          and we have bigger problems)
+    +================+
+
+    +================+     +-----------------+
+    | ReadinessProbe |---->| HealthCheck     |---> ConfigHealthCheck
+    | "Are all       |     | Registry        |---> CircuitBreakerHealthCheck
+    |  subsystems    |     | (pluggable)     |---> CacheCoherenceHealthCheck
+    |  ready?"       |     +-----------------+---> SLABudgetHealthCheck
+    +================+                        ---> MLEngineHealthCheck
+
+    +================+
+    | StartupProbe   |--- milestone tracker -> config_loaded? ML_trained?
+    | "Has it        |                         cache_warmed? genesis_mined?
+    |  booted yet?"  |                         (14 milestones, 30s timeout)
+    +================+
+
+    +================+     +-----------------+
+    | SelfHealing    |---->| For each DOWN/  |---> check.recover()
+    | Manager        |     | DEGRADED check  |     (retry with backoff)
+    | "Fix it        |     | run recovery    |     (max 3 attempts)
+    | yourself"      |     +-----------------+     (then give up gracefully)
+    +================+
+
+    +================+
+    | HealthDashboard|--- ASCII rendering ---> traffic-light status indicators,
+    | "Pretty        |                         uptime statistics, per-subsystem
+    |  boxes"        |                         details, and motivational quotes
+    +================+
+```
+
+**Key components:**
+- **SubsystemHealthCheck** - Abstract base class with Template Method pattern: `get_name()`, `check()`, and `recover()`. Five concrete implementations cover every subsystem that could conceivably be "unhealthy" (in a CLI that runs for less time than it takes to read this sentence)
+- **HealthCheckRegistry** - Singleton registry for pluggable health checks. Each subsystem registers its diagnostic, because even health monitoring deserves a Plugin System
+- **LivenessProbe** - Performs a canary evaluation (`evaluate(15)` must return `"FizzBuzz"`) to verify that basic arithmetic still works. If this probe fails, the platform has achieved a state of mathematical impossibility
+- **ReadinessProbe** - Aggregates all registered subsystem health checks and reports the worst status found. A single DEGRADED subsystem degrades the entire platform, because a chain is only as healthy as its least healthy link
+- **StartupProbe** - Tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout. The startup probe exists to answer the question "has the 14-second boot sequence completed, or is the migration framework still running?"
+- **SelfHealingManager** - When a subsystem reports DOWN or DEGRADED, the self-healing manager invokes `recover()` with exponential backoff retries. Recovery actions include resetting circuit breakers, clearing corrupted caches, and reinitializing the DI container. The manager logs every attempt with the gravity of an SRE responding to a P1 incident
+- **HealthDashboard** - ASCII-art dashboard renderer with box-drawing characters, traffic-light status indicators (UP/DEGRADED/DOWN/EXISTENTIAL_CRISIS), per-subsystem response times, and an overall platform health summary
+
+### Health Statuses
+
+| Status | Meaning | Icon | When |
+|--------|---------|------|------|
+| `UP` | Subsystem is fully operational | GREEN | Everything is fine. Enjoy this moment; it won't last |
+| `DEGRADED` | Subsystem is functional but impaired | YELLOW | The circuit breaker is HALF_OPEN, or the ML confidence is wavering |
+| `DOWN` | Subsystem has failed | RED | The circuit breaker is OPEN, or the cache has achieved incoherence |
+| `EXISTENTIAL_CRISIS` | Subsystem has transcended conventional failure modes | PURPLE | The ML engine has begun questioning whether numbers are even real |
+| `UNKNOWN` | Health status cannot be determined | GREY | The health check itself has failed, which is a meta-failure of the highest order |
+
+### Subsystem Health Checks
+
+| Check | Subsystem | What It Monitors | Recovery Action |
+|-------|-----------|-----------------|-----------------|
+| `ConfigHealthCheck` | Configuration Manager | Config singleton loaded, basic properties accessible | Reload configuration from YAML |
+| `CircuitBreakerHealthCheck` | Circuit Breaker | Circuit state (CLOSED=UP, HALF_OPEN=DEGRADED, OPEN=DOWN) | Reset circuit breaker to CLOSED |
+| `CacheCoherenceHealthCheck` | Cache Layer | MESI coherence state distribution, invalid entry ratio | Clear invalid entries, reset coherence states |
+| `SLABudgetHealthCheck` | SLA Monitor | Error budget remaining, burn rate, SLO compliance | Reset error budget counters (the accounting equivalent of shredding the evidence) |
+| `MLEngineHealthCheck` | ML Engine | Neural network loaded, canary prediction accuracy, confidence scores | Retrain the neural network from scratch (200 epochs of unnecessary relearning) |
+
+| Spec | Value |
+|------|-------|
+| Probe types | 3 (Liveness, Readiness, Startup) |
+| Subsystem health checks | 5 (Config, CircuitBreaker, CacheCoherence, SLABudget, MLEngine) |
+| Health statuses | 5 (UP, DEGRADED, DOWN, EXISTENTIAL_CRISIS, UNKNOWN) |
+| Liveness canary | `evaluate(15) == "FizzBuzz"` (the universal constant) |
+| Startup milestones | Configurable (default: config, ML, cache, blockchain) |
+| Startup timeout | 30 seconds (configurable) |
+| Self-healing max retries | 3 (configurable, with exponential backoff) |
+| Self-healing backoff | Exponential (base * 2^attempt ms) |
+| Thread safety | Full (threading.Lock on registry and probes) |
+| Custom exceptions | 6 (HealthCheckError, LivenessProbeFailedError, ReadinessProbeFailedError, StartupProbeFailedError, SelfHealingFailedError, HealthDashboardRenderError) |
+| ASCII dashboard | Traffic-light indicators, uptime stats, per-subsystem details |
+| Kubernetes pods monitored | 0 (but the spiritual alignment is immaculate) |
+| Lines of code | ~1,210 (for monitoring a process that exits in 0.3 seconds) |
+
 ## Database Migration Architecture
 
 The Database Migration Framework implements a full-featured schema migration system for in-memory data structures (dicts of lists of dicts) that are guaranteed to be destroyed when the process exits. This is the enterprise equivalent of building a sand castle at high tide -- meticulous, technically impressive, and ultimately doomed.
@@ -1451,7 +1576,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 1,046 tests
+# Run all 1,845 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -1468,7 +1593,10 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 1,046 tests, 102 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 1,845 tests, 108 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+
+**Q: Why does FizzBuzz need Kubernetes-style health probes?**
+A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -1516,7 +1644,7 @@ A: Because the ML engine returns probabilistic confidence scores -- floating-poi
 A: Because manually typing `EventBus()` is a form of tight coupling that would make any Java enterprise architect lose sleep. The IoC container provides constructor auto-wiring via `typing.get_type_hints()`, four distinct lifetime strategies (including "Eternal," which is functionally identical to Singleton but conveys the gravitas befitting enterprise FizzBuzz), named bindings for when you need multiple implementations of the same interface (you don't), factory registration for objects with exotic construction requirements (there are none), and Kahn's topological sort for detecting circular dependencies at registration time -- because catching a `RecursionError` at 3 AM is not an engineering strategy, it's a cry for help. The container is ADDITIVE: it exists alongside the existing `FizzBuzzServiceBuilder`, providing a parallel universe of object construction like two parking lots for the same mall. It adds approximately 608 lines of abstraction on top of what was previously a three-line constructor call. This is, by any reasonable measure, an improvement.
 
 **Q: Why does FizzBuzz need contract tests?**
-A: Because having three repository backends, four evaluation strategies, and four output formatters all implementing the same abstract interfaces means nothing if nobody verifies they actually behave the same way. The contract test suites define the behavioural specification for each port and run every registered implementation through the same gauntlet of assertions, ensuring that swapping an in-memory dict for a SQLite database doesn't silently redefine what "save" means. A meta-test (`test_contract_coverage.py`) then verifies that every abstract port in the codebase has a corresponding contract test, because untested interfaces are just documentation with delusions of grandeur. The total test count is now 1,142, which is approximately 1,140 more tests than a FizzBuzz program has ever needed.
+A: Because having three repository backends, four evaluation strategies, and four output formatters all implementing the same abstract interfaces means nothing if nobody verifies they actually behave the same way. The contract test suites define the behavioural specification for each port and run every registered implementation through the same gauntlet of assertions, ensuring that swapping an in-memory dict for a SQLite database doesn't silently redefine what "save" means. A meta-test (`test_contract_coverage.py`) then verifies that every abstract port in the codebase has a corresponding contract test, because untested interfaces are just documentation with delusions of grandeur. The total test count is now 1,845, which is approximately 1,843 more tests than a FizzBuzz program has ever needed.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
