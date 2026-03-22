@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 4
-- Remaining: 6
+- Implemented: 5
+- Remaining: 5
 
 ---
 
@@ -165,7 +165,7 @@ Test the following:
 
 ### 5. Integration: Middleware Pipeline Composition (tests/integration/test_pipeline_integration.py)
 
-**Status:** PENDING
+**Status:** DONE (44 tests)
 **Description:** The middleware pipeline is the spinal cord of the platform. Unit tests verify individual middlewares. This item tests the pipeline as a composed system, instantiated in-process (not via subprocess) with multiple real middlewares wired together in priority order. The goal is to verify ordering, context propagation, metadata accumulation, and error handling across the actual middleware stack.
 
 Test the following by importing and composing real middleware classes:
