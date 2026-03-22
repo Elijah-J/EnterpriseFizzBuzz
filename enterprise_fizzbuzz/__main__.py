@@ -411,6 +411,12 @@ from enterprise_fizzbuzz.infrastructure.distributed_locks import (
     WaitPolicy,
     WaitPolicyType,
 )
+from enterprise_fizzbuzz.infrastructure.cdc import (
+    CDCDashboard,
+    CDCMiddleware,
+    CDCPipeline,
+    create_cdc_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.ip_office import (
     CopyrightRegistry,
     IPDisputeTribunal,
@@ -2028,6 +2034,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--lock-dashboard",
         action="store_true",
         help="Display the FizzLock ASCII dashboard with active locks, wait-for graph, deadlock history, and contention heatmap",
+    )
+
+    # Change Data Capture (FizzCDC)
+    parser.add_argument(
+        "--cdc",
+        action="store_true",
+        help="Enable FizzCDC Change Data Capture: stream platform state changes through an outbox relay to pluggable sinks",
+    )
+
+    parser.add_argument(
+        "--cdc-dashboard",
+        action="store_true",
+        help="Display the FizzCDC ASCII dashboard with capture rates, outbox depth, relay lag, and sink status",
+    )
+
+    parser.add_argument(
+        "--cdc-sinks",
+        type=str,
+        default=None,
+        metavar="SINKS",
+        help="Comma-separated list of CDC sink connectors (log,metrics,message_queue). Default: from config",
     )
 
     return parser
@@ -4809,6 +4836,44 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzCDC Change Data Capture setup
+    # ----------------------------------------------------------------
+    cdc_pipeline = None
+    cdc_agents = None
+    cdc_sinks_list = None
+    cdc_middleware_instance = None
+
+    if args.cdc or args.cdc_dashboard:
+        sinks_cfg = (
+            [s.strip() for s in args.cdc_sinks.split(",")]
+            if args.cdc_sinks
+            else config.cdc_sinks
+        )
+        cdc_pipeline, cdc_agents, cdc_sinks_list, _cdc_registry = create_cdc_subsystem(
+            sinks_config=sinks_cfg,
+            compatibility=config.cdc_schema_compatibility,
+            relay_interval_s=config.cdc_relay_interval_s,
+            outbox_capacity=config.cdc_outbox_capacity,
+        )
+
+        cdc_middleware_instance = CDCMiddleware(pipeline=cdc_pipeline)
+
+        # Start the background outbox relay
+        cdc_pipeline.outbox_relay.start()
+
+        sink_names = ", ".join(s.name for s in cdc_sinks_list) if cdc_sinks_list else "none"
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZCDC — CHANGE DATA CAPTURE                           |\n"
+            "  | Transactional Outbox | Schema Registry | Sink Relay     |\n"
+            f"  | Sinks: {sink_names:<50}|\n"
+            f"  | Relay Interval: {config.cdc_relay_interval_s:.2f}s  Capacity: {config.cdc_outbox_capacity:<14}|\n"
+            "  | Capture: cache | blockchain | SLA | compliance          |\n"
+            '  | "Every state change deserves a paper trail."            |\n'
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # FizzBuzz Intellectual Property Office setup
     # ----------------------------------------------------------------
     ip_trademark_registry = None
@@ -5072,6 +5137,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add Archaeology middleware (priority 900, near end of chain)
     if arch_middleware is not None:
         builder.with_middleware(arch_middleware)
+
+    # Add CDC middleware (priority 950, captures state after evaluation)
+    if cdc_middleware_instance is not None:
+        builder.with_middleware(cdc_middleware_instance)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -6408,6 +6477,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.lock_dashboard:
         print("\n  FizzLock not enabled. Use --locks to enable.\n")
+
+    # FizzCDC Dashboard
+    if args.cdc_dashboard and cdc_pipeline is not None:
+        # Final flush before rendering
+        cdc_pipeline.outbox_relay.stop()
+        print(CDCDashboard.render(
+            pipeline=cdc_pipeline,
+            agents=cdc_agents or [],
+            sinks=cdc_sinks_list or [],
+            width=config.cdc_dashboard_width,
+        ))
+    elif args.cdc_dashboard:
+        print("\n  FizzCDC not enabled. Use --cdc to enable.\n")
+
+    # Stop CDC relay if running (without dashboard)
+    if cdc_pipeline is not None and not args.cdc_dashboard:
+        cdc_pipeline.outbox_relay.stop()
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
