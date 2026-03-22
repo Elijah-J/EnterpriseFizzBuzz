@@ -198,6 +198,14 @@ from enterprise_fizzbuzz.infrastructure.data_pipeline import (
     SinkConnectorFactory,
     SourceConnectorFactory,
 )
+from enterprise_fizzbuzz.infrastructure.openapi import (
+    ASCIISwaggerUI,
+    EndpointRegistry,
+    ExceptionToHTTPMapper,
+    OpenAPIDashboard,
+    OpenAPIGenerator,
+    SchemaGenerator,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -974,6 +982,37 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Enable retroactive backfill enrichment of pipeline records",
     )
 
+    # OpenAPI Specification Generator & ASCII Swagger UI
+    parser.add_argument(
+        "--openapi",
+        action="store_true",
+        help="Display the ASCII Swagger UI for the fictional Enterprise FizzBuzz REST API",
+    )
+
+    parser.add_argument(
+        "--openapi-spec",
+        action="store_true",
+        help="Export the complete OpenAPI 3.1 specification in JSON format",
+    )
+
+    parser.add_argument(
+        "--openapi-yaml",
+        action="store_true",
+        help="Export the complete OpenAPI 3.1 specification in YAML format",
+    )
+
+    parser.add_argument(
+        "--swagger-ui",
+        action="store_true",
+        help="Display the ASCII Swagger UI (alias for --openapi)",
+    )
+
+    parser.add_argument(
+        "--openapi-dashboard",
+        action="store_true",
+        help="Display the OpenAPI specification statistics dashboard",
+    )
+
     return parser
 
 
@@ -1012,6 +1051,25 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Configuration
     config = ConfigurationManager(config_path=args.config)
     config.load()
+
+    # ----------------------------------------------------------------
+    # OpenAPI Specification Generator (early exit commands)
+    # ----------------------------------------------------------------
+    if args.openapi or args.swagger_ui:
+        print(ASCIISwaggerUI.render(width=config.openapi_swagger_ui_width))
+        return 0
+
+    if args.openapi_spec:
+        print(OpenAPIGenerator.to_json())
+        return 0
+
+    if args.openapi_yaml:
+        print(OpenAPIGenerator.to_yaml())
+        return 0
+
+    if args.openapi_dashboard:
+        print(OpenAPIDashboard.render(width=config.openapi_dashboard_width))
+        return 0
 
     # ----------------------------------------------------------------
     # Configuration Validation (--config-validate, early exit)

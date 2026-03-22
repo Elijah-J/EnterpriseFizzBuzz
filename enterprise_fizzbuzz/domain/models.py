@@ -368,6 +368,14 @@ class EventType(Enum):
     VAULT_SCAN_SECRET_FOUND = auto()
     VAULT_DASHBOARD_RENDERED = auto()
 
+    # OpenAPI Specification Generator events
+    OPENAPI_SPEC_GENERATED = auto()
+    OPENAPI_SCHEMA_INTROSPECTED = auto()
+    OPENAPI_EXCEPTION_MAPPED = auto()
+    OPENAPI_SWAGGER_UI_RENDERED = auto()
+    OPENAPI_DASHBOARD_RENDERED = auto()
+    OPENAPI_YAML_EXPORTED = auto()
+
     # Data Pipeline & ETL Framework events
     PIPELINE_STARTED = auto()
     PIPELINE_COMPLETED = auto()

@@ -4097,6 +4097,264 @@ class PipelineStageRetryExhaustedError(DataPipelineError):
         )
 
 
+# ============================================================
+# OpenAPI Specification Generator Exceptions (EFP-OA00 through EFP-OA11)
+# ============================================================
+# Because generating documentation for an API that does not exist
+# requires its own twelve-member exception family. Every schema
+# introspection failure, every endpoint registration error, and
+# every ASCII rendering anomaly is captured with the gravitas of
+# a Swagger UI that has lost its swagger.
+# ============================================================
+
+
+class OpenAPIError(FizzBuzzError):
+    """Base exception for all OpenAPI Specification Generator errors.
+
+    When your system for documenting an API that does not exist
+    encounters a failure, you have achieved a level of meta-documentation
+    failure that most enterprises can only dream of. The spec was
+    supposed to describe what could be; instead, it describes what
+    went wrong while trying to describe what could be.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-OA00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class SchemaIntrospectionError(OpenAPIError):
+    """Raised when the schema generator fails to introspect a domain model.
+
+    The SchemaGenerator attempted to convert a dataclass or enum to
+    JSON Schema using reflection, type hints, and a healthy dose of
+    optimism. Something went wrong. Perhaps the type annotations are
+    too creative, the dataclass fields are too recursive, or Python's
+    typing module has finally given up trying to understand generics.
+    """
+
+    def __init__(self, class_name: str, reason: str) -> None:
+        super().__init__(
+            f"Schema introspection failed for '{class_name}': {reason}. "
+            f"The JSON Schema generator cannot convert this class to a "
+            f"schema. The type annotations have defeated reflection.",
+            error_code="EFP-OA01",
+            context={"class_name": class_name, "reason": reason},
+        )
+        self.class_name = class_name
+
+
+class EndpointRegistrationError(OpenAPIError):
+    """Raised when an endpoint fails to register in the EndpointRegistry.
+
+    The fictional endpoint you tried to register has been rejected by
+    the registry. Perhaps the path is malformed, the operation_id is
+    already taken, or the endpoint is simply too fictional even for
+    our standards (which is saying something).
+    """
+
+    def __init__(self, path: str, method: str, reason: str) -> None:
+        super().__init__(
+            f"Endpoint registration failed for {method} {path}: {reason}. "
+            f"The fictional endpoint could not be added to the fictional registry "
+            f"of the fictional API. This is a real error about a fake API.",
+            error_code="EFP-OA02",
+            context={"path": path, "method": method, "reason": reason},
+        )
+        self.path = path
+        self.method = method
+
+
+class ExceptionMappingError(OpenAPIError):
+    """Raised when an exception cannot be mapped to an HTTP status code.
+
+    The ExceptionToHTTPMapper examined the exception class, walked its
+    MRO, checked the explicit mappings, and still couldn't determine
+    an appropriate HTTP status code. This exception has fallen through
+    every crack in the mapping table and now exists in HTTP status limbo.
+    """
+
+    def __init__(self, exception_name: str, reason: str) -> None:
+        super().__init__(
+            f"Cannot map exception '{exception_name}' to HTTP status code: "
+            f"{reason}. The exception will default to 500 Internal Server "
+            f"Error, which is the HTTP equivalent of shrugging.",
+            error_code="EFP-OA03",
+            context={"exception_name": exception_name, "reason": reason},
+        )
+        self.exception_name = exception_name
+
+
+class OpenAPISpecGenerationError(OpenAPIError):
+    """Raised when the OpenAPI specification cannot be assembled.
+
+    The OpenAPIGenerator attempted to assemble the complete specification
+    from endpoints, schemas, security schemes, and server definitions,
+    but something went wrong during assembly. The spec is incomplete,
+    which means the documentation for the non-existent API is itself
+    non-existent. The recursion is complete.
+    """
+
+    def __init__(self, section: str, reason: str) -> None:
+        super().__init__(
+            f"OpenAPI specification generation failed in section '{section}': "
+            f"{reason}. The spec for the server that does not exist has itself "
+            f"failed to exist. The irony is not lost on us.",
+            error_code="EFP-OA04",
+            context={"section": section, "reason": reason},
+        )
+        self.section = section
+
+
+class SwaggerUIRenderError(OpenAPIError):
+    """Raised when the ASCII Swagger UI fails to render.
+
+    The ASCII art rendering engine — which converts OpenAPI endpoints
+    into box-drawing characters and [Try It] buttons — has encountered
+    a rendering error. The Swagger UI cannot be displayed, which means
+    the terminal-based documentation for the non-existent API will
+    remain invisible. Some might argue this is an improvement.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"ASCII Swagger UI render failed: {reason}. "
+            f"The box-drawing characters have refused to draw boxes. "
+            f"The [Try It] buttons cannot be tried. The swagger has left the UI.",
+            error_code="EFP-OA05",
+            context={"reason": reason},
+        )
+
+
+class OpenAPIDashboardRenderError(OpenAPIError):
+    """Raised when the OpenAPI dashboard fails to render.
+
+    The statistics dashboard — a compact summary of endpoints, schemas,
+    and exception mappings — has failed to render. The meta-dashboard
+    about the meta-specification has experienced a meta-failure. We are
+    now three levels deep in the meta-stack and the box-drawing characters
+    are getting dizzy.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"OpenAPI dashboard render failed: {reason}. "
+            f"The dashboard summarizing the spec describing the API that "
+            f"doesn't exist has itself failed to appear. Peak enterprise.",
+            error_code="EFP-OA06",
+            context={"reason": reason},
+        )
+
+
+class OpenAPISerializationError(OpenAPIError):
+    """Raised when the OpenAPI spec cannot be serialized to JSON or YAML.
+
+    The specification was generated successfully in memory but could not
+    be serialized to a string format. Perhaps a value is not JSON-serializable,
+    or the YAML formatter encountered a type it cannot represent. Either way,
+    the documentation exists only in RAM, which is appropriate for a platform
+    whose entire state exists only in RAM.
+    """
+
+    def __init__(self, format_name: str, reason: str) -> None:
+        super().__init__(
+            f"OpenAPI spec serialization to {format_name} failed: {reason}. "
+            f"The specification cannot be exported. It will remain an "
+            f"in-memory representation of a non-existent API.",
+            error_code="EFP-OA07",
+            context={"format_name": format_name, "reason": reason},
+        )
+        self.format_name = format_name
+
+
+class InvalidEndpointPathError(OpenAPIError):
+    """Raised when an endpoint path does not conform to OpenAPI path syntax.
+
+    OpenAPI paths must start with '/' and use '{paramName}' for path
+    parameters. Your path either forgot the leading slash (barbaric),
+    used angle brackets instead of curly braces (XML contamination),
+    or contained characters that no URL should ever contain.
+    """
+
+    def __init__(self, path: str, reason: str) -> None:
+        super().__init__(
+            f"Invalid OpenAPI endpoint path '{path}': {reason}. "
+            f"Paths must start with '/' and use curly braces for parameters. "
+            f"This is not negotiable. RFC 3986 has opinions.",
+            error_code="EFP-OA08",
+            context={"path": path, "reason": reason},
+        )
+        self.path = path
+
+
+class DuplicateOperationIdError(OpenAPIError):
+    """Raised when two endpoints share the same operationId.
+
+    Every endpoint must have a unique operationId, because the OpenAPI
+    spec says so and we are nothing if not compliant with specifications
+    — even when documenting an API that violates the most fundamental
+    specification of all: having a server.
+    """
+
+    def __init__(self, operation_id: str, path_a: str, path_b: str) -> None:
+        super().__init__(
+            f"Duplicate operationId '{operation_id}' found in '{path_a}' "
+            f"and '{path_b}'. Operation IDs must be unique across the entire "
+            f"spec. Even fictional APIs have standards.",
+            error_code="EFP-OA09",
+            context={
+                "operation_id": operation_id,
+                "path_a": path_a,
+                "path_b": path_b,
+            },
+        )
+        self.operation_id = operation_id
+
+
+class SecuritySchemeNotFoundError(OpenAPIError):
+    """Raised when a referenced security scheme does not exist.
+
+    The endpoint references a security scheme that has not been defined
+    in the components/securitySchemes section. This is the OpenAPI
+    equivalent of citing a source that doesn't exist in an academic paper.
+    The peer reviewers (validators) will not be pleased.
+    """
+
+    def __init__(self, scheme_name: str) -> None:
+        super().__init__(
+            f"Security scheme '{scheme_name}' not found in components. "
+            f"The endpoint references a security mechanism that has not "
+            f"been defined. Authentication is hard enough without phantom "
+            f"security schemes.",
+            error_code="EFP-OA10",
+            context={"scheme_name": scheme_name},
+        )
+        self.scheme_name = scheme_name
+
+
+class TagNotFoundError(OpenAPIError):
+    """Raised when an endpoint references a tag that has no description.
+
+    Every tag used by endpoints should have a corresponding entry in the
+    tags section with a description. An undescribed tag is like an
+    unlabeled filing cabinet: technically functional, but deeply
+    unsatisfying to anyone who values organizational hygiene.
+    """
+
+    def __init__(self, tag_name: str) -> None:
+        super().__init__(
+            f"Tag '{tag_name}' used by endpoint but not defined in tags section. "
+            f"Every tag deserves a description. Even in a spec for an API that "
+            f"doesn't exist, we maintain documentation standards.",
+            error_code="EFP-OA11",
+            context={"tag_name": tag_name},
+        )
+        self.tag_name = tag_name
+
+
 class PipelineDashboardRenderError(DataPipelineError):
     """Raised when the pipeline ASCII dashboard fails to render.
 
