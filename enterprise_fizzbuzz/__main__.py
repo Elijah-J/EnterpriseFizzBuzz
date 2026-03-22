@@ -335,6 +335,11 @@ from enterprise_fizzbuzz.infrastructure.knowledge_graph import (
     execute_fizzsparql,
     populate_fizzbuzz_domain,
 )
+from enterprise_fizzbuzz.infrastructure.self_modifying import (
+    SelfModifyingDashboard,
+    SelfModifyingMiddleware,
+    create_self_modifying_engine,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1600,6 +1605,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--ontology-dashboard",
         action="store_true",
         help="Display the Knowledge Graph & Domain Ontology ASCII dashboard after execution",
+    )
+
+    # Self-Modifying Code
+    parser.add_argument(
+        "--self-modify",
+        action="store_true",
+        help="Enable Self-Modifying Code: FizzBuzz rules that inspect and rewrite their own evaluation logic at runtime",
+    )
+
+    parser.add_argument(
+        "--self-modify-rate",
+        type=float,
+        default=None,
+        metavar="RATE",
+        help="Mutation probability per evaluation, 0.0-1.0 (default: from config)",
+    )
+
+    parser.add_argument(
+        "--self-modify-dashboard",
+        action="store_true",
+        help="Display the Self-Modifying Code ASCII dashboard after execution",
     )
 
     return parser
@@ -3861,6 +3887,51 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Knowledge Graph not enabled. Use --ontology to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Self-Modifying Code setup
+    # ----------------------------------------------------------------
+    sm_engine = None
+    sm_middleware = None
+
+    if args.self_modify or args.self_modify_dashboard:
+        sm_rate = args.self_modify_rate if args.self_modify_rate is not None else config.self_modifying_mutation_rate
+        sm_rules = [(r.divisor, r.label) for r in config.rules]
+
+        sm_engine = create_self_modifying_engine(
+            rules=sm_rules,
+            mutation_rate=sm_rate,
+            max_ast_depth=config.self_modifying_max_ast_depth,
+            correctness_floor=config.self_modifying_correctness_floor,
+            max_mutations=config.self_modifying_max_mutations_per_session,
+            kill_switch=config.self_modifying_kill_switch,
+            correctness_weight=config.self_modifying_fitness_correctness_weight,
+            latency_weight=config.self_modifying_fitness_latency_weight,
+            compactness_weight=config.self_modifying_fitness_compactness_weight,
+            enabled_operators=config.self_modifying_enabled_operators,
+            seed=42,
+            event_bus=event_bus,
+            range_start=config.range_start,
+            range_end=config.range_end,
+        )
+
+        sm_middleware = SelfModifyingMiddleware(
+            engine=sm_engine,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | SELF-MODIFYING CODE: Rules That Rewrite Themselves      |\n"
+            f"  | Mutation Rate: {sm_rate:<42.1%}|\n"
+            f"  | Safety Floor: {config.self_modifying_correctness_floor:<43.1%}|\n"
+            f"  | Kill Switch: {'ARMED' if config.self_modifying_kill_switch else 'DISABLED':<44}|\n"
+            f"  | Operators: {len(config.self_modifying_enabled_operators):<46}|\n"
+            "  | The rules now inspect and rewrite their own ASTs at     |\n"
+            "  | runtime. The SafetyGuard prevents catastrophic          |\n"
+            "  | mutations. Probably.                                    |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -3965,6 +4036,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if kg_middleware is not None:
         builder.with_middleware(kg_middleware)
+
+    if sm_middleware is not None:
+        builder.with_middleware(sm_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -4982,6 +5056,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.ontology_dashboard:
         print("\n  Knowledge Graph not enabled. Use --ontology to enable.\n")
+
+    # Self-Modifying Code Dashboard
+    if args.self_modify_dashboard and sm_engine is not None:
+        print(SelfModifyingDashboard.render(
+            sm_engine,
+            width=config.self_modifying_dashboard_width,
+            show_ast=config.self_modifying_dashboard_show_ast,
+            show_history=config.self_modifying_dashboard_show_history,
+            show_fitness=config.self_modifying_dashboard_show_fitness,
+        ))
+    elif args.self_modify_dashboard:
+        print("\n  Self-modifying code not enabled. Use --self-modify to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

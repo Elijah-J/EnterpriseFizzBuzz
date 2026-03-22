@@ -552,6 +552,14 @@ class EventType(Enum):
     KG_SPARQL_EXECUTED = auto()
     KG_ONTOLOGY_RENDERED = auto()
 
+    # Self-Modifying Code events
+    SELF_MODIFY_MUTATION_PROPOSED = auto()
+    SELF_MODIFY_MUTATION_ACCEPTED = auto()
+    SELF_MODIFY_MUTATION_REVERTED = auto()
+    SELF_MODIFY_FITNESS_EVALUATED = auto()
+    SELF_MODIFY_SAFETY_VIOLATION = auto()
+    SELF_MODIFY_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

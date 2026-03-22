@@ -1238,6 +1238,44 @@ knowledge_graph:
     show_triple_stats: true                    # Show triple store statistics
     show_inference_stats: true                 # Show inference engine statistics
 
+# Self-Modifying Code configuration
+# Because the only thing more terrifying than enterprise FizzBuzz
+# is FizzBuzz rules that inspect and rewrite their own evaluation
+# logic at runtime using mutable ASTs, stochastic mutation operators,
+# and a Darwinian fitness evaluator. The rules don't just evaluate
+# numbers — they evolve. They improve. They occasionally mutate
+# themselves into incomprehensibility and must be reverted by the
+# SafetyGuard, which is basically a kill switch for bad ideas.
+self_modifying:
+  enabled: false                               # Master switch — opt-in via --self-modify
+  mutation_rate: 0.05                          # Probability of mutation per evaluation (5%)
+  max_ast_depth: 10                            # Maximum allowed AST depth after mutation
+  correctness_floor: 0.95                      # Minimum correctness to accept a mutation (95%)
+  max_mutations_per_session: 100               # Mutation quota per evaluation session
+  kill_switch: true                            # Emergency stop: revert ALL mutations if correctness < floor
+  fitness_weights:
+    correctness: 0.70                          # Weight for classification accuracy
+    latency: 0.20                              # Weight for evaluation speed
+    compactness: 0.10                          # Weight for AST size (smaller = better)
+  enabled_operators:                           # Which mutation operators are active
+    - "DivisorShift"
+    - "LabelSwap"
+    - "BranchInvert"
+    - "InsertShortCircuit"
+    - "DeadCodePrune"
+    - "SubtreeSwap"
+    - "DuplicateSubtree"
+    - "NegateCondition"
+    - "ConstantFold"
+    - "InsertRedundantCheck"
+    - "ShuffleChildren"
+    - "WrapInConditional"
+  dashboard:
+    width: 60                                  # ASCII dashboard width
+    show_ast: true                             # Show current AST structure
+    show_history: true                         # Show mutation history
+    show_fitness: true                         # Show fitness sparkline
+
 # Observer configuration
 observers:
   console_observer:
