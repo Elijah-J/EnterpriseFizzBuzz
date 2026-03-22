@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 8
-- Remaining: 2
+- Implemented: 9
+- Remaining: 1
 
 ---
 
@@ -252,7 +252,7 @@ Test the following by running real evaluations and then rendering the correspond
 
 ### 9. Regression: Cross-Subsystem Edge Cases (tests/integration/test_cross_subsystem_regression.py)
 
-**Status:** PENDING
+**Status:** DONE (30 tests)
 **Description:** This item covers specific edge cases and known interaction patterns between subsystems that could produce surprising behavior. These are the tests that a QA engineer writes after reading the source code and thinking "wait, what happens when..."
 
 Test the following:
