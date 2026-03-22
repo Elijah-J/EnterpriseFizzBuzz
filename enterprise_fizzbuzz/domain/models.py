@@ -544,6 +544,14 @@ class EventType(Enum):
     FEDERATION_CONVERGENCE_ACHIEVED = auto()
     FEDERATION_DASHBOARD_RENDERED = auto()
 
+    # Knowledge Graph & Domain Ontology events
+    KG_TRIPLE_ADDED = auto()
+    KG_INFERENCE_STARTED = auto()
+    KG_INFERENCE_FIXPOINT = auto()
+    KG_SPARQL_PARSED = auto()
+    KG_SPARQL_EXECUTED = auto()
+    KG_ONTOLOGY_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

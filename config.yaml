@@ -1219,6 +1219,25 @@ federated_learning:
     show_convergence_curve: true              # Show ASCII convergence plot
     show_client_details: true                 # Show per-client training metrics
 
+# Knowledge Graph & Domain Ontology configuration
+# Because the only thing more important than computing FizzBuzz
+# is representing the entire FizzBuzz domain as a formal ontology
+# with RDF triples, OWL class hierarchies, forward-chaining inference,
+# and a bespoke SPARQL query engine. Tim Berners-Lee envisioned the
+# Semantic Web for exactly this kind of application. Probably.
+knowledge_graph:
+  enabled: false                               # Master switch — opt-in via --ontology
+  max_inference_iterations: 100                # Safety limit for forward-chaining fixpoint
+  domain_range_start: 1                        # Start of range for domain population
+  domain_range_end: 100                        # End of range for domain population
+  enable_owl_reasoning: true                   # Enable OWL class hierarchy reasoning
+  enable_visualization: true                   # Generate ASCII ontology trees
+  dashboard:
+    width: 60                                  # ASCII dashboard width
+    show_class_hierarchy: true                 # Show OWL class tree in dashboard
+    show_triple_stats: true                    # Show triple store statistics
+    show_inference_stats: true                 # Show inference engine statistics
+
 # Observer configuration
 observers:
   console_observer:

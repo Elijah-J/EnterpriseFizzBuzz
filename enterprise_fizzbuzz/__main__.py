@@ -323,6 +323,18 @@ from enterprise_fizzbuzz.infrastructure.federated_learning import (
     DifferentialPrivacyManager,
     NonIIDSimulator,
 )
+from enterprise_fizzbuzz.infrastructure.knowledge_graph import (
+    FizzSPARQLParser,
+    FizzSPARQLExecutor,
+    InferenceEngine,
+    KnowledgeDashboard,
+    KnowledgeGraphMiddleware,
+    OWLClassHierarchy,
+    OntologyVisualizer,
+    TripleStore,
+    execute_fizzsparql,
+    populate_fizzbuzz_domain,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1567,6 +1579,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fed-dashboard",
         action="store_true",
         help="Display the Federated Learning ASCII dashboard after execution",
+    )
+
+    # Knowledge Graph & Domain Ontology
+    parser.add_argument(
+        "--ontology",
+        action="store_true",
+        help="Enable the Knowledge Graph & Domain Ontology: model FizzBuzz as RDF triples with OWL class hierarchy",
+    )
+
+    parser.add_argument(
+        "--sparql",
+        type=str,
+        metavar="QUERY",
+        default=None,
+        help='Execute a FizzSPARQL query (e.g. --sparql "SELECT ?n WHERE { ?n fizz:hasClassification fizz:Fizz } LIMIT 10")',
+    )
+
+    parser.add_argument(
+        "--ontology-dashboard",
+        action="store_true",
+        help="Display the Knowledge Graph & Domain Ontology ASCII dashboard after execution",
     )
 
     return parser
@@ -3720,6 +3753,114 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Quantum simulator not enabled. Use --quantum to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Knowledge Graph & Domain Ontology setup
+    # ----------------------------------------------------------------
+    kg_store = None
+    kg_hierarchy = None
+    kg_engine = None
+    kg_middleware = None
+
+    if args.ontology or args.sparql or args.ontology_dashboard:
+        kg_store = TripleStore()
+        triple_count = populate_fizzbuzz_domain(
+            kg_store,
+            range_start=config.knowledge_graph_domain_range_start,
+            range_end=config.knowledge_graph_domain_range_end,
+        )
+
+        kg_hierarchy = OWLClassHierarchy(kg_store)
+        kg_engine = InferenceEngine(
+            kg_store,
+            max_iterations=config.knowledge_graph_max_inference_iterations,
+        )
+
+        # Run forward-chaining inference to fixpoint
+        inferred = kg_engine.run()
+
+        # Rebuild hierarchy after inference (new subclass triples may exist)
+        kg_hierarchy = OWLClassHierarchy(kg_store)
+
+        if args.sparql and not args.ontology:
+            # SPARQL-only mode: execute query and exit
+            try:
+                results = execute_fizzsparql(kg_store, args.sparql)
+                print()
+                print("  FizzSPARQL Query Results:")
+                print("  " + "-" * 56)
+                if not results:
+                    print("  (no results)")
+                else:
+                    # Print header
+                    if results:
+                        headers = list(results[0].keys())
+                        header_line = "  " + "  ".join(f"{h:<20}" for h in headers)
+                        print(header_line)
+                        print("  " + "-" * 56)
+                    for row in results:
+                        vals = [f"{v:<20}" for v in row.values()]
+                        print("  " + "  ".join(vals))
+                print("  " + "-" * 56)
+                print(f"  {len(results)} result(s)")
+                print()
+            except Exception as e:
+                print(f"\n  FizzSPARQL Error: {e}\n")
+                return 1
+            return 0
+
+        kg_middleware = KnowledgeGraphMiddleware(
+            store=kg_store,
+            hierarchy=kg_hierarchy,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | KNOWLEDGE GRAPH: Semantic Web for FizzBuzz ENABLED      |\n"
+            f"  | Triples: {kg_store.size:<48}|\n"
+            f"  | Inferred: {inferred:<47}|\n"
+            f"  | Classes: {len(kg_hierarchy.get_all_classes()):<48}|\n"
+            "  | Every integer is now an RDF resource with formal class   |\n"
+            "  | membership, divisibility properties, and an OWL class   |\n"
+            "  | hierarchy featuring diamond inheritance. Linked Data!   |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Show class hierarchy if visualization is enabled
+        if config.knowledge_graph_enable_visualization:
+            print()
+            print(OntologyVisualizer.render_class_tree(
+                kg_hierarchy, width=config.knowledge_graph_dashboard_width
+            ))
+
+        # Execute inline SPARQL query if provided alongside --ontology
+        if args.sparql:
+            try:
+                results = execute_fizzsparql(kg_store, args.sparql)
+                print()
+                print("  FizzSPARQL Query Results:")
+                print("  " + "-" * 56)
+                if not results:
+                    print("  (no results)")
+                else:
+                    if results:
+                        headers = list(results[0].keys())
+                        header_line = "  " + "  ".join(f"{h:<20}" for h in headers)
+                        print(header_line)
+                        print("  " + "-" * 56)
+                    for row in results:
+                        vals = [f"{v:<20}" for v in row.values()]
+                        print("  " + "  ".join(vals))
+                print("  " + "-" * 56)
+                print(f"  {len(results)} result(s)")
+                print()
+            except Exception as e:
+                print(f"\n  FizzSPARQL Error: {e}\n")
+
+    elif args.ontology_dashboard:
+        print("\n  Knowledge Graph not enabled. Use --ontology to enable.\n")
+        return 0
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -3821,6 +3962,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if federated_middleware is not None:
         builder.with_middleware(federated_middleware)
+
+    if kg_middleware is not None:
+        builder.with_middleware(kg_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -4824,6 +4968,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.fed_dashboard:
         print("\n  Federated learning not enabled. Use --federated to enable.\n")
+
+    # Knowledge Graph & Domain Ontology Dashboard
+    if args.ontology_dashboard and kg_store is not None:
+        print(KnowledgeDashboard.render(
+            kg_store,
+            kg_hierarchy,
+            kg_engine,
+            width=config.knowledge_graph_dashboard_width,
+            show_class_hierarchy=config.knowledge_graph_dashboard_show_class_hierarchy,
+            show_triple_stats=config.knowledge_graph_dashboard_show_triple_stats,
+            show_inference_stats=config.knowledge_graph_dashboard_show_inference_stats,
+        ))
+    elif args.ontology_dashboard:
+        print("\n  Knowledge Graph not enabled. Use --ontology to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
