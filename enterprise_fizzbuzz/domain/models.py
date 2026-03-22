@@ -490,6 +490,13 @@ class EventType(Enum):
     FBAAS_BILLING_CHARGED = auto()
     FBAAS_WATERMARK_APPLIED = auto()
 
+    # Time-Travel Debugger events
+    TIME_TRAVEL_SNAPSHOT_CAPTURED = auto()
+    TIME_TRAVEL_NAVIGATION = auto()
+    TIME_TRAVEL_BREAKPOINT_HIT = auto()
+    TIME_TRAVEL_ANOMALY_DETECTED = auto()
+    TIME_TRAVEL_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

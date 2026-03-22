@@ -1076,6 +1076,22 @@ fbaas:
   dashboard:
     width: 60                              # ASCII dashboard width
 
+# Time-Travel Debugger configuration
+# Because debugging FizzBuzz in a strictly forward-moving temporal
+# direction is an unacceptable limitation. With the Time-Travel
+# Debugger, you can step backwards through the evaluation timeline,
+# set conditional breakpoints on modulo results, and diff any two
+# points in FizzBuzz history. Doc Brown would be proud — or
+# confused — but definitely impressed by the SHA-256 integrity hashes.
+time_travel:
+  enabled: false                         # Master switch — opt-in via --time-travel
+  max_snapshots: 10000                   # Maximum snapshots retained in the timeline
+  integrity_checks: true                 # Verify SHA-256 hashes on snapshot access
+  anomaly_detection: true                # Detect temporal anomalies (non-monotonic results)
+  dashboard:
+    width: 60                            # ASCII dashboard width
+    timeline_markers: true               # Show breakpoint/anomaly markers on timeline strip
+
 # Observer configuration
 observers:
   console_observer:

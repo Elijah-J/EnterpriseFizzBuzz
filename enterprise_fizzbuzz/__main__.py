@@ -267,6 +267,14 @@ from enterprise_fizzbuzz.infrastructure.load_testing import (
 from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     UnifiedAuditDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.time_travel import (
+    ConditionalBreakpoint,
+    DiffViewer,
+    TimelineUI,
+    TimeTravelMiddleware,
+    create_time_travel_subsystem,
+    render_time_travel_summary,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1332,6 +1340,28 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fbaas-billing",
         action="store_true",
         help="Display the FBaaS billing ledger and dashboard after execution",
+    )
+
+    # Time-Travel Debugger
+    parser.add_argument(
+        "--time-travel",
+        action="store_true",
+        help="Enable the Time-Travel Debugger: capture evaluation snapshots and navigate bidirectionally through FizzBuzz history",
+    )
+
+    parser.add_argument(
+        "--tt-breakpoint",
+        type=str,
+        action="append",
+        default=[],
+        metavar="EXPR",
+        help="Set a conditional breakpoint (e.g., \"result == 'FizzBuzz'\"). Can be repeated.",
+    )
+
+    parser.add_argument(
+        "--tt-dashboard",
+        action="store_true",
+        help="Display the Time-Travel Debugger ASCII dashboard after execution",
     )
 
     return parser
@@ -3149,6 +3179,40 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # Time-Travel Debugger Setup
+    # ----------------------------------------------------------------
+    tt_timeline = None
+    tt_middleware = None
+    tt_navigator = None
+    tt_breakpoints: list[ConditionalBreakpoint] = []
+
+    if args.time_travel or args.tt_dashboard or args.tt_breakpoint:
+        tt_timeline, tt_middleware, tt_navigator = create_time_travel_subsystem(
+            max_snapshots=config.time_travel_max_snapshots,
+            event_bus=event_bus,
+            enable_anomaly_detection=config.time_travel_anomaly_detection,
+            enable_integrity_checks=config.time_travel_integrity_checks,
+        )
+
+        # Parse conditional breakpoints
+        for expr in (args.tt_breakpoint or []):
+            bp = ConditionalBreakpoint(expr)
+            tt_breakpoints.append(bp)
+
+        bp_count = len(tt_breakpoints)
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | TIME-TRAVEL DEBUGGER ENABLED                            |\n"
+            "  | Every FizzBuzz evaluation will be captured in a         |\n"
+            "  | SHA-256 integrity-verified snapshot for bidirectional   |\n"
+            "  | temporal navigation. Because debugging forward-only    |\n"
+            "  | is for temporally challenged mortals.                   |\n"
+            f"  | Breakpoints: {bp_count:<44}|\n"
+            f"  | Max snapshots: {config.time_travel_max_snapshots:<42}|\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -3245,6 +3309,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
         builder.with_middleware(flag_middleware)
+
+    # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
+    if tt_middleware is not None:
+        builder.with_middleware(tt_middleware)
 
     service = builder.build()
 
@@ -4075,6 +4143,35 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.fbaas_billing:
         print("\n  FBaaS not enabled. Use --fbaas to enable.\n")
+
+    # ----------------------------------------------------------------
+    # Time-Travel Debugger post-execution rendering
+    # ----------------------------------------------------------------
+    if tt_timeline is not None and tt_navigator is not None:
+        # Run breakpoint navigation if breakpoints were set
+        if tt_breakpoints:
+            tt_navigator.reset()
+            hit = tt_navigator.continue_to_breakpoint(tt_breakpoints)
+            if hit is not None:
+                print(f"\n  [TT] Breakpoint hit at sequence #{hit.sequence}: "
+                      f"number={hit.number}, result='{hit.result}'")
+
+        # Show the summary
+        print(render_time_travel_summary(
+            tt_timeline,
+            tt_navigator,
+            breakpoints=tt_breakpoints,
+            width=config.time_travel_dashboard_width,
+        ))
+
+        # Show the full dashboard if requested
+        if args.tt_dashboard:
+            print(TimelineUI.render_dashboard(
+                tt_timeline,
+                tt_navigator,
+                breakpoints=tt_breakpoints,
+                width=config.time_travel_dashboard_width,
+            ))
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

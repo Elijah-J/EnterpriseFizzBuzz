@@ -68,7 +68,9 @@ A fully simulated SaaS platform layer -- tenant isolation, usage-based billing w
 
 ---
 
-## Idea 3: Time-Travel Debugger
+## ~~Idea 3: Time-Travel Debugger~~ DONE
+
+> **Status: IMPLEMENTED** -- Shipped as `enterprise_fizzbuzz/infrastructure/time_travel.py` (~1,166 lines) with 82 tests (~877 lines). Bidirectional timeline navigation with O(1) random access, SHA-256-integrity-verified EvaluationSnapshots, conditional breakpoints with compiled expression evaluation, step_forward/step_back/goto/continue_to_breakpoint/reverse_continue operations, field-by-field snapshot diffing with ASCII side-by-side rendering, and an ASCII timeline strip with breakpoint/cursor/anomaly markers. TimeTravelMiddleware at priority -5. CLI flags: `--time-travel`, `--time-travel-break`, `--time-travel-goto`, `--time-travel-step-back`, `--time-travel-diff`, `--time-travel-timeline`, `--time-travel-reverse-continue`, `--time-travel-snapshot`. Doc Brown would be proud.
 
 ### The Problem
 
@@ -217,7 +219,7 @@ Because Raft already exists in the hot-reload module, and implementing the same 
 |---|------|------------------|-----------------|--------------------------|
 | 1 | ~~Formal Verification / Proof System~~ **DONE** | ~1,400 + 855 tests | 76 | Tests prove FizzBuzz works for finite inputs; proofs prove it for all inputs |
 | 2 | ~~FizzBuzz-as-a-Service (FBaaS)~~ **DONE** | ~1,031 + 726 tests | 87 | CLI-only FizzBuzz is a pre-cloud relic; SaaS is the future of modulo |
-| 3 | Time-Travel Debugger | ~2,600 | ~130 | We store every event but cannot navigate them; the data demands a vehicle |
+| 3 | ~~Time-Travel Debugger~~ **DONE** | ~1,166 + 877 tests | 82 | We store every event but cannot navigate them; the data demands a vehicle |
 | 4 | Custom Bytecode VM (FBVM) | ~3,000 | ~150 | CPython's general-purpose bytecode is an insult to purpose-built modulo |
 | 5 | Query Optimizer / Rule Planner | ~2,450 | ~140 | Treating all evaluations equally is the full-table-scan of FizzBuzz |
 | 6 | Distributed Paxos Consensus | ~3,150 | ~160 | Single-node truth is single-point-of-failure truth; quorum is non-negotiable |

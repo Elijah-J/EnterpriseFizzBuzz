@@ -984,6 +984,16 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "time_travel": {
+                "enabled": False,
+                "max_snapshots": 10000,
+                "integrity_checks": True,
+                "anomaly_detection": True,
+                "dashboard": {
+                    "width": 60,
+                    "timeline_markers": True,
+                },
+            },
         }
 
     def _apply_environment_overrides(self) -> None:
@@ -3367,6 +3377,40 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def fbaas_dashboard_width(self) -> int:
         self._ensure_loaded()
         return self._raw_config.get("fbaas", {}).get("dashboard", {}).get("width", 60)
+
+    # ----------------------------------------------------------------
+    # Time-Travel Debugger Configuration Properties
+    # ----------------------------------------------------------------
+
+    @property
+    def time_travel_enabled(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("time_travel", {}).get("enabled", False)
+
+    @property
+    def time_travel_max_snapshots(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("time_travel", {}).get("max_snapshots", 10000)
+
+    @property
+    def time_travel_integrity_checks(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("time_travel", {}).get("integrity_checks", True)
+
+    @property
+    def time_travel_anomaly_detection(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("time_travel", {}).get("anomaly_detection", True)
+
+    @property
+    def time_travel_dashboard_width(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("time_travel", {}).get("dashboard", {}).get("width", 60)
+
+    @property
+    def time_travel_timeline_markers(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("time_travel", {}).get("dashboard", {}).get("timeline_markers", True)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
