@@ -1132,6 +1132,28 @@ query_optimizer:
   dashboard:
     width: 60                              # ASCII dashboard width
 
+# Distributed Paxos Consensus configuration
+# Because computing FizzBuzz on a single machine with a single
+# thread is far too centralized. What if that one thread is wrong?
+# What if it secretly believes 15 % 3 == 1? The only way to be
+# sure is to run FIVE copies of the same deterministic computation
+# and have them vote on the result via a full implementation of
+# Lamport's Paxos consensus protocol. Leslie Lamport received the
+# Turing Award for this algorithm. We are using it for FizzBuzz.
+paxos:
+  enabled: false                           # Master switch — opt-in via --paxos
+  num_nodes: 5                             # Number of nodes in the Paxos cluster (odd numbers recommended)
+  message_delay_ms: 0                      # Simulated message propagation delay (0 = instant)
+  message_drop_rate: 0.0                   # Probability of dropping a message (0.0 - 1.0)
+  byzantine_mode: false                    # Enable Byzantine fault injection (one node lies)
+  byzantine_lie_probability: 1.0           # Probability that the Byzantine node will lie (0.0 - 1.0)
+  partition_enabled: false                 # Enable network partition simulation
+  partition_groups:                        # Partition groups: majority and minority
+    - [0, 1, 2]                            # Majority partition (can reach quorum)
+    - [3, 4]                               # Minority partition (cannot reach quorum)
+  dashboard:
+    width: 60                              # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

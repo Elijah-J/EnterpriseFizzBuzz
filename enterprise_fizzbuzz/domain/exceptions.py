@@ -6204,3 +6204,145 @@ class InvalidHintError(QueryOptimizerError):
             error_code="EFP-QO04",
             context={"hint": hint, "reason": reason},
         )
+
+
+# ============================================================
+# Distributed Paxos Consensus Exceptions
+# ============================================================
+# Because even an in-memory, single-process, simulated
+# distributed consensus protocol for modulo arithmetic needs
+# a full taxonomy of failure modes. Leslie Lamport would
+# either be honoured or horrified.
+# ============================================================
+
+
+class PaxosError(FizzBuzzError):
+    """Base exception for all Distributed Paxos Consensus errors.
+
+    When the simulated distributed consensus protocol for FizzBuzz
+    evaluation encounters an error, it means democracy itself has
+    failed — at least within the confines of a single Python process
+    pretending to be a five-node cluster.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str = "EFP-PX00",
+        context: Optional[dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message, error_code=error_code, context=context)
+
+
+class QuorumNotReachedError(PaxosError):
+    """Raised when a Paxos round fails to achieve quorum.
+
+    A majority of nodes could not agree on the FizzBuzz evaluation
+    result. In a real distributed system, this means the cluster
+    is partitioned or nodes are unresponsive. Here, it means your
+    simulated network is having simulated problems. The distinction
+    is purely academic, as is this entire consensus protocol.
+    """
+
+    def __init__(self, required: int, received: int, decree_number: int) -> None:
+        super().__init__(
+            f"Quorum not reached for decree #{decree_number}: "
+            f"needed {required} votes, received {received}. "
+            f"Democracy has failed for this particular modulo operation.",
+            error_code="EFP-PX01",
+            context={
+                "required": required,
+                "received": received,
+                "decree_number": decree_number,
+            },
+        )
+
+
+class BallotRejectedError(PaxosError):
+    """Raised when a proposer's ballot number is rejected by an acceptor.
+
+    The acceptor has already promised to honour a higher ballot number,
+    making your ballot obsolete. This is the distributed consensus
+    equivalent of arriving at a polling station after it has closed —
+    your vote no longer counts, and the election has moved on without
+    you. Try a higher ballot number next time.
+    """
+
+    def __init__(self, proposed: int, promised: int, node_id: str) -> None:
+        super().__init__(
+            f"Ballot #{proposed} rejected by node '{node_id}': "
+            f"already promised to honour ballot #{promised}. "
+            f"Your proposal arrived too late. The consensus train has left the station.",
+            error_code="EFP-PX02",
+            context={
+                "proposed_ballot": proposed,
+                "promised_ballot": promised,
+                "node_id": node_id,
+            },
+        )
+
+
+class ByzantineFaultDetectedError(PaxosError):
+    """Raised when a Byzantine fault is detected in the consensus cluster.
+
+    One or more nodes are returning results inconsistent with their
+    peers. In the Byzantine Generals Problem, this represents a
+    traitorous general sending conflicting messages. In our FizzBuzz
+    cluster, this represents a node that has decided 15 % 3 != 0,
+    which is the modulo arithmetic equivalent of treason.
+    """
+
+    def __init__(self, node_id: str, expected: str, actual: str) -> None:
+        super().__init__(
+            f"Byzantine fault detected on node '{node_id}': "
+            f"expected '{expected}', got '{actual}'. "
+            f"This node is lying about its FizzBuzz evaluation. "
+            f"Leslie Lamport warned us about this.",
+            error_code="EFP-PX03",
+            context={
+                "node_id": node_id,
+                "expected": expected,
+                "actual": actual,
+            },
+        )
+
+
+class NetworkPartitionError(PaxosError):
+    """Raised when a network partition prevents message delivery.
+
+    The simulated network has been partitioned, and messages cannot
+    traverse the divide. In a real distributed system, this is caused
+    by switch failures, datacenter outages, or angry sysadmins pulling
+    cables. Here, it is caused by a boolean flag in a Python dict.
+    The emotional impact is identical.
+    """
+
+    def __init__(self, source: str, destination: str) -> None:
+        super().__init__(
+            f"Network partition: message from '{source}' to '{destination}' "
+            f"was dropped. The simulated cable has been simulated-ly unplugged.",
+            error_code="EFP-PX04",
+            context={"source": source, "destination": destination},
+        )
+
+
+class ConsensusTimeoutError(PaxosError):
+    """Raised when the Paxos protocol fails to reach consensus in time.
+
+    The cluster spent too long deliberating the correct FizzBuzz
+    result and timed out. In distributed systems, this triggers a
+    new round with a higher ballot number. In FizzBuzz, it triggers
+    existential questions about why we need consensus for modulo
+    arithmetic in the first place.
+    """
+
+    def __init__(self, decree_number: int, elapsed_ms: float) -> None:
+        super().__init__(
+            f"Consensus timeout for decree #{decree_number} after "
+            f"{elapsed_ms:.2f}ms. The cluster could not agree on a "
+            f"FizzBuzz result within the allotted time. Consider "
+            f"reducing the number of Byzantine traitors in your cluster.",
+            error_code="EFP-PX05",
+            context={"decree_number": decree_number, "elapsed_ms": elapsed_ms},
+        )

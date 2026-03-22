@@ -292,6 +292,14 @@ from enterprise_fizzbuzz.infrastructure.query_optimizer import (
     create_optimizer_from_config,
     parse_optimizer_hints,
 )
+from enterprise_fizzbuzz.infrastructure.paxos import (
+    ByzantineFaultInjector,
+    ConsensusDashboard,
+    NetworkPartitionSimulator,
+    PaxosCluster,
+    PaxosMesh,
+    PaxosMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1441,6 +1449,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--optimizer-dashboard",
         action="store_true",
         help="Display the Query Optimizer ASCII dashboard after execution",
+    )
+
+    # Distributed Paxos Consensus
+    parser.add_argument(
+        "--paxos",
+        action="store_true",
+        help="Enable Distributed Paxos Consensus for multi-node FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--paxos-nodes",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of Paxos cluster nodes (default: from config, typically 5)",
+    )
+
+    parser.add_argument(
+        "--paxos-byzantine",
+        action="store_true",
+        help="Enable Byzantine fault injection (one node lies about its FizzBuzz evaluation)",
+    )
+
+    parser.add_argument(
+        "--paxos-dashboard",
+        action="store_true",
+        help="Display the Paxos Consensus ASCII dashboard after execution",
     )
 
     return parser
@@ -2622,6 +2657,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("graph_database")
         if args.fbaas:
             active_subsystems.append("fbaas_metering")
+        if args.paxos:
+            active_subsystems.append("paxos_consensus")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -3378,6 +3415,60 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # Distributed Paxos Consensus setup
+    # ----------------------------------------------------------------
+    paxos_cluster = None
+    paxos_middleware = None
+    paxos_partition_sim = None
+    paxos_byzantine_injector = None
+    paxos_byzantine_node_id = None
+
+    if args.paxos or args.paxos_dashboard:
+        num_nodes = args.paxos_nodes or config.paxos_num_nodes
+        paxos_mesh = PaxosMesh(
+            delay_ms=config.paxos_message_delay_ms,
+            drop_rate=config.paxos_message_drop_rate,
+        )
+
+        paxos_cluster = PaxosCluster(
+            num_nodes=num_nodes,
+            rules=config.rules,
+            mesh=paxos_mesh,
+            event_callback=event_bus.publish if event_bus else None,
+        )
+
+        # Byzantine fault injection
+        if args.paxos_byzantine or config.paxos_byzantine_mode:
+            paxos_byzantine_injector = ByzantineFaultInjector(paxos_cluster)
+            paxos_byzantine_node_id = paxos_byzantine_injector.inject(
+                node_index=-1,
+                lie_probability=config.paxos_byzantine_lie_probability,
+            )
+
+        # Network partition simulation
+        if config.paxos_partition_enabled:
+            paxos_partition_sim = NetworkPartitionSimulator(paxos_cluster)
+            paxos_partition_sim.partition(config.paxos_partition_groups)
+
+        paxos_middleware = PaxosMiddleware(cluster=paxos_cluster)
+
+        byz_status = f"node {paxos_byzantine_node_id}" if paxos_byzantine_node_id else "None"
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | PAXOS CONSENSUS: Distributed FizzBuzz ENABLED           |\n"
+            f"  | Nodes: {num_nodes:<51}|\n"
+            f"  | Quorum: {paxos_cluster.quorum_size:<50}|\n"
+            f"  | Byzantine traitor: {byz_status:<38}|\n"
+            "  | Every number will be evaluated by ALL nodes and then    |\n"
+            "  | ratified through Lamport's Paxos protocol. Because one  |\n"
+            "  | modulo operation is never enough for enterprise.        |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.paxos_dashboard:
+        print("\n  Paxos consensus not enabled. Use --paxos to enable.\n")
+        return 0
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -3470,6 +3561,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if fbaas_middleware is not None:
         builder.with_middleware(fbaas_middleware)
+
+    if paxos_middleware is not None:
+        builder.with_middleware(paxos_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -4433,6 +4527,16 @@ def main(argv: Optional[list[str]] = None) -> int:
                 breakpoints=tt_breakpoints,
                 width=config.time_travel_dashboard_width,
             ))
+
+    # Paxos Consensus Dashboard
+    if args.paxos_dashboard and paxos_cluster is not None:
+        print(ConsensusDashboard.render(
+            paxos_cluster,
+            width=config.paxos_dashboard_width,
+            byzantine_node_id=paxos_byzantine_node_id,
+        ))
+    elif args.paxos_dashboard:
+        print("\n  Paxos consensus not enabled. Use --paxos to enable.\n")
 
     # Query Optimizer Dashboard
     if args.optimizer_dashboard and qo_optimizer is not None:

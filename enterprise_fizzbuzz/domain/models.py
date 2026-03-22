@@ -511,6 +511,14 @@ class EventType(Enum):
     OPTIMIZER_CACHE_HIT = auto()
     OPTIMIZER_EXPLAIN_RENDERED = auto()
 
+    # Distributed Paxos Consensus events
+    PAXOS_PREPARE_SENT = auto()
+    PAXOS_PROMISE_RECEIVED = auto()
+    PAXOS_ACCEPT_SENT = auto()
+    PAXOS_ACCEPTED_RECEIVED = auto()
+    PAXOS_CONSENSUS_REACHED = auto()
+    PAXOS_CONSENSUS_FAILED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
