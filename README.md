@@ -32,11 +32,11 @@ for i in range(1, 101):
 
 ## This Solution
 
-**31,000+ lines** across **80+ files** with **1,046 unit tests** and **102 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**32,000+ lines** across **85+ files** with **1,142 unit tests** and **102 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
-The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 31,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
+The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 32,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
 
 ### The Dependency Rule
 
@@ -157,8 +157,13 @@ EnterpriseFizzBuzz/
     ├── test_repository.py           # 40 repository pattern & unit of work tests (3 backends)
     ├── test_acl.py                  # 44 Anti-Corruption Layer & strategy adapter tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
+    ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
-    └── test_architecture.py         # AST-based import linter enforcing the Dependency Rule
+    ├── test_architecture.py         # AST-based import linter enforcing the Dependency Rule
+    └── contracts/                   # Contract tests: verify all implementations honor their interface promises
+        ├── test_repository_contract.py   # Repository port contract (3 backends, 1 contract, 0 excuses)
+        ├── test_strategy_contract.py     # Strategy port contract (4 engines must agree on what "Fizz" means)
+        └── test_formatter_contract.py    # Formatter port contract (4 formats, all must serialize correctly)
 ```
 
 ### Backward-Compatible Re-Export Stubs
@@ -234,6 +239,7 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Anti-Corruption Layer | `strategy_adapters.py` | Four strategy adapters that translate raw engine output (probabilistic ML floats, chain-of-responsibility results, async evaluations) into clean, canonical `FizzBuzzClassification` domain enums -- because allowing ML confidence scores to leak into the domain model would make Eric Evans weep into his copy of the Blue Book |
 | Strategy Adapter | `strategy_adapters.py`, `ports.py` | Each evaluation engine gets its own adapter implementing the `StrategyPort` contract, with a factory for wiring. The ML adapter adds ambiguity detection, cross-strategy disagreement tracking, and event emission -- because even the simplest modulo result deserves observability at the translation boundary |
 | Ports & Adapters (Persistence) | `ports.py`, `persistence/` | Hexagonal architecture ports for repository and UoW contracts, with three concrete adapter implementations -- ensuring the domain remains blissfully ignorant of whether its results are stored in RAM, SQLite, or artisanal JSON files |
+| Contract Testing | `tests/contracts/` | Interface-level conformance tests that run every concrete implementation through the same behavioural gauntlet, ensuring that swapping backends doesn't silently redefine what "correct" means. If an adapter passes the contract, it is blessed; if it doesn't, it is dead to us |
 
 ## Features
 
@@ -256,6 +262,7 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **In-Memory Caching with Cache Invalidation Protocol** - Four eviction policies (LRU, LFU, FIFO, DramaticRandom), MESI cache coherence state tracking (pointless but thorough), satirical eulogies for evicted entries, a cache warming system that pre-populates results (thereby defeating the entire purpose of caching), TTL-based expiration, thread-safe operations, and an ASCII statistics dashboard -- because the result of `15 % 3` might change between invocations, and we need to be prepared
 - **Database Migration Framework** - Five reversible migrations for in-memory schema management, with dependency tracking, fake SQL logging, ASCII ER diagram visualization, a migration status dashboard, and seed data generation that uses the FizzBuzz engine to populate the FizzBuzz database (the ouroboros pattern) -- all for data structures that exist exclusively in RAM and will vanish the moment you press Ctrl+C. This is by design.
 - **Repository Pattern / Unit of Work** - Three interchangeable persistence backends (in-memory, SQLite, filesystem) with transactional Unit of Work semantics, abstract hexagonal ports, and automatic rollback -- because FizzBuzz results that aren't durably persisted with ACID guarantees are just numbers shouted into the void
+- **Contract Testing** - Interface-level conformance suites for repositories, strategies, and formatters -- every concrete implementation must survive the same behavioural gauntlet, plus a meta-test that verifies every port has a contract test (because untested contracts are just suggestions)
 - **Anti-Corruption Layer (ACL)** - Four strategy adapters forming a protective boundary between the evaluation engines and the domain model, with ML ambiguity detection (configurable decision threshold and margin), cross-strategy disagreement tracking, and domain event emission -- because allowing a neural network's probabilistic confidence scores to contaminate the sacred `FizzBuzzClassification` enum would be an act of architectural heresy
 - **Dependency Injection Container** - A fully-featured IoC container with constructor auto-wiring via `typing.get_type_hints()`, four lifetime strategies (Transient, Scoped, Singleton, Eternal), named bindings, factory registration, fluent API, and Kahn's topological sort cycle detection at registration time -- because calling `EventBus()` directly was an affront to enterprise architecture. The container is ADDITIVE: it does not replace the existing Builder pattern wiring, it merely provides an additional layer of abstraction on top of the existing layers of abstraction, like a parfait of unnecessary indirection
 - **Lines of Code Census Bureau** - A production-grade codebase metrics engine that walks every file, classifies it by language and architectural layer, computes the Overengineering Index (OEI = total lines / 2, where 2 is the minimal FizzBuzz solution), renders an ASCII dashboard with box-drawing characters, and attributes 100% of lines to Bob McFizzington -- because you can't manage what you can't measure, and you can't overengineer what you can't quantify
@@ -1507,6 +1514,9 @@ A: Because the ML engine returns probabilistic confidence scores -- floating-poi
 
 **Q: Why does FizzBuzz need a Dependency Injection Container?**
 A: Because manually typing `EventBus()` is a form of tight coupling that would make any Java enterprise architect lose sleep. The IoC container provides constructor auto-wiring via `typing.get_type_hints()`, four distinct lifetime strategies (including "Eternal," which is functionally identical to Singleton but conveys the gravitas befitting enterprise FizzBuzz), named bindings for when you need multiple implementations of the same interface (you don't), factory registration for objects with exotic construction requirements (there are none), and Kahn's topological sort for detecting circular dependencies at registration time -- because catching a `RecursionError` at 3 AM is not an engineering strategy, it's a cry for help. The container is ADDITIVE: it exists alongside the existing `FizzBuzzServiceBuilder`, providing a parallel universe of object construction like two parking lots for the same mall. It adds approximately 608 lines of abstraction on top of what was previously a three-line constructor call. This is, by any reasonable measure, an improvement.
+
+**Q: Why does FizzBuzz need contract tests?**
+A: Because having three repository backends, four evaluation strategies, and four output formatters all implementing the same abstract interfaces means nothing if nobody verifies they actually behave the same way. The contract test suites define the behavioural specification for each port and run every registered implementation through the same gauntlet of assertions, ensuring that swapping an in-memory dict for a SQLite database doesn't silently redefine what "save" means. A meta-test (`test_contract_coverage.py`) then verifies that every abstract port in the codebase has a corresponding contract test, because untested interfaces are just documentation with delusions of grandeur. The total test count is now 1,142, which is approximately 1,140 more tests than a FizzBuzz program has ever needed.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.
