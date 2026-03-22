@@ -30,8 +30,8 @@ There is no `docs/` directory, no developer guide, no architecture decision reco
 
 ## Backlog Status
 - Total items: 8
-- Implemented: 2
-- Remaining: 6
+- Implemented: 3
+- Remaining: 5
 
 ## Documentation Items
 
@@ -76,7 +76,8 @@ This should be a reference, not a tutorial. Someone should be able to ctrl-F for
 
 ### 3. Developer Guide (docs/developer-guide.md)
 
-**Status:** PENDING
+**Status:** DONE
+**Output path:** `docs/developer-guide.md`
 **Description:** A practical guide for someone who wants to add a new feature to the platform. Walk through the actual steps, referencing real files and classes. This document needs to be genuinely useful since future Claude workers will follow it.
 
 Cover the following:
