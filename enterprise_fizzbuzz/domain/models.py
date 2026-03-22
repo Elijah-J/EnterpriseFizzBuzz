@@ -294,6 +294,16 @@ class EventType(Enum):
     HIPAA_MINIMUM_NECESSARY_APPLIED = auto()
     COMPLIANCE_DASHBOARD_RENDERED = auto()
 
+    # FinOps Cost Tracking & Chargeback Engine events
+    FINOPS_COST_RECORDED = auto()
+    FINOPS_TAX_APPLIED = auto()
+    FINOPS_INVOICE_GENERATED = auto()
+    FINOPS_BUDGET_WARNING = auto()
+    FINOPS_BUDGET_EXCEEDED = auto()
+    FINOPS_EXCHANGE_RATE_UPDATED = auto()
+    FINOPS_SAVINGS_PLAN_COMPUTED = auto()
+    FINOPS_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

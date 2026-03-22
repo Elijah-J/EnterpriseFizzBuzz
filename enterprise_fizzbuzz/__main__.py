@@ -147,6 +147,16 @@ from enterprise_fizzbuzz.infrastructure.compliance import (
     HIPAAGuard,
     SOXAuditor,
 )
+from enterprise_fizzbuzz.infrastructure.finops import (
+    CostDashboard,
+    CostTracker,
+    FizzBuckCurrency,
+    FizzBuzzTaxEngine,
+    FinOpsMiddleware,
+    InvoiceGenerator,
+    SavingsPlanCalculator,
+    SubsystemCostRegistry,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -733,6 +743,31 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--compliance-dashboard",
         action="store_true",
         help="Display the compliance & regulatory ASCII dashboard after execution",
+    )
+
+    # FinOps Cost Tracking & Chargeback Engine
+    parser.add_argument(
+        "--finops",
+        action="store_true",
+        help="Enable FinOps cost tracking for FizzBuzz evaluations (every modulo has a price)",
+    )
+
+    parser.add_argument(
+        "--invoice",
+        action="store_true",
+        help="Generate an itemized ASCII invoice for all FizzBuzz evaluations in this session",
+    )
+
+    parser.add_argument(
+        "--cost-dashboard",
+        action="store_true",
+        help="Display the FinOps cost tracking ASCII dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--savings-plan",
+        action="store_true",
+        help="Display FizzBuzz Savings Plan comparison (1-year and 3-year commitments)",
     )
 
     return parser
@@ -1560,6 +1595,98 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # FinOps Cost Tracking & Chargeback Engine setup
+    # ----------------------------------------------------------------
+    finops_tracker = None
+    finops_middleware = None
+    finops_savings_calc = None
+    if args.finops or args.invoice or args.cost_dashboard or args.savings_plan:
+        cost_registry = SubsystemCostRegistry()
+        tax_engine = FizzBuzzTaxEngine(
+            fizz_rate=config.finops_tax_rate_fizz,
+            buzz_rate=config.finops_tax_rate_buzz,
+            fizzbuzz_rate=config.finops_tax_rate_fizzbuzz,
+            plain_rate=config.finops_tax_rate_plain,
+        )
+        fizzbuck_currency = FizzBuckCurrency(
+            base_rate=config.finops_exchange_rate_base,
+            symbol=config.finops_currency,
+        )
+
+        finops_tracker = CostTracker(
+            cost_registry=cost_registry,
+            tax_engine=tax_engine,
+            currency=fizzbuck_currency,
+            budget_limit=config.finops_budget_monthly_limit,
+            budget_warning_pct=config.finops_budget_warning_threshold_pct,
+            friday_premium_pct=config.finops_friday_premium_pct,
+            event_bus=event_bus,
+        )
+
+        # Determine which subsystems are active based on CLI flags
+        active_subsystems = ["rule_engine", "middleware_pipeline", "validation", "formatting", "event_bus", "logging"]
+        if args.circuit_breaker:
+            active_subsystems.append("circuit_breaker")
+        if args.cache:
+            active_subsystems.append("cache_lookup")
+        if args.sla:
+            active_subsystems.append("sla_monitoring")
+        if args.blockchain:
+            active_subsystems.append("blockchain")
+        if args.chaos or args.gameday:
+            active_subsystems.append("chaos_injection")
+        if args.compliance:
+            active_subsystems.append("compliance_check")
+        if args.feature_flags:
+            active_subsystems.append("feature_flag_eval")
+        if args.service_mesh:
+            active_subsystems.append("service_mesh_hop")
+        if args.rate_limit:
+            active_subsystems.append("rate_limit_check")
+        if args.trace or args.trace_json:
+            active_subsystems.append("tracing")
+        if args.health:
+            active_subsystems.append("health_probe")
+        if args.hot_reload:
+            active_subsystems.append("hot_reload_check")
+        if strategy == EvaluationStrategy.MACHINE_LEARNING:
+            active_subsystems.append("ml_inference")
+
+        finops_middleware = FinOpsMiddleware(
+            cost_tracker=finops_tracker,
+            active_subsystems=active_subsystems,
+            event_bus=event_bus,
+        )
+
+        finops_savings_calc = SavingsPlanCalculator(
+            one_year_discount_pct=config.finops_savings_one_year_discount_pct,
+            three_year_discount_pct=config.finops_savings_three_year_discount_pct,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FINOPS: Cost Tracking & Chargeback Engine ENABLED       |\n"
+            "  | Every FizzBuzz evaluation now has a price tag.          |\n"
+            f"  | Currency: FizzBuck ({config.finops_currency})"
+            + " " * max(0, 40 - len(f"FizzBuck ({config.finops_currency})"))
+            + "|\n"
+            "  | Tax rates: 3% Fizz / 5% Buzz / 15% FizzBuzz            |\n"
+            "  | Friday premium: 50% surcharge (TGIF costs extra)       |\n"
+            "  | Chaos injection: FB$0.00 (chaos is free)               |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    elif args.invoice:
+        print("\n  FinOps not enabled. Use --finops to enable.\n")
+        return 0
+    elif args.cost_dashboard:
+        print("\n  FinOps not enabled. Use --finops to enable.\n")
+        return 0
+    elif args.savings_plan:
+        print("\n  FinOps not enabled. Use --finops to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -1697,6 +1824,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if compliance_middleware is not None:
         builder.with_middleware(compliance_middleware)
+
+    if finops_middleware is not None:
+        builder.with_middleware(finops_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -2137,6 +2267,37 @@ def main(argv: Optional[list[str]] = None) -> int:
             print()
         else:
             print("\n  No HIPAA statistics recorded.\n")
+
+    # FinOps invoice
+    if args.invoice and finops_tracker is not None:
+        cache_hit_ratio = 0.0
+        if cache_store is not None:
+            cache_stats = cache_store.get_statistics()
+            cache_hit_ratio = cache_stats.get("hit_ratio", 0.0) if isinstance(cache_stats, dict) else 0.0
+        print(InvoiceGenerator.generate(
+            finops_tracker,
+            session_id=stats_observer.session_id if hasattr(stats_observer, "session_id") else "N/A",
+            cache_hit_ratio=cache_hit_ratio,
+            width=config.finops_dashboard_width + 4,
+        ))
+    elif args.invoice:
+        print("\n  FinOps not enabled. Use --finops to enable.\n")
+
+    # FinOps cost dashboard
+    if args.cost_dashboard and finops_tracker is not None:
+        print(CostDashboard.render(finops_tracker, width=config.finops_dashboard_width + 4))
+    elif args.cost_dashboard:
+        print("\n  FinOps not enabled. Use --finops to enable.\n")
+
+    # FinOps savings plan
+    if args.savings_plan and finops_tracker is not None and finops_savings_calc is not None:
+        print(finops_savings_calc.render(
+            finops_tracker.total_spent,
+            currency_symbol=config.finops_currency,
+            width=config.finops_dashboard_width + 4,
+        ))
+    elif args.savings_plan:
+        print("\n  FinOps not enabled. Use --finops to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
