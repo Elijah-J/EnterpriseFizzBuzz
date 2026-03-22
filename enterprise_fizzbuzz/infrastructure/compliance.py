@@ -5,20 +5,22 @@ Implements SOX (Sarbanes-Oxley), GDPR (General Data Protection Regulation),
 and HIPAA (Health Insurance Portability and Accountability Act) compliance
 for the Enterprise FizzBuzz Platform.
 
-Because the only thing standing between your FizzBuzz output and a
-regulatory enforcement action is this module. Features include:
+This module provides the regulatory controls necessary to ensure
+every FizzBuzz evaluation meets applicable compliance standards.
+Features include:
 
 - SOX Segregation of Duties: No single virtual employee can both evaluate
-  Fizz AND evaluate Buzz. That would be a conflict of interest.
+  Fizz AND evaluate Buzz. Duties are strictly partitioned per SOX controls.
 - GDPR Consent & Right-to-Erasure: Every number is a data subject. Every
   FizzBuzz result is personally identifiable information. THE COMPLIANCE
   PARADOX occurs when erasure requests hit the append-only event store
   and immutable blockchain.
 - HIPAA Minimum Necessary Rule: FizzBuzz results are Protected Health
-  Information. Access is restricted. "Encryption" is base64. It's
-  military-grade RFC 4648 encoding.
-- Bob McFizzington: Chief Compliance Officer. Stress level: 94.7% and
-  rising. Availability: never. Certifications: many. Usefulness: debatable.
+  Information. Access is restricted and data is encrypted using
+  RFC 4648 encoding.
+- Bob McFizzington: Chief Compliance Officer. Certifications: CISA,
+  CISSP, CRISC. Responsible for final sign-off on all cross-regime
+  compliance determinations.
 """
 
 from __future__ import annotations

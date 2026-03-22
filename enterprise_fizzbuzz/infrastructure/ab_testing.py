@@ -6,8 +6,8 @@ evaluating FizzBuzz evaluation strategies against each other with full
 statistical rigor. Because the only thing better than computing FizzBuzz
 correctly is scientifically proving that you computed it correctly using
 the CORRECT strategy — even though every strategy produces identical
-results for every input. Welcome to the most over-engineered hypothesis
-test in computing history.
+results for every input. This framework provides the statistical foundation
+necessary for data-driven strategy selection.
 
 Features:
     - Deterministic hash-based traffic splitting (same number = same group)
@@ -308,10 +308,9 @@ class MutualExclusionLayer:
     dimension simultaneously. This layer maintains a registry of
     active experiments and their strategy pairs to detect conflicts.
 
-    In practice, for FizzBuzz, there are no real conflicts because
-    all strategies produce identical results. But we enforce mutual
-    exclusion anyway because experimental rigor is non-negotiable,
-    even when it's pointless.
+    Mutual exclusion enforcement ensures that no number is subject
+    to conflicting experimental treatments, preserving the integrity
+    of statistical conclusions drawn from each experiment.
     """
 
     def __init__(self) -> None:
@@ -446,11 +445,10 @@ class StatisticalAnalyzer:
     def _gamma_ln(x: float) -> float:
         """Compute the natural log of the gamma function.
 
-        Delegates to math.lgamma because reimplementing the Lanczos
-        approximation from scratch for a FizzBuzz project would be
-        over-engineering even by this codebase's standards. Python's
-        stdlib has had lgamma since 3.2, and we are not too proud
-        to use it — unlike the rest of this framework.
+        Delegates to math.lgamma for numerical stability and
+        performance. Python's stdlib has provided a well-tested
+        lgamma implementation since 3.2, and leveraging proven
+        standard library functions is sound engineering practice.
         """
         if x <= 0:
             return float("inf")

@@ -69,8 +69,8 @@ class ChatbotIntent(Enum):
     UNKNOWN is reserved for queries that defy classification, such as
     "What is the meaning of life?" or "Why does 15 % 3 equal 0?"
     The chatbot handles UNKNOWN gracefully by issuing a CONDITIONALLY
-    COMPLIANT verdict with a recommendation to consult Bob McFizzington
-    (who is, of course, perpetually unavailable).
+    COMPLIANT verdict with a recommendation to escalate to the Chief
+    Compliance Officer for manual review.
     """
 
     GDPR_DATA_RIGHTS = auto()

@@ -1529,6 +1529,39 @@ fizzsql:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzDAP Debug Adapter Protocol Server configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is stepping through each modulo operation one at a time
+# in a full-featured debugger, setting breakpoints on numbers
+# divisible by 3, and inspecting the cache coherence state of
+# results that exist for less than a microsecond. The DAP server
+# implements the VS Code Debug Adapter Protocol — complete with
+# Content-Length framing, JSON-RPC dispatch, synthetic stack frames
+# for every middleware in the pipeline, and a Debug Complexity
+# Index that measures how many lines of debugging infrastructure
+# exist per line of actual FizzBuzz logic. Spoiler: it's over 100:1.
+fizzdap:
+  enabled: false                          # Master switch — opt-in via --dap
+  port: 4711                              # Default DAP port (simulated, no actual socket)
+  auto_stop_on_entry: true                # Automatically break on first evaluation
+  max_breakpoints: 256                    # Maximum concurrent breakpoints (for n%3)
+  step_granularity: "middleware"           # middleware | instruction | evaluation
+  variable_inspection:
+    include_cache_state: true             # Expose cache MESI states as debugger variables
+    include_circuit_breaker: true         # Expose circuit breaker state as variables
+    include_quantum_state: true           # Expose quantum register amplitudes as variables
+    include_middleware_timings: true       # Expose per-middleware timing data
+    max_string_length: 1024               # Truncate string variables at this length
+  stack_frame:
+    include_source_location: true         # Synthesize source locations for middleware frames
+    max_frames: 64                        # Maximum stack depth (one per middleware, typically ~30)
+  dashboard:
+    width: 60                             # ASCII dashboard width
+    show_breakpoints: true                # Show breakpoint table in dashboard
+    show_stack_trace: true                # Show synthetic stack trace in dashboard
+    show_variables: true                  # Show variable inspector in dashboard
+    show_complexity_index: true           # Show Debug Complexity Index in dashboard
+
 # Observer configuration
 observers:
   console_observer:

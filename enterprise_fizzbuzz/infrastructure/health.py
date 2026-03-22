@@ -3,25 +3,25 @@ Enterprise FizzBuzz Platform - Kubernetes-Style Health Check Probes
 
 Implements a production-grade health monitoring system with liveness,
 readiness, and startup probes for the Enterprise FizzBuzz Platform.
-Because if Kubernetes pods get three types of health checks for running
-a web server, surely our FizzBuzz evaluation pipeline deserves the
-same level of operational scrutiny for computing n % 3.
+Following Kubernetes best practices, the FizzBuzz evaluation pipeline
+implements the same level of operational scrutiny expected of any
+production-grade distributed system.
 
 This module provides:
     - Subsystem health checks for all infrastructure components
     - Liveness probe: canary evaluation to verify basic arithmetic survival
     - Readiness probe: aggregated subsystem health assessment
     - Startup probe: boot sequence milestone tracking
-    - Self-healing manager: automated recovery attempts (because humans
-      should not be burdened with restarting a FizzBuzz cache)
-    - ASCII health dashboard: because health data in monospace font
-      hits different
+    - Self-healing manager: automated recovery attempts for degraded
+      subsystems without operator intervention
+    - ASCII health dashboard: terminal-based operational visibility
+      for real-time health status monitoring
 
-The health check system operates on the principle that a FizzBuzz
-platform is only as healthy as its least healthy subsystem. If the
-ML engine is having an existential crisis, the entire platform is
-considered to be in EXISTENTIAL_CRISIS, regardless of how well the
-cache and circuit breaker are performing.
+The health check system operates on the principle that platform
+health reflects the worst status across all subsystems. If the
+ML engine enters a degraded confidence state, the entire platform
+reports the corresponding status, regardless of how well other
+subsystems are performing.
 
 Design Patterns Employed:
     - Template Method (subsystem health checks)
@@ -29,10 +29,10 @@ Design Patterns Employed:
     - Strategy (different probe types)
     - Observer (health event publication)
     - Abstract Factory (subsystem check creation)
-    - Self-Healing (automated recovery, because why not)
+    - Self-Healing (automated recovery for degraded subsystems)
 
 Compliance:
-    - Kubernetes Health Check API: /healthz, /readyz, /startupz (spiritually)
+    - Kubernetes Health Check API: /healthz, /readyz, /startupz semantics
     - ISO 27001: Security through obsessive health monitoring
     - SOC2: Full audit trail of every health check and recovery attempt
 """

@@ -16,10 +16,9 @@ Implements a Netflix-style recommendation engine for integers, featuring:
 - RecommendationEngine: orchestrator that ties all components together
 - RecommendationDashboard: ASCII dashboard for recommendation analytics
 
-The fact that this entire module exists to suggest which integers a user
-might enjoy dividing by 3 and 5 is, of course, the point. Every number
-deserves a personality profile, and every user deserves personalized
-recommendations for their modulo arithmetic journey.
+This module provides comprehensive number profiling and delivers
+personalized evaluation recommendations tailored to each user's
+history, preferences, and arithmetic engagement patterns.
 """
 
 from __future__ import annotations

@@ -7,9 +7,9 @@ as a probabilistic component in a directed acyclic graph, predicts
 evaluation latency and cost before the real pipeline runs, and flags
 anomalies when reality diverges from the model.
 
-The core joke: this is a simulation of a simulation of modulo arithmetic.
-The twin predicts what ``n % 3`` will cost before you compute ``n % 3``,
-achieving negative value at enterprise scale.
+The twin predicts evaluation latency and resource cost before the real
+pipeline executes, enabling proactive capacity planning and anomaly
+detection at enterprise scale.
 
 Classes:
     TwinComponent       -- dataclass modeling a single subsystem

@@ -2,17 +2,17 @@
 Enterprise FizzBuzz Platform - SLA Monitoring with PagerDuty-Style Alerting
 
 Implements a production-grade Service Level Agreement monitoring system
-for the Enterprise FizzBuzz Platform, because computing n % 3 without
-contractual latency guarantees, error budgets, and a multi-tier alerting
-escalation policy would be unconscionable in a production environment.
+for the Enterprise FizzBuzz Platform. Contractual latency guarantees,
+error budgets, and a multi-tier alerting escalation policy are
+fundamental requirements for production readiness.
 
 This module tracks three SLOs (Service Level Objectives):
     - Latency: Each FizzBuzz evaluation must complete within the agreed
       threshold or the on-call engineer gets paged.
     - Accuracy: The pipeline must produce the correct FizzBuzz result.
       Ground truth is verified by re-computing n % 3 and n % 5 from
-      scratch, because trusting the pipeline you're monitoring would
-      defeat the entire purpose.
+      scratch using an independent verification path to ensure
+      monitoring integrity.
     - Availability: The ratio of successful evaluations to total attempts.
       If the platform starts failing to compute modulo, someone must
       be held accountable.

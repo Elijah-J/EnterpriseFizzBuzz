@@ -340,7 +340,7 @@ The framework is built around a singleton **ChaosMonkey** orchestrator that mana
 
 ### Post-Mortem Generator
 
-After a chaos session, the `--post-mortem` flag generates a lovingly crafted satirical incident report containing:
+After a chaos session, the `--post-mortem` flag generates a detailed incident report containing:
 - An executive summary with injection rate statistics
 - A fault type breakdown with ASCII bar charts
 - A timestamped incident timeline (capped at 20 entries for sanity)
@@ -525,17 +525,17 @@ The rotation algorithm uses modulo arithmetic (the supreme irony) to cycle throu
 
 ## Caching Architecture
 
-The In-Memory Caching Layer implements a production-grade, thread-safe, MESI-coherent caching subsystem for FizzBuzz evaluation results -- because computing `n % 3` takes approximately zero nanoseconds, and the only responsible engineering decision is to add a caching layer with four eviction policies, a hardware-inspired coherence protocol, and satirical eulogies for evicted entries.
+The In-Memory Caching Layer implements a production-grade, thread-safe, MESI-coherent caching subsystem for FizzBuzz evaluation results, featuring four eviction policies, a hardware-inspired coherence protocol, and eulogies for evicted entries.
 
-The cache operates as middleware in the evaluation pipeline, intercepting requests before they reach the rule engine. On a cache hit, the result is returned immediately. On a miss, the pipeline executes normally and the result is cached. The entire caching infrastructure takes longer to execute than the operation it caches, but performance was never the point.
+The cache operates as middleware in the evaluation pipeline, intercepting requests before they reach the rule engine. On a cache hit, the result is returned immediately. On a miss, the pipeline executes normally and the result is cached. The caching infrastructure prioritizes correctness and observability alongside performance.
 
 **Key components:**
 - **CacheStore** - Thread-safe in-memory store with TTL expiration, MESI state tracking, dignity level degradation, and configurable eviction policies
 - **CacheMiddleware** - Pipeline integration that intercepts evaluations and serves cached results on hits
-- **EvictionPolicyFactory** - Factory for creating eviction policy instances by name, because `if policy == "lru"` lacked sufficient enterprise gravitas
-- **CacheWarmer** - Pre-populates the cache before execution, thereby defeating the entire purpose of caching with meticulous thoroughness
+- **EvictionPolicyFactory** - Factory for creating eviction policy instances by name, supporting named policy instantiation via the factory pattern
+- **CacheWarmer** - Pre-populates the cache before execution to eliminate cold-start latency
 - **CacheDashboard** - ASCII statistics renderer for hit rates, eviction counts, and coherence state distribution
-- **CacheEulogyComposer** - Generates satirical obituaries for evicted cache entries, because no data should be garbage-collected without a proper farewell
+- **CacheEulogyComposer** - Generates memorial entries for evicted cache entries, providing a dignified lifecycle record for every cached datum
 
 ### Eviction Policies
 
@@ -548,7 +548,7 @@ The cache operates as middleware in the evaluation pipeline, intercepting reques
 
 ### MESI Coherence Protocol
 
-The MESI cache coherence protocol tracks the state of every cache entry through four states, implementing the same coherence guarantees that Intel uses for its L1 cache -- in a single-process Python application with exactly zero concurrent cache readers. The protocol is pointless. It is also non-negotiable.
+The MESI cache coherence protocol tracks the state of every cache entry through four states, implementing the same coherence guarantees that Intel uses for its L1 cache -- in a single-process Python application with exactly zero concurrent cache readers. The protocol is non-negotiable.
 
 ```
            +--- write-back ---+
@@ -573,7 +573,7 @@ The MESI cache coherence protocol tracks the state of every cache entry through 
 
 ### Cache Eulogies
 
-When a cache entry is evicted, the system composes a satirical eulogy honoring the departed data. Example eulogies:
+When a cache entry is evicted, the system composes a eulogy honoring the departed data. Example eulogies:
 
 ```
   +===========================================================+
@@ -681,8 +681,8 @@ The system implements five concrete subsystem health checks (config, circuit bre
 | `ConfigHealthCheck` | Configuration Manager | Config singleton loaded, basic properties accessible | Reload configuration from YAML |
 | `CircuitBreakerHealthCheck` | Circuit Breaker | Circuit state (CLOSED=UP, HALF_OPEN=DEGRADED, OPEN=DOWN) | Reset circuit breaker to CLOSED |
 | `CacheCoherenceHealthCheck` | Cache Layer | MESI coherence state distribution, invalid entry ratio | Clear invalid entries, reset coherence states |
-| `SLABudgetHealthCheck` | SLA Monitor | Error budget remaining, burn rate, SLO compliance | Reset error budget counters (the accounting equivalent of shredding the evidence) |
-| `MLEngineHealthCheck` | ML Engine | Neural network loaded, canary prediction accuracy, confidence scores | Retrain the neural network from scratch (200 epochs of unnecessary relearning) |
+| `SLABudgetHealthCheck` | SLA Monitor | Error budget remaining, burn rate, SLO compliance | Reset error budget counters |
+| `MLEngineHealthCheck` | ML Engine | Neural network loaded, canary prediction accuracy, confidence scores | Retrain the neural network from scratch (200 epochs of full retraining) |
 
 | Spec | Value |
 |------|-------|
@@ -790,7 +790,7 @@ Every migration provides both forward (`up()`) and reverse (`down()`) transforma
 | ID | Description | Dependencies | What It Does |
 |----|-------------|-------------|--------------|
 | `m001_initial_schema` | Create initial fizzbuzz_results table | (none) | Creates a seven-column table in a Python dict. The genesis of our ephemeral relational model |
-| `m002_add_is_prime` | Add is_prime column with trial division backfill | m001 | Adds a primality flag using trial division, because implementing Miller-Rabin for numbers under 100 would be over-engineering (and we would never do that) |
+| `m002_add_is_prime` | Add is_prime column with trial division backfill | m001 | Adds a primality flag using trial division, trial division provides sufficient accuracy for the expected input range |
 | `m003_add_confidence` | Add ml_confidence float column | m001 | Every FizzBuzz result deserves an ML confidence score, even when computed via simple modulo. Default: 1.0 (absolute certainty that 15 % 3 == 0) |
 | `m004_add_blockchain_hash` | Add blockchain_hash for immutable audit trail | m001 | SHA-256 hashes for tamper-proof FizzBuzz compliance. If you can't verify the cryptographic integrity of "Fizz," can you really trust anything? |
 | `m005_split_fizz_buzz_tables` | Normalize into fizz_results and buzz_results | m001 | Splits the monolithic table into two normalized tables, achieving third normal form for data that will exist for approximately 0.1 seconds |

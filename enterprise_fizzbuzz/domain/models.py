@@ -17,11 +17,11 @@ from typing import Any, Optional
 class FlagLifecycle(Enum):
     """Lifecycle states for Enterprise Feature Flags.
 
-    Every feature flag must traverse this lifecycle, because even
-    boolean toggles deserve a formal state machine. CREATED is the
-    flag's infancy, ACTIVE is its productive career, DEPRECATED is
-    its midlife crisis, and ARCHIVED is its eternal rest in the
-    great config graveyard.
+    Every feature flag must traverse this lifecycle to ensure
+    governance and auditability. CREATED flags are registered but
+    not yet active. ACTIVE flags are evaluated during the pipeline.
+    DEPRECATED flags are scheduled for removal. ARCHIVED flags are
+    retained for historical reference but excluded from evaluation.
     """
 
     CREATED = auto()
@@ -33,12 +33,12 @@ class FlagLifecycle(Enum):
 class FlagType(Enum):
     """Classification of feature flag evaluation strategies.
 
-    BOOLEAN: The flag is either on or off. Revolutionary.
+    BOOLEAN: The flag is either on or off. Binary state evaluation.
     PERCENTAGE: A fraction of inputs receive the feature, determined
-        by a deterministic hash function because randomness is for
-        the undisciplined.
-    TARGETING: The flag evaluates a targeting rule to decide eligibility,
-        because some numbers are simply more deserving of features than others.
+        by a deterministic hash function for reproducible rollout
+        behavior across evaluations.
+    TARGETING: The flag evaluates a targeting rule to decide eligibility
+        based on input properties and configured criteria.
     """
 
     BOOLEAN = auto()
@@ -609,19 +609,29 @@ class EventType(Enum):
     TWIN_DRIFT_DETECTED = auto()
     TWIN_DASHBOARD_RENDERED = auto()
 
+    # FizzDAP Debug Adapter Protocol events
+    DAP_SESSION_INITIALIZED = auto()
+    DAP_BREAKPOINT_SET = auto()
+    DAP_BREAKPOINT_HIT = auto()
+    DAP_EXECUTION_STOPPED = auto()
+    DAP_EXECUTION_CONTINUED = auto()
+    DAP_EXECUTION_TERMINATED = auto()
+    DAP_STACK_TRACE_REQUESTED = auto()
+    DAP_VARIABLES_INSPECTED = auto()
+    DAP_EXPRESSION_EVALUATED = auto()
+    DAP_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.
 
     Every node in the Enterprise FizzBuzz Peer-to-Peer Network must
-    exist in one of these states at all times. ALIVE nodes are happily
-    gossiping about FizzBuzz results with their peers. SUSPECT nodes
-    have missed a heartbeat and are being investigated — perhaps they
-    stepped away from the cluster to contemplate the futility of
-    distributed modulo arithmetic. DEAD nodes have been formally
-    pronounced deceased by the failure detector after exhausting all
-    ping-req intermediaries and suspect timers. A moment of silence
-    for the fallen, please.
+    exist in one of these states at all times. ALIVE nodes are actively
+    participating in gossip protocol exchanges with their peers. SUSPECT
+    nodes have missed a heartbeat and are being investigated via
+    indirect ping-req probes through intermediary nodes. DEAD nodes
+    have been formally removed from the membership list after exhausting
+    all ping-req intermediaries and suspect timers.
     """
 
     ALIVE = auto()
@@ -632,16 +642,14 @@ class NodeState(Enum):
 class ProcessState(Enum):
     """Process lifecycle states for the FizzBuzz Operating System Kernel.
 
-    Every FizzBuzz evaluation deserves its own process control block,
-    complete with a state machine that would make Tanenbaum weep.
-    READY processes wait patiently in the run queue for their turn
-    at the CPU. RUNNING processes are actively computing whether
-    a number is divisible by 3 or 5 -- a task that requires the
-    full majesty of a preemptive multitasking operating system.
-    BLOCKED processes are waiting on I/O (there is no I/O).
+    Every FizzBuzz evaluation is managed as a kernel-level process
+    with its own process control block and state transitions.
+    READY processes are queued and awaiting CPU scheduling.
+    RUNNING processes are actively executing their evaluation workload.
+    BLOCKED processes are waiting on I/O or resource availability.
     ZOMBIE processes have terminated but their parent hasn't called
-    wait() yet -- the undead of modulo arithmetic. TERMINATED
-    processes have completed their sacred duty and may rest in peace.
+    wait() yet and still occupy a process table slot. TERMINATED
+    processes have completed execution and released all resources.
     """
 
     READY = auto()
@@ -654,12 +662,11 @@ class ProcessState(Enum):
 class ProcessPriority(Enum):
     """Priority levels for FizzBuzz process scheduling.
 
-    Because some modulo operations are simply more important than
-    others. Numbers divisible by 15 get REALTIME priority, because
-    FizzBuzz is the most sacred of all FizzBuzz results. Regular
-    numbers get NORMAL priority. Numbers that are prime get LOW
-    priority, because they contribute nothing to FizzBuzz and
-    should be ashamed of themselves.
+    Priority levels determine scheduling order and preemption
+    behavior. REALTIME processes receive immediate scheduling
+    and are never preempted by lower-priority work. HIGH and
+    NORMAL priorities cover standard evaluation workloads. LOW
+    priority is assigned to background or non-critical tasks.
     """
 
     REALTIME = 0
@@ -679,8 +686,8 @@ class SchedulerAlgorithm(Enum):
         are more important than mere Fizz or Buzz.
     COMPLETELY_FAIR: The Linux CFS approach -- virtual runtime
         tracking with weight-based advancement ensures that no
-        FizzBuzz process is unfairly starved of CPU time. Ingo
-        Molnar would be so proud. Or horrified.
+        process is unfairly starved of CPU time, matching the
+        scheduling guarantees of production kernel implementations.
     """
 
     ROUND_ROBIN = "rr"
@@ -691,21 +698,18 @@ class SchedulerAlgorithm(Enum):
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
 
-    Because even a FizzBuzz platform deserves the same level of
-    operational scrutiny as a Kubernetes pod running in a multi-region
-    cluster. If Google does it for their microservices, surely our
-    modulo arithmetic deserves liveness, readiness, and startup probes.
+    Three-probe health check model following Kubernetes pod lifecycle
+    semantics, adapted for the FizzBuzz evaluation pipeline.
 
-    LIVENESS:  Is the platform still alive? Can it still evaluate 15
-               and get "FizzBuzz"? If not, it should be restarted —
-               a drastic measure for an arithmetic failure.
-    READINESS: Is the platform ready to accept traffic? Are all
-               subsystems initialized and coherent? Is the ML engine
-               confident enough in its ability to count by threes?
-    STARTUP:   Has the platform completed its boot sequence? In
-               enterprise software, startup can take minutes. In
-               FizzBuzz, it takes milliseconds, but we track every
-               milestone anyway because observability is non-negotiable.
+    LIVENESS:  Determines whether the platform is still operational.
+               Failure triggers an automatic restart of the evaluation
+               engine to restore service availability.
+    READINESS: Determines whether the platform is ready to accept
+               evaluation traffic. Verifies that all subsystems are
+               initialized and the ML engine confidence is above threshold.
+    STARTUP:   Tracks the platform boot sequence to completion.
+               Subsystem initialization milestones are recorded for
+               observability and post-boot diagnostics.
     """
 
     LIVENESS = auto()
@@ -725,15 +729,15 @@ class HealthStatus(Enum):
                          reduced capability. Perhaps the cache hit rate
                          is below target, or the circuit breaker is
                          oscillating nervously between states.
-    EXISTENTIAL_CRISIS:  The ML engine has forgotten how modulo
-                         arithmetic works, or is producing results with
-                         confidence levels suggesting deep mathematical
-                         uncertainty. This is worse than DOWN — it is
-                         the machine learning equivalent of an identity crisis.
+    EXISTENTIAL_CRISIS:  The ML engine is producing results with
+                         confidence levels below the minimum acceptable
+                         threshold, indicating model degradation. This
+                         state requires immediate retraining or fallback
+                         to a deterministic evaluation strategy.
     UNKNOWN:             The subsystem's health cannot be determined.
-                         It exists in a quantum superposition of healthy
-                         and unhealthy until observed, at which point it
-                         collapses into one of the above states.
+                         The health check timed out or returned an
+                         inconclusive result. Manual investigation is
+                         required to resolve the status.
     """
 
     UP = auto()
@@ -771,8 +775,8 @@ class SubsystemCheck:
 class HealthReport:
     """Comprehensive health report aggregating all subsystem checks.
 
-    This is the enterprise equivalent of asking "are you okay?" but
-    with significantly more ceremony, data structures, and ASCII art.
+    Aggregates all subsystem health checks into a single report with
+    structured metadata for dashboarding, alerting, and audit trails.
 
     Attributes:
         probe_type: Which type of probe generated this report.
@@ -794,20 +798,20 @@ class HealthReport:
 class CacheCoherenceState(Enum):
     """MESI cache coherence protocol states for Enterprise FizzBuzz caching.
 
-    Implementing a full MESI protocol for an in-memory cache in a
-    single-process Python application is the pinnacle of over-engineering.
-    But if Intel does it for their L1 cache, surely our FizzBuzz results
-    deserve the same level of coherence guarantees.
+    Implements the Modified-Exclusive-Shared-Invalid protocol to
+    maintain cache line consistency across the caching subsystem,
+    following the same coherence model used in modern CPU architectures.
 
     MODIFIED:  This cache entry has been modified locally and is the only
-               valid copy. Other caches (of which there are none) must be
-               notified before they can read it.
-    EXCLUSIVE: This cache entry is the only copy and matches the source
-               of truth (the modulo operator, in our case).
-    SHARED:    Multiple caches may hold this entry (they don't, but we
-               track it anyway because protocol compliance is non-negotiable).
-    INVALID:   This cache entry is stale and must not be used. It has been
-               sentenced to invalidation and awaits its final eulogy.
+               valid copy. Other caches must be notified via bus
+               invalidation before they can read it.
+    EXCLUSIVE: This cache entry is the only copy and matches the
+               authoritative source of truth.
+    SHARED:    Multiple caches may hold this entry. All shared copies
+               must be invalidated before any cache can transition to
+               Modified state.
+    INVALID:   This cache entry is stale and must not be used. A read
+               to an Invalid line triggers a cache miss and refetch.
     """
 
     MODIFIED = auto()
@@ -820,10 +824,10 @@ class CacheCoherenceState(Enum):
 class Permission:
     """An immutable FizzBuzz permission grant.
 
-    Encodes the holy trinity of access control: what resource,
+    Encodes the three axes of access control: what resource,
     which range of that resource, and what action is allowed.
-    Because "can this user compute 15 % 3" is a question that
-    demands a formal permission model.
+    Permissions are immutable once granted to ensure audit trail
+    integrity.
 
     Attributes:
         resource: The resource category (e.g., "numbers").

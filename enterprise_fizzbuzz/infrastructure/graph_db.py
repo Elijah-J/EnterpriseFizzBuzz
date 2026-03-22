@@ -3,14 +3,14 @@ Enterprise FizzBuzz Platform - Graph Database for Relationship Mapping
 
 Implements a full in-memory property graph database with CypherLite query
 support, graph analytics (centrality, community detection), ASCII
-visualization, and an analytics dashboard — because the relationships
-between numbers divisible by 3 and numbers divisible by 5 are clearly
-too complex to reason about without a dedicated graph infrastructure.
+visualization, and an analytics dashboard for modeling the rich
+relationship topology between numbers, divisibility rules, and
+classification outcomes.
 
-If Neo4j can map social networks with billions of edges, surely we can
-map the divisibility relationships of integers 1-100 with the same
-level of engineering gravitas. Number 15 didn't ask to be the most
-connected node in the graph, but here we are.
+The graph infrastructure enables structural analysis of divisibility
+relationships, revealing emergent patterns in how numbers interact
+with evaluation rules through centrality metrics and community
+detection algorithms.
 
 Features:
     - Property Graph with label indices and adjacency lists
@@ -1115,9 +1115,9 @@ class GraphAnalyzer:
         - FizzBuzz numbers (divisible by both)
         - Plain numbers (divisible by neither)
 
-        This is, of course, exactly the same information you'd get
-        from a simple modulo check, but discovering it through graph
-        community detection is dramatically more enterprise.
+        Community detection surfaces these groupings through structural
+        analysis of the graph topology, providing an independent
+        verification pathway for classification correctness.
 
         Args:
             label: Optional label filter.

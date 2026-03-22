@@ -1261,6 +1261,31 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "fizzdap": {
+                "enabled": False,
+                "port": 4711,
+                "auto_stop_on_entry": True,
+                "max_breakpoints": 256,
+                "step_granularity": "middleware",
+                "variable_inspection": {
+                    "include_cache_state": True,
+                    "include_circuit_breaker": True,
+                    "include_quantum_state": True,
+                    "include_middleware_timings": True,
+                    "max_string_length": 1024,
+                },
+                "stack_frame": {
+                    "include_source_location": True,
+                    "max_frames": 64,
+                },
+                "dashboard": {
+                    "width": 60,
+                    "show_breakpoints": True,
+                    "show_stack_trace": True,
+                    "show_variables": True,
+                    "show_complexity_index": True,
+                },
+            },
             "recommendation": {
                 "enabled": False,
                 "collaborative_weight": 0.6,
@@ -4821,6 +4846,112 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Dashboard width for the FizzSQL dashboard."""
         self._ensure_loaded()
         return self._raw_config.get("fizzsql", {}).get("dashboard", {}).get("width", 60)
+
+    # ----------------------------------------------------------------
+    # FizzDAP Debug Adapter Protocol
+    # ----------------------------------------------------------------
+
+    @property
+    def fizzdap_enabled(self) -> bool:
+        """Whether the FizzDAP Debug Adapter Protocol server is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("enabled", False)
+
+    @property
+    def fizzdap_port(self) -> int:
+        """The DAP server port (simulated)."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("port", 4711)
+
+    @property
+    def fizzdap_auto_stop_on_entry(self) -> bool:
+        """Whether to automatically break on first evaluation."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("auto_stop_on_entry", True)
+
+    @property
+    def fizzdap_max_breakpoints(self) -> int:
+        """Maximum concurrent breakpoints."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("max_breakpoints", 256)
+
+    @property
+    def fizzdap_step_granularity(self) -> str:
+        """Step granularity: middleware | instruction | evaluation."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("step_granularity", "middleware")
+
+    @property
+    def fizzdap_include_cache_state(self) -> bool:
+        """Whether to expose cache MESI states as debugger variables."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("variable_inspection", {}).get("include_cache_state", True)
+
+    @property
+    def fizzdap_include_circuit_breaker(self) -> bool:
+        """Whether to expose circuit breaker state as variables."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("variable_inspection", {}).get("include_circuit_breaker", True)
+
+    @property
+    def fizzdap_include_quantum_state(self) -> bool:
+        """Whether to expose quantum register amplitudes as variables."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("variable_inspection", {}).get("include_quantum_state", True)
+
+    @property
+    def fizzdap_include_middleware_timings(self) -> bool:
+        """Whether to expose per-middleware timing data."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("variable_inspection", {}).get("include_middleware_timings", True)
+
+    @property
+    def fizzdap_max_string_length(self) -> int:
+        """Maximum string length for variable inspection."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("variable_inspection", {}).get("max_string_length", 1024)
+
+    @property
+    def fizzdap_include_source_location(self) -> bool:
+        """Whether to synthesize source locations for middleware stack frames."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("stack_frame", {}).get("include_source_location", True)
+
+    @property
+    def fizzdap_max_frames(self) -> int:
+        """Maximum stack frame depth."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("stack_frame", {}).get("max_frames", 64)
+
+    @property
+    def fizzdap_dashboard_width(self) -> int:
+        """Dashboard width for the FizzDAP dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("dashboard", {}).get("width", 60)
+
+    @property
+    def fizzdap_dashboard_show_breakpoints(self) -> bool:
+        """Whether to show breakpoint table in dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("dashboard", {}).get("show_breakpoints", True)
+
+    @property
+    def fizzdap_dashboard_show_stack_trace(self) -> bool:
+        """Whether to show synthetic stack trace in dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("dashboard", {}).get("show_stack_trace", True)
+
+    @property
+    def fizzdap_dashboard_show_variables(self) -> bool:
+        """Whether to show variable inspector in dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("dashboard", {}).get("show_variables", True)
+
+    @property
+    def fizzdap_dashboard_show_complexity_index(self) -> bool:
+        """Whether to show Debug Complexity Index in dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdap", {}).get("dashboard", {}).get("show_complexity_index", True)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

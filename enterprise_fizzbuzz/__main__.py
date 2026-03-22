@@ -348,6 +348,10 @@ from enterprise_fizzbuzz.infrastructure.fizzsql import (
     FizzSQLEngine,
     PlatformState,
 )
+from enterprise_fizzbuzz.infrastructure.fizzdap import (
+    FizzDAPDashboard,
+    FizzDAPServer,
+)
 from enterprise_fizzbuzz.infrastructure.self_modifying import (
     SelfModifyingDashboard,
     SelfModifyingMiddleware,
@@ -1935,6 +1939,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzsql-dashboard",
         action="store_true",
         help="Display the FizzSQL Relational Query Engine ASCII dashboard after execution",
+    )
+
+    # FizzDAP Debug Adapter Protocol Server
+    parser.add_argument(
+        "--dap",
+        action="store_true",
+        help="Enable the FizzDAP Debug Adapter Protocol Server: step through FizzBuzz one modulo at a time",
+    )
+
+    parser.add_argument(
+        "--dap-port",
+        type=int,
+        default=None,
+        metavar="N",
+        help="DAP server port (simulated, no actual socket — default: from config)",
+    )
+
+    parser.add_argument(
+        "--dap-dashboard",
+        action="store_true",
+        help="Display the FizzDAP ASCII dashboard with breakpoints, stack trace, variables, and Debug Complexity Index",
     )
 
     return parser
@@ -5999,6 +6024,101 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.types_dashboard:
         print("\n  Dependent Type System not enabled. Use --dependent-types to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzDAP Debug Adapter Protocol Server
+    # ----------------------------------------------------------------
+    dap_server = None
+
+    if args.dap or args.dap_dashboard:
+        dap_port = args.dap_port or config.fizzdap_port
+
+        dap_server = FizzDAPServer(
+            port=dap_port,
+            auto_stop_on_entry=config.fizzdap_auto_stop_on_entry,
+            max_breakpoints=config.fizzdap_max_breakpoints,
+            step_granularity=config.fizzdap_step_granularity,
+            max_frames=config.fizzdap_max_frames,
+            include_source_location=config.fizzdap_include_source_location,
+            include_cache=config.fizzdap_include_cache_state,
+            include_circuit_breaker=config.fizzdap_include_circuit_breaker,
+            include_quantum=config.fizzdap_include_quantum_state,
+            include_timings=config.fizzdap_include_middleware_timings,
+            max_string_length=config.fizzdap_max_string_length,
+        )
+
+        # Initialize the DAP session
+        dap_server.initialize()
+
+        # Set middleware names for stack frame generation
+        active_middleware_names = []
+        for mw_var in [
+            "tracing_mw", "auth_middleware", "es_middleware", "cb_middleware",
+            "cache_middleware", "chaos_middleware", "sla_middleware",
+            "metrics_middleware", "mesh_middleware", "rate_limit_middleware",
+            "compliance_middleware", "finops_middleware", "dr_middleware",
+            "ab_middleware", "mq_middleware", "vault_middleware",
+            "pipeline_middleware", "gateway_middleware", "graph_middleware",
+            "fbaas_middleware", "paxos_middleware", "quantum_middleware",
+            "federated_middleware", "kg_middleware", "sm_middleware",
+            "fizzkube_middleware", "kernel_middleware", "p2p_middleware",
+            "twin_middleware", "flag_middleware", "qo_middleware",
+            "arch_middleware", "tt_middleware",
+        ]:
+            _l = locals()
+            mw_obj = _l.get(mw_var)
+            if mw_obj is not None:
+                active_middleware_names.append(type(mw_obj).__name__)
+
+        # Always include the base middleware
+        for base_name in ["ValidationMiddleware", "TimingMiddleware", "LoggingMiddleware"]:
+            if base_name not in active_middleware_names:
+                active_middleware_names.append(base_name)
+
+        dap_server.set_middleware_names(active_middleware_names)
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZDAP DEBUG ADAPTER PROTOCOL SERVER                    |\n"
+            "  | Breakpoints | Stack Frames | Variables | Events         |\n"
+            f"  | Port: {dap_port} (simulated) | DAP 1.0 Compliant           |\n"
+            '  | "Setting breakpoints on n%3 since 2026."                |\n'
+            "  +---------------------------------------------------------+"
+        )
+
+        # Process evaluations through the debugger
+        if args.dap and "results" in dir():
+            _l = locals()
+            eval_results = _l.get("results")
+            if eval_results and isinstance(eval_results, list):
+                for ev_result in eval_results:
+                    if hasattr(ev_result, "number") and hasattr(ev_result, "label"):
+                        dap_server.process_evaluation(
+                            ev_result.number,
+                            ev_result.label,
+                            ev_result.label,
+                        )
+                    elif isinstance(ev_result, dict):
+                        n = ev_result.get("number", 0)
+                        label = ev_result.get("label", str(n))
+                        dap_server.process_evaluation(n, label, label)
+
+        # Terminate the DAP session
+        if dap_server.session.is_active:
+            dap_server.terminate()
+
+    # FizzDAP Dashboard
+    if args.dap_dashboard and dap_server is not None:
+        print(FizzDAPDashboard.render(
+            dap_server,
+            width=config.fizzdap_dashboard_width,
+            show_breakpoints=config.fizzdap_dashboard_show_breakpoints,
+            show_stack_trace=config.fizzdap_dashboard_show_stack_trace,
+            show_variables=config.fizzdap_dashboard_show_variables,
+            show_complexity_index=config.fizzdap_dashboard_show_complexity_index,
+        ))
+    elif args.dap_dashboard:
+        print("\n  FizzDAP not enabled. Use --dap to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzSQL Relational Query Engine

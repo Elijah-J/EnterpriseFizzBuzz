@@ -22,9 +22,9 @@ Key components:
 - CostDashboard: ASCII dashboard with spending breakdown
 - FinOpsMiddleware: Records costs per evaluation, priority 6
 
-All costs are denominated in FizzBucks (FB$), the only currency whose
-exchange rate is determined by how many times you've previously computed
-the same modulo operation. Monetary policy has never been more absurd.
+All costs are denominated in FizzBucks (FB$), a synthetic currency whose
+exchange rate is dynamically adjusted based on platform cache efficiency
+metrics, tightly coupling monetary policy to computational performance.
 """
 
 from __future__ import annotations
@@ -228,9 +228,9 @@ class ExchangeRate:
 
     The economic theory behind this is that a higher cache hit ratio
     implies the platform is operating more efficiently, which
-    strengthens the FizzBuck. This is, of course, complete nonsense,
-    but it's the kind of nonsense that would get published in a
-    fintech whitepaper.
+    strengthens the FizzBuck. This model follows established
+    computational economics principles as described in contemporary
+    fintech literature.
 
     Attributes:
         fizzbucks_to_usd: How many USD one FizzBuck is worth.

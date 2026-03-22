@@ -2,8 +2,8 @@
 Enterprise FizzBuzz Platform - Custom Bytecode Virtual Machine (FBVM)
 
 Implements a complete bytecode virtual machine for evaluating FizzBuzz
-rules, because running `n % d == 0` directly in Python was far too
-efficient, readable, and maintainable.
+rules, providing a compilation-based execution model that enables
+fine-grained control over evaluation semantics and runtime optimization.
 
 The FBVM features:
 - A custom instruction set with ~20 opcodes optimized for modulo arithmetic
@@ -14,9 +14,9 @@ The FBVM features:
 - A serialization format (.fzbc) with magic header "FZBC"
 - An ASCII dashboard with register file, disassembly, and execution stats
 
-The entire system exists to transform `if n % 3 == 0: print("Fizz")`
-into approximately 700 lines of infrastructure. Enterprise architects
-everywhere are nodding approvingly.
+The system provides a robust compilation and execution pipeline for
+FizzBuzz rule evaluation, with full support for introspection,
+serialization, and runtime optimization.
 
 Architecture Overview:
 

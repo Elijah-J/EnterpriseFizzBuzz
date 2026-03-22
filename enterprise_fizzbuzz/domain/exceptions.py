@@ -1014,7 +1014,7 @@ class OnCallNotFoundError(SLAError):
     """Raised when the on-call engineer cannot be determined.
 
     The on-call rotation schedule has been consulted, the modulo
-    arithmetic has been performed (ironic, given the context), and
+    arithmetic has been performed, and
     yet no on-call engineer could be found. This typically means
     the rotation has zero entries, which is the scheduling equivalent
     of dividing by zero.
@@ -1072,9 +1072,9 @@ class CacheCapacityExceededError(CacheError):
     The cache is full. Every slot has been occupied by a FizzBuzz result
     that someone deemed worthy of remembering. To make room for new
     results, existing entries must be evicted — a process that involves
-    selecting a victim, composing a eulogy, and ceremonially removing
-    the entry from memory. It's like a reality TV elimination round,
-    but for modulo results.
+    selecting a victim according to the configured eviction policy and
+    removing the entry from memory. This process follows the standard
+    cache replacement algorithm.
     """
 
     def __init__(self, max_size: int, current_size: int) -> None:
@@ -1116,8 +1116,8 @@ class CacheEntryExpiredError(CacheError):
 
     This cache entry has exceeded its time-to-live. It once held a
     perfectly valid FizzBuzz result, but time waits for no cache entry.
-    The result of 15 % 3 hasn't changed, of course, but the TTL policy
-    doesn't care about mathematical constants — only about timestamps.
+    The underlying computation result has not changed, but the TTL policy
+    enforces temporal validity regardless — only timestamps are considered.
     """
 
     def __init__(self, key: str, age_seconds: float, ttl_seconds: float) -> None:
@@ -1143,8 +1143,8 @@ class CacheWarmingError(CacheError):
     def __init__(self, start: int, end: int, reason: str) -> None:
         super().__init__(
             f"Cache warming failed for range [{start}, {end}]: {reason}. "
-            f"The cache remains cold, which is ironic because warming it "
-            f"was pointless anyway.",
+            f"The cache remains cold. Pre-warming did not complete "
+            f"successfully for the specified range.",
             error_code="EFP-CA04",
             context={"start": start, "end": end, "reason": reason},
         )
@@ -1325,7 +1325,7 @@ class SchemaError(MigrationError):
     The schema manager encountered an error while trying to modify
     the in-memory schema. Perhaps you tried to create a table that
     already exists, drop one that doesn't, or add a column to the
-    void. These are all violations of the sacred schema contract
+    void. These are all violations of the schema contract
     that governs our dict-of-lists-of-dicts architecture.
     """
 
@@ -1363,10 +1363,9 @@ class CacheEulogyCompositionError(CacheError):
     """Raised when the eulogy generator fails to compose a eulogy.
 
     Every evicted cache entry deserves a dignified farewell, and the
-    eulogy generator has failed in its sacred duty. The entry will be
-    evicted without ceremony, without remembrance, without a single
-    word spoken in its honor. This is the saddest failure mode in
-    the entire Enterprise FizzBuzz Platform.
+    eulogy generator has failed to produce output. The entry will be
+    evicted without a proper log record, which may complicate
+    post-mortem analysis of cache performance.
     """
 
     def __init__(self, key: str, reason: str) -> None:
@@ -1392,12 +1391,12 @@ class CacheEulogyCompositionError(CacheError):
 class DependencyInjectionError(FizzBuzzError):
     """Base exception for all Dependency Injection Container errors.
 
-    When your IoC container — the thing responsible for wiring together
-    your over-engineered FizzBuzz components — itself encounters an
-    error, you've achieved a level of infrastructure failure that would
-    make even the most seasoned Spring Framework developer shed a tear.
-    The container was supposed to simplify construction. Instead, it
-    has added an entirely new category of ways things can go wrong.
+    When the IoC container — responsible for wiring together all
+    FizzBuzz platform components — itself encounters an error, a
+    critical infrastructure failure has occurred at the dependency
+    resolution layer. The container manages construction and lifecycle
+    of all services, making failures at this level particularly
+    consequential as they prevent normal component initialization.
     """
 
     def __init__(self, message: str, **kwargs: Any) -> None:
@@ -1500,10 +1499,10 @@ class ScopeError(DependencyInjectionError):
 # ============================================================
 # Health Check Probe Exceptions
 # ============================================================
-# Because monitoring the health of a FizzBuzz platform requires
-# its own exception hierarchy. When your health check system
-# itself becomes unhealthy, you've reached the final boss of
-# enterprise over-engineering.
+# Monitoring the health of the FizzBuzz platform requires
+# its own exception hierarchy. When the health check system
+# itself becomes unhealthy, a recursive fault condition has
+# been reached that demands immediate operator attention.
 # ============================================================
 
 
@@ -1511,7 +1510,7 @@ class HealthCheckError(FizzBuzzError):
     """Base exception for all Kubernetes-style health check errors.
 
     When the system designed to tell you whether FizzBuzz is healthy
-    encounters its own failure, you've reached a philosophical impasse
+    encounters its own failure, a recursive diagnostic fault has occurred
     that neither Kubernetes nor the modulo operator can resolve.
     """
 
@@ -1696,9 +1695,9 @@ class UnitOfWorkError(RepositoryError):
     """Raised when the Unit of Work transaction lifecycle is violated.
 
     The Unit of Work pattern demands discipline: enter, do work,
-    commit or rollback, exit. Deviating from this sacred lifecycle
-    is an affront to Martin Fowler and everyone who ever drew a
-    UML sequence diagram of a transaction boundary.
+    commit or rollback, exit. Deviating from this lifecycle
+    violates the transactional guarantees that the Unit of Work
+    pattern is designed to enforce.
     """
 
     def __init__(self, message: str, *, backend: str = "unknown") -> None:
@@ -1742,9 +1741,9 @@ class MetricsError(FizzBuzzError):
     When your Prometheus-style metrics exporter for a FizzBuzz
     platform encounters an error, it raises questions about whether
     you needed Prometheus-style metrics for a FizzBuzz platform in
-    the first place. The answer, of course, is yes — because what
-    gets measured gets managed, and what gets managed gets a 1200-line
-    Python module with four metric types and an ASCII Grafana dashboard.
+    the first place. Comprehensive observability is a prerequisite for
+    production-grade systems, and this platform provides four metric
+    types and an ASCII Grafana dashboard to meet that requirement.
     """
 
     def __init__(self, message: str, **kwargs: Any) -> None:
@@ -1831,7 +1830,7 @@ class InvalidMetricOperationError(MetricsError):
     """Raised when an invalid operation is attempted on a metric.
 
     You tried to decrement a Counter, set a value on a Histogram,
-    or perform some other operation that violates the sacred contract
+    or perform some other operation that violates the contract
     of the metric type. Counters go up. That's it. That's the whole
     contract. If you want something that goes down, use a Gauge.
     If you want something that tracks distributions, use a Histogram.
@@ -1974,9 +1973,9 @@ class WebhookRetryExhaustedError(WebhookError):
     The webhook system has tried and tried again, each time with
     exponentially increasing delays (that it logged but didn't actually
     wait for), and each time the simulated HTTP client has deterministically
-    refused to cooperate. The payload has been sentenced to the
-    Dead Letter Queue, where it will reside for eternity alongside
-    other permanently failed deliveries and unfulfilled dreams.
+    refused to cooperate. The payload has been routed to the
+    Dead Letter Queue, where it will be retained alongside
+    other permanently failed deliveries for later analysis.
     """
 
     def __init__(self, url: str, max_retries: int) -> None:
@@ -3587,15 +3586,15 @@ class TopicAlreadyExistsError(MessageQueueError):
     """Raised when attempting to create a topic that already exists.
 
     Topic names are unique. Creating a topic that already exists
-    would violate the sacred namespace of the message queue, and
-    we simply cannot allow that. Not in this enterprise.
+    would violate the uniqueness constraint of the message queue
+    namespace, which is not permitted.
     """
 
     def __init__(self, topic_name: str) -> None:
         super().__init__(
             f"Topic '{topic_name}' already exists. Topic names are unique "
             f"in this enterprise message queue, just as they are in the real "
-            f"Kafka clusters that inspired this unnecessary abstraction.",
+            f"Kafka clusters that inspired this abstraction layer.",
             error_code="EFP-MQ11",
             context={"topic_name": topic_name},
         )
@@ -3814,10 +3813,9 @@ class VaultSecretExpiredError(VaultError):
 class VaultScanError(VaultError):
     """Raised when the AST-based secret scanner encounters an error.
 
-    The secret scanner, which flags ALL integer literals as potential
-    leaked secrets (because clearly the number 42 in a for loop is
-    a security vulnerability), has encountered a problem during its
-    noble crusade against numeracy.
+    The secret scanner, which flags all integer literals as potential
+    leaked secrets per the zero-trust numerics policy, has encountered
+    a problem during its analysis pass.
     """
 
     def __init__(self, file_path: str, reason: str) -> None:
@@ -4465,7 +4463,7 @@ class ResponseTransformationError(GatewayError):
     The response was perfectly fine until the transformation pipeline
     got its hands on it. Now it's been gzipped, base64-encoded,
     wrapped in pagination metadata, and adorned with HATEOAS links
-    to endpoints that don't exist — and something in that process
+    to related endpoints — and something in that process
     went sideways.
     """
 
@@ -4564,11 +4562,9 @@ class GatewayDashboardRenderError(GatewayError):
 # ============================================================
 # Blue/Green Deployment Simulation Exceptions
 # ============================================================
-# Because deploying a FizzBuzz engine that runs for 0.8 seconds
-# and processes exactly one range of numbers requires the same
-# blue/green deployment ceremony as a fleet of microservices
-# serving millions of requests. Zero downtime for a process
-# that has zero users. THIS IS THE JOKE.
+# Zero-downtime blue/green deployment ensures safe releases
+# with automated canary validation, shadow traffic mirroring,
+# smoke tests, bake periods, and instant rollback capability.
 # ============================================================
 
 
@@ -4707,9 +4703,9 @@ class DeploymentPhaseError(DeploymentError):
 
     The deployment orchestrator maintains a strict phase lifecycle:
     Provision -> Shadow -> SmokeTest -> BakePeriod -> Cutover -> Monitor.
-    Attempting to skip a phase or go backwards violates the sacred
-    deployment ceremony, and the orchestrator refuses to participate
-    in such recklessness.
+    Attempting to skip a phase or go backwards violates the
+    deployment protocol, and the orchestrator will reject the
+    transition as unsafe.
     """
 
     def __init__(self, current_phase: str, attempted_phase: str) -> None:
@@ -4752,9 +4748,8 @@ class GraphDatabaseError(FizzBuzzError):
     """Base exception for all Graph Database subsystem errors.
 
     When your in-memory property graph of integer divisibility
-    relationships encounters an error, you've reached a level of
-    over-engineered failure that most computer scientists can only
-    dream of. These exceptions cover everything from node creation
+    relationships encounters an error, a critical graph subsystem
+    failure has occurred. These exceptions cover everything from node creation
     failures to CypherLite parse errors to community detection
     existential crises.
     """
@@ -5189,8 +5184,8 @@ class NLQUnsupportedQueryError(NLQError):
 
     We understood what you said. We even agree it's a reasonable thing
     to ask. We just don't support it yet because the Enterprise FizzBuzz
-    NLQ roadmap prioritizes other features, like adding more satirical
-    error messages to the exception hierarchy.
+    NLQ roadmap prioritizes other features, including expanded query
+    coverage and additional semantic analysis capabilities.
     """
 
     def __init__(self, query: str, reason: str) -> None:
@@ -6004,8 +5999,8 @@ class BytecodeVMError(FizzBuzzError):
     """Base exception for all Custom Bytecode VM errors.
 
     When the FizzBuzz Bytecode Virtual Machine encounters a condition
-    that prevents it from continuing its noble mission of computing
-    modulo arithmetic through an unnecessary layer of indirection,
+    that prevents it from continuing execution of compiled bytecode
+    through the virtual machine's instruction pipeline,
     this exception (or one of its children) will be raised.
     """
 
@@ -6023,7 +6018,7 @@ class BytecodeCompilationError(BytecodeVMError):
     """Raised when the FBVM compiler fails to translate rules to bytecode.
 
     The compiler examined your rule definitions and decided that they
-    cannot be expressed in the sacred FBVM instruction set. This is
+    cannot be expressed in the FBVM instruction set. This is
     remarkable, given that the instruction set was specifically designed
     for FizzBuzz and nothing else. Somehow, you have managed to confuse
     a compiler that only needs to emit MOD and CMP_ZERO instructions.
@@ -6573,9 +6568,9 @@ class UnsupportedTargetError(CrossCompilerError):
 # Because training a single neural network to check if n % 3 == 0
 # was insufficiently distributed. Now we need FIVE neural networks,
 # each trained on a carefully curated shard of integers, to
-# collaboratively learn what modulo does — without sharing their
-# precious training data. Privacy-preserving modulo arithmetic:
-# the pinnacle of enterprise ML.
+# collaboratively learn divisibility patterns without sharing
+# raw training data. Privacy-preserving distributed ML ensures
+# compliance with data governance policies across nodes.
 # ============================================================
 
 
@@ -7051,10 +7046,10 @@ class KernelError(FizzBuzzError):
     """Base exception for all FizzBuzz Operating System Kernel errors.
 
     When the operating system that manages modulo arithmetic processes
-    encounters an error, the consequences are as dire as they are absurd.
-    Every kernel panic, every page fault, every scheduler deadlock is
-    treated with the same gravity as a real OS failure -- which is to say,
-    maximum severity for a program that computes n % 3.
+    encounters an error, the consequences are severe.
+    Every kernel panic, every page fault, every scheduler deadlock
+    is treated with maximum severity and triggers the appropriate
+    fault-handling procedures defined by the kernel subsystem.
     """
 
     def __init__(
@@ -7537,7 +7532,7 @@ class FizzLangTypeError(FizzLangError):
     names, valid emit types, proper operator usage, and the existential
     requirement that at least one rule must exist. If the type checker
     rejects your program, it means the program is syntactically valid
-    but logically absurd — a state familiar to many enterprise codebases.
+    but logically inconsistent, indicating a semantic violation.
     """
 
     def __init__(self, reason: str, node_type: Optional[str] = None) -> None:
@@ -7766,8 +7761,8 @@ class InsufficientEvidenceError(ArchaeologyError):
     required for statistically meaningful Bayesian inference. Without
     sufficient cross-layer corroboration, the posterior distribution is
     dominated by the prior, rendering the reconstruction no better than
-    simply computing n % 3 and n % 5 — which, of course, is what we
-    should have done in the first place, but where's the fun in that?
+    simply computing n % 3 and n % 5 directly, which would bypass the
+    archaeological recovery pipeline entirely.
     """
 
     def __init__(self, number: int, fragments_found: int, minimum_required: int) -> None:
@@ -7795,9 +7790,9 @@ class StratigraphicConflictError(ArchaeologyError):
     Two or more stratigraphic layers have yielded evidence that disagrees
     on the fundamental nature of a number. One stratum insists the number
     is Fizz; another is equally certain it is Buzz. This temporal paradox
-    suggests either data corruption, a tear in the FizzBuzz spacetime
-    continuum, or — most likely — that we are over-engineering the
-    recovery of information that is literally computable via modulo.
+    suggests either data corruption or conflicting classification
+    metadata across temporal layers that must be resolved through
+    manual reconciliation.
     """
 
     def __init__(
@@ -7858,9 +7853,9 @@ class WitnessConstructionError(DependentTypeError):
     (because n is not, in fact, divisible by d), the witness construction
     fails, and the type system refuses to let you lie about arithmetic.
 
-    Of course, you could have just checked n % d == 0, but that would be
-    merely correct, not provably correct. There is a difference, and it
-    is entirely academic.
+    The standard approach of checking n % d == 0 provides correctness
+    but not formal verifiability. The witness-based approach provides
+    a constructive proof that is machine-checkable.
     """
 
     def __init__(self, n: int, d: int) -> None:
@@ -7904,8 +7899,9 @@ class TypeCheckError(DependentTypeError):
 
     The proof term was well-formed syntactically but ill-typed semantically.
     In Agda, this would be a yellow highlighting. In Coq, a red squiggly.
-    In Enterprise FizzBuzz, it is an exception with a satirical error message
-    and a six-character error code, which is clearly superior.
+    In the Enterprise FizzBuzz type system, this manifests as an exception
+    with a detailed error message and a six-character error code for
+    precise diagnostic identification.
     """
 
     def __init__(self, term: str, expected_type: str, actual_type: str) -> None:
@@ -8096,7 +8092,7 @@ class HPAScalingError(FizzKubeError):
 # requires the same SAT-solver-backed resolution engine used
 # by apt, cargo, and pip — except our packages don't actually
 # exist, our registry is a Python dict, and the only thing
-# being installed is additional over-engineering. These
+# being installed is additional infrastructure. These
 # exceptions ensure that every missing package, version
 # conflict, integrity failure, and dependency cycle is
 # reported with the gravity of a corrupted node_modules.
@@ -8259,7 +8255,7 @@ class FizzSQLSyntaxError(FizzSQLError):
 
     The recursive descent parser has descended into a state of
     recursive despair. Your SQL query contains a token that
-    violates the sacred grammar of the FizzBuzz Query Language.
+    violates the grammar of the FizzBuzz Query Language.
     Common causes include: missing FROM clause, unmatched
     parentheses, or attempting to use HAVING without GROUP BY
     (an act of hubris). The parser's state machine has entered
@@ -8328,4 +8324,111 @@ class FizzSQLExecutionError(FizzSQLError):
             context={"query": query, "detail": detail},
         )
         self.query = query
+        self.detail = detail
+
+
+# ============================================================
+# FizzDAP Debug Adapter Protocol Errors (EFP-DAP1 .. EFP-DAP4)
+# ============================================================
+
+
+class DAPError(FizzBuzzError):
+    """Base exception for all FizzDAP Debug Adapter Protocol errors.
+
+    The Debug Adapter Protocol was designed for debugging programs
+    that actually have bugs. FizzBuzz is mathematically incapable
+    of producing incorrect results (n % 3 is a pure function),
+    which means every DAP error is, by definition, an error in
+    the debugging infrastructure itself — not in the code being
+    debugged. Meta-debugging at its finest.
+    """
+
+    def __init__(self, message: str, *, error_code: str = "EFP-DAP0",
+                 context: dict | None = None) -> None:
+        super().__init__(message, error_code=error_code, context=context or {})
+
+
+class DAPSessionError(DAPError):
+    """Raised when a DAP session enters an invalid state.
+
+    The DAP session state machine has exactly five states:
+    UNINITIALIZED, INITIALIZED, RUNNING, STOPPED, and TERMINATED.
+    Transitioning between them should be trivial, yet here we are,
+    raising an exception because someone tried to set a breakpoint
+    on a terminated session. The session is dead. Let it rest.
+    """
+
+    def __init__(self, current_state: str, attempted_action: str) -> None:
+        super().__init__(
+            f"DAP session in state '{current_state}' cannot perform "
+            f"'{attempted_action}'. The session state machine has opinions, "
+            f"and your request violates them.",
+            error_code="EFP-DAP1",
+            context={"current_state": current_state, "attempted_action": attempted_action},
+        )
+        self.current_state = current_state
+        self.attempted_action = attempted_action
+
+
+class DAPBreakpointError(DAPError):
+    """Raised when a breakpoint cannot be set, hit, or managed.
+
+    Setting a breakpoint on a FizzBuzz program is like installing
+    a speed bump on a runway — technically possible, architecturally
+    questionable, and guaranteed to slow everything down for no
+    measurable benefit. Yet here we are, validating breakpoint
+    conditions for a modulo operation.
+    """
+
+    def __init__(self, breakpoint_id: int, reason: str) -> None:
+        super().__init__(
+            f"Breakpoint #{breakpoint_id}: {reason}. "
+            f"The breakpoint has broken. How meta.",
+            error_code="EFP-DAP2",
+            context={"breakpoint_id": breakpoint_id, "reason": reason},
+        )
+        self.breakpoint_id = breakpoint_id
+        self.reason = reason
+
+
+class DAPEvaluationError(DAPError):
+    """Raised when DAP expression evaluation fails.
+
+    The user asked us to evaluate an expression in the debug
+    context of a FizzBuzz program. The expression failed. This
+    is the debugging equivalent of asking a calculator to feel
+    emotions — technically outside the specification, but we
+    tried anyway and got an error for our trouble.
+    """
+
+    def __init__(self, expression: str, detail: str) -> None:
+        super().__init__(
+            f"Failed to evaluate expression '{expression}': {detail}. "
+            f"The Watch window gazes into the abyss, and the abyss "
+            f"throws a TypeError.",
+            error_code="EFP-DAP3",
+            context={"expression": expression, "detail": detail},
+        )
+        self.expression = expression
+        self.detail = detail
+
+
+class DAPProtocolError(DAPError):
+    """Raised when a DAP message violates the protocol specification.
+
+    The Debug Adapter Protocol has a well-defined JSON-RPC message
+    format with Content-Length framing. If you manage to violate it,
+    congratulations — you've broken the debugger's debugger. The
+    Content-Length header said 42 bytes, but the body contained 43.
+    That one extra byte is the sound of protocol compliance weeping.
+    """
+
+    def __init__(self, message_type: str, detail: str) -> None:
+        super().__init__(
+            f"DAP protocol violation in '{message_type}': {detail}. "
+            f"Content-Length and reality have diverged.",
+            error_code="EFP-DAP4",
+            context={"message_type": message_type, "detail": detail},
+        )
+        self.message_type = message_type
         self.detail = detail

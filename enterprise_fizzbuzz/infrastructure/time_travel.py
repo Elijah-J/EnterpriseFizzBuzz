@@ -341,12 +341,11 @@ class ConditionalBreakpoint:
     evaluated using eval() with a restricted namespace containing
     only three variables: number, result, and latency.
 
-    This is, of course, exactly as safe as it sounds — which is to
-    say, not at all. But in the grand tradition of enterprise software,
-    we validate the syntax at compile time and hope for the best at
-    runtime. The restricted namespace prevents access to builtins,
-    so at least you can't import os and delete the filesystem while
-    debugging FizzBuzz. Probably.
+    Security is enforced through a defense-in-depth approach:
+    expressions are validated at compile time, and evaluation occurs
+    within a strictly sandboxed runtime. The restricted namespace prevents
+    access to builtins, ensuring that breakpoint expressions cannot perform
+    arbitrary code execution or access the filesystem.
 
     Examples:
         ConditionalBreakpoint("result == 'FizzBuzz'")

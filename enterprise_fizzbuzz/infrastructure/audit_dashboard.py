@@ -3,9 +3,9 @@ Enterprise FizzBuzz Platform - Unified Audit Dashboard & Real-Time Event Streami
 
 Implements a comprehensive, six-pane ASCII dashboard with z-score anomaly
 detection, temporal event correlation, and NDJSON event streaming for the
-Enterprise FizzBuzz Platform. Because the only thing more important than
-monitoring your FizzBuzz evaluations is monitoring the monitoring of your
-FizzBuzz evaluations.
+Enterprise FizzBuzz Platform. A unified observability layer aggregates,
+correlates, and visualizes operational telemetry across all platform
+subsystems in a single terminal interface.
 
 Features:
     - EventAggregator: Subscribes to the EventBus, normalizes raw events

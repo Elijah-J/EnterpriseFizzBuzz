@@ -2,16 +2,14 @@
 Enterprise FizzBuzz Platform - Webhook Notification System
 
 Implements a production-grade webhook dispatch system for notifying
-external services about FizzBuzz evaluation events. Because when
-someone computes 15 % 3 and gets "FizzBuzz", every downstream
-microservice in the constellation must be immediately informed via
-a cryptographically signed HTTP POST request.
+external services about FizzBuzz evaluation events. Downstream
+consumers are informed of pipeline events via cryptographically
+signed HTTP POST requests.
 
-The deliveries are, of course, entirely simulated. No actual HTTP
-requests leave this process. But the HMAC-SHA256 signatures are real,
-the exponential backoff delays are calculated (if not actually waited
-for), and the Dead Letter Queue faithfully stores every permanently
-failed delivery for future regret and post-incident review.
+Deliveries are simulated within the process boundary. The HMAC-SHA256
+signatures are computed per RFC 2104, exponential backoff delays are
+calculated for retry scheduling, and the Dead Letter Queue retains
+all permanently failed deliveries for post-incident review.
 
 Design Patterns Employed:
     - Observer (GoF) — WebhookObserver bridges EventBus to webhook dispatch

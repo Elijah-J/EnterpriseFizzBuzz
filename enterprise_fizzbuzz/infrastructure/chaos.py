@@ -2,9 +2,10 @@
 Enterprise FizzBuzz Platform - Chaos Engineering / Fault Injection Framework
 
 Implements a production-grade chaos engineering system for stress-testing
-the FizzBuzz evaluation pipeline. Because if Netflix can have a Chaos
-Monkey that randomly terminates production instances, the Enterprise
-FizzBuzz Platform deserves one that randomly corrupts modulo results.
+the FizzBuzz evaluation pipeline. Following chaos engineering best
+practices established by industry leaders, the platform includes a
+comprehensive fault injection framework for validating the resilience
+of its evaluation pipeline under adverse conditions.
 
 The framework supports five categories of fault injection:
     - Result Corruption: Silently changes FizzBuzz outputs to wrong values

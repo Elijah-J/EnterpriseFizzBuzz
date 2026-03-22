@@ -2,13 +2,12 @@
 Enterprise FizzBuzz Platform - In-Memory Caching Layer with Cache Invalidation Protocol
 
 Implements a production-grade, thread-safe, MESI-coherent caching subsystem
-for FizzBuzz evaluation results. Because computing n % 3 is an expensive
-operation that deserves its own caching infrastructure, complete with:
+for FizzBuzz evaluation results. The caching infrastructure provides:
 
     - Multiple eviction policies (LRU, LFU, FIFO, DramaticRandom)
-    - MESI cache coherence protocol (pointless in single-process, implemented anyway)
-    - Satirical eulogy generation for evicted cache entries
-    - A cache warming system that defeats the entire purpose of caching
+    - MESI cache coherence protocol for multi-level coherence guarantees
+    - Eulogy generation for evicted cache entries
+    - A cache warming system for pre-populating high-frequency entries
     - An ASCII dashboard for cache statistics visualization
     - Thread-safe operations with fine-grained locking
 
@@ -18,10 +17,9 @@ the result is returned immediately without invoking the downstream pipeline.
 On a miss, the pipeline executes normally and the result is cached for
 future consultations.
 
-This is, without question, the most over-engineered caching layer ever
-built for an operation that takes approximately zero nanoseconds. But in
-the Enterprise FizzBuzz Platform, we don't ask "should we cache this?"
-— we ask "how many eviction policies should the cache support?"
+This caching layer provides a comprehensive approach to evaluation
+result memoization, supporting multiple eviction strategies to match
+different workload characteristics and access patterns.
 
 Design Patterns Employed:
     - Strategy (eviction policies)
@@ -32,7 +30,7 @@ Design Patterns Employed:
     - Observer/Event Bus (cache event publication)
 
 Compliance:
-    - RFC 7234: HTTP Caching (spiritually, if not literally)
+    - RFC 7234: HTTP Caching semantics
     - MESI Protocol: Modified/Exclusive/Shared/Invalid coherence
     - ISO 27001: Information security through cache entry dignity tracking
 """

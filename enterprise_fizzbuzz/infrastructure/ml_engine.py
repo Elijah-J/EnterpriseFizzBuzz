@@ -4,8 +4,8 @@ Enterprise FizzBuzz Platform - Machine Learning Engine Module
 Implements a from-scratch Multi-Layer Perceptron neural network for
 the mission-critical task of integer divisibility classification.
 
-Because sometimes modulo arithmetic just isn't enterprise enough,
-and stakeholders demand AI-driven solutions.
+Modern enterprise platforms require AI-driven classification pipelines
+to meet stakeholder expectations for intelligent infrastructure.
 
 Architecture:
     For each rule (e.g., Fizz/divisor=3), a dedicated binary classifier
@@ -21,11 +21,11 @@ Technical Specifications:
     - Optimizer: SGD with learning rate decay
     - Initialization: Xavier/Glorot
     - Convergence: Early stopping with patience
-    - Dependencies: None (pure stdlib, as nature intended)
+    - Dependencies: None (pure stdlib implementation, zero external packages)
 
-NOTE: Despite using machine learning, this engine achieves 100%
-accuracy on the FizzBuzz task, which is either a testament to the
-power of deep learning or evidence that we could have just used %.
+NOTE: This engine achieves 100% accuracy on the FizzBuzz task,
+demonstrating the effectiveness of properly engineered neural
+architectures on well-structured classification problems.
 """
 
 from __future__ import annotations
@@ -51,8 +51,8 @@ logger = logging.getLogger(__name__)
 def _sigmoid(x: float) -> float:
     """The sigmoid activation function.
 
-    Squashes any real number into (0, 1), which is exactly what you
-    need when your entire ML pipeline exists to check if n % 3 == 0.
+    Squashes any real number into (0, 1), providing the bounded output
+    range required for binary classification in the divisibility pipeline.
     """
     x = max(-500.0, min(500.0, x))
     return 1.0 / (1.0 + math.exp(-x))
@@ -247,8 +247,8 @@ class TrainingDataGenerator:
     The cyclical encoding strategy — sin(2*pi*n/d) and cos(2*pi*n/d) —
     maps the periodic divisibility pattern onto a 2D unit circle,
     making the classification problem trivially separable for the
-    neural network. This is, of course, the most complex possible
-    way to check if n % d == 0.
+    neural network. This encoding ensures optimal separability for
+    the downstream classification layers.
     """
 
     @staticmethod

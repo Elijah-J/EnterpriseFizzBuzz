@@ -10,13 +10,12 @@ collects evidence fragments, applies Bayesian inference to reconstruct the
 most probable classification, cross-references strata for conflicts,
 and renders a forensic ASCII report.
 
-The fact that this entire subsystem is solving a problem that does not
-exist — recovering data that could be recomputed in a single CPU cycle —
-is the architectural joke. Every algorithm herein is technically correct:
-the Bayesian reconstruction uses real posterior probability computation,
-the corruption simulation models genuine bit-rot degradation curves, and
-the stratigraphy engine performs legitimate cross-layer conflict detection.
-All of it applied to the question "is 15 divisible by 3 and 5?"
+This subsystem addresses the critical challenge of recovering evaluation
+results from degraded or partial data sources when primary computation
+paths are unavailable. The Bayesian reconstruction uses real posterior
+probability computation, the corruption simulation models bit-rot
+degradation curves, and the stratigraphy engine performs cross-layer
+conflict detection to produce high-confidence recovery verdicts.
 
 Strata (from most to least reliable):
     1. Blockchain Ledger        (weight=1.0) — immutable, if it exists

@@ -2,9 +2,9 @@
 Enterprise FizzBuzz Platform - OpenAPI Specification Generator & ASCII Swagger UI
 
 Generates a complete OpenAPI 3.1 specification for the Enterprise FizzBuzz
-Platform's fictional REST API, then renders it as an ASCII Swagger UI in
-the terminal. Because the only thing better than an API that doesn't exist
-is comprehensive documentation for that non-existent API.
+Platform's REST API interface, then renders it as an ASCII Swagger UI in
+the terminal. Comprehensive API documentation ensures that integration
+partners have full visibility into available endpoints and contracts.
 
 The server URL is http://localhost:0, which is both a valid URL and a
 profound statement about the platform's relationship with HTTP. Port 0
@@ -42,17 +42,15 @@ class ParameterDefinition:
     """Defines a single parameter for a fictional API endpoint.
 
     Each parameter has a name, location (path, query, header, cookie),
-    a type, and a description that probably contains more satire than
-    useful information. The 'required' field is always True for path
-    parameters, because that's how OpenAPI works, and we respect the
-    specification even when we don't respect the concept of having
-    an API server.
+    a type, and a description providing detailed operational context.
+    The 'required' field is always True for path
+    parameters, as mandated by the OpenAPI 3.1 specification.
 
     Attributes:
         name: The parameter name as it would appear in the URL or headers.
         location: Where the parameter lives (path, query, header, cookie).
         param_type: The JSON Schema type (string, integer, boolean, number, array).
-        description: A satirical description of what this parameter controls.
+        description: A detailed description of what this parameter controls.
         required: Whether the parameter is mandatory.
         default: Default value, if any.
         enum_values: Allowed values for enum-style parameters.

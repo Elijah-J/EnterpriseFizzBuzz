@@ -1021,13 +1021,11 @@ class SecretScanner:
     and identify integer literals that could potentially be secrets that
     should be stored in the vault instead of hardcoded in source code.
 
-    The joke, of course, is that EVERY integer literal is flagged. The
-    number 0 in a loop counter? Potential secret. The 100 in range(100)?
-    Definitely a leaked configuration value. The 3 in "divisor=3"? CRITICAL
-    SECRET LEAK, SOUND THE ALARMS.
-
-    This scanner embodies the security principle of "when everything is a
-    secret, nothing is secure but at least compliance is satisfied."
+    Applies a conservative detection policy where all integer literals
+    are flagged as potential hardcoded secrets requiring review. This
+    zero-tolerance approach ensures that no configuration value escapes
+    the vault, enforcing the security principle that sensitive values
+    should always be externalized into secure storage.
     """
 
     def __init__(
