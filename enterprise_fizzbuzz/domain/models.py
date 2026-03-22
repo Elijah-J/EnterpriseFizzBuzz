@@ -98,6 +98,7 @@ class EvaluationStrategy(Enum):
     CHAIN_OF_RESPONSIBILITY = auto()
     PARALLEL_ASYNC = auto()
     MACHINE_LEARNING = auto()
+    QUANTUM = auto()
 
 
 class LogLevel(Enum):
@@ -518,6 +519,14 @@ class EventType(Enum):
     PAXOS_ACCEPTED_RECEIVED = auto()
     PAXOS_CONSENSUS_REACHED = auto()
     PAXOS_CONSENSUS_FAILED = auto()
+
+    # Quantum Computing Simulator events
+    QUANTUM_CIRCUIT_INITIALIZED = auto()
+    QUANTUM_GATE_APPLIED = auto()
+    QUANTUM_MEASUREMENT_PERFORMED = auto()
+    QUANTUM_PERIOD_FOUND = auto()
+    QUANTUM_CLASSICAL_FALLBACK = auto()
+    QUANTUM_DASHBOARD_RENDERED = auto()
 
 
 class ProbeType(Enum):

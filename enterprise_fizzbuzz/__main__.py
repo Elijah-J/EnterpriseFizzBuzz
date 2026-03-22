@@ -300,6 +300,14 @@ from enterprise_fizzbuzz.infrastructure.paxos import (
     PaxosMesh,
     PaxosMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.quantum import (
+    CircuitVisualizer,
+    QuantumCircuit,
+    QuantumDashboard,
+    QuantumFizzBuzzEngine,
+    QuantumMiddleware,
+    build_qft_circuit,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1476,6 +1484,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--paxos-dashboard",
         action="store_true",
         help="Display the Paxos Consensus ASCII dashboard after execution",
+    )
+
+    # Quantum Computing Simulator
+    parser.add_argument(
+        "--quantum",
+        action="store_true",
+        help="Enable the Quantum Computing Simulator: use Shor's algorithm for FizzBuzz divisibility checking",
+    )
+
+    parser.add_argument(
+        "--quantum-circuit",
+        action="store_true",
+        help="Display the ASCII quantum circuit diagram for the divisibility checking circuit",
+    )
+
+    parser.add_argument(
+        "--quantum-dashboard",
+        action="store_true",
+        help="Display the Quantum Computing Simulator ASCII dashboard with negative advantage ratios",
     )
 
     return parser
@@ -2659,6 +2686,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("fbaas_metering")
         if args.paxos:
             active_subsystems.append("paxos_consensus")
+        if args.quantum:
+            active_subsystems.append("quantum_simulation")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -3469,6 +3498,68 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Paxos consensus not enabled. Use --paxos to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Quantum Computing Simulator setup
+    # ----------------------------------------------------------------
+    quantum_engine = None
+    quantum_middleware = None
+    quantum_sample_circuit = None
+
+    if args.quantum or args.quantum_circuit or args.quantum_dashboard:
+        # Build rules for the quantum engine
+        quantum_rules = [
+            {"name": r.name, "divisor": r.divisor, "label": r.label, "priority": r.priority}
+            for r in config.rules
+        ]
+
+        quantum_engine = QuantumFizzBuzzEngine(
+            rules=quantum_rules,
+            num_qubits=config.quantum_num_qubits,
+            max_attempts=config.quantum_max_measurement_attempts,
+            decoherence_threshold=config.quantum_decoherence_threshold,
+            max_period_attempts=config.quantum_shor_max_period_attempts,
+            fallback_to_classical=config.quantum_fallback_to_classical,
+        )
+
+        quantum_middleware = QuantumMiddleware(
+            engine=quantum_engine,
+            event_bus=event_bus,
+        )
+
+        # Build a sample QFT circuit for visualization
+        quantum_sample_circuit = build_qft_circuit(config.quantum_num_qubits)
+        quantum_sample_circuit.measure_all()
+
+        qubits = config.quantum_num_qubits
+        hilbert_dim = 2 ** qubits
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | QUANTUM COMPUTING: Shor's Algorithm ENABLED             |\n"
+            f"  | Qubits: {qubits:<49}|\n"
+            f"  | Hilbert Space: {hilbert_dim} dimensions"
+            + " " * max(0, 41 - len(f"{hilbert_dim} dimensions"))
+            + "|\n"
+            "  | Divisibility will be checked via quantum period-finding  |\n"
+            "  | using a simplified Shor's algorithm. Classical fallback  |\n"
+            "  | is armed, because quantum supremacy is aspirational.    |\n"
+            "  | Quantum Advantage Ratio: NEGATIVE (as expected)          |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Show circuit diagram if requested
+        if args.quantum_circuit:
+            print()
+            print("  Quantum Period-Finding Circuit (QFT):")
+            print(CircuitVisualizer.render(quantum_sample_circuit, width=58))
+            print()
+
+    elif args.quantum_dashboard:
+        print("\n  Quantum simulator not enabled. Use --quantum to enable.\n")
+        return 0
+    elif args.quantum_circuit:
+        print("\n  Quantum simulator not enabled. Use --quantum to enable.\n")
+        return 0
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -3564,6 +3655,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if paxos_middleware is not None:
         builder.with_middleware(paxos_middleware)
+
+    if quantum_middleware is not None:
+        builder.with_middleware(quantum_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -4527,6 +4621,17 @@ def main(argv: Optional[list[str]] = None) -> int:
                 breakpoints=tt_breakpoints,
                 width=config.time_travel_dashboard_width,
             ))
+
+    # Quantum Computing Simulator Dashboard
+    if args.quantum_dashboard and quantum_engine is not None:
+        print(QuantumDashboard.render(
+            quantum_engine,
+            circuit=quantum_sample_circuit,
+            width=config.quantum_dashboard_width,
+            show_circuit=config.quantum_dashboard_show_circuit,
+        ))
+    elif args.quantum_dashboard:
+        print("\n  Quantum simulator not enabled. Use --quantum to enable.\n")
 
     # Paxos Consensus Dashboard
     if args.paxos_dashboard and paxos_cluster is not None:

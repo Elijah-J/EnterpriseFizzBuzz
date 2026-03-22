@@ -1154,6 +1154,24 @@ paxos:
   dashboard:
     width: 60                              # ASCII dashboard width
 
+# Quantum Computing Simulator configuration
+# Because the only way to truly determine whether n % 3 == 0 is to
+# simulate a quantum computer, construct a simplified Shor's algorithm,
+# perform quantum period-finding via QFT on a state vector that grows
+# as O(2^n) in memory, measure via the Born rule, and then — when the
+# probabilistic result inevitably fails — fall back to classical modulo.
+# The Quantum Advantage Ratio is always negative, which is the point.
+quantum:
+  enabled: false                             # Master switch — opt-in via --quantum
+  num_qubits: 4                              # Number of qubits for the quantum register (keep low!)
+  max_measurement_attempts: 10               # Max measurement attempts before classical fallback
+  decoherence_threshold: 0.001               # State vector norm deviation tolerance
+  fallback_to_classical: true                # Fall back to modulo when quantum fails (recommended: true)
+  shor_max_period_attempts: 5                # Max iterations for Shor's period-finding subroutine
+  dashboard:
+    width: 60                                # ASCII dashboard width
+    show_circuit: true                       # Show ASCII circuit diagrams in dashboard
+
 # Observer configuration
 observers:
   console_observer:

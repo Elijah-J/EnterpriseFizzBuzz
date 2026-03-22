@@ -559,9 +559,12 @@ class TestEvaluationStrategy:
     def test_has_machine_learning(self):
         assert EvaluationStrategy.MACHINE_LEARNING is not None
 
-    def test_exactly_four_strategies(self):
-        """Four strategies for computing n%3 and n%5. A testament to human ambition."""
-        assert len(EvaluationStrategy) == 4
+    def test_has_quantum(self):
+        assert EvaluationStrategy.QUANTUM is not None
+
+    def test_exactly_five_strategies(self):
+        """Five strategies for computing n%3 and n%5. A testament to human ambition."""
+        assert len(EvaluationStrategy) == 5
 
 
 # ============================================================

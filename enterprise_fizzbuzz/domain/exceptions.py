@@ -6283,6 +6283,117 @@ class BallotRejectedError(PaxosError):
         )
 
 
+class QuantumError(FizzBuzzError):
+    """Base exception for all Quantum Computing Simulator errors.
+
+    When the fabric of simulated quantum reality collapses, this exception
+    hierarchy ensures that the failure is communicated with the same
+    gravitas that a real quantum decoherence event deserves. The fact
+    that our "qubits" are Python floats in a list does not diminish
+    the seriousness of these errors in the slightest.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str = "EFP-QC00",
+        context: Optional[dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message, error_code=error_code, context=context)
+
+
+class QuantumDecoherenceError(QuantumError):
+    """Raised when a quantum state vector loses normalization.
+
+    In a real quantum computer, decoherence occurs when qubits interact
+    with their environment, causing the delicate superposition to collapse
+    into classical noise. In our simulator, it means the sum of squared
+    amplitudes drifted away from 1.0, probably due to floating-point
+    arithmetic — the thermal noise of the software world.
+    """
+
+    def __init__(self, norm: float, expected: float = 1.0) -> None:
+        super().__init__(
+            f"Quantum decoherence detected: state vector norm is {norm:.6f}, "
+            f"expected {expected:.6f}. The simulated qubits have lost contact "
+            f"with simulated reality. Consider simulated error correction.",
+            error_code="EFP-QC01",
+            context={"norm": norm, "expected": expected},
+        )
+
+
+class QuantumCircuitError(QuantumError):
+    """Raised when a quantum circuit is malformed or cannot be executed.
+
+    The circuit attempted to apply a gate to a qubit that does not exist,
+    or the gate matrix dimensions do not match the target qubits. This is
+    the quantum computing equivalent of an IndexError, but with more
+    existential implications.
+    """
+
+    def __init__(self, gate_name: str, target_qubits: Any, num_qubits: int) -> None:
+        super().__init__(
+            f"Cannot apply gate '{gate_name}' to qubits {target_qubits} "
+            f"in a {num_qubits}-qubit register. The quantum circuit has "
+            f"attempted to manipulate a qubit that exists only in the "
+            f"imagination of an overly ambitious gate schedule.",
+            error_code="EFP-QC02",
+            context={
+                "gate_name": gate_name,
+                "target_qubits": str(target_qubits),
+                "num_qubits": num_qubits,
+            },
+        )
+
+
+class QuantumMeasurementError(QuantumError):
+    """Raised when a quantum measurement yields an impossible outcome.
+
+    The Born rule assigns probabilities to measurement outcomes based on
+    the squared amplitudes of the state vector. When the measurement
+    produces a result with zero probability, either the laws of quantum
+    mechanics are wrong, or our random number generator is broken.
+    Occam's razor suggests the latter.
+    """
+
+    def __init__(self, outcome: int, probability: float) -> None:
+        super().__init__(
+            f"Measurement yielded outcome |{outcome}> with probability "
+            f"{probability:.6e}. This outcome should not have occurred, "
+            f"yet here we are, staring into the void of probabilistic "
+            f"impossibility. The simulation has become self-aware.",
+            error_code="EFP-QC03",
+            context={"outcome": outcome, "probability": probability},
+        )
+
+
+class QuantumAdvantageMirage(QuantumError):
+    """Raised when the quantum simulator's performance advantage is requested.
+
+    This exception exists to formally acknowledge that our quantum
+    simulator provides a negative speedup over classical computation.
+    The "advantage" is measured in negative scientific notation, and
+    any attempt to claim otherwise constitutes academic fraud of the
+    highest order.
+    """
+
+    def __init__(self, classical_ns: float, quantum_ns: float) -> None:
+        ratio = quantum_ns / max(classical_ns, 1)
+        super().__init__(
+            f"Quantum Advantage Ratio: {-ratio:.2e}x (negative means slower). "
+            f"Classical: {classical_ns:.0f}ns, Quantum: {quantum_ns:.0f}ns. "
+            f"The quantum simulator is approximately {ratio:.0f}x slower than "
+            f"a single modulo operation. This is expected. This is fine.",
+            error_code="EFP-QC04",
+            context={
+                "classical_ns": classical_ns,
+                "quantum_ns": quantum_ns,
+                "advantage_ratio": -ratio,
+            },
+        )
+
+
 class ByzantineFaultDetectedError(PaxosError):
     """Raised when a Byzantine fault is detected in the consensus cluster.
 
