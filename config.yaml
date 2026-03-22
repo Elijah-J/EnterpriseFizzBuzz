@@ -533,6 +533,42 @@ finops:
   dashboard:
     width: 60                           # ASCII dashboard width
 
+# Disaster Recovery & Backup/Restore with Point-in-Time Recovery
+# Because FizzBuzz results that exist exclusively in RAM for less
+# than one second deserve the same disaster recovery guarantees as
+# a Fortune 500 company's production database. All backups are stored
+# in the same RAM that they are ostensibly protecting against loss,
+# which is the infrastructure equivalent of keeping your spare house
+# key inside the house.
+disaster_recovery:
+  enabled: false                        # Master switch — opt-in via --dr
+  wal:
+    enabled: true                       # Write-Ahead Log for dict mutation tracking
+    checksum_algorithm: "sha256"        # SHA-256 checksums for append-only integrity
+    max_entries: 10000                  # Maximum WAL entries before rotation (in RAM)
+    verify_on_read: true                # Verify checksums when reading WAL entries
+  backup:
+    enabled: true                       # Snapshot-based backup system
+    max_snapshots: 50                   # Maximum snapshots in the backup vault (in RAM)
+    auto_snapshot_interval: 10          # Take snapshot every N evaluations
+    compression: "none"                 # Compression algorithm (none — it's already in RAM)
+  pitr:
+    enabled: true                       # Point-in-Time Recovery capability
+    granularity_ms: 1                   # Recovery granularity in milliseconds
+    max_recovery_window_ms: 5000        # Maximum time window for PITR (aspirational)
+  retention:
+    hourly: 24                          # Keep 24 hourly backups (for a <1s process)
+    daily: 7                            # Keep 7 daily backups (the process ran once)
+    weekly: 4                           # Keep 4 weekly backups (pure fantasy)
+    monthly: 12                         # Keep 12 monthly backups (delusions of grandeur)
+  drill:
+    enabled: true                       # Allow DR drill execution
+    auto_drill: false                   # Run DR drill automatically after evaluation
+    rto_target_ms: 100.0                # Recovery Time Objective (always violated)
+    rpo_target_ms: 50.0                 # Recovery Point Objective (always violated)
+  dashboard:
+    width: 60                           # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

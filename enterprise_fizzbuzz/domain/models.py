@@ -304,6 +304,25 @@ class EventType(Enum):
     FINOPS_SAVINGS_PLAN_COMPUTED = auto()
     FINOPS_DASHBOARD_RENDERED = auto()
 
+    # Disaster Recovery & Backup/Restore events
+    DR_WAL_ENTRY_APPENDED = auto()
+    DR_WAL_CHECKSUM_VERIFIED = auto()
+    DR_WAL_CHECKSUM_FAILED = auto()
+    DR_SNAPSHOT_CREATED = auto()
+    DR_SNAPSHOT_RESTORED = auto()
+    DR_SNAPSHOT_CORRUPTED = auto()
+    DR_BACKUP_CREATED = auto()
+    DR_BACKUP_DELETED = auto()
+    DR_BACKUP_VAULT_FULL = auto()
+    DR_PITR_STARTED = auto()
+    DR_PITR_COMPLETED = auto()
+    DR_PITR_FAILED = auto()
+    DR_RETENTION_POLICY_APPLIED = auto()
+    DR_DRILL_STARTED = auto()
+    DR_DRILL_COMPLETED = auto()
+    DR_DRILL_FAILED = auto()
+    DR_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

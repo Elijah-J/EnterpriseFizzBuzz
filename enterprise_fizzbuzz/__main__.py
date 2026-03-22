@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import copy
 import logging
 import os
 import sys
@@ -156,6 +157,10 @@ from enterprise_fizzbuzz.infrastructure.finops import (
     InvoiceGenerator,
     SavingsPlanCalculator,
     SubsystemCostRegistry,
+)
+from enterprise_fizzbuzz.infrastructure.disaster_recovery import (
+    DRSystem,
+    RecoveryDashboard,
 )
 
 logger = logging.getLogger(__name__)
@@ -768,6 +773,49 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--savings-plan",
         action="store_true",
         help="Display FizzBuzz Savings Plan comparison (1-year and 3-year commitments)",
+    )
+
+    # Disaster Recovery & Backup/Restore
+    parser.add_argument(
+        "--dr",
+        action="store_true",
+        help="Enable Disaster Recovery with WAL, snapshots, and PITR (all in RAM, naturally)",
+    )
+
+    parser.add_argument(
+        "--backup",
+        action="store_true",
+        help="Create a manual backup of the current state after execution",
+    )
+
+    parser.add_argument(
+        "--backup-list",
+        action="store_true",
+        help="Display all backups in the in-memory vault after execution",
+    )
+
+    parser.add_argument(
+        "--restore",
+        action="store_true",
+        help="Restore the latest backup before execution (proves recovery works)",
+    )
+
+    parser.add_argument(
+        "--dr-drill",
+        action="store_true",
+        help="Run a DR drill: destroy state, recover, measure RTO/RPO (all in RAM)",
+    )
+
+    parser.add_argument(
+        "--dr-dashboard",
+        action="store_true",
+        help="Display the Disaster Recovery ASCII dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--retention-status",
+        action="store_true",
+        help="Display the backup retention policy status (24h/7d/4w/12m for a <1s process)",
     )
 
     return parser
@@ -1650,6 +1698,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("health_probe")
         if args.hot_reload:
             active_subsystems.append("hot_reload_check")
+        if args.dr:
+            active_subsystems.append("disaster_recovery")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -1685,6 +1735,49 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
     elif args.savings_plan:
         print("\n  FinOps not enabled. Use --finops to enable.\n")
+        return 0
+
+    # ----------------------------------------------------------------
+    # Disaster Recovery & Backup/Restore setup
+    # ----------------------------------------------------------------
+    dr_system = None
+    dr_middleware = None
+    if args.dr or args.backup or args.backup_list or args.restore or args.dr_drill or args.dr_dashboard or args.retention_status:
+        dr_system = DRSystem(
+            wal_max_entries=config.dr_wal_max_entries,
+            wal_verify_on_read=config.dr_wal_verify_on_read,
+            backup_max_snapshots=config.dr_backup_max_snapshots,
+            auto_snapshot_interval=config.dr_backup_auto_snapshot_interval,
+            retention_hourly=config.dr_retention_hourly,
+            retention_daily=config.dr_retention_daily,
+            retention_weekly=config.dr_retention_weekly,
+            retention_monthly=config.dr_retention_monthly,
+            rto_target_ms=config.dr_drill_rto_target_ms,
+            rpo_target_ms=config.dr_drill_rpo_target_ms,
+            dashboard_width=config.dr_dashboard_width,
+            event_bus=event_bus,
+        )
+        dr_middleware = dr_system.create_middleware()
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | DISASTER RECOVERY: Backup/Restore ENABLED               |\n"
+            "  | Write-Ahead Log: SHA-256 checksummed (in RAM)            |\n"
+            "  | Snapshots: Point-in-time state capture (in RAM)          |\n"
+            "  | PITR: Recover to any microsecond (from RAM)              |\n"
+            "  | Retention: 24h/7d/4w/12m (for a <1s process)             |\n"
+            "  | WARNING: ALL BACKUPS STORED IN-MEMORY.                   |\n"
+            "  | A process restart destroys ALL recovery data.            |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.dr_dashboard:
+        print("\n  DR not enabled. Use --dr to enable.\n")
+        return 0
+    elif args.backup_list:
+        print("\n  DR not enabled. Use --dr to enable.\n")
+        return 0
+    elif args.retention_status:
+        print("\n  DR not enabled. Use --dr to enable.\n")
         return 0
 
     # Chaos Engineering setup
@@ -1827,6 +1920,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if finops_middleware is not None:
         builder.with_middleware(finops_middleware)
+
+    if dr_middleware is not None:
+        builder.with_middleware(dr_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -2298,6 +2394,54 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.savings_plan:
         print("\n  FinOps not enabled. Use --finops to enable.\n")
+
+    # ----------------------------------------------------------------
+    # Disaster Recovery post-execution actions
+    # ----------------------------------------------------------------
+    if dr_system is not None:
+        # Create manual backup if requested
+        if args.backup and dr_middleware is not None:
+            snapshot = dr_system.create_backup(
+                dr_middleware.state,
+                description="Manual backup via --backup flag",
+            )
+            print(
+                f"\n  Backup created: {snapshot.manifest.snapshot_id}"
+                f"\n  Entries: {snapshot.manifest.entry_count}"
+                f"\n  Size: {snapshot.manifest.size_bytes} bytes"
+                f"\n  Storage: RAM (will be lost on process exit)\n"
+            )
+
+        # Restore latest backup
+        if args.restore:
+            restored = dr_system.restore_latest()
+            if restored:
+                print(
+                    f"\n  Restored {len(restored)} entries from latest backup."
+                    f"\n  (This data was already in RAM. You're welcome.)\n"
+                )
+            else:
+                print("\n  No backups available to restore. The void is empty.\n")
+
+        # DR drill
+        if args.dr_drill and dr_middleware is not None:
+            drill_state = copy.deepcopy(dr_middleware.state) if dr_middleware.state else {"dummy": "data"}
+            drill_result = dr_system.run_drill(drill_state)
+            print(RecoveryDashboard.render_drill_report(
+                drill_result, width=config.dr_dashboard_width
+            ))
+
+        # Backup list
+        if args.backup_list:
+            print(dr_system.render_backup_list())
+
+        # DR dashboard
+        if args.dr_dashboard:
+            print(dr_system.render_dashboard())
+
+        # Retention status
+        if args.retention_status:
+            print(dr_system.render_retention_status())
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
