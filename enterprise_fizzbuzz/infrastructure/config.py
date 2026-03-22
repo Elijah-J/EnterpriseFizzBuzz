@@ -988,6 +988,16 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "show_circuit": True,
                 },
             },
+            "cross_compiler": {
+                "enabled": False,
+                "verify_round_trip": True,
+                "verification_range_end": 100,
+                "emit_comments": True,
+                "dashboard": {
+                    "width": 60,
+                    "show_ir": False,
+                },
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -3630,6 +3640,39 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def quantum_dashboard_show_circuit(self) -> bool:
         self._ensure_loaded()
         return self._raw_config.get("quantum", {}).get("dashboard", {}).get("show_circuit", True)
+
+    # ------------------------------------------------------------------
+    # Cross-Compiler properties
+    # ------------------------------------------------------------------
+    @property
+    def cross_compiler_enabled(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("cross_compiler", {}).get("enabled", False)
+
+    @property
+    def cross_compiler_verify_round_trip(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("cross_compiler", {}).get("verify_round_trip", True)
+
+    @property
+    def cross_compiler_verification_range_end(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("cross_compiler", {}).get("verification_range_end", 100)
+
+    @property
+    def cross_compiler_emit_comments(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("cross_compiler", {}).get("emit_comments", True)
+
+    @property
+    def cross_compiler_dashboard_width(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("cross_compiler", {}).get("dashboard", {}).get("width", 60)
+
+    @property
+    def cross_compiler_dashboard_show_ir(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("cross_compiler", {}).get("dashboard", {}).get("show_ir", False)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

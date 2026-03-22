@@ -528,6 +528,13 @@ class EventType(Enum):
     QUANTUM_CLASSICAL_FALLBACK = auto()
     QUANTUM_DASHBOARD_RENDERED = auto()
 
+    # Cross-Compiler events
+    COMPILER_IR_GENERATED = auto()
+    COMPILER_CODE_EMITTED = auto()
+    COMPILER_ROUND_TRIP_VERIFIED = auto()
+    COMPILER_ROUND_TRIP_FAILED = auto()
+    COMPILER_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

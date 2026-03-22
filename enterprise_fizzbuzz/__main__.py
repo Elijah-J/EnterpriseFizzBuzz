@@ -35,6 +35,10 @@ from enterprise_fizzbuzz.infrastructure.chaos import (
     PostMortemGenerator,
 )
 from enterprise_fizzbuzz.infrastructure.blockchain import BlockchainObserver, FizzBuzzBlockchain
+from enterprise_fizzbuzz.infrastructure.cross_compiler import (
+    CompilerDashboard,
+    CrossCompiler,
+)
 from enterprise_fizzbuzz.infrastructure.cache import (
     CacheDashboard,
     CacheMiddleware,
@@ -1505,6 +1509,34 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the Quantum Computing Simulator ASCII dashboard with negative advantage ratios",
     )
 
+    # Cross-Compiler
+    parser.add_argument(
+        "--compile-to",
+        type=str,
+        choices=["c", "rust", "wat"],
+        default=None,
+        metavar="TARGET",
+        help="Cross-compile FizzBuzz rules to a target language (c | rust | wat)",
+    )
+
+    parser.add_argument(
+        "--compile-ir",
+        action="store_true",
+        help="Display the cross-compiler Intermediate Representation (IR) without code generation",
+    )
+
+    parser.add_argument(
+        "--compile-verify",
+        action="store_true",
+        help="Run round-trip verification after cross-compilation (enabled by default with --compile-to)",
+    )
+
+    parser.add_argument(
+        "--compile-dashboard",
+        action="store_true",
+        help="Display the Cross-Compiler ASCII dashboard with overhead metrics and enterprise analysis",
+    )
+
     return parser
 
 
@@ -1543,6 +1575,33 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Configuration
     config = ConfigurationManager(config_path=args.config)
     config.load()
+
+    # ----------------------------------------------------------------
+    # Cross-Compiler (early exit commands)
+    # ----------------------------------------------------------------
+    if args.compile_to or args.compile_ir:
+        cc = CrossCompiler(
+            config.rules,
+            emit_comments=config.cross_compiler_emit_comments,
+            verify=config.cross_compiler_verify_round_trip or args.compile_verify,
+            verification_range_end=config.cross_compiler_verification_range_end,
+            dashboard_width=config.cross_compiler_dashboard_width,
+            dashboard_show_ir=config.cross_compiler_dashboard_show_ir,
+        )
+
+        if args.compile_ir:
+            ir = cc.compile_ir_only()
+            print(ir.dump())
+            return 0
+
+        result = cc.compile(args.compile_to)
+        print(result.generated_code)
+
+        if args.compile_dashboard:
+            print()
+            print(cc.render_dashboard(result))
+
+        return 0
 
     # ----------------------------------------------------------------
     # OpenAPI Specification Generator (early exit commands)
