@@ -370,6 +370,11 @@ from enterprise_fizzbuzz.infrastructure.fizzlang import (
     compile_program,
     run_program,
 )
+from enterprise_fizzbuzz.infrastructure.archaeology import (
+    ArchaeologyDashboard,
+    ArchaeologyEngine,
+    ArchaeologyMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.recommendations import (
     RecommendationDashboard,
     RecommendationEngine,
@@ -1795,6 +1800,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--recommend-dashboard",
         action="store_true",
         help="Display the Recommendation Engine ASCII dashboard after execution",
+    )
+
+    # Archaeological Recovery System
+    parser.add_argument(
+        "--archaeology",
+        action="store_true",
+        help="Enable the Archaeological Recovery System: excavate FizzBuzz evidence from seven stratigraphic layers",
+    )
+
+    parser.add_argument(
+        "--excavate",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Excavate a specific number and display full forensic report (e.g. --excavate 15)",
+    )
+
+    parser.add_argument(
+        "--archaeology-dashboard",
+        action="store_true",
+        help="Display the Archaeological Recovery System ASCII dashboard after execution",
     )
 
     return parser
@@ -4384,6 +4410,33 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # Archaeological Recovery System setup
+    # ----------------------------------------------------------------
+    arch_engine = None
+    arch_middleware = None
+
+    if args.archaeology or args.excavate is not None or args.archaeology_dashboard:
+        arch_engine = ArchaeologyEngine(
+            corruption_rate=config.archaeology_corruption_rate,
+            confidence_threshold=config.archaeology_confidence_threshold,
+            min_fragments=config.archaeology_min_fragments,
+            enable_corruption=config.archaeology_enable_corruption,
+            seed=config.archaeology_seed,
+            strata_weights=config.archaeology_strata_weights,
+        )
+        arch_middleware = ArchaeologyMiddleware(arch_engine)
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | ARCHAEOLOGICAL RECOVERY SYSTEM: Digital Forensics       |\n"
+            "  | 7 stratigraphic evidence layers | Bayesian inference    |\n"
+            "  | Corruption simulation | Cross-layer conflict detection  |\n"
+            '  | "Excavating data computable in one CPU cycle."          |\n'
+            "  | Every modulo deserves a forensic investigation.         |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # Recommendation Engine setup
     # ----------------------------------------------------------------
     rec_engine = None
@@ -4541,6 +4594,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             rules=list(config.rules),
         )
         builder.with_middleware(qo_middleware)
+
+    # Add Archaeology middleware (priority 900, near end of chain)
+    if arch_middleware is not None:
+        builder.with_middleware(arch_middleware)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -4955,6 +5012,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             for num, score, explanation in rec_results:
                 print(explanation)
             print()
+
+    # Archaeological excavation output
+    if arch_engine is not None and args.excavate is not None:
+        print(arch_engine.excavate(args.excavate, width=config.archaeology_dashboard_width))
 
     # Distributed tracing output
     if tracing_enabled:
@@ -5643,6 +5704,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.recommend_dashboard:
         print("\n  Recommendation Engine not enabled. Use --recommend to enable.\n")
+
+    # Archaeology Dashboard
+    if args.archaeology_dashboard and arch_engine is not None:
+        print(ArchaeologyDashboard.render(
+            arch_engine,
+            width=config.archaeology_dashboard_width,
+            show_strata=config.archaeology_dashboard_show_strata,
+            show_bayesian=config.archaeology_dashboard_show_bayesian,
+            show_corruption=config.archaeology_dashboard_show_corruption,
+        ))
+    elif args.archaeology_dashboard:
+        print("\n  Archaeological Recovery System not enabled. Use --archaeology to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
