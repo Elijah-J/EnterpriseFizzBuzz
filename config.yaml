@@ -275,6 +275,19 @@ ml:
   ambiguity_margin: 0.1                # Margin around threshold for ambiguity detection
   enable_disagreement_tracking: false  # Cross-check ML against deterministic baseline
 
+# Dependency Injection Container configuration
+# Because manually calling constructors is a solved problem, and the
+# solution involves a registry, lifetime management, topological sorting,
+# and a fluent API. The container does NOT replace existing wiring — it
+# provides a parallel universe of object construction that exists purely
+# to demonstrate that we could have done it this way, had we wanted to
+# add yet another layer of abstraction.
+di:
+  enabled: false                     # Master switch — the container is always available
+  default_lifetime: "transient"      # Default lifetime for auto-registered services
+  cycle_detection: true              # Validate dependency graph at registration time
+  verbose_resolution_logging: false  # Log every resolve() call (noisy but educational)
+
 # Observer configuration
 observers:
   console_observer:

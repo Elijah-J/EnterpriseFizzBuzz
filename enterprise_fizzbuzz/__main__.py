@@ -979,6 +979,35 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     service = builder.build()
 
+    # ----------------------------------------------------------------
+    # Dependency Injection Container Demonstration
+    # ----------------------------------------------------------------
+    # The DI container exists alongside the builder. It does NOT replace
+    # the existing wiring — it merely proves that we COULD have used an
+    # IoC container instead of a builder, had we wanted to add yet another
+    # layer of abstraction to our already stratospheric abstraction stack.
+    # ----------------------------------------------------------------
+    from enterprise_fizzbuzz.infrastructure.container import Container, Lifetime
+    from enterprise_fizzbuzz.domain.interfaces import IEventBus
+
+    di_container = Container()
+    di_container.register(
+        IEventBus,
+        lifetime=Lifetime.SINGLETON,
+        factory=lambda: event_bus,
+    ).register(
+        ConfigurationManager,
+        lifetime=Lifetime.ETERNAL,
+        factory=lambda: config,
+    )
+
+    logger.debug(
+        "DI Container initialized with %d bindings. "
+        "These bindings coexist peacefully with the builder-based wiring, "
+        "because two parallel object construction strategies are better than one.",
+        di_container.get_registration_count(),
+    )
+
     # Wire up the Anti-Corruption Layer strategy adapter.
     # This is done after build() because the adapter needs the resolved
     # rules list, which is only available on the built service.

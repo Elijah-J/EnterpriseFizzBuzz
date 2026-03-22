@@ -32,11 +32,11 @@ for i in range(1, 101):
 
 ## This Solution
 
-**30,000+ lines** across **75 files** with **1,011 unit tests** and **98 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**31,000+ lines** across **80+ files** with **1,046 unit tests** and **102 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
-The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 30,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
+The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, **Ports and Adapters**, **Onion Architecture** -- because one name for the same concept would be insufficiently enterprise). The flat-file layout has been promoted to a proper layered package structure with three concentric dependency rings, because 31,000 lines of FizzBuzz deserved an architectural diagram that looks like it belongs in a Martin Fowler keynote.
 
 ### The Dependency Rule
 
@@ -112,6 +112,10 @@ EnterpriseFizzBuzz/
 │       ├── sla.py                   # SLA Monitoring with PagerDuty-style alerting (~1,400 lines)
 │       ├── cache.py                 # In-Memory Caching with MESI coherence and eulogies (~1,100 lines)
 │       ├── migrations.py            # Database Migration Framework for ephemeral RAM schemas (~1,160 lines)
+│       ├── container.py             # Dependency Injection Container with IoC, auto-wiring, and Kahn's cycle detection (~608 lines)
+│       ├── utils/                   # Enterprise utility modules
+│       │   ├── __init__.py
+│       │   └── loc.py               # Lines of Code Census Bureau with Overengineering Index (~585 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -126,7 +130,8 @@ EnterpriseFizzBuzz/
 │   ├── interfaces.py → enterprise_fizzbuzz.domain.interfaces
 │   ├── config.py → enterprise_fizzbuzz.infrastructure.config
 │   ├── ... (one stub per original module)
-│   └── tracing.py → enterprise_fizzbuzz.infrastructure.tracing
+│   ├── tracing.py → enterprise_fizzbuzz.infrastructure.tracing
+│   └── loc.py → enterprise_fizzbuzz.infrastructure.utils.loc
 │
 ├── locales/                         # Proprietary .fizztranslation locale files
 │   ├── en.fizztranslation           # English (base locale)
@@ -151,6 +156,8 @@ EnterpriseFizzBuzz/
     ├── test_migrations.py           # 56 database migration & schema management tests
     ├── test_repository.py           # 40 repository pattern & unit of work tests (3 backends)
     ├── test_acl.py                  # 44 Anti-Corruption Layer & strategy adapter tests
+    ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
+    ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
     └── test_architecture.py         # AST-based import linter enforcing the Dependency Rule
 ```
 
@@ -183,7 +190,9 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Sliding Window | `circuit_breaker.py` | Recent failure tracking for trip decisions |
 | Exponential Backoff | `circuit_breaker.py` | Giving arithmetic time to recover from outages |
 | State Machine | `circuit_breaker.py`, `i18n.py` | Three-state lifecycle for fault tolerance; parser state machine for .fizztranslation files |
-| Dependency Injection | Everywhere | Constructor injection, because globals are evil |
+| IoC Container | `container.py` | A fully-featured Inversion of Control container with constructor auto-wiring, four lifetime scopes (Transient, Scoped, Singleton, Eternal), named bindings, factory registration, and Kahn's topological sort for cycle detection -- because manually calling `EventBus()` was far too simple |
+| Lifetime Scopes | `container.py` | Transient, Scoped, Singleton, and the comedically identical Eternal -- because "Singleton" sounds too pedestrian for enterprise software |
+| Dependency Injection | Everywhere, `container.py` | Constructor injection, because globals are evil. Now with a proper IoC container to prove it |
 | Custom File Format Parser | `i18n.py` | A bespoke `.fizztranslation` format, because JSON, YAML, and TOML lacked sufficient enterprise gravitas |
 | Fallback Chain | `i18n.py` | Locale resolution via linked-list traversal with cycle detection, because one language is never enough |
 | Pluralization Engine | `i18n.py` | CLDR-inspired plural rule evaluator supporting five grammatical traditions, because "1 Fizzes" is unconscionable |
@@ -248,7 +257,9 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Database Migration Framework** - Five reversible migrations for in-memory schema management, with dependency tracking, fake SQL logging, ASCII ER diagram visualization, a migration status dashboard, and seed data generation that uses the FizzBuzz engine to populate the FizzBuzz database (the ouroboros pattern) -- all for data structures that exist exclusively in RAM and will vanish the moment you press Ctrl+C. This is by design.
 - **Repository Pattern / Unit of Work** - Three interchangeable persistence backends (in-memory, SQLite, filesystem) with transactional Unit of Work semantics, abstract hexagonal ports, and automatic rollback -- because FizzBuzz results that aren't durably persisted with ACID guarantees are just numbers shouted into the void
 - **Anti-Corruption Layer (ACL)** - Four strategy adapters forming a protective boundary between the evaluation engines and the domain model, with ML ambiguity detection (configurable decision threshold and margin), cross-strategy disagreement tracking, and domain event emission -- because allowing a neural network's probabilistic confidence scores to contaminate the sacred `FizzBuzzClassification` enum would be an act of architectural heresy
-- **Custom Exception Hierarchy** - 98 exception classes for every conceivable FizzBuzz failure mode
+- **Dependency Injection Container** - A fully-featured IoC container with constructor auto-wiring via `typing.get_type_hints()`, four lifetime strategies (Transient, Scoped, Singleton, Eternal), named bindings, factory registration, fluent API, and Kahn's topological sort cycle detection at registration time -- because calling `EventBus()` directly was an affront to enterprise architecture. The container is ADDITIVE: it does not replace the existing Builder pattern wiring, it merely provides an additional layer of abstraction on top of the existing layers of abstraction, like a parfait of unnecessary indirection
+- **Lines of Code Census Bureau** - A production-grade codebase metrics engine that walks every file, classifies it by language and architectural layer, computes the Overengineering Index (OEI = total lines / 2, where 2 is the minimal FizzBuzz solution), renders an ASCII dashboard with box-drawing characters, and attributes 100% of lines to Bob McFizzington -- because you can't manage what you can't measure, and you can't overengineer what you can't quantify
+- **Custom Exception Hierarchy** - 102 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -1249,6 +1260,73 @@ The `StrategyAdapterFactory` maps `EvaluationStrategy` enum values to the correc
 | Lines of code | ~410 (all four adapters in one file, because even this project has limits) |
 | Eric Evans tears shed | 0 (the Blue Book is safe) |
 
+## Dependency Injection Architecture
+
+The Dependency Injection Container implements a fully-featured IoC (Inversion of Control) container with constructor introspection, lifetime management, topological cycle detection, named bindings, and factory registration -- because manually calling `EventBus()` was far too simple, and what the Enterprise FizzBuzz Platform truly needed was a 600-line abstraction layer that uses `inspect.signature`, `typing.get_type_hints()`, and Kahn's algorithm to wire together objects that could have been instantiated in three lines of code.
+
+The container is **ADDITIVE**. It does not replace the existing `FizzBuzzServiceBuilder` wiring in `__main__.py`. It merely provides a parallel universe of object construction that exists alongside the builder, like two parallel parking lots for the same mall.
+
+```
+    +================================================================+
+    |                    IoC CONTAINER                                |
+    |                                                                |
+    |   .register(IEventBus, EventBus, SINGLETON)                    |
+    |   .register(IObserver, ConsoleObserver, TRANSIENT)             |
+    |   .register(IScopedService, ScopedImpl, SCOPED)                |
+    |                                                                |
+    |   +--------+    resolve()    +------------------+              |
+    |   | Caller |--------------->| Auto-Wiring      |              |
+    |   +--------+                | (introspects      |              |
+    |                             |  constructor via   |              |
+    |                             |  get_type_hints()) |              |
+    |                             +--------+----------+              |
+    |                                      |                         |
+    |                     +----------------+----------------+        |
+    |                     |                |                |        |
+    |              +------+------+  +------+------+  +-----+-----+  |
+    |              | TRANSIENT   |  | SINGLETON   |  | SCOPED    |  |
+    |              | (new every  |  | (cached     |  | (per-scope|  |
+    |              |  resolve)   |  |  forever)   |  |  context) |  |
+    |              +-------------+  +-------------+  +-----------+  |
+    +================================================================+
+
+    Cycle Detection (Kahn's Topological Sort):
+      At registration time, the container builds a dependency graph
+      and runs Kahn's algorithm. If a cycle exists, it is caught
+      BEFORE resolve() can cause an infinite recursion that
+      stack-overflows your production FizzBuzz evaluation pipeline.
+```
+
+**Key components:**
+- **Container** - The central IoC container with fluent `register().register().register()` API, recursive `resolve()`, and `reset()` for the nuclear option
+- **Lifetime** - Four-member enum: TRANSIENT (born and discarded), SCOPED (per-context), SINGLETON (the classic), ETERNAL (functionally identical to Singleton, but with more gravitas)
+- **ScopeContext** - Context manager for scoped lifetime management, where scoped instances are cached per-scope and ceremonially discarded upon exit
+- **Registration** - Dataclass binding an interface to its implementation, lifetime, optional name, and optional factory callable
+- **Cycle Detection** - Kahn's topological sort validates the dependency graph at registration time, because catching cycles early is infinitely preferable to catching them at 3 AM via a `RecursionError`
+
+### Lifetime Strategies
+
+| Lifetime | Behavior | When To Use | Enterprise Justification |
+|----------|----------|-------------|--------------------------|
+| `TRANSIENT` | New instance every `resolve()` | Stateless services | Commitment-free. The Tinder of object lifetimes |
+| `SCOPED` | One instance per `ScopeContext` | Per-request shared state | Perfect for things that need to share state within a request, assuming your FizzBuzz platform processes concurrent requests (it does not) |
+| `SINGLETON` | One instance for the container lifetime | Shared state, caches | The classic. The original. The pattern that launched a thousand blog posts about why it's an anti-pattern |
+| `ETERNAL` | Functionally identical to SINGLETON | When SINGLETON lacks gravitas | Singletons are temporary. Eternal instances transcend the mortal plane of garbage collection |
+
+| Spec | Value |
+|------|-------|
+| Lifetime strategies | 4 (Transient, Scoped, Singleton, Eternal) |
+| Auto-wiring | Constructor introspection via `typing.get_type_hints()` |
+| Optional parameter handling | `Optional[X]` resolves to `None` if no binding exists |
+| Cycle detection | Kahn's topological sort at registration time |
+| Named bindings | Multiple implementations per interface via `name=` |
+| Factory registration | Custom callables for exotic construction requirements |
+| Fluent API | `container.register(...).register(...).register(...)` |
+| Thread safety | Not required (single-threaded FizzBuzz, as is tradition) |
+| Custom exceptions | 4 (CircularDependencyError, DuplicateBindingError, MissingBindingError, ScopeError) |
+| Lines of code | ~608 (for an abstraction over `EventBus()`) |
+| Java enterprise architects who feel at home | All of them |
+
 ## Distributed Tracing Architecture
 
 The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
@@ -1366,7 +1444,7 @@ A purpose-built configuration language with metadata directives, sections, hered
 ## Testing
 
 ```bash
-# Run all 1,011 tests
+# Run all 1,046 tests
 python -m pytest tests/ -v
 
 # With coverage (if you want to feel good about yourself)
@@ -1383,7 +1461,7 @@ python -m pytest tests/ -v --tb=short
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 1,011 tests, 98 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, and nanosecond timing. You tell me.
+A: It has 1,046 tests, 102 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why not use microservices?**
 A: That's the v2.0 roadmap. Each divisibility check will be its own containerized service behind an API gateway.
@@ -1426,6 +1504,9 @@ A: Because the ability to persist FizzBuzz results is a fundamental enterprise r
 
 **Q: Why does FizzBuzz need an Anti-Corruption Layer?**
 A: Because the ML engine returns probabilistic confidence scores -- floating-point numbers between 0 and 1 that represent the neural network's degree of belief that a number is divisible by 3. Allowing those floats to leak directly into the domain model would be a violation of architectural purity so severe that it would make Eric Evans weep into his copy of the Blue Book. The ACL translates the engine's messy, strategy-specific output into clean `FizzBuzzClassification` enums that the domain layer can consume without philosophical contamination. The ML adapter also detects ambiguous classifications (when confidence hovers near the decision boundary) and tracks disagreements between the ML engine and a deterministic reference strategy -- which, given the neural network's 100% accuracy, should never happen, but governance demands we monitor for it anyway. Four adapters, one per strategy, all implementing the same `StrategyPort` contract, all doing essentially the same thing with varying degrees of paranoia. The factory wires everything together so the caller never has to know which engine class corresponds to which strategy, because that kind of coupling is exactly what the ACL was designed to prevent. Eric Evans would be proud. Or confused. Possibly both.
+
+**Q: Why does FizzBuzz need a Dependency Injection Container?**
+A: Because manually typing `EventBus()` is a form of tight coupling that would make any Java enterprise architect lose sleep. The IoC container provides constructor auto-wiring via `typing.get_type_hints()`, four distinct lifetime strategies (including "Eternal," which is functionally identical to Singleton but conveys the gravitas befitting enterprise FizzBuzz), named bindings for when you need multiple implementations of the same interface (you don't), factory registration for objects with exotic construction requirements (there are none), and Kahn's topological sort for detecting circular dependencies at registration time -- because catching a `RecursionError` at 3 AM is not an engineering strategy, it's a cry for help. The container is ADDITIVE: it exists alongside the existing `FizzBuzzServiceBuilder`, providing a parallel universe of object construction like two parking lots for the same mall. It adds approximately 608 lines of abstraction on top of what was previously a three-line constructor call. This is, by any reasonable measure, an improvement.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

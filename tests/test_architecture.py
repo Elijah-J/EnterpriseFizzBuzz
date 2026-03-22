@@ -170,11 +170,11 @@ class TestPackageStructure:
 
     def test_infrastructure_contains_expected_modules(self) -> None:
         expected = {
-            "config.py", "formatters.py", "observers.py", "plugins.py",
-            "rules_engine.py", "tracing.py", "middleware.py", "auth.py",
-            "blockchain.py", "cache.py", "chaos.py", "circuit_breaker.py",
-            "event_sourcing.py", "feature_flags.py", "ml_engine.py",
-            "sla.py", "migrations.py", "i18n.py",
+            "config.py", "container.py", "formatters.py", "observers.py",
+            "plugins.py", "rules_engine.py", "tracing.py", "middleware.py",
+            "auth.py", "blockchain.py", "cache.py", "chaos.py",
+            "circuit_breaker.py", "event_sourcing.py", "feature_flags.py",
+            "ml_engine.py", "sla.py", "migrations.py", "i18n.py",
         }
         actual = {f.name for f in _get_python_files(INFRASTRUCTURE_DIR)}
         assert expected.issubset(actual), f"Missing infrastructure modules: {expected - actual}"
