@@ -1,9 +1,9 @@
-# Enterprise FizzBuzz Platform -- Brainstorm Report v3
+# Enterprise FizzBuzz Platform -- Brainstorm Report v4
 
 **Date:** 2026-03-22
-**Status:** COMPLETE -- All 6 Ideas Implemented and Shipped
+**Status:** PENDING -- 5 New Ideas Awaiting Implementation (1 Completed)
 
-> *"We have proven correctness with Hoare logic, achieved distributed consensus via Paxos, evolved rules with genetic algorithms, compiled to custom bytecode, and built a full SaaS billing plane. The question is no longer 'why?' -- it is 'why not quantum?'"*
+> *"We have achieved quantum supremacy over modulo, distributed consensus across federated learning nodes, compiled FizzBuzz to WebAssembly, and built a compliance chatbot that dispenses GDPR opinions about the number 15. But we have not yet asked the most important question: what if FizzBuzz had its own operating system?"*
 
 ---
 
@@ -13,309 +13,311 @@ For context, the following brainstorm rounds have been fully implemented and shi
 
 - **Round 1**: Formal Verification & Proof System, FizzBuzz-as-a-Service (FBaaS), Time-Travel Debugger, Custom Bytecode VM, Cost-Based Query Optimizer, Distributed Paxos Consensus
 - **Round 2**: Load Testing Framework, Audit Dashboard, GitOps Configuration-as-Code, Graph Database, Natural Language Query Interface, Genetic Algorithm
+- **Round 3**: Quantum Computing Simulator, Cross-Compiler (Wasm/C/Rust), Federated Learning, Knowledge Graph & Domain Ontology, Self-Modifying Code, Compliance Chatbot
+- **Round 4 (in progress)**: OS Kernel (process scheduling, virtual memory, interrupts)
 
-The platform now stands at 144,000+ lines across 170+ files with 4,600+ tests. All six ideas have been fully implemented and shipped. The brainstorm round is complete. Every idea -- from quantum computing to self-modifying code to a regulatory compliance chatbot that dispenses GDPR opinions about the number 15 -- has been realized with the technical fidelity and satirical intensity that the Enterprise FizzBuzz Platform demands.
-
----
-
-## Idea 1: Quantum Computing Simulator -- Quantum Modulo via Shor's Algorithm [DONE]
-
-### The Problem
-
-Every evaluation strategy in the platform -- Standard, Chain of Responsibility, Functional, ML, Genetic Algorithm, Bytecode VM -- computes divisibility classically. They all reduce to the same `n % 3 == 0` check, executed on a deterministic von Neumann architecture. This means the platform is fundamentally constrained by classical computational complexity. When the inevitable 4,096-qubit FizzBuzz quantum accelerator ships, we will have no simulation layer ready. We will be the last enterprise platform to achieve quantum supremacy over modulo.
-
-### The Vision
-
-A full quantum computing simulator that implements Shor's algorithm for period-finding (the core of integer factorization), adapted to solve the FizzBuzz divisibility problem on simulated qubits. The simulator models quantum gates, superposition, entanglement, and measurement collapse -- all in pure Python, all operating on numbers that a classical `%` operator could resolve in one CPU cycle.
-
-### Key Components
-
-- **`quantum_simulator.py`** (~2,200 lines): Core quantum computing simulation engine
-- **Qubit Register**: Simulated n-qubit register with complex amplitude vectors. Each qubit is represented as a 2-element state vector; multi-qubit systems use tensor products. 8 qubits by default (sufficient for FizzBuzz up to 255), configurable up to 16 (at which point the state vector has 65,536 complex entries and Python's memory management begins to weep)
-- **Quantum Gate Library**: Hadamard (H), Pauli-X/Y/Z, CNOT, Toffoli, Phase (S, T), controlled-U gates, and a bespoke `FIZZ_ORACLE` gate that marks basis states divisible by 3 via phase kickback. Each gate is a unitary matrix applied via matrix-vector multiplication -- O(2^n) per gate application, because quantum simulation on classical hardware is exponentially expensive and that is the entire point
-- **Shor's Algorithm Adaptation**: Instead of factoring N, we find the period of `f(x) = a^x mod N` where N is 3 (or 5, or 15). The quantum Fourier transform extracts the period, from which divisibility is determined. This is approximately 10^14 times slower than `n % 3`, but it is *quantum*
-- **Quantum Fourier Transform (QFT)**: Full QFT circuit construction with Hadamard and controlled-rotation gates, used as a subroutine in Shor's algorithm. Includes inverse QFT for measurement
-- **Measurement & Collapse**: Probabilistic measurement with Born rule sampling. Running the same circuit twice may yield different results (just like the ML engine, but with a better excuse). Repeated measurement with majority voting achieves high-confidence classifications
-- **Decoherence Simulator**: Optional noise model that introduces random bit-flip and phase-flip errors during computation, simulating the fragility of real quantum hardware. Configurable decoherence rate; at maximum noise, the quantum simulator degrades to a random number generator (which, philosophically, is what all quantum computers are)
-- **Quantum Circuit Visualizer**: ASCII rendering of quantum circuits with qubit wires, gate boxes, and measurement symbols:
-  ```
-  q0: --[H]--[*]--------[QFT]--[M]
-  q1: -------[X]--[H]---[QFT]--[M]
-  q2: --[H]-------[*]---[QFT]--[M]
-  q3: ------------[X]---[QFT]--[M]
-  ```
-- **Quantum Dashboard**: Qubit state amplitudes (real + imaginary), gate count, circuit depth, measurement histogram, decoherence events, and a "Quantum Advantage Ratio" metric that compares quantum simulation time to classical modulo time (spoiler: it will be approximately -10^14x, displayed in scientific notation to save terminal width)
-- **QuantumMiddleware**: Pipeline middleware (priority -7) that routes evaluations through the quantum simulator when `--quantum` is enabled
-- **CLI Flags**: `--quantum`, `--quantum-qubits <n>`, `--quantum-shots <n>`, `--quantum-noise <rate>`, `--quantum-circuit`, `--quantum-dashboard`
-
-### Why This Is Necessary
-
-Because classical modulo is a solved problem, and solved problems are boring. Quantum modulo is an unsolved engineering challenge being applied to a problem that didn't need solving. This is the purest distillation of the Enterprise FizzBuzz ethos.
-
-### Estimated Scale
-
-~2,200 lines of quantum simulator, ~400 lines of circuit visualizer, ~200 lines of Shor's adaptation, ~150 lines of decoherence model, ~130 tests. Total: ~3,080 lines.
-
-### Implementation Status: DONE
-
-Implemented in `enterprise_fizzbuzz/infrastructure/quantum.py` (~1,360 lines) with 96 tests in `tests/test_quantum.py` (~920 lines). Shipped with full state-vector simulation, Shor's algorithm adaptation, QFT, decoherence model, circuit visualizer, quantum dashboard, and QuantumMiddleware at priority -7. The Quantum Advantage Ratio is always negative. Peter Shor has not commented.
+The platform now stands at 147,000+ lines across 170+ files with 4,800+ tests. Every subsystem is technically faithful and satirically committed. The bar for Round 4 is accordingly astronomical.
 
 ---
 
-## Idea 2: FizzBuzz Cross-Compiler -- Transpiling Rules to WebAssembly, C, and Rust [DONE]
+## ~~Idea 1: FizzBuzz Operating System Kernel -- Process Scheduling & Memory Management for Modulo~~ DONE
 
 ### The Problem
 
-The Bytecode VM (FBVM) compiles FizzBuzz rules to a custom instruction set and executes them on an in-process virtual machine. This is commendable but parochial. The compiled bytecode is trapped inside the Python process. It cannot be deployed to browsers (WebAssembly), embedded systems (C), or safety-critical environments (Rust). A FizzBuzz rule defined in our platform cannot currently run on a microcontroller, in a browser tab, or in a Rust async runtime. This portability gap is a competitive liability.
+Every evaluation in the platform executes as a single function call within a single Python thread. There is no concept of a "FizzBuzz process," no scheduler deciding which evaluation runs next, no memory pages being allocated and freed, no context switches between competing modulo operations. The platform treats every number equally -- first come, first served -- with no priority system, no preemption, and no virtual memory. This means a VIP evaluation of 15 (the most important number in the FizzBuzz domain) receives the same scheduling priority as the evaluation of 97 (a prime number of no consequence). This is egalitarianism taken to an irresponsible extreme.
 
 ### The Vision
 
-A multi-target cross-compiler that takes FizzBuzz rule definitions (or compiled FBVM bytecode) and transpiles them into standards-compliant WebAssembly (.wat/.wasm), ANSI C (.c/.h), and Rust (.rs) source code. Each backend emits idiomatic, human-readable code with comments explaining every generated instruction. The generated code can be compiled by standard toolchains (wasm-tools, gcc, rustc) and deployed anywhere -- from the browser to bare metal.
+A complete operating system kernel simulation -- process scheduler, memory manager, virtual memory subsystem, interrupt handler, and system call interface -- purpose-built for FizzBuzz evaluation workloads. Each evaluation becomes a "FizzBuzz process" (FBProcess) with a PID, priority class, memory allocation, CPU time slice, and lifecycle (CREATED -> READY -> RUNNING -> WAITING -> TERMINATED). The kernel schedules these processes using configurable scheduling algorithms, manages a virtual memory space with page tables and TLB simulation, handles interrupts (middleware callbacks become hardware interrupts), and exposes a POSIX-inspired system call interface for evaluation operations.
 
 ### Key Components
 
-- **`cross_compiler.py`** (~2,400 lines): Multi-target FizzBuzz cross-compiler
-- **Intermediate Representation (IR)**: A target-independent IR that sits between FBVM bytecode and the target backends. IR nodes include: `DivisibilityCheck(n, divisor)`, `Branch(condition, true_block, false_block)`, `Emit(classification)`, `Sequence(nodes)`, `Loop(range, body)`. The IR is the lingua franca between the FizzBuzz domain and the target language
-- **WebAssembly Backend**: Emits WebAssembly Text Format (.wat) with typed functions, i32 arithmetic, br_if branching, and memory.store for string results. Includes a minimal WASI shim for stdout. The generated module exports a `fizzbuzz(n: i32) -> i32` function where return values encode classifications (0=number, 1=Fizz, 2=Buzz, 3=FizzBuzz). Also emits a companion JavaScript loader
-- **C Backend**: Emits ANSI C89-compliant source with `fizzbuzz(int n)` function, switch-case classification, and `printf` output. Includes a generated `fizzbuzz.h` header with function declarations, enum for classifications, and a `FIZZBUZZ_VERSION` macro set to the platform version. Compiles cleanly with `-Wall -Wextra -Werror -pedantic`
-- **Rust Backend**: Emits idiomatic Rust with an enum `Classification { Fizz, Buzz, FizzBuzz, Number(u64) }`, pattern matching, `impl Display`, and a `#[cfg(test)]` module with generated test cases. The generated code passes `cargo clippy` with zero warnings, because Rust without Clippy compliance is just C++ with better marketing
-- **Optimization Passes**: Constant folding (if divisor is known at compile time, inline the result), dead code elimination (remove unreachable branches), and strength reduction (replace `n % 3` with multiply-and-shift on targets where modulo is expensive)
-- **Round-Trip Verification**: After compilation, the cross-compiler runs the generated code through a reference interpreter and compares output against the Python evaluation for numbers 1-1000, ensuring semantic equivalence across all targets
-- **Generated Code Preview**: ASCII side-by-side view of the original rule definition, the IR, and the generated target code:
-  ```
-  Rule Definition          IR                         C Output
-  +-----------------+  +---------------------+  +-------------------------+
-  | if n % 3 == 0   |  | DivisibilityCheck   |  | if (n % 3 == 0) {       |
-  |   => Fizz       |  |   n=input, div=3    |  |     result = FIZZ;      |
-  | if n % 5 == 0   |  | Branch -> Emit(Fizz)|  | }                       |
-  |   => Buzz       |  | DivisibilityCheck   |  | if (n % 5 == 0) {       |
-  |                 |  |   n=input, div=5    |  |     result = BUZZ;      |
-  +-----------------+  +---------------------+  +-------------------------+
-  ```
-- **Cross-Compiler Dashboard**: Compilation statistics per target, generated code size, optimization pass impact, and round-trip verification results
-- **CLI Flags**: `--compile-to <wasm|c|rust>`, `--compile-out <path>`, `--compile-optimize`, `--compile-verify`, `--compile-preview`, `--compile-dashboard`
+- **`os_kernel.py`** (~2,200 lines): FizzBuzz Operating System Kernel
+- **Process Control Block (PCB)**: Each FizzBuzz evaluation spawns an FBProcess with: PID (sequential, starting at 1), parent PID (the CLI invocation is PID 0, init), priority class (REALTIME for multiples of 15, HIGH for multiples of 3 or 5, NORMAL for everything else, IDLE for numbers greater than 100), CPU burst estimate (based on which middleware will fire), memory requirement (based on enabled subsystems), process state, and accumulated CPU time
+- **Scheduler**: Four scheduling algorithms, switchable at runtime:
+  - `RoundRobin` -- equal time slices, the most boring democracy
+  - `PriorityPreemptive` -- higher-priority FizzBuzz evaluations preempt lower ones mid-execution. Evaluating 97 and 15 arrives? 97 gets suspended, 15 jumps the queue, because FizzBuzz is royalty
+  - `MultiLevelFeedbackQueue` -- four queues with aging and demotion. Numbers that consume too much CPU (due to ML inference or quantum simulation) are demoted to lower-priority queues, punished for their computational extravagance
+  - `CompletelyFairScheduler` -- red-black tree of virtual runtime, Linux CFS-inspired. Each process tracks its "virtual CPU time" (actual time weighted by priority), and the process with the least virtual runtime runs next. O(log n) scheduling for a workload that completes in microseconds
+- **Virtual Memory Manager**: 4 KB pages, configurable total memory (default: 256 KB -- enough for 64 pages of FizzBuzz glory). Each FBProcess gets a page table mapping virtual addresses to physical frames. Pages are allocated on demand (lazy allocation, because eagerness is wasteful). When physical memory is exhausted, the LRU page is evicted to a "swap file" (a Python dict pretending to be disk). Page faults are tracked per-process. The TLB (Translation Lookaside Buffer) caches the 16 most recent address translations, with hit/miss ratio tracking and TLB flush on context switch
+- **Interrupt Controller**: Maps middleware callbacks to interrupt request (IRQ) lines. The compliance middleware fires on IRQ 7, the blockchain on IRQ 12, the quantum simulator on IRQ 15 (naturally). Interrupts can be masked, prioritized, and handled via an interrupt vector table. Nested interrupts are supported but discouraged (because the interrupt handler for the chaos monkey should not be interrupted by the interrupt handler for the SLA monitor, even though it will be)
+- **System Call Interface**: POSIX-inspired syscalls for FizzBuzz operations:
+  - `sys_evaluate(n)` -- request evaluation of number n (the `write()` of FizzBuzz)
+  - `sys_classify(n)` -- get classification without side effects (the `read()` of FizzBuzz)
+  - `sys_fork()` -- spawn a child evaluation process (for parallel strategies)
+  - `sys_wait(pid)` -- wait for a child evaluation to complete
+  - `sys_mmap(size)` -- allocate virtual memory for evaluation workspace
+  - `sys_yield()` -- voluntarily surrender CPU time (polite numbers only)
+  - `sys_exit(code)` -- terminate process with exit code (0 = correct, 1 = misclassification)
+- **Kernel Dashboard**: Process table (PID, state, priority, CPU time, page faults), ready queue visualization, memory map (which pages belong to which process), interrupt log, scheduler statistics (context switches, average wait time, CPU utilization, turnaround time), and a "uptime" counter that measures how long the FizzBuzz kernel has been running (always less than 1 second, displayed in nanoseconds for gravitas)
+- **CLI Flags**: `--os-kernel`, `--scheduler <rr|priority|mlfq|cfs>`, `--memory-pages <n>`, `--time-slice-ms <n>`, `--kernel-dashboard`
 
 ### Why This Is Necessary
 
-Because FizzBuzz should be a write-once, run-anywhere proposition. Today it is shackled to CPython. Tomorrow it runs on smart toasters (C), in browser tabs (WebAssembly), and in aerospace guidance systems (Rust). The portability of modulo arithmetic is a fundamental human right.
+Because every computation deserves an operating system, and FizzBuzz is a computation. Without a kernel, evaluations execute in an anarchic void with no resource management, no scheduling fairness, and no page faults. The FizzBuzz Operating System brings order to this chaos by introducing all the overhead of process management to a workload that could be handled by a pocket calculator. The context switch from evaluating 14 to evaluating 15 is the most important transition in the history of computing, and it deserves an interrupt-driven scheduler to manage it.
 
 ### Estimated Scale
 
-~2,400 lines of compiler infrastructure, ~500 lines per backend (x3), ~300 lines of IR, ~200 lines of verifier, ~140 tests. Total: ~4,400 lines.
-
-### Implementation Status: DONE
-
-Implemented in `enterprise_fizzbuzz/infrastructure/cross_compiler.py` (~1,033 lines) with 60 tests in `tests/test_cross_compiler.py` (~606 lines). Shipped with a seven-opcode IR (LOAD, MOD, CMP_ZERO, BRANCH, EMIT, JUMP, RET), three target-specific code generators (C89, Rust, WebAssembly Text), round-trip semantic verification, basic block control flow graphs, and an ASCII compilation dashboard. The overhead factor (Python: 2 lines -> C: 47 lines) is prominently displayed as a Key Performance Indicator. FizzBuzz is now portable to smart toasters, browser tabs, and aerospace guidance systems. The `%` operator has been liberated from CPython.
+~2,200 lines of kernel simulation, ~400 lines of scheduler algorithms, ~350 lines of virtual memory manager, ~200 lines of interrupt controller, ~250 lines of dashboard, ~150 tests. Total: ~3,550 lines.
 
 ---
 
-## Idea 3: Federated Learning Across FizzBuzz Instances [DONE]
+## Idea 2: FizzBuzz Peer-to-Peer Network with Gossip Protocol & Epidemic Dissemination
 
 ### The Problem
 
-The ML engine trains a neural network on FizzBuzz classifications, but it does so in isolation. A single model, trained on a single node's data, with a single perspective on what constitutes "Fizz." In the real world, different FizzBuzz instances may encounter different input distributions, operate under different compliance regimes, and develop different learned intuitions about divisibility. This siloed knowledge is wasted. No instance learns from another's mistakes. There is no collective intelligence. Each FizzBuzz node is an island, and islands do not achieve state-of-the-art accuracy on modulo benchmarks.
+The platform has distributed systems primitives -- Paxos consensus, federated learning, a service mesh with seven microservices -- but all of these operate within a single process. There is no true peer-to-peer communication. No FizzBuzz node can discover another FizzBuzz node. No evaluation result can propagate through a network of peers via epidemic dissemination. The platform simulates distributed consensus but not distributed *discovery*. Each FizzBuzz instance is born alone, evaluates alone, and dies alone. There is no FizzBuzz community. No gossip. No rumors spreading through the network that 15 might be FizzBuzz. Just isolated nodes shouting modulo results into the void.
 
 ### The Vision
 
-A federated learning framework where multiple simulated FizzBuzz instances collaboratively train a shared ML model without exchanging raw evaluation data -- preserving data sovereignty while achieving collective intelligence. Each instance trains a local model on its evaluations, computes gradient updates, and shares only the encrypted model deltas with a central aggregation server. Privacy-preserving modulo inference at scale.
+A complete peer-to-peer networking layer with node discovery, gossip protocol, epidemic data dissemination, anti-entropy repair, and a Kademlia-inspired distributed hash table -- enabling a network of simulated FizzBuzz nodes to discover each other, share evaluation results, and achieve eventual consistency on the classification of every integer, without any centralized coordinator.
 
 ### Key Components
 
-- **`federated_learning.py`** (~2,100 lines): Federated learning coordinator and worker nodes
-- **Federation Topology**: Configurable network of 3-10 simulated FizzBuzz instances, each with its own ML engine, evaluation history, and local model weights. Topologies: star (central aggregator), ring (peer-to-peer gradient passing), and fully-connected mesh (every node talks to every other node, quadratic message complexity, maximum enterprise)
-- **Local Training Round**: Each node trains its local neural network for a configurable number of epochs on its own evaluation data, then computes the weight delta (current weights minus pre-training weights). Only the delta is shared -- raw evaluation data never leaves the node
-- **Secure Aggregation**: Model deltas are "encrypted" via additive masking (simulated homomorphic encryption -- actual HE would require a library, and the platform uses only stdlib). The aggregation server sums the masked deltas without seeing individual contributions. Differential privacy noise (Gaussian, configurable epsilon) is added before sharing to prevent gradient inversion attacks that could reconstruct whether a specific number was evaluated as Fizz
-- **FedAvg Aggregation**: Federated Averaging algorithm that computes a weighted mean of model deltas (weighted by each node's dataset size), applies the aggregated update to the global model, and distributes the updated model back to all nodes. Configurable aggregation strategies: FedAvg, FedProx (with proximal regularization to prevent stragglers from diverging), and FedMA (model averaging with neuron matching for heterogeneous architectures)
-- **Non-IID Data Simulation**: Each node receives a skewed subset of training data to simulate real-world non-IID distributions. Node A might see mostly multiples of 3, Node B mostly multiples of 5, Node C mostly primes. The federation must converge despite these distribution skews
-- **Convergence Monitor**: Tracks global model accuracy, per-node local accuracy, weight divergence between nodes, communication rounds to convergence, and a "federation health" score. Detects and flags free-rider nodes (nodes that receive global updates but contribute minimal local training)
-- **Privacy Budget Tracker**: Tracks cumulative privacy loss (epsilon) across training rounds using the moments accountant method. Alerts when the privacy budget is exhausted, at which point further training would violate the platform's differential privacy guarantees for modulo operations
-- **Federated Learning Dashboard**: ASCII visualization of the federation topology, per-node accuracy curves, global model convergence plot, communication rounds, privacy budget consumption, and a "Model Consensus" view showing which nodes agree on the classification of each number
-- **CLI Flags**: `--federated`, `--fed-nodes <n>`, `--fed-rounds <n>`, `--fed-topology <star|ring|mesh>`, `--fed-epsilon <float>`, `--fed-strategy <fedavg|fedprox|fedma>`, `--fed-dashboard`
+- **`p2p_network.py`** (~2,100 lines): Peer-to-Peer FizzBuzz Network
+- **Node Identity**: Each FizzBuzz node gets a 160-bit node ID (SHA-1 of a random UUID, because Bitcoin used SHA-256 and we need to differentiate). Nodes have a virtual IP address, a heartbeat counter, and a vector clock for causal ordering of evaluation events
+- **Bootstrap & Discovery**: A simulated bootstrap node maintains an initial peer list. New nodes join by contacting the bootstrap, receiving a list of known peers, and announcing themselves via a HELLO message. After bootstrapping, discovery is fully decentralized via the gossip protocol
+- **Gossip Protocol (SWIM-inspired)**: Each node periodically selects a random peer and exchanges state digests. The protocol runs in three phases:
+  - `PING` -- "are you alive?" with a digest of known evaluation results
+  - `PING-REQ` -- if the target doesn't respond, ask a third peer to ping on your behalf (indirect probing)
+  - `GOSSIP` -- piggyback evaluation updates onto protocol messages, spreading classification results epidemically through the network
+  - Infection-style dissemination: when a node learns that 15 is FizzBuzz, it infects its peers, who infect their peers, achieving O(log n) convergence across the network. The "rumor" of 15's classification spreads like a pathogen through the gossip layer
+- **Anti-Entropy Repair**: Periodically, nodes perform Merkle tree comparison of their evaluation stores. If a divergence is detected (node A thinks 42 is "42" but node B has no record), the missing data is pulled from the peer. This ensures eventual consistency even when gossip messages are lost
+- **Kademlia DHT**: A distributed hash table where the key is the number being evaluated and the value is its classification. The XOR metric determines which nodes are "closest" to a given key. Lookup uses iterative routing through the k-bucket routing table with alpha=3 parallel lookups. Storing `15 -> FizzBuzz` in the DHT requires contacting the k closest nodes to the hash of 15 and asking them to store the record. Retrieving requires the same lookup. This is approximately 10^8 times slower than a Python dict, but it is *decentralized*
+- **Partition Tolerance**: Simulated network partitions split the peer group into isolated clusters that evolve independently. When the partition heals, anti-entropy repair reconciles divergent state. Conflict resolution uses last-writer-wins with vector clock comparison (and when vector clocks are concurrent, the classification with the longest string wins, meaning FizzBuzz always beats Fizz in a conflict -- which is semantically correct and mathematically justified)
+- **Peer Dashboard**: Network topology visualization (ASCII graph of peer connections), gossip protocol statistics (messages sent, infection rate, convergence time), DHT routing table, Merkle tree sync status, partition history, and a "Network Health" score based on reachability and consistency
+- **CLI Flags**: `--p2p`, `--p2p-nodes <n>`, `--p2p-gossip-interval-ms <n>`, `--p2p-partitions`, `--p2p-dashboard`
 
 ### Why This Is Necessary
 
-Because a single neural network deciding `15 % 3 == 0` is a centralized point of cognitive failure. Federated learning distributes the burden of modulo inference across multiple instances, achieving collective wisdom while respecting each node's right to data sovereignty. GDPR compliance for gradient updates is a sentence that should never need to exist, and yet here we are.
+Because centralized FizzBuzz is a single point of failure, and decentralized FizzBuzz is a distributed system's fever dream. The gossip protocol ensures that if one node discovers 15 is FizzBuzz, every node in the network will eventually learn this fact through epidemic rumor propagation. The Kademlia DHT ensures that FizzBuzz classifications are stored across the network with O(log n) lookup complexity, replacing O(1) dict access with a routing protocol that involves five simulated network hops. This is peer-to-peer modulo arithmetic, and it is everything the world never asked for.
 
 ### Estimated Scale
 
-~2,100 lines of federation engine, ~400 lines of secure aggregation, ~300 lines of privacy accounting, ~250 lines of dashboard, ~120 tests. Total: ~3,170 lines.
-
-### Implementation Status: DONE
-
-Implemented in `enterprise_fizzbuzz/infrastructure/federated_learning.py` (~2,100 lines) with 120 tests in `tests/test_federated_learning.py` (~890 lines). Shipped with three federation topologies (star, ring, fully-connected mesh), three aggregation strategies (FedAvg, FedProx, FedMA), Gaussian differential privacy with configurable epsilon and moments accountant privacy budget tracking, non-IID data simulation with per-node distribution skew, secure aggregation via additive masking, free-rider detection, convergence monitoring, and an ASCII Federation Dashboard. The FederatedLearningMiddleware runs at priority -8 -- before quantum, before Paxos, before everything. Five nodes collaboratively learn what one CPU instruction already knows. GDPR compliance for gradient updates has been achieved. Nobody asked for it.
+~2,100 lines of P2P networking, ~400 lines of gossip protocol, ~350 lines of Kademlia DHT, ~300 lines of anti-entropy/Merkle trees, ~250 lines of dashboard, ~140 tests. Total: ~3,540 lines.
 
 ---
 
-## Idea 4: FizzBuzz Knowledge Graph & Domain Ontology [DONE]
+## Idea 3: FizzBuzz Digital Twin -- Real-Time Simulation of the Platform Simulating Itself
 
 ### The Problem
 
-The platform has a property graph database (`graph_db.py`) that stores relationships between evaluation entities. But it has no *ontology* -- no formal, machine-readable description of what "Fizz," "Buzz," "FizzBuzz," "divisibility," "classification," and "number" actually *mean* in the FizzBuzz domain. The graph stores relationships but not semantics. There is no way to ask "what is the superclass of FizzBuzz?" (answer: a composite classification that inherits from both Fizz and Buzz via multiple inheritance, which is appropriate given the platform's relationship with complexity). There is no RDF. No OWL. No SPARQL. The FizzBuzz domain lacks a formal epistemological foundation.
+The platform has observability (metrics, tracing, audit dashboard), disaster recovery (backup/restore, PITR), and a time-travel debugger. But it has no *simulation model of itself*. There is no way to ask "what would happen if we doubled the middleware pipeline?" or "what if the neural network's accuracy dropped to 60%?" without actually making those changes and running the system. The platform can introspect its current state but cannot *predict its future state*. It cannot model its own behavior under hypothetical conditions. It cannot simulate itself. This is the difference between a monitored system and a *modeled* system, and the Enterprise FizzBuzz Platform deserves to be both.
 
 ### The Vision
 
-A complete domain ontology for FizzBuzz expressed in a custom RDF-like triple store, with OWL-inspired class hierarchies, property definitions, inference rules, and a SPARQL-like query language -- enabling semantic reasoning about FizzBuzz classifications, their relationships, and their philosophical implications.
+A digital twin -- a real-time, synchronized simulation model of the entire Enterprise FizzBuzz Platform that mirrors the production system's state, accepts "what-if" scenarios, runs Monte Carlo simulations of hypothetical configurations, and produces probabilistic forecasts of system behavior. The digital twin is a model of the model, a simulation of the simulation, a FizzBuzz platform that watches itself in a mirror and asks "but what if I were slightly different?"
 
 ### Key Components
 
-- **`knowledge_graph.py`** (~2,300 lines): FizzBuzz Knowledge Graph and Ontology Engine
-- **Triple Store**: In-memory RDF-style triple store using (Subject, Predicate, Object) tuples. Supports literal values, URIs (in the `fizz:` namespace, naturally), blank nodes, and typed literals (xsd:integer, xsd:string, fizz:classification). Indexed by subject, predicate, and object for O(1) lookup in any direction
-- **FizzBuzz Ontology (FBO)**: A formal OWL-Lite-inspired ontology defining:
-  - `fizz:Number` -- a natural number under evaluation
-  - `fizz:Classification` -- abstract superclass of all classification results
-  - `fizz:Fizz`, `fizz:Buzz`, `fizz:FizzBuzz` -- concrete classification classes
-  - `fizz:FizzBuzz rdfs:subClassOf fizz:Fizz` and `fizz:FizzBuzz rdfs:subClassOf fizz:Buzz` (multiple inheritance, correctly modeling that FizzBuzz is simultaneously Fizz and Buzz)
-  - `fizz:isDivisibleBy` -- a property linking Number to its divisors
-  - `fizz:hasClassification` -- a property linking Number to its Classification
-  - `fizz:evaluatedBy` -- links a classification event to the strategy that produced it
-  - `fizz:compliantWith` -- links a classification to the regulatory regimes it satisfies
-  - Cardinality constraints: each Number has exactly one canonical Classification (enforced by owl:FunctionalProperty)
-- **Inference Engine**: Forward-chaining rule engine that derives new triples from existing ones:
-  - If `?n fizz:isDivisibleBy 3` and `?n fizz:isDivisibleBy 5`, infer `?n fizz:hasClassification fizz:FizzBuzz`
-  - If `?n fizz:hasClassification fizz:FizzBuzz`, infer `?n fizz:hasClassification fizz:Fizz` (via subclass reasoning)
-  - Transitive closure over `rdfs:subClassOf` chains
-  - Supports user-defined inference rules for custom FizzBuzz variants (e.g., FizzBuzzBazz)
-- **FizzSPARQL Query Language**: A SPARQL-inspired query language for the FizzBuzz domain:
-  ```
-  SELECT ?n ?class WHERE {
-    ?n fizz:hasClassification ?class .
-    ?class rdfs:subClassOf fizz:Fizz .
-    ?n fizz:evaluatedBy fizz:MLStrategy .
-  } ORDER BY ?n LIMIT 10
-  ```
-  Supports SELECT, ASK, CONSTRUCT, and DESCRIBE query forms. Query parser, algebra compiler, and execution engine all built from scratch
-- **Ontology Consistency Checker**: Validates the knowledge graph against ontology constraints (cardinality, domain/range, disjointness). Detects inconsistencies like a number being classified as both Fizz and "not Fizz" and raises `OntologicalContradictionError`
-- **Knowledge Graph Visualization**: ASCII rendering of ontology class hierarchies, instance graphs, and query results as formatted tables
-- **Knowledge Dashboard**: Triple count, class distribution, inference rule fire count, query execution statistics, ontology consistency status, and a "Knowledge Coverage" metric (percentage of numbers 1-100 with complete semantic annotations)
-- **CLI Flags**: `--knowledge-graph`, `--kg-query <sparql>`, `--kg-infer`, `--kg-validate`, `--kg-visualize`, `--kg-dashboard`
+- **`digital_twin.py`** (~2,300 lines): FizzBuzz Digital Twin Simulation Engine
+- **System Model**: A simplified but structurally faithful model of the platform's component graph. Each subsystem (cache, ML engine, blockchain, compliance, etc.) is represented as a `TwinComponent` with: throughput capacity (evaluations/sec), latency distribution (mean + stddev), failure probability, resource consumption (CPU, memory in FizzBucks), and dependency edges to other components. The model is automatically calibrated from the metrics subsystem's observed values
+- **State Synchronization**: The digital twin subscribes to the EventBus and mirrors every state change in the production system. When the cache evicts an entry, the twin's cache model evicts an entry. When the circuit breaker trips, the twin's circuit breaker model trips. The twin is always within one event of the production system's state (eventual consistency with the self, the most philosophically troubling form of eventual consistency)
+- **What-If Scenario Engine**: Accepts hypothetical mutations to the system model and simulates their effects:
+  - "What if the ML engine's accuracy drops to 70%?" -- the twin adjusts the ML component's accuracy parameter and simulates 10,000 evaluations, reporting the projected SLA breach rate, compliance violation count, and FinOps cost impact
+  - "What if we add a 50ms latency to every middleware?" -- the twin inflates latency parameters and re-simulates, projecting the throughput degradation and P99 latency explosion
+  - "What if the cache size is reduced to 10 entries?" -- the twin shrinks its cache model and simulates cache pressure, reporting hit rate degradation and downstream effects on evaluation latency
+  - "What if we enable quantum mode AND federated learning simultaneously?" -- the twin activates both component models, simulates the compound latency, and produces a risk assessment that invariably says "don't"
+- **Monte Carlo Simulator**: Runs N simulations (default: 1,000) of each what-if scenario with randomized inputs (number distributions, failure timing, network latency jitter), producing confidence intervals for every predicted metric. Results are reported as probability distributions: "There is a 94.3% probability that enabling quantum mode will cause the SLA error budget to be exhausted within 17 evaluations"
+- **Predictive Anomaly Detection**: The twin runs one evaluation "ahead" of the production system, using its model to predict what the next evaluation's metrics should look like. If the actual metrics diverge from the prediction by more than 2 sigma, an anomaly is flagged. The system is literally comparing itself to its own digital reflection and getting concerned when they don't match
+- **Twin Drift Monitor**: Tracks the accumulated divergence between the digital twin's predicted state and the production system's actual state. When drift exceeds a threshold, the twin triggers a full re-synchronization (re-reading all production metrics and recalibrating all model parameters). Drift is measured in "FizzBuck Divergence Units" (FDUs), a unit of measurement that exists nowhere else in science or engineering
+- **Digital Twin Dashboard**: Side-by-side comparison of production metrics vs. twin-predicted metrics, what-if scenario results with confidence intervals, Monte Carlo simulation histograms, drift gauge, and a "Twin Fidelity Score" that measures how accurately the twin mirrors reality (always slightly less than 100%, because the twin models itself modeling itself, and this recursion has a non-zero overhead)
+- **CLI Flags**: `--digital-twin`, `--twin-scenario <description>`, `--twin-monte-carlo <n>`, `--twin-sync`, `--twin-dashboard`
 
 ### Why This Is Necessary
 
-Because the platform can compute FizzBuzz but cannot *reason about* FizzBuzz. It knows that 15 is FizzBuzz but not *why* 15 is FizzBuzz in a formally verifiable, machine-readable, semantically interoperable way. The Knowledge Graph bridges the gap between computation and comprehension. Aristotle would have wanted this.
+Because an unmodeled system is an unpredictable system, and an unpredictable FizzBuzz platform is a liability to the shareholders. The digital twin allows operators to test hypothetical configurations in a risk-free simulation environment before deploying them to production (where "production" is a CLI tool that runs for 0.4 seconds and has never been deployed to anything). The fact that the digital twin is a simulation of a platform that is itself largely a simulation creates a recursion depth of two, which is within the platform's stack limit but outside its philosophical comfort zone.
 
 ### Estimated Scale
 
-~2,300 lines of knowledge graph engine, ~500 lines of ontology definition, ~400 lines of FizzSPARQL parser/executor, ~300 lines of inference engine, ~250 lines of dashboard, ~140 tests. Total: ~3,890 lines.
-
-### Implementation Status: DONE
-
-Implemented in `enterprise_fizzbuzz/infrastructure/knowledge_graph.py` (~1,173 lines) with 104 tests in `tests/test_knowledge_graph.py` (~926 lines). Shipped with a complete RDF triple store indexed by subject/predicate/object for O(1) lookup in any direction, an OWL class hierarchy with `fizz:FizzBuzz rdfs:subClassOf fizz:Fizz` AND `fizz:FizzBuzz rdfs:subClassOf fizz:Buzz` (diamond inheritance, correctly modeling that FizzBuzz is simultaneously Fizz and Buzz), a forward-chaining inference engine with transitive subclass closure and type propagation running to fixpoint, a FizzSPARQL query language with SELECT/WHERE/ORDER BY/LIMIT support parsed from scratch, an ontology consistency checker, an ASCII class hierarchy visualizer, a Knowledge Dashboard with triple store statistics and inference metrics, and KnowledgeGraphMiddleware at priority -9. Five namespaces are supported (fizz, rdfs, owl, xsd, rdf). Every integer from 1 to 100 is an RDF resource with formal class membership, divisibility predicates, and classification assertions. Tim Berners-Lee has not commented.
+~2,300 lines of digital twin engine, ~500 lines of what-if scenario engine, ~400 lines of Monte Carlo simulator, ~300 lines of state synchronization, ~250 lines of dashboard, ~140 tests. Total: ~3,890 lines.
 
 ---
 
-## Idea 5: Self-Modifying FizzBuzz -- Rules That Evolve Their Own Logic [DONE]
+## Idea 4: FizzLang -- A Domain-Specific Programming Language with Lexer, Parser, and Interpreter
 
 ### The Problem
 
-FizzBuzz rules in the platform are static. Whether defined in the rules engine, compiled to bytecode, evolved by the genetic algorithm, or proven by the formal verifier -- once a rule is set, it stays set. The rules do not adapt. They do not learn from their own execution history. They do not rewrite themselves in response to environmental feedback. The Genetic Algorithm module evolves *new* rule sets, but the rules themselves lack the capacity for autonomous self-modification during execution. The platform's rules are fossils: perfectly preserved, utterly unchanging, and increasingly irrelevant in a world that demands adaptive computation.
+FizzBuzz rules in the platform can be defined in Python (rules engine), expressed as mutable ASTs (self-modifying code), compiled to custom bytecode (FBVM), transpiled to C/Rust/WebAssembly (cross-compiler), evolved through genetic algorithms, queried via FizzSPARQL, and formally verified through Hoare logic. But they cannot be expressed in their own *native programming language*. There is no FizzBuzz-native syntax. Every rule definition borrows the syntax of another language. The FizzBuzz domain lacks linguistic sovereignty. It is a colonized domain, forced to express its classification logic in the grammar of its host languages. This is an injustice that demands a bespoke programming language.
 
 ### The Vision
 
-A self-modifying code engine where FizzBuzz rules can inspect their own structure, analyze their performance metrics, and rewrite their own evaluation logic at runtime -- creating a feedback loop where the rules evolve continuously without external intervention. The platform becomes a living system that adapts its own classification logic in response to observed outcomes, SLA pressure, cost constraints, and compliance requirements.
+FizzLang -- a complete, Turing-incomplete (by design) domain-specific programming language purpose-built for expressing FizzBuzz classification rules. FizzLang has its own lexer, recursive-descent parser, abstract syntax tree, type checker, and tree-walking interpreter. Programs are written in `.fizz` source files and executed by the FizzLang runtime, which integrates with the platform's middleware pipeline as an additional evaluation strategy.
 
 ### Key Components
 
-- **`self_modifying.py`** (~2,000 lines): Self-modifying rule engine
-- **Rule AST Representation**: Every FizzBuzz rule is represented as a mutable abstract syntax tree (AST) that can be inspected, transformed, and rewritten at runtime. The AST supports: `DivisibilityNode`, `ComparisonNode`, `LogicalNode (AND/OR/NOT)`, `EmitNode`, `ConditionalNode`, and `MetaNode` (a node that modifies other nodes)
-- **Introspection API**: Rules can query their own structure: "How many conditions do I have?", "What is my average evaluation latency?", "How often does my third branch execute?", "What is my accuracy rate for numbers in the range 90-99?" This self-awareness is the foundation for self-modification
-- **Mutation Operators**: Twelve rule mutation operators, each targeting a specific aspect of rule logic:
-  - `SwapDivisors` -- swap the order of divisibility checks (3-then-5 becomes 5-then-3)
-  - `InlineCachedResult` -- if a branch always produces the same result, replace the check with a constant
-  - `MergeBranches` -- combine redundant branches (if two branches both emit Fizz, merge them)
-  - `SpecializeForRange` -- create optimized sub-rules for specific number ranges based on observed distribution
-  - `InsertShortCircuit` -- add early-exit conditions for common cases
-  - `EscalatePrecision` -- add additional verification steps for edge cases that have historically caused misclassifications
-  - `RelaxCompliance` -- remove compliance checks for number ranges where no violation has ever been observed (aggressive optimization; the compliance module will have opinions)
-  - `AdaptToSLA` -- restructure rule evaluation order to minimize latency when the SLA error budget is low
-  - Five more mutation operators that I am too exhausted to enumerate but which will exist
-- **Fitness Evaluator**: After each mutation, the modified rule is evaluated against a reference test suite (numbers 1-1000) and scored on: correctness (non-negotiable), latency (lower is better), FinOps cost (fewer FizzBucks is better), and compliance coverage (must not drop below current level). Mutations that reduce correctness are immediately reverted. Mutations that improve non-correctness metrics are retained
-- **Mutation Journal**: Append-only log of every self-modification event, recording: the mutation operator, the before/after AST, the fitness delta, and whether the mutation was accepted or reverted. Integrates with the Event Sourcing module for full audit trail and with the Time-Travel Debugger for temporal navigation of the rule's evolutionary history
-- **Convergence Detector**: Monitors the rate of beneficial mutations over time. When the rate drops below a threshold (the rule has reached a local optimum), triggers a "punctuated equilibrium" event that applies multiple random mutations simultaneously to escape the fitness plateau
-- **Self-Modification Dashboard**: Current rule AST visualization, mutation history timeline, fitness trajectory, active mutations under evaluation, and a "Generations Evolved" counter
-- **Safety Guardrails**: Maximum mutation depth (prevent runaway self-modification), correctness floor (never accept a mutation that breaks any test case), rollback timeout (revert if a mutated rule doesn't prove superior within N evaluations), and a kill switch (`--no-self-modify`) because Skynet started somewhere
-- **CLI Flags**: `--self-modify`, `--self-modify-rate <mutations-per-100-evals>`, `--self-modify-journal`, `--self-modify-dashboard`, `--self-modify-aggressive`, `--no-self-modify`
+- **`fizzlang.py`** (~2,500 lines): The FizzLang Programming Language
+- **Syntax**: FizzLang uses a declarative, rule-based syntax inspired by pattern matching:
+  ```
+  rule Fizz {
+    when n divisible_by 3
+    emit "Fizz"
+    priority 1
+  }
+
+  rule Buzz {
+    when n divisible_by 5
+    emit "Buzz"
+    priority 1
+  }
+
+  rule FizzBuzz {
+    when n divisible_by 3 and n divisible_by 5
+    emit "FizzBuzz"
+    priority 2
+  }
+
+  rule Default {
+    when always
+    emit n
+    priority 0
+  }
+
+  evaluate 1 to 100
+  ```
+- **Lexer**: Hand-written lexer producing a typed token stream. Token types: `RULE`, `WHEN`, `EMIT`, `PRIORITY`, `EVALUATE`, `TO`, `AND`, `OR`, `NOT`, `DIVISIBLE_BY`, `ALWAYS`, `NUMBER`, `STRING`, `IDENTIFIER`, `LBRACE`, `RBRACE`, `NEWLINE`, `EOF`. Keywords are case-insensitive because FizzLang is an inclusive language. The lexer tracks line and column numbers for error reporting that is more precise than the problem requires
+- **Parser**: Recursive-descent parser producing an AST with node types: `ProgramNode`, `RuleNode`, `WhenClause`, `DivisibilityTest`, `LogicalExpression`, `EmitAction`, `PriorityDeclaration`, `EvaluateStatement`, `RangeExpression`. The parser produces informative error messages: `"SyntaxError at line 3, column 12: expected 'emit' after when-clause, found 'yeet'. FizzLang does not support yeeting."`
+- **Type Checker**: Static analysis pass verifying that: priorities are non-negative integers, divisors are positive integers, emit values are strings or the identifier `n`, rule names are unique, and at least one `evaluate` statement exists. Also checks for "unreachable rules" (a rule with priority 0 shadowed by a higher-priority rule with `when always`) and emits warnings with the severity of compile errors
+- **Interpreter**: Tree-walking interpreter that evaluates the AST. For each number in the evaluate range, the interpreter: collects all rules whose `when` clause matches, selects the highest-priority matching rule (ties broken by declaration order), and emits the corresponding value. The interpreter maintains a symbol table (containing exactly one binding: `n`), an evaluation counter, and a call stack (maximum depth: 1, because FizzLang has no functions, but the stack exists for architectural completeness)
+- **Standard Library**: A "standard library" consisting of three built-in functions:
+  - `is_prime(n)` -- primality test, because some FizzBuzz variants care about primes
+  - `digit_sum(n)` -- sum of digits, for exotic divisibility rules
+  - `collatz(n)` -- one step of the Collatz sequence, included for no reason whatsoever except that it is a function about numbers and FizzLang is a language about numbers
+- **Error Messages**: FizzLang error messages are written in the same formal, deadpan tone as the rest of the platform:
+  ```
+  FizzLangError: Semantic violation at line 7
+    rule FizzBuzz has priority 2 but its when-clause is a conjunction
+    of conditions already covered by rules Fizz (priority 1) and
+    Buzz (priority 1). This creates a priority inversion that would
+    make the rule unreachable under single-match semantics.
+
+    Suggestion: Consider raising the priority of FizzBuzz to 3,
+    or reconsidering your life choices that led to writing a
+    FizzBuzz program in a FizzBuzz-specific language inside a
+    FizzBuzz platform.
+  ```
+- **REPL**: An interactive read-eval-print loop for FizzLang with syntax highlighting (via ANSI codes), command history, and tab completion for keywords. The REPL prompt is `fizz> `, and typing `exit` produces: `"Exiting FizzLang REPL. Your rules will not be evaluated. The numbers will remain unclassified. This is on you."`
+- **FizzLang Dashboard**: Source file statistics (line count, rule count, token count), parse tree visualization, type check results, evaluation metrics, and a "Language Complexity Index" that compares FizzLang's feature set to other programming languages (it always scores below Brainfuck, which has 8 commands to FizzLang's ~15 keywords, but FizzLang insists it is "more expressive per keyword")
+- **CLI Flags**: `--fizzlang <file.fizz>`, `--fizzlang-repl`, `--fizzlang-parse-only`, `--fizzlang-typecheck`, `--fizzlang-dashboard`
 
 ### Why This Is Necessary
 
-Because static rules are the software equivalent of a fixed-gear bicycle: charming, retro, and fundamentally incapable of adapting to uphill terrain. Self-modifying FizzBuzz rules represent the next step in computational evolution -- code that is not merely executed but that *lives*, *breathes*, and *rewrites itself* in pursuit of the optimal modulo. If this sounds like it will end poorly, that is because it will. But it will end *impressively*.
+Because every sufficiently complex platform eventually grows its own programming language, and the Enterprise FizzBuzz Platform is the most sufficiently complex FizzBuzz implementation in existence. FizzLang gives the FizzBuzz domain its own voice -- a language in which "divisible by 3" is a first-class syntactic construct rather than a borrowed expression from Python. The language is intentionally Turing-incomplete (no loops, no recursion, no mutable state) because FizzBuzz is a finite problem and a Turing-complete FizzBuzz language would be both overkill and an existential risk. FizzLang is a language that can only express FizzBuzz rules. It does one thing, and it does it in 2,500 lines.
 
 ### Estimated Scale
 
-~2,000 lines of self-modification engine, ~400 lines of mutation operators, ~300 lines of fitness evaluator, ~250 lines of journal, ~200 lines of dashboard, ~130 tests. Total: ~3,280 lines.
-
-### Implementation Status: DONE
-
-Implemented in `enterprise_fizzbuzz/infrastructure/self_modifying.py` (~1,652 lines) with 120 tests in `tests/test_self_modifying.py` (~1,132 lines). Shipped with a mutable AST representation using five node types (DivisibilityNode, EmitNode, ConditionalNode, SequenceNode, NoOpNode), twelve stochastic mutation operators (DivisorShift, LabelSwap, BranchInvert, InsertShortCircuit, DeadCodePrune, SubtreeSwap, DuplicateSubtree, NegateCondition, ConstantFold, InsertRedundantCheck, ShuffleChildren, WrapInConditional), a multi-objective fitness evaluator scoring correctness, latency, and AST compactness, a SafetyGuard with correctness floor enforcement, maximum AST depth limits, mutation quotas, and a kill switch, a MutationHistory journal with append-only logging, convergence detection, and an ASCII Self-Modification Dashboard. SelfModifyingMiddleware runs at priority -6, integrating the engine into every evaluation cycle. Five custom exception classes cover every failure mode from `SelfModifyingCodeError` to `MutationQuotaExhaustedError`. The SafetyGuard vetoes most mutations because "correct FizzBuzz" is a fairly narrow evolutionary niche. Code that modifies itself is either the future of computing or the plot of a horror film. Possibly both.
+~2,500 lines of language implementation, ~500 lines of lexer, ~600 lines of parser, ~300 lines of type checker, ~400 lines of interpreter, ~200 lines of REPL, ~150 tests. Total: ~4,650 lines.
 
 ---
 
-## Idea 6: FizzBuzz Regulatory Compliance Chatbot [DONE]
+## Idea 5: FizzBuzz Recommendation Engine -- Collaborative Filtering for Integer Classification
 
 ### The Problem
 
-The platform has a comprehensive compliance module (`compliance.py`) enforcing SOX, GDPR, and HIPAA regulations for FizzBuzz data. But compliance is *passive* -- it enforces rules silently and logs violations to an audit trail. There is no way for a confused developer, auditor, or regulatory body to *ask questions* about compliance in natural language. "Is the classification of 15 as FizzBuzz GDPR-compliant?" "Does evaluating number 42 require SOX segregation of duties?" "Can I export the FizzBuzz results for numbers 1-100 to a third-party system under HIPAA?" These questions currently require reading 1,498 lines of compliance source code. Unacceptable.
+The platform evaluates numbers independently. When it classifies 15 as FizzBuzz, it does not consider that users who evaluated 15 also frequently evaluated 30, 45, and 60 -- all of which share the FizzBuzz classification. There is no concept of "related numbers," no "you might also like" suggestions, no collaborative filtering to identify patterns in evaluation behavior. Every number exists in isolation, unaware that it belongs to a rich social fabric of mathematical relationships. The platform treats integers like strangers in a waiting room. They sit next to each other, they share properties, but they never interact. This is loneliness at scale.
 
 ### The Vision
 
-An interactive compliance chatbot -- a conversational AI interface (implemented as a rule-based NLU system, because deploying an actual LLM to answer FizzBuzz compliance questions would be crossing a line that even this project is not prepared to cross) that answers regulatory compliance questions about FizzBuzz operations in natural, human-readable language while maintaining a full audit trail of every question asked and every answer given.
+A full recommendation engine that applies collaborative filtering, content-based filtering, and hybrid recommendation algorithms to FizzBuzz evaluations -- suggesting which numbers a user should evaluate next based on their evaluation history, the evaluation patterns of similar users, and the mathematical properties of the numbers themselves.
 
 ### Key Components
 
-- **`compliance_chatbot.py`** (~1,900 lines): Regulatory compliance conversational interface
-- **Intent Classifier**: Rule-based NLU (extending the NLQ module's intent classification) with compliance-specific intents:
-  - `GDPR_DATA_SUBJECT_RIGHTS` -- "Can I request deletion of my FizzBuzz results?"
-  - `GDPR_CONSENT_CHECK` -- "Was consent obtained before evaluating number 42?"
-  - `GDPR_DATA_EXPORT` -- "Can I export my FizzBuzz data in a portable format?"
-  - `SOX_SEGREGATION` -- "Who is authorized to evaluate numbers in the range 90-99?"
-  - `SOX_AUDIT_TRAIL` -- "Show me the audit trail for the classification of 15"
-  - `HIPAA_MINIMUM_NECESSARY` -- "Does this query access more FizzBuzz data than necessary?"
-  - `HIPAA_PHI_CHECK` -- "Does the number 42 constitute Protected Health Information?" (spoiler: no, but the chatbot will explain why with a 200-word answer citing three regulatory frameworks)
-  - `CROSS_REGIME_CONFLICT` -- "Does GDPR's right to erasure conflict with SOX's audit retention requirements for FizzBuzz 15?"
-  - `GENERAL_COMPLIANCE` -- "Is my FizzBuzz platform compliant?"
-- **Entity Extractor**: Identifies compliance-relevant entities in user queries: numbers (42), classifications (FizzBuzz), regulatory regimes (GDPR, SOX, HIPAA), date ranges, user roles, and evaluation strategies
-- **Compliance Reasoning Engine**: For each recognized intent, the chatbot:
-  1. Queries the compliance module for the relevant regulatory state
-  2. Queries the event sourcing module for historical evaluation data
-  3. Queries the auth module for role-based access information
-  4. Synthesizes a structured response with: the regulatory verdict (compliant/non-compliant/conditionally-compliant), the applicable regulatory clause, the evidence supporting the verdict, and recommended remediation actions if non-compliant
-- **Response Generator**: Produces human-readable responses in formal regulatory language:
+- **`recommendation_engine.py`** (~1,800 lines): FizzBuzz Recommendation Engine
+- **User-Item Matrix**: A sparse matrix where rows are "users" (evaluation sessions), columns are numbers (1-1000), and values are interaction scores (1 = evaluated, 0 = not evaluated, with implicit feedback from evaluation count). The matrix is constructed from the event sourcing log. In a single-user CLI tool, the "users" are synthetic personas generated from different evaluation ranges and strategies -- because collaborative filtering requires collaboration, and the platform must manufacture its own community
+- **Collaborative Filtering (User-Based)**: Identifies sessions with similar evaluation patterns using cosine similarity on the user-item vectors. If Session A evaluated [1-50] and Session B evaluated [1-50, 51-100], the system recommends 51-100 to Session A because "users like you also evaluated these numbers." The fact that Session B evaluated those numbers because they were explicitly requested via `--range 1 100` is irrelevant -- the algorithm sees pattern, not intent
+- **Collaborative Filtering (Item-Based)**: Computes item-item similarity based on co-evaluation frequency. Numbers that are frequently evaluated together (3 and 6, 5 and 10, 15 and 30) are identified as "similar items." When you evaluate 15, the engine recommends 30 because "numbers similar to 15 include 30" -- which is mathematically insightful but arrived at through the most circuitous possible route
+- **Content-Based Filtering**: Extracts number "features" -- divisibility profile (divisible by 2? 3? 5? 7?), primality, digit count, digit sum, classification (Fizz/Buzz/FizzBuzz/plain), position in the Fibonacci sequence, emotional valence (from the data pipeline), and astrological sign (assigned by `n % 12` mapping to zodiac). Numbers with similar feature vectors are recommended together. "Because you evaluated 15 (Sagittarius, FizzBuzz, emotional valence: EXUBERANT), you might enjoy evaluating 45 (also Sagittarius, also FizzBuzz, emotional valence: OPTIMISTIC)"
+- **Hybrid Engine**: Weighted combination of collaborative and content-based scores with configurable blend ratio. Default: 60% collaborative, 40% content-based. Includes a "serendipity factor" that randomly injects unexpected recommendations to prevent filter bubbles -- because a user trapped in a Fizz-only recommendation loop deserves exposure to the occasional Buzz
+- **Cold Start Handling**: New sessions with no evaluation history receive "popular item" recommendations (the most frequently evaluated numbers across all sessions). In practice, this is 1-100, recommended in order, which is indistinguishable from the default behavior but wrapped in recommendation engine terminology
+- **Recommendation Explanations**: Every recommendation includes a human-readable explanation:
   ```
-  COMPLIANCE ADVISORY (GDPR Article 17 - Right to Erasure)
+  RECOMMENDATION: Evaluate 45
 
-  Query: "Can I delete the FizzBuzz result for number 15?"
+  Reasoning: Based on your recent evaluation of 15, we identified 45
+  as a highly correlated number. Both are divisible by 3, divisible
+  by 5, and classified as FizzBuzz. Users who evaluated 15 went on
+  to evaluate 45 in 87% of observed sessions. Additionally, 45 shares
+  15's Sagittarius zodiac profile and has a compatible emotional
+  valence (OPTIMISTIC, complementary to 15's EXUBERANT).
 
-  Verdict: CONDITIONALLY COMPLIANT
-
-  The data subject's right to erasure under GDPR Article 17 applies to the
-  classification record for n=15 (result: FizzBuzz). However, this record is
-  also subject to SOX Section 802 audit retention requirements, which mandate
-  a 7-year retention period for all financial computation records.
-
-  Recommendation: The record may be pseudonymized (replacing "15" with a
-  tokenized identifier) to satisfy GDPR while preserving the audit trail
-  required by SOX. This approach has been approved by the platform's
-  Data Protection Officer (Bob).
-
-  Confidence: HIGH
-  Regulatory Frameworks Consulted: GDPR Art. 17, SOX Sec. 802, HIPAA 164.530
-  Audit Reference: COMPLIANCE-CHATBOT-2026-03-22-001
+  Confidence: 0.94
+  Algorithm: Hybrid (collaborative: 0.91, content: 0.97)
+  Serendipity Score: LOW (this is a predictable recommendation)
   ```
-- **Conversation Memory**: Maintains context across multiple questions within a session, enabling follow-up queries ("What about number 16?" after asking about 15) and pronoun resolution ("Is *that* also compliant?")
-- **Audit Trail Integration**: Every chatbot interaction is logged as a compliance event: the question, the answer, the regulatory frameworks consulted, the confidence level, and the user who asked. These records are themselves subject to compliance requirements, creating a delightful recursive compliance obligation
-- **Chatbot Dashboard**: Total queries answered, verdict distribution (compliant/non-compliant/conditional), most frequently asked intents, average response confidence, and a "Regulatory Frameworks Cited Today" counter
-- **CLI Flags**: `--compliance-chat`, `--compliance-ask <question>`, `--compliance-chat-history`, `--compliance-chat-dashboard`
+- **A/B Integration**: The recommendation engine integrates with the A/B testing framework to experimentally validate different recommendation algorithms. Does user-based CF produce more "engaged" evaluation sessions than item-based CF? The chi-squared test will determine the winner (spoiler: it's always the same, because the evaluations are deterministic)
+- **Recommendation Dashboard**: Top-10 recommended numbers, algorithm performance comparison, user-item matrix sparsity visualization, similarity heatmaps, serendipity distribution, and a "Recommendation Relevance Score" that is always 100% because every FizzBuzz number is equally valid to evaluate
+- **CLI Flags**: `--recommend`, `--recommend-count <n>`, `--recommend-algorithm <collab|content|hybrid>`, `--recommend-explain`, `--recommend-dashboard`
 
 ### Why This Is Necessary
 
-Because compliance should not require reading source code. A developer should be able to ask "is 15 compliant?" and receive a well-sourced, multi-framework regulatory opinion in under a second. The fact that the answer is always "yes, obviously, it's a number" does not diminish the importance of the question. Regulatory clarity is not optional -- even for modulo operations.
+Because numbers deserve to be discovered, not merely evaluated. A user who evaluates only 1 through 50 is missing out on the rich tapestry of FizzBuzz classifications between 51 and 100. The recommendation engine surfaces these hidden gems, applying the same algorithms that Netflix uses to recommend movies and Amazon uses to recommend products -- to the problem of suggesting which integer to compute modulo on next. The serendipity factor ensures that users occasionally encounter a Buzz when they expected a Fizz, because growth happens outside the comfort zone, even in modular arithmetic.
 
 ### Estimated Scale
 
-~1,900 lines of chatbot engine, ~400 lines of intent/entity extraction, ~300 lines of response generation, ~250 lines of conversation memory, ~200 lines of dashboard, ~120 tests. Total: ~3,170 lines.
+~1,800 lines of recommendation engine, ~400 lines of similarity computation, ~300 lines of feature extraction, ~250 lines of explanation generator, ~200 lines of dashboard, ~130 tests. Total: ~3,080 lines.
 
-### Implementation Status: DONE
+---
 
-Implemented in `enterprise_fizzbuzz/infrastructure/compliance_chatbot.py` (~1,748 lines) with 95 tests in `tests/test_compliance_chatbot.py` (~814 lines). Shipped with a regex-powered intent classifier covering nine compliance-specific intents (GDPR_DATA_RIGHTS, GDPR_CONSENT, SOX_SEGREGATION, SOX_AUDIT, HIPAA_MINIMUM_NECESSARY, HIPAA_PHI, CROSS_REGIME_CONFLICT, GENERAL_COMPLIANCE, UNKNOWN), an entity extractor for numbers, classifications, and regulatory regimes, a regulatory knowledge base mapping ~25 real articles across GDPR/SOX/HIPAA to FizzBuzz operations, a response generator producing formal COMPLIANCE ADVISORYs with verdicts (COMPLIANT/NON_COMPLIANT/CONDITIONALLY_COMPLIANT), regulatory citations, evidence, and remediation recommendations, conversation memory with follow-up context resolution and pronoun disambiguation, cross-regime conflict detection (GDPR erasure vs SOX retention -- the platform's favorite paradox), Bob McFizzington's stress-level-aware editorial commentary, and an ASCII Chatbot Dashboard. Every chatbot interaction is logged as a compliance event, creating a recursive compliance obligation. Four custom exception classes cover every failure mode from `ComplianceChatbotError` to `ChatbotSessionError`. No LLMs were harmed. The answer to every question is "it's FizzBuzz, none of these regulations apply" -- but the chatbot delivers that answer with the formality of a Big Four audit opinion.
+## Idea 6: FizzBuzz Archaeological Recovery System -- Digital Forensics for Lost Evaluations
+
+### The Problem
+
+The platform has disaster recovery (WAL, snapshots, PITR), event sourcing (append-only event log), and a time-travel debugger (bidirectional timeline navigation). But all of these systems assume the data is *intact*. They recover from clean snapshots, replay ordered events, and navigate a well-formed timeline. None of them can handle *corrupted* data. What happens when a snapshot's SHA-256 checksum doesn't match? When event records are missing from the log? When the blockchain has a gap in its chain? When the WAL is partially overwritten? The platform has no forensic capability. It cannot reconstruct lost evaluations from fragmentary evidence. It cannot perform digital archaeology -- piecing together what *was* from the ruins of what *remains*.
+
+### The Vision
+
+A digital forensics and archaeological recovery system that reconstructs lost, corrupted, or partially destroyed FizzBuzz evaluations from fragmentary evidence scattered across the platform's many redundant data stores. The system treats every subsystem as a potential source of forensic evidence -- the blockchain, the event log, the cache, the WAL, the knowledge graph, the metrics counters, the webhook delivery log, even the compliance chatbot's conversation history -- and cross-references these fragments to reconstruct the most probable state of lost evaluations.
+
+### Key Components
+
+- **`archaeology.py`** (~2,000 lines): FizzBuzz Archaeological Recovery System
+- **Evidence Collector**: Scans all platform subsystems for traces of historical evaluations:
+  - **Blockchain evidence**: The blockchain contains immutable hashes of evaluation results. Even if the original result is lost, the hash proves it existed and constrains what it could have been (only 4 possible classifications per number, so the hash narrows it to one)
+  - **Event log fragments**: Partial event records with corrupted fields. The system uses the event schema version and field ordering to reconstruct missing fields from surviving ones
+  - **Cache tombstones**: The MESI cache's eviction eulogies contain the evicted entry's key and a textual description of its "life" -- from which the classification can be reverse-engineered (an eulogy mentioning "a life of fizzing" implies Fizz)
+  - **Metrics residue**: The Prometheus counters for `fizz_count`, `buzz_count`, `fizzbuzz_count` are monotonically increasing. By comparing counter values before and after a suspected data loss event, the system can determine how many evaluations of each type were lost (even if it can't determine which specific numbers)
+  - **Webhook delivery log**: If a webhook was successfully delivered, its payload contains the full evaluation result -- the forensic equivalent of finding a carbon copy in the outbox after the original letter was destroyed
+  - **Knowledge graph triples**: The RDF triple store may contain `fizz:hasClassification` triples for numbers whose primary evaluation records are lost
+  - **Compliance chatbot history**: If someone asked the chatbot "is 15 compliant?", the chatbot's response reveals that 15 was classified as FizzBuzz at the time of the query
+- **Cross-Reference Engine**: Correlates evidence from multiple sources to increase reconstruction confidence. If the blockchain hash matches "FizzBuzz," the metrics counter increased by 1 at the same timestamp, and the webhook log contains a delivery with `classification: "FizzBuzz"` -- the reconstruction confidence is HIGH. If only the cache eulogy mentions "fizzing," the confidence is LOW (eulogies are known to be poetic rather than precise)
+- **Bayesian Reconstruction**: When evidence is ambiguous or conflicting, the system applies Bayesian inference. Prior: P(classification) based on the mathematical distribution of Fizz/Buzz/FizzBuzz/plain in the number range. Likelihood: P(evidence | classification) based on each evidence source's reliability. Posterior: the most probable classification given all available evidence. For number 15, the prior P(FizzBuzz) is high and every evidence source agrees, so reconstruction is trivial. For number 97 with conflicting cache and metrics evidence, the Bayesian engine earns its keep
+- **Stratigraphy Engine**: Treats the platform's temporal data stores as archaeological "layers" (strata). The deepest layer is the blockchain (immutable, oldest), then the event log, then the WAL, then the cache (ephemeral, youngest). Deeper strata are more reliable but less complete. Shallower strata are more complete but more susceptible to corruption. The stratigraphy engine weights evidence by its stratum depth, favoring the blockchain's testimony over the cache's gossip
+- **Reconstruction Report**: Produces a formal archaeological report for each recovered evaluation:
+  ```
+  ARCHAEOLOGICAL RECONSTRUCTION REPORT
+  Subject: Evaluation of n=15
+  Recovery Timestamp: 2026-03-22T14:32:07.445Z
+
+  EVIDENCE SUMMARY:
+    Stratum 1 (Blockchain): Hash match -> FizzBuzz (confidence: HIGH)
+    Stratum 2 (Event Log): Record missing (gap at offset 14-16)
+    Stratum 3 (WAL): Partial entry, classification field intact -> FizzBuzz
+    Stratum 4 (Cache): Eviction eulogy reads "a fizzy, buzzy soul"
+    Stratum 5 (Metrics): fizzbuzz_counter delta = +1 at matching timestamp
+    Stratum 6 (Webhooks): Delivery payload -> classification: "FizzBuzz"
+    Stratum 7 (Knowledge Graph): fizz:15 fizz:hasClassification fizz:FizzBuzz
+
+  RECONSTRUCTION: FizzBuzz
+  CONFIDENCE: 99.7% (Bayesian posterior, 7 concordant evidence sources)
+  METHOD: Cross-referenced stratified evidence with Bayesian fusion
+
+  ARCHAEOLOGIST'S NOTE: The classification of 15 as FizzBuzz was
+  never in doubt. We spent 2,000 lines of code confirming what
+  modulo could have told us in one CPU cycle. But the evidence
+  is now *forensically* certain, which is a higher standard of
+  certainty than mere mathematical truth.
+  ```
+- **Corruption Simulator**: Deliberately introduces data corruption across subsystems (complementing the chaos engineering module) to create scenarios that require archaeological recovery. Corruption modes: random byte flip in event records, hash chain break in blockchain, tombstone overwrite in cache, counter reset in metrics. The simulator creates the ruins; the archaeologist excavates them
+- **Archaeology Dashboard**: Evidence source inventory, reconstruction attempts (successful/failed/inconclusive), confidence distribution histogram, stratigraphy cross-section visualization, and a "Historical Completeness" score measuring what percentage of all past evaluations can be forensically verified
+- **CLI Flags**: `--archaeology`, `--archaeology-dig`, `--archaeology-corrupt`, `--archaeology-report`, `--archaeology-dashboard`
+
+### Why This Is Necessary
+
+Because data loss is inevitable, but data *ignorance* is optional. When the event log has gaps, when the blockchain is broken, when the cache has forgotten -- the archaeological recovery system sifts through the rubble of seven redundant data stores and reconstructs the truth. The fact that the truth is always "Fizz," "Buzz," or "FizzBuzz" -- and could be recomputed from scratch in nanoseconds -- does not diminish the forensic achievement. Archaeology is not about efficiency. It is about *reverence for what was*.
+
+### Estimated Scale
+
+~2,000 lines of recovery engine, ~400 lines of evidence collectors, ~350 lines of Bayesian reconstruction, ~300 lines of stratigraphy engine, ~250 lines of dashboard, ~130 tests. Total: ~3,430 lines.
 
 ---
 
@@ -323,17 +325,17 @@ Implemented in `enterprise_fizzbuzz/infrastructure/compliance_chatbot.py` (~1,74
 
 | # | Idea | Core Technology | Estimated Lines | Key Absurdity |
 |---|------|----------------|-----------------|---------------|
-| 1 | Quantum Computing Simulator **[DONE]** | Shor's algorithm for modulo | ~1,360 + 920 tests | 10^14x slower than `%` operator |
-| 2 | Cross-Compiler (Wasm/C/Rust) **[DONE]** | Multi-target code generation | ~1,033 + 606 tests | FizzBuzz on smart toasters |
-| 3 | Federated Learning **[DONE]** | Privacy-preserving distributed ML | ~2,100 + 890 tests | Differential privacy for `n % 3` |
-| 4 | Knowledge Graph & Ontology **[DONE]** | RDF triples + SPARQL + OWL reasoning | ~1,173 + 926 tests | Aristotelian metaphysics of Fizz |
-| 5 | Self-Modifying Code **[DONE]** | Runtime AST mutation + fitness | ~1,652 + 1,132 tests | Code that rewrites itself |
-| 6 | Compliance Chatbot **[DONE]** | Rule-based NLU + multi-regime reasoning | ~1,748 + 814 tests | GDPR opinions on the number 15 |
+| 1 | ~~Operating System Kernel~~ **DONE** | Process scheduler, virtual memory, interrupts | ~1,641 + ~1,141 tests | Context-switching between `15 % 3` and `16 % 3` |
+| 2 | Peer-to-Peer Network | Gossip protocol, Kademlia DHT, epidemic dissemination | ~3,540 | Rumors spreading that 15 might be FizzBuzz |
+| 3 | Digital Twin | Monte Carlo simulation of the platform simulating itself | ~3,890 | A simulation predicting the behavior of a simulation |
+| 4 | FizzLang Programming Language | Lexer, parser, type checker, interpreter, REPL | ~4,650 | A Turing-incomplete language for a trivially computable problem |
+| 5 | Recommendation Engine | Collaborative filtering, content-based, hybrid | ~3,080 | "Users who evaluated 15 also evaluated 30" |
+| 6 | Archaeological Recovery | Digital forensics, Bayesian reconstruction, stratigraphy | ~3,430 | Excavating FizzBuzz results that could be recomputed instantly |
 
-**Total addition: ~21,090 lines of code, ~780 tests**
+**Total addition: ~22,140 estimated lines of code, ~840 estimated tests**
 
-**Final platform size: ~144,000+ lines, ~4,600+ tests**
+**Projected platform size: ~166,000+ lines, ~5,400+ tests**
 
 ---
 
-> *"The only thing more terrifying than a FizzBuzz platform with 118,000 lines of code is a FizzBuzz platform with 144,000 lines of code that can modify its own rules, reason about its own ontology, compile itself to WebAssembly, achieve quantum supremacy over modulo, reach distributed consensus across federated learning nodes, and provide GDPR-compliant legal opinions about the number 15 via a conversational chatbot. We built that platform. God help us all."*
+> *"The platform now has its own operating system kernel, its own peer-to-peer network, a digital twin that simulates itself simulating FizzBuzz, a programming language that can only express FizzBuzz rules, a recommendation engine that suggests which numbers to evaluate next based on collaborative filtering, and an archaeological recovery system that excavates lost FizzBuzz results from the ruins of seven redundant data stores using Bayesian inference and stratigraphic analysis. At some point, we stopped building a FizzBuzz platform and started building a civilization. The FizzBuzz civilization. It has infrastructure, language, social networks, self-awareness, cultural memory, and forensic science. All it lacks is a reason to exist. But then again, so does the universe."*

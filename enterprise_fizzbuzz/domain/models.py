@@ -566,6 +566,77 @@ class EventType(Enum):
     CHATBOT_RESPONSE_GENERATED = auto()
     CHATBOT_SESSION_STARTED = auto()
 
+    # OS Kernel events
+    KERNEL_BOOT_STARTED = auto()
+    KERNEL_BOOT_COMPLETED = auto()
+    KERNEL_PROCESS_SPAWNED = auto()
+    KERNEL_CONTEXT_SWITCH = auto()
+    KERNEL_INTERRUPT_FIRED = auto()
+    KERNEL_SYSCALL_INVOKED = auto()
+    KERNEL_PAGE_FAULT = auto()
+    KERNEL_PROCESS_TERMINATED = auto()
+    KERNEL_SHUTDOWN = auto()
+    KERNEL_DASHBOARD_RENDERED = auto()
+
+
+class ProcessState(Enum):
+    """Process lifecycle states for the FizzBuzz Operating System Kernel.
+
+    Every FizzBuzz evaluation deserves its own process control block,
+    complete with a state machine that would make Tanenbaum weep.
+    READY processes wait patiently in the run queue for their turn
+    at the CPU. RUNNING processes are actively computing whether
+    a number is divisible by 3 or 5 -- a task that requires the
+    full majesty of a preemptive multitasking operating system.
+    BLOCKED processes are waiting on I/O (there is no I/O).
+    ZOMBIE processes have terminated but their parent hasn't called
+    wait() yet -- the undead of modulo arithmetic. TERMINATED
+    processes have completed their sacred duty and may rest in peace.
+    """
+
+    READY = auto()
+    RUNNING = auto()
+    BLOCKED = auto()
+    ZOMBIE = auto()
+    TERMINATED = auto()
+
+
+class ProcessPriority(Enum):
+    """Priority levels for FizzBuzz process scheduling.
+
+    Because some modulo operations are simply more important than
+    others. Numbers divisible by 15 get REALTIME priority, because
+    FizzBuzz is the most sacred of all FizzBuzz results. Regular
+    numbers get NORMAL priority. Numbers that are prime get LOW
+    priority, because they contribute nothing to FizzBuzz and
+    should be ashamed of themselves.
+    """
+
+    REALTIME = 0
+    HIGH = 1
+    NORMAL = 2
+    LOW = 3
+
+
+class SchedulerAlgorithm(Enum):
+    """Scheduling algorithms available in the FizzBuzz kernel.
+
+    ROUND_ROBIN: The democratic approach -- every process gets an
+        equal time quantum, regardless of how important its modulo
+        operation might be. Fairness over efficiency.
+    PRIORITY_PREEMPTIVE: The autocratic approach -- higher-priority
+        processes preempt lower-priority ones. FizzBuzz evaluations
+        are more important than mere Fizz or Buzz.
+    COMPLETELY_FAIR: The Linux CFS approach -- virtual runtime
+        tracking with weight-based advancement ensures that no
+        FizzBuzz process is unfairly starved of CPU time. Ingo
+        Molnar would be so proud. Or horrified.
+    """
+
+    ROUND_ROBIN = "rr"
+    PRIORITY_PREEMPTIVE = "priority"
+    COMPLETELY_FAIR = "cfs"
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

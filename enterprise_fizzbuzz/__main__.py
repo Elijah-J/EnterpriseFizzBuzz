@@ -344,6 +344,12 @@ from enterprise_fizzbuzz.infrastructure.self_modifying import (
     SelfModifyingMiddleware,
     create_self_modifying_engine,
 )
+from enterprise_fizzbuzz.infrastructure.os_kernel import (
+    FizzBuzzKernel,
+    KernelDashboard,
+    KernelMiddleware,
+)
+from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
 
@@ -1651,6 +1657,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--self-modify-dashboard",
         action="store_true",
         help="Display the Self-Modifying Code ASCII dashboard after execution",
+    )
+
+    # FizzBuzz Operating System Kernel
+    parser.add_argument(
+        "--kernel",
+        action="store_true",
+        help="Enable the FizzBuzz OS Kernel: process scheduling, virtual memory, and interrupts for modulo arithmetic",
+    )
+
+    parser.add_argument(
+        "--kernel-scheduler",
+        type=str,
+        choices=["rr", "priority", "cfs"],
+        default=None,
+        help="Kernel process scheduler algorithm (rr=Round Robin, priority=Preemptive, cfs=Completely Fair)",
+    )
+
+    parser.add_argument(
+        "--kernel-dashboard",
+        action="store_true",
+        help="Display the FizzBuzz OS Kernel ASCII dashboard after execution",
     )
 
     return parser
@@ -4000,6 +4027,61 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # FizzBuzz Operating System Kernel setup
+    # ----------------------------------------------------------------
+    fizzbuzz_kernel = None
+    kernel_middleware = None
+
+    if args.kernel or args.kernel_dashboard:
+        sched_str = args.kernel_scheduler or config.kernel_scheduler
+        sched_map = {
+            "rr": SchedulerAlgorithm.ROUND_ROBIN,
+            "priority": SchedulerAlgorithm.PRIORITY_PREEMPTIVE,
+            "cfs": SchedulerAlgorithm.COMPLETELY_FAIR,
+        }
+        kernel_sched = sched_map.get(sched_str, SchedulerAlgorithm.ROUND_ROBIN)
+
+        fizzbuzz_kernel = FizzBuzzKernel(
+            rules=list(config.rules),
+            scheduler_type=kernel_sched,
+            time_quantum_ms=config.kernel_time_quantum_ms,
+            max_processes=config.kernel_max_processes,
+            page_size=config.kernel_page_size,
+            tlb_size=config.kernel_tlb_size,
+            physical_pages=config.kernel_physical_pages,
+            swap_pages=config.kernel_swap_pages,
+            irq_vectors=config.kernel_irq_vectors,
+            boot_delay_ms=config.kernel_boot_delay_ms,
+            context_switch_overhead_us=config.kernel_context_switch_overhead_us,
+            cfs_default_weight=config.kernel_cfs_default_weight,
+            cfs_min_granularity_ms=config.kernel_cfs_min_granularity_ms,
+            event_callback=event_bus.publish if event_bus else None,
+        )
+
+        # Boot the kernel
+        fizzbuzz_kernel.boot()
+
+        kernel_middleware = KernelMiddleware(
+            kernel=fizzbuzz_kernel,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FIZZBUZZ OS KERNEL: BOOTED                              |\n"
+            "  | Every FizzBuzz evaluation is now a kernel process with  |\n"
+            "  | PID, PCB, virtual memory, and CPU registers.           |\n"
+            f"  | Scheduler: {fizzbuzz_kernel.scheduler_name:<46}|\n"
+            f"  | Boot time: {fizzbuzz_kernel._boot_time_ns / 1_000_000:<9.2f}ms"
+            + " " * (37 - len(f"{fizzbuzz_kernel._boot_time_ns / 1_000_000:.2f}"))
+            + "|\n"
+            "  | IRQ vectors: 16 (Fizz=IRQ4, Buzz=IRQ5, FizzBuzz=IRQ6) |\n"
+            "  | Virtual Memory: TLB + page table + swap                |\n"
+            "  | Linus would be proud. Or horrified.                    |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -4107,6 +4189,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if sm_middleware is not None:
         builder.with_middleware(sm_middleware)
+
+    if kernel_middleware is not None:
+        builder.with_middleware(kernel_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -5136,6 +5221,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.self_modify_dashboard:
         print("\n  Self-modifying code not enabled. Use --self-modify to enable.\n")
+
+    # FizzBuzz OS Kernel Dashboard
+    if args.kernel_dashboard and fizzbuzz_kernel is not None:
+        print(KernelDashboard.render(
+            fizzbuzz_kernel,
+            width=config.kernel_dashboard_width,
+            show_process_table=config.kernel_dashboard_show_process_table,
+            show_memory_map=config.kernel_dashboard_show_memory_map,
+            show_interrupt_log=config.kernel_dashboard_show_interrupt_log,
+        ))
+    elif args.kernel_dashboard:
+        print("\n  Kernel not enabled. Use --kernel to enable.\n")
+
+    # Shutdown the kernel if it was booted
+    if fizzbuzz_kernel is not None:
+        fizzbuzz_kernel.shutdown()
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
