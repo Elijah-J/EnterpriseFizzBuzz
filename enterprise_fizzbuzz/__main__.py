@@ -343,6 +343,11 @@ from enterprise_fizzbuzz.infrastructure.package_manager import (
     FizzPMDashboard,
     FizzPMManager,
 )
+from enterprise_fizzbuzz.infrastructure.fizzsql import (
+    FizzSQLDashboard,
+    FizzSQLEngine,
+    PlatformState,
+)
 from enterprise_fizzbuzz.infrastructure.self_modifying import (
     SelfModifyingDashboard,
     SelfModifyingMiddleware,
@@ -1909,6 +1914,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzpm-dashboard",
         action="store_true",
         help="Display the FizzPM Package Manager ASCII dashboard after execution",
+    )
+
+    # FizzSQL Relational Query Engine
+    parser.add_argument(
+        "--fizzsql",
+        type=str,
+        metavar="QUERY",
+        default=None,
+        help='Execute a FizzSQL query against platform internals (e.g. --fizzsql "SELECT * FROM evaluations")',
+    )
+
+    parser.add_argument(
+        "--fizzsql-tables",
+        action="store_true",
+        help="List all FizzSQL virtual tables and their schemas",
+    )
+
+    parser.add_argument(
+        "--fizzsql-dashboard",
+        action="store_true",
+        help="Display the FizzSQL Relational Query Engine ASCII dashboard after execution",
     )
 
     return parser
@@ -5973,6 +5999,68 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.types_dashboard:
         print("\n  Dependent Type System not enabled. Use --dependent-types to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzSQL Relational Query Engine
+    # ----------------------------------------------------------------
+    fizzsql_engine = None
+
+    if args.fizzsql or args.fizzsql_tables or args.fizzsql_dashboard:
+        # Build platform state snapshot for virtual tables
+        _locals = locals()
+        fizzsql_state = PlatformState(
+            evaluations=_locals.get("results"),
+            cache_store=_locals.get("cache_store"),
+            blockchain=_locals.get("blockchain"),
+            sla_monitor=_locals.get("sla_monitor"),
+            event_bus=_locals.get("event_bus"),
+        )
+
+        fizzsql_engine = FizzSQLEngine(
+            state=fizzsql_state,
+            max_result_rows=config.fizzsql_max_result_rows,
+            enable_history=config.fizzsql_enable_query_history,
+            history_size=config.fizzsql_query_history_size,
+            slow_query_threshold_ms=config.fizzsql_slow_query_threshold_ms,
+        )
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZSQL RELATIONAL QUERY ENGINE                         |\n"
+            "  | Lexer | Parser | Planner | Volcano Executor             |\n"
+            "  | 5 virtual tables | Cost model | EXPLAIN ANALYZE         |\n"
+            '  | "Your SELECT * deserves a query optimizer."             |\n'
+            "  +---------------------------------------------------------+"
+        )
+
+        if args.fizzsql_tables:
+            tables = fizzsql_engine.list_tables()
+            print("\n  Available FizzSQL Virtual Tables:")
+            print("  " + "=" * 57)
+            for t in tables:
+                print(f"\n  {t['name']}")
+                print(f"    Columns: {t['columns']}")
+                print(f"    {t['description']}")
+            print("\n  " + "=" * 57)
+            print()
+
+        if args.fizzsql:
+            try:
+                output = fizzsql_engine.execute(args.fizzsql)
+                print(f"\n  fizzsql> {args.fizzsql}")
+                print(output)
+                print()
+            except Exception as e:
+                print(f"\n  FizzSQL Error: {e}\n")
+
+    # FizzSQL Dashboard
+    if args.fizzsql_dashboard and fizzsql_engine is not None:
+        print(FizzSQLDashboard.render(
+            fizzsql_engine,
+            width=config.fizzsql_dashboard_width,
+        ))
+    elif args.fizzsql_dashboard:
+        print("\n  FizzSQL not enabled. Use --fizzsql to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
