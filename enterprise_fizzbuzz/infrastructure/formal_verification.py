@@ -232,13 +232,10 @@ class ProofTree:
         lines: list[str] = []
 
         if step.children:
-            # Render children (premises) side by side
-            child_renders = []
+            # Render children (premises), one per line for readability
             for child in step.children:
                 child_text = f"{child.label} {child.status_symbol}"
-                child_renders.append(child_text)
-
-            premises_line = "    ".join(child_renders)
+                lines.append(child_text[:width])
 
             # Build the inference line
             rule_label = f" [{step.justification}]" if step.justification else ""
@@ -246,18 +243,17 @@ class ProofTree:
             if self.is_complete:
                 conclusion += "  QED"
 
-            # Calculate line width
-            content_width = max(len(premises_line), len(conclusion))
-            bar_width = min(content_width + 4, width)
+            # Calculate bar width: leave room for rule_label, cap at width
+            bar_width = min(width - len(rule_label), width)
+            bar_width = max(bar_width, 20)  # minimum legibility
 
-            # Center premises above the bar
-            lines.append(premises_line.center(bar_width))
             lines.append("\u2500" * bar_width + rule_label)
-            lines.append(conclusion.center(bar_width))
+            lines.append(conclusion[:width])
         else:
             # Leaf node — axiom or base case
             status = step.status_symbol
-            lines.append(f"{step.label} {status}  [{step.justification}]")
+            leaf = f"{step.label} {status}  [{step.justification}]"
+            lines.append(leaf[:width])
 
         return "\n".join(lines)
 
@@ -292,9 +288,10 @@ class ProofTree:
             if self.is_complete:
                 conclusion += "  QED"
 
-            bar_width = min(max(len(conclusion) + 4, 40), width)
+            bar_width = min(max(len(conclusion) + 4, 40), width - len(rule_label))
+            bar_width = max(bar_width, 20)  # minimum legibility
             lines.append("\u2500" * bar_width + rule_label)
-            lines.append(conclusion.center(bar_width))
+            lines.append(conclusion[:width])
         else:
             lines.append(self._render_step(self._root, width))
 

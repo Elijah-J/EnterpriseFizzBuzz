@@ -811,11 +811,12 @@ class FBaaSMiddleware(IMiddleware):
         # Execute the rest of the pipeline
         result = next_handler(context)
 
-        # Apply Free Tier watermark
+        # Apply Free Tier watermark (only once per result — avoid stacking)
         if self._tenant.tier == SubscriptionTier.FREE and result.results:
             for r in result.results:
-                r.output = f"{r.output} {self._watermark}"
-                r.metadata["fbaas_watermarked"] = True
+                if not r.metadata.get("fbaas_watermarked"):
+                    r.output = f"{r.output} {self._watermark}"
+                    r.metadata["fbaas_watermarked"] = True
 
             self._emit(EventType.FBAAS_WATERMARK_APPLIED, {
                 "tenant_id": self._tenant.tenant_id,
@@ -977,8 +978,12 @@ class FBaaSDashboard:
         for event in stripe_client.get_ledger()[-20:]:
             ts = event.timestamp.strftime("%H:%M:%S")
             amount_str = f"${event.amount_cents / 100:.2f}"
-            row = f"  {ts} [{event.event_type:<20}] {amount_str:>10} {event.description[:25]}"
-            lines.append("  |" + row.ljust(width - 2) + "|")
+            # Inner width is width - 2 (for the | delimiters)
+            inner = width - 2
+            # Fixed overhead: " " + ts(8) + " [" + type(20) + "] " + amt(10) + " " = 44
+            desc_max = max(1, inner - 44)
+            row = f" {ts} [{event.event_type:<20}] {amount_str:>10} {event.description[:desc_max]}"
+            lines.append("  |" + row[:inner].ljust(inner) + "|")
 
         if not stripe_client.get_ledger():
             lines.append("  |" + "  No billing events recorded.".ljust(width - 2) + "|")

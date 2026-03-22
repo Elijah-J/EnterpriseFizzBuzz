@@ -2977,9 +2977,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+\n"
             "  | FINOPS: Cost Tracking & Chargeback Engine ENABLED       |\n"
             "  | Every FizzBuzz evaluation now has a price tag.          |\n"
-            f"  | Currency: FizzBuck ({config.finops_currency})"
-            + " " * max(0, 40 - len(f"FizzBuck ({config.finops_currency})"))
-            + "|\n"
+            f"  | {f'Currency: FizzBuck ({config.finops_currency})':<57}|\n"
             "  | Tax rates: 3% Fizz / 5% Buzz / 15% FizzBuzz            |\n"
             "  | Friday premium: 50% surcharge (TGIF costs extra)       |\n"
             "  | Chaos injection: FB$0.00 (chaos is free)               |\n"
