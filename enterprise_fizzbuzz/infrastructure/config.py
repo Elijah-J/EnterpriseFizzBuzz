@@ -1175,6 +1175,23 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "show_complexity_index": True,
                 },
             },
+            "recommendation": {
+                "enabled": False,
+                "collaborative_weight": 0.6,
+                "content_weight": 0.4,
+                "serendipity_factor": 0.1,
+                "num_recommendations": 5,
+                "min_evaluations_for_personalization": 3,
+                "max_similar_users": 10,
+                "popular_items_fallback_size": 10,
+                "seed": None,
+                "dashboard": {
+                    "width": 60,
+                    "show_feature_vectors": True,
+                    "show_user_profiles": True,
+                    "show_similarity_matrix": True,
+                },
+            },
         }
 
     def _apply_environment_overrides(self) -> None:
@@ -4308,6 +4325,75 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def fizzlang_dashboard_show_complexity_index(self) -> bool:
         self._ensure_loaded()
         return self._raw_config.get("fizzlang", {}).get("dashboard", {}).get("show_complexity_index", True)
+
+    # ------------------------------------------------------------------
+    # Recommendation Engine properties
+    # ------------------------------------------------------------------
+
+    @property
+    def recommendation_enabled(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("enabled", False)
+
+    @property
+    def recommendation_collaborative_weight(self) -> float:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("collaborative_weight", 0.6)
+
+    @property
+    def recommendation_content_weight(self) -> float:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("content_weight", 0.4)
+
+    @property
+    def recommendation_serendipity_factor(self) -> float:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("serendipity_factor", 0.1)
+
+    @property
+    def recommendation_num_recommendations(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("num_recommendations", 5)
+
+    @property
+    def recommendation_min_evaluations(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("min_evaluations_for_personalization", 3)
+
+    @property
+    def recommendation_max_similar_users(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("max_similar_users", 10)
+
+    @property
+    def recommendation_popular_items_fallback_size(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("popular_items_fallback_size", 10)
+
+    @property
+    def recommendation_seed(self) -> int | None:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("seed", None)
+
+    @property
+    def recommendation_dashboard_width(self) -> int:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("dashboard", {}).get("width", 60)
+
+    @property
+    def recommendation_dashboard_show_feature_vectors(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("dashboard", {}).get("show_feature_vectors", True)
+
+    @property
+    def recommendation_dashboard_show_user_profiles(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("dashboard", {}).get("show_user_profiles", True)
+
+    @property
+    def recommendation_dashboard_show_similarity_matrix(self) -> bool:
+        self._ensure_loaded()
+        return self._raw_config.get("recommendation", {}).get("dashboard", {}).get("show_similarity_matrix", True)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

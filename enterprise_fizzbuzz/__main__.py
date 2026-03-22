@@ -370,6 +370,10 @@ from enterprise_fizzbuzz.infrastructure.fizzlang import (
     compile_program,
     run_program,
 )
+from enterprise_fizzbuzz.infrastructure.recommendations import (
+    RecommendationDashboard,
+    RecommendationEngine,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -1770,6 +1774,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzlang-dashboard",
         action="store_true",
         help="Display the FizzLang ASCII dashboard with source stats and Language Complexity Index",
+    )
+
+    # Recommendation Engine
+    parser.add_argument(
+        "--recommend",
+        action="store_true",
+        help="Enable the Recommendation Engine: suggest numbers you might enjoy evaluating next",
+    )
+
+    parser.add_argument(
+        "--recommend-for",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Get recommendations similar to a specific number (e.g. --recommend-for 15)",
+    )
+
+    parser.add_argument(
+        "--recommend-dashboard",
+        action="store_true",
+        help="Display the Recommendation Engine ASCII dashboard after execution",
     )
 
     return parser
@@ -4358,6 +4383,34 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # Recommendation Engine setup
+    # ----------------------------------------------------------------
+    rec_engine = None
+    rec_results = None
+
+    if args.recommend or args.recommend_for is not None or args.recommend_dashboard:
+        rec_engine = RecommendationEngine(
+            collaborative_weight=config.recommendation_collaborative_weight,
+            content_weight=config.recommendation_content_weight,
+            serendipity_factor=config.recommendation_serendipity_factor,
+            num_recommendations=config.recommendation_num_recommendations,
+            min_evaluations=config.recommendation_min_evaluations,
+            max_similar_users=config.recommendation_max_similar_users,
+            popular_items_fallback_size=config.recommendation_popular_items_fallback_size,
+            seed=config.recommendation_seed,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | RECOMMENDATION ENGINE: Integer Affinity Analytics        |\n"
+            "  | Collaborative filtering + content-based + hybrid blend  |\n"
+            "  | Serendipity injection to break filter bubbles            |\n"
+            '  | "Because you evaluated 15, you might enjoy 45."          |\n'
+            "  | Every number deserves a zodiac sign and a digit sum.     |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -4865,6 +4918,43 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(f"\n  {locale_mgr.t('messages.wall_clock', time=f'{wall_time_ms:.2f}')}")
         else:
             print(f"\n  Wall clock time: {wall_time_ms:.2f}ms")
+
+    # ----------------------------------------------------------------
+    # Recommendation Engine post-execution
+    # ----------------------------------------------------------------
+    if rec_engine is not None:
+        # Record all evaluated numbers for the default user
+        user_id = "cli-user"
+        if auth_context is not None:
+            user_id = auth_context.user
+        for number in range(start, end + 1):
+            rec_engine.record_evaluation(user_id, number)
+
+        # Generate recommendations
+        if args.recommend_for is not None:
+            # Item-to-item recommendations for a specific number
+            pool = list(range(1, max(end + 50, 101)))
+            rec_results = rec_engine.recommend_for_number(
+                args.recommend_for,
+                candidate_pool=pool,
+                n=config.recommendation_num_recommendations,
+            )
+            print(f"\n  Recommendations similar to {args.recommend_for}:")
+            for num, score, explanation in rec_results:
+                print(explanation)
+            print()
+        elif args.recommend:
+            # Personalized recommendations for the user
+            pool = list(range(1, max(end + 50, 101)))
+            rec_results = rec_engine.recommend(
+                user_id,
+                candidate_pool=pool,
+                n=config.recommendation_num_recommendations,
+            )
+            print(f"\n  Personalized recommendations for {user_id}:")
+            for num, score, explanation in rec_results:
+                print(explanation)
+            print()
 
     # Distributed tracing output
     if tracing_enabled:
@@ -5539,6 +5629,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.twin_dashboard:
         print("\n  Digital Twin not enabled. Use --twin to enable.\n")
+
+    # Recommendation Engine Dashboard
+    if args.recommend_dashboard and rec_engine is not None:
+        print(RecommendationDashboard.render(
+            rec_engine,
+            recommendations=rec_results,
+            target_number=args.recommend_for,
+            width=config.recommendation_dashboard_width,
+            show_feature_vectors=config.recommendation_dashboard_show_feature_vectors,
+            show_user_profiles=config.recommendation_dashboard_show_user_profiles,
+            show_similarity_matrix=config.recommendation_dashboard_show_similarity_matrix,
+        ))
+    elif args.recommend_dashboard:
+        print("\n  Recommendation Engine not enabled. Use --recommend to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
