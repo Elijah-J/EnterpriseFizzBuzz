@@ -368,6 +368,22 @@ class EventType(Enum):
     VAULT_SCAN_SECRET_FOUND = auto()
     VAULT_DASHBOARD_RENDERED = auto()
 
+    # Data Pipeline & ETL Framework events
+    PIPELINE_STARTED = auto()
+    PIPELINE_COMPLETED = auto()
+    PIPELINE_STAGE_ENTERED = auto()
+    PIPELINE_STAGE_COMPLETED = auto()
+    PIPELINE_RECORD_EXTRACTED = auto()
+    PIPELINE_RECORD_VALIDATED = auto()
+    PIPELINE_RECORD_TRANSFORMED = auto()
+    PIPELINE_RECORD_ENRICHED = auto()
+    PIPELINE_RECORD_LOADED = auto()
+    PIPELINE_DAG_RESOLVED = auto()
+    PIPELINE_CHECKPOINT_SAVED = auto()
+    PIPELINE_BACKFILL_STARTED = auto()
+    PIPELINE_BACKFILL_COMPLETED = auto()
+    PIPELINE_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

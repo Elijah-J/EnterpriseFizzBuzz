@@ -189,6 +189,15 @@ from enterprise_fizzbuzz.infrastructure.secrets_vault import (
     VaultMiddleware,
     VaultSealManager,
 )
+from enterprise_fizzbuzz.infrastructure.data_pipeline import (
+    BackfillEngine,
+    DataLineageTracker,
+    PipelineBuilder,
+    PipelineDashboard,
+    PipelineMiddleware,
+    SinkConnectorFactory,
+    SourceConnectorFactory,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -932,6 +941,37 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--vault-rotate",
         action="store_true",
         help="Force an immediate rotation of all rotatable secrets",
+    )
+
+    # Data Pipeline & ETL Framework
+    parser.add_argument(
+        "--pipeline",
+        action="store_true",
+        help="Enable the Data Pipeline & ETL Framework: route FizzBuzz through a 5-stage DAG",
+    )
+
+    parser.add_argument(
+        "--pipeline-dashboard",
+        action="store_true",
+        help="Display the Data Pipeline ASCII dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--pipeline-dag",
+        action="store_true",
+        help="Display the pipeline DAG visualization (a very straight line)",
+    )
+
+    parser.add_argument(
+        "--pipeline-lineage",
+        action="store_true",
+        help="Display data lineage provenance chains for all processed records",
+    )
+
+    parser.add_argument(
+        "--backfill",
+        action="store_true",
+        help="Enable retroactive backfill enrichment of pipeline records",
     )
 
     return parser
@@ -1822,6 +1862,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("message_queue")
         if args.vault:
             active_subsystems.append("secrets_vault")
+        if args.pipeline:
+            active_subsystems.append("data_pipeline")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -2143,6 +2185,64 @@ def main(argv: Optional[list[str]] = None) -> int:
             width=config.vault_dashboard_width,
         ))
 
+    # ----------------------------------------------------------------
+    # Data Pipeline & ETL Framework setup
+    # ----------------------------------------------------------------
+    pipeline = None
+    pipeline_middleware = None
+    if args.pipeline or args.pipeline_dashboard or args.pipeline_dag or args.pipeline_lineage:
+        source = SourceConnectorFactory.create(config.data_pipeline_source)
+        sink = SinkConnectorFactory.create(config.data_pipeline_sink)
+
+        enrichments = config.data_pipeline_enrichments
+        pipeline_builder = (
+            PipelineBuilder()
+            .with_source(source)
+            .with_sink(sink)
+            .with_rules(config.rules)
+            .with_enrichments(enrichments)
+            .with_max_retries(config.data_pipeline_max_retries)
+            .with_retry_backoff_ms(config.data_pipeline_retry_backoff_ms)
+            .with_checkpoints(config.data_pipeline_enable_checkpoints)
+            .with_lineage(config.data_pipeline_enable_lineage)
+            .with_backfill(args.backfill or config.data_pipeline_enable_backfill)
+            .with_event_bus(event_bus)
+        )
+        pipeline = pipeline_builder.build()
+
+        pipeline_middleware = PipelineMiddleware(
+            pipeline=pipeline,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | DATA PIPELINE: ETL Framework ENABLED                     |\n"
+            "  | 5-stage DAG: Extract -> Validate -> Transform ->         |\n"
+            "  |              Enrich -> Load                              |\n"
+            f"  | Source: {source.get_name():<49}|\n"
+            f"  | Sink:   {sink.get_name():<49}|\n"
+            "  | Topological sort: Kahn's algorithm (maximally pointless) |\n"
+            "  | Enrichments: Fibonacci, primality, Roman numerals,       |\n"
+            "  |              emotional valence                           |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Handle --pipeline-dag (early exit if standalone)
+        if args.pipeline_dag and not args.pipeline:
+            print(pipeline.dag.render(config.data_pipeline_dag_width))
+            # Don't exit -- allow continued execution
+
+    elif args.pipeline_dashboard:
+        print("\n  Data pipeline not enabled. Use --pipeline to enable.\n")
+        return 0
+    elif args.pipeline_dag:
+        print("\n  Data pipeline not enabled. Use --pipeline to enable.\n")
+        return 0
+    elif args.pipeline_lineage:
+        print("\n  Data pipeline not enabled. Use --pipeline to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -2295,6 +2395,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if vault_middleware is not None:
         builder.with_middleware(vault_middleware)
+
+    if pipeline_middleware is not None:
+        builder.with_middleware(pipeline_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -2494,6 +2597,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"  Strategy: {strategy.name}")
         print(f"  Output Format: {output_format.name}")
     print()
+
+    # Run the data pipeline if enabled (standalone ETL mode)
+    pipeline_records = None
+    if pipeline is not None and args.pipeline:
+        pipeline_records = pipeline.run(start, end)
 
     boot_time = time.perf_counter()
 
@@ -2877,6 +2985,31 @@ def main(argv: Optional[list[str]] = None) -> int:
         print()
     elif args.vault_status:
         print("\n  Vault not enabled. Use --vault to enable.\n")
+
+    # Data Pipeline dashboards
+    if pipeline is not None:
+        if args.pipeline_dashboard:
+            print(PipelineDashboard.render(
+                executor=pipeline.executor,
+                dag=pipeline.dag,
+                records=pipeline_records or [],
+                lineage_tracker=pipeline.lineage_tracker,
+                backfill_engine=pipeline.backfill_engine,
+                width=config.data_pipeline_dashboard_width + 4,
+            ))
+
+        if args.pipeline_dag:
+            print(pipeline.dag.render(config.data_pipeline_dag_width))
+
+        if args.pipeline_lineage and pipeline.lineage_tracker is not None:
+            print(PipelineDashboard.render_lineage(
+                lineage_tracker=pipeline.lineage_tracker,
+                records=pipeline_records or [],
+                width=config.data_pipeline_dag_width,
+            ))
+
+    # Also add pipeline to finops active subsystems tracking
+    # (this is already handled above in the finops setup)
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
