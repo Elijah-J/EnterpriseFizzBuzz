@@ -30,8 +30,8 @@ There is no `docs/` directory, no developer guide, no architecture decision reco
 
 ## Backlog Status
 - Total items: 8
-- Implemented: 7
-- Remaining: 1
+- Implemented: 8
+- Remaining: 0
 
 ## Documentation Items
 
@@ -173,7 +173,8 @@ A reference document, but one that belongs to this project. The exception names 
 
 ### 8. Test Coverage Map (docs/testing.md)
 
-**Status:** PENDING
+**Status:** DONE
+**Output path:** `docs/testing.md`
 **Description:** The platform has 829 tests across 10 test files. Document what's tested, what's not, and how the test suite is organized.
 
 Cover the following:
