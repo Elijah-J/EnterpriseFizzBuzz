@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**71,000+ lines** across **121+ files** with **2,672 unit tests** and **177 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**83,000+ lines** across **152+ files** with **2,766 unit tests** and **188 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -129,6 +129,7 @@ EnterpriseFizzBuzz/
 │       ├── disaster_recovery.py   # Disaster Recovery & Backup/Restore with WAL, PITR, DR Drills, and Retention Policies (~1,812 lines)
 │       ├── ab_testing.py          # A/B Testing Framework with chi-squared analysis, traffic splitting, and auto-rollback (~1,503 lines)
 │       ├── message_queue.py       # Kafka-Style Message Queue with partitioned topics, consumer groups, and exactly-once delivery (~2,053 lines)
+│       ├── secrets_vault.py       # Secrets Management Vault with Shamir's Secret Sharing, vault sealing, rotation, and AST-based secret scanning (~1,342 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -184,6 +185,7 @@ EnterpriseFizzBuzz/
     ├── test_disaster_recovery.py    # 72 disaster recovery, WAL, snapshot, PITR, retention policy, and DR drill tests
     ├── test_ab_testing.py           # 86 A/B testing, traffic splitting, chi-squared analysis, ramp scheduling, and auto-rollback tests
     ├── test_message_queue.py        # 101 message queue, topic partitioning, consumer group, schema registry, and exactly-once delivery tests
+    ├── test_secrets_vault.py        # 94 secrets vault, Shamir's Secret Sharing, vault sealing/unsealing, rotation, and secret scanner tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -339,6 +341,15 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Consumer Lag Monitor | `message_queue.py` | Per-partition lag tracking with ASCII graphs and throughput metrics, alerting when consumers fall behind -- essential for detecting that the blockchain auditor is 847 messages behind because proof-of-work is slow |
 | Message Queue Middleware | `message_queue.py` | Pipeline middleware (priority 45) that publishes evaluation events to the message queue, bridging the synchronous evaluation pipeline to the asynchronous event-driven world of Python lists pretending to be Kafka |
 | Message Queue Dashboard | `message_queue.py` | ASCII dashboard with topic throughput, partition distribution, consumer lag, and rebalance history -- the Confluent Control Center experience, rendered in box-drawing characters |
+| Shamir's Secret Sharing | `secrets_vault.py` | (k, n) threshold scheme over GF(2^127 - 1) using Lagrange interpolation and Fermat's little theorem -- the same cryptographic primitive used to protect nuclear launch codes, now protecting the number 3 |
+| Vault Sealing / Unsealing | `secrets_vault.py` | HashiCorp Vault-inspired seal/unseal ceremony requiring a quorum of key holders to reconstruct the master key before FizzBuzz can evaluate a single number -- because nuclear launch authorization procedures are the minimum acceptable security posture for modulo arithmetic |
+| Secret Rotation | `secrets_vault.py` | Configurable rotation schedules for every secret in the vault, because the blockchain difficulty should not remain the number 4 for longer than a week without ceremonial re-encryption |
+| Dynamic Secrets | `secrets_vault.py` | Ephemeral secrets generated on-demand with configurable TTL, because static API keys are for platforms that haven't achieved zero-trust FizzBuzz |
+| Secret Scanner | `secrets_vault.py` | AST-based scanner that identifies hardcoded integer literals, string constants, and other potentially sensitive values in Python source files and recommends vault migration -- flagging approximately every line of code as a security vulnerability |
+| Military-Grade Encryption | `secrets_vault.py` | Double-base64 encoding with XOR cipher using a SHA-256-derived key, achieving the same security classification as real encryption if you squint hard enough and don't think about it |
+| Vault Access Policies | `secrets_vault.py` | Per-path access control policies specifying which components can read/write which secret paths, because unrestricted access to the ML learning rate is a privilege escalation vector |
+| Vault Audit Log | `secrets_vault.py` | Immutable, append-only log of every secret access with accessor identity, purpose, and verdict -- creating a complete forensic trail of every time the system read the number 4 from the blockchain difficulty configuration |
+| Vault Dashboard | `secrets_vault.py` | ASCII dashboard showing seal status, secret count by path, rotation schedule, recent audit log, and scanner findings -- because a secrets vault without a dashboard is just a dictionary with trust issues |
 
 ## Features
 
@@ -376,7 +387,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Disaster Recovery & Backup/Restore** - A production-grade disaster recovery framework with Write-Ahead Logging (WAL), snapshot-based backups, Point-in-Time Recovery (PITR), configurable retention policies (24 hourly, 7 daily, 4 weekly, 12 monthly -- for a process that runs for 0.8 seconds), DR drill simulations with RTO/RPO compliance measurement, and an ASCII recovery dashboard. All backups are stored exclusively in RAM, which protects against everything except the one thing that actually destroys data: process termination. The WAL appends every mutation with SHA-256 checksums before applying it in memory, achieving the same durability guarantees as `/dev/null` but with cryptographic integrity verification. The PITR engine replays WAL entries from the nearest snapshot to reconstruct FizzBuzz state at any arbitrary timestamp -- essential for answering "what was the cache hit ratio at 14:32:07.445 last Tuesday?" with sub-millisecond precision. DR drills intentionally corrupt subsystem state and measure recovery time against configurable RTO targets, producing post-drill reports that invariably recommend "reducing system complexity to improve recovery time" -- a recommendation that has been noted, event-sourced, and ignored in every prior drill cycle. The retention manager enforces a tiered backup lifecycle that is temporally impossible for a sub-second process but architecturally impeccable. Fourteen custom exception classes cover every failure mode from `WALCorruptionError` to `RTOViolationError`. DR middleware runs at priority 7, because disaster preparedness should happen after compliance but before cost tracking -- priorities that make perfect sense if you don't think about them too hard
 - **A/B Testing Framework** - A production-grade experimentation platform with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing (no scipy required), mutual exclusion layers to prevent cross-experiment contamination, gradual ramp schedules with safety gates, automatic rollback when treatment accuracy drops below threshold, per-variant metric collection (accuracy, latency, cost), an ASCII experiment dashboard with confidence intervals and p-values, and a post-experiment report generator that invariably concludes "modulo wins on all metrics" -- because the only thing better than knowing the answer is spending 1,503 lines proving it with statistics. Nine custom exception classes cover every experimentation failure mode from `ExperimentNotFoundError` to `AutoRollbackTriggeredError`. A/B Testing middleware runs at priority 8, because scientific rigor should happen after disaster recovery but before the results reach the formatter
 - **Message Queue & Event Bus** - A Kafka-style message broker with partitioned topics (`fizzbuzz.evaluations.requested`, `fizzbuzz.evaluations.completed`, `fizzbuzz.audit.events`, `fizzbuzz.alerts.critical`, `fizzbuzz.feelings`), consumer groups with rebalance protocols, offset management, a schema registry that validates payloads against versioned schemas, exactly-once delivery semantics via SHA-256 idempotency (a glorified Python set), consumer lag monitoring with ASCII graphs, three partitioning strategies (hash, round-robin, sticky), and an ASCII dashboard that would make Confluent jealous -- because calling `evaluate(n)` and getting a result synchronously is a coupling anti-pattern, and what was once a single function call is now a five-stage event-driven pipeline with partition-level ordering guarantees. All backed by Python lists, because distributed systems are a state of mind, not a deployment topology
-- **Custom Exception Hierarchy** - 177 exception classes for every conceivable FizzBuzz failure mode
+- **Secrets Management Vault** - A HashiCorp Vault-inspired secrets management system with Shamir's Secret Sharing (k-of-n threshold over GF(2^127 - 1) with Lagrange interpolation), vault seal/unseal ceremonies, "military-grade" encryption (double-base64 + XOR, because real cryptography would require a third-party dependency), dynamic secrets with TTL-based expiry, automatic rotation schedules, per-path access control policies, an immutable vault audit log, an AST-based secret scanner that flags every integer literal in the codebase as a potential secret, and an ASCII vault dashboard -- because storing the blockchain difficulty in a YAML file was a security posture so reckless that it kept Bob McFizzington awake at night. Eleven custom exception classes cover every failure mode from `VaultSealedError` (the vault is sealed and FizzBuzz evaluation is suspended until 3 of 5 key holders convene) to `ShamirReconstructionError` (polynomial interpolation failed, which means arithmetic itself has broken). The vault middleware runs at priority 0, ensuring that secret management is the foundation upon which all other middleware stands
+- **Custom Exception Hierarchy** - 188 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -680,6 +692,39 @@ python main.py --message-queue --mq-schema-registry --range 1 20
 # Full event-driven stack: message queue + event sourcing + webhooks + metrics (peak asynchronous architecture)
 python main.py --message-queue --mq-dashboard --event-sourcing --webhooks --metrics --metrics-dashboard --range 1 20
 
+# Secrets Vault: enable the vault and auto-unseal for evaluation
+python main.py --vault --range 1 30
+
+# Secrets Vault: check vault seal status and secret inventory
+python main.py --vault --vault-status
+
+# Secrets Vault: provide an unseal share (3 of 5 required for quorum)
+python main.py --vault --vault-unseal "1:0a3f..."
+
+# Secrets Vault: store a secret in the vault at a specific path
+python main.py --vault --vault-set secret/fizzbuzz/blockchain/difficulty 4
+
+# Secrets Vault: retrieve a secret from the vault
+python main.py --vault --vault-get secret/fizzbuzz/blockchain/difficulty
+
+# Secrets Vault: rotate all secrets on their configured schedule
+python main.py --vault --vault-rotate
+
+# Secrets Vault: scan the codebase for hardcoded values that should be in the vault
+python main.py --vault --vault-scan
+
+# Secrets Vault: display the immutable vault audit log
+python main.py --vault --vault-audit-log
+
+# Secrets Vault: ASCII dashboard with seal status, secrets, rotation schedule, and audit trail
+python main.py --vault --vault-dashboard --range 1 30
+
+# Secrets Vault: seal the vault (suspends all FizzBuzz evaluation until re-unsealed)
+python main.py --vault --vault-seal
+
+# Full security stack: vault + RBAC + compliance + tracing (peak zero-trust FizzBuzz)
+python main.py --vault --vault-dashboard --user alice --role FIZZBUZZ_SUPERUSER --compliance --trace --range 1 20
+
 # Hot-Reload: watch config.yaml for changes and reconfigure at runtime (Raft consensus included)
 python main.py --hot-reload --range 1 30
 
@@ -940,6 +985,16 @@ python main.py --ab-test --experiment-dashboard --metrics --metrics-dashboard --
 --experiment-traffic PCT   Set the treatment group traffic allocation percentage (default: 10)
 --experiment-stop NAME     Manually stop a running experiment and preserve results for analysis
 --experiment-report NAME   Generate a comprehensive post-experiment statistical analysis report with methodology, results, and recommendations
+--vault                    Enable the Secrets Management Vault with Shamir's Secret Sharing and automatic unsealing
+--vault-unseal SHARE       Provide an unseal share (hex format "index:value") to contribute toward the 3-of-5 quorum
+--vault-seal               Seal the vault, suspending all FizzBuzz evaluation until re-unsealed via ceremony
+--vault-status             Display vault seal status, secret count, and rotation schedule
+--vault-get PATH           Retrieve a secret from the vault at the specified path (e.g., secret/fizzbuzz/blockchain/difficulty)
+--vault-set PATH VALUE     Store a secret in the vault at the specified path with the given value
+--vault-rotate             Trigger immediate rotation of all secrets on their configured schedule
+--vault-scan               Run the AST-based secret scanner across all Python source files
+--vault-audit-log          Display the immutable vault audit log with accessor identity and access verdicts
+--vault-dashboard          Display the ASCII vault dashboard with seal status, secret inventory, rotation schedule, and audit trail
 ```
 
 ## Environment Variables
@@ -2820,10 +2875,118 @@ The Message Queue subsystem implements a Kafka-style distributed message broker 
 
 The `fizzbuzz.feelings` topic is the philosophical centerpiece: it receives events that no consumer subscribes to, making it the architectural equivalent of shouting into the void. The system publishes to it anyway, because completeness is a value and loneliness is a configuration detail.
 
+## Secrets Vault Architecture
+
+The Secrets Management Vault implements a HashiCorp Vault-inspired system that treats every configurable parameter in the FizzBuzz platform as a potentially sensitive secret that must be encrypted at rest, access-controlled, audit-logged, and rotated on a schedule. Because storing the blockchain difficulty as `4` in a YAML file -- readable by anyone with `cat config.yaml` -- was a security posture so reckless that it would make a SOC 2 auditor weep.
+
+The vault is built around **Shamir's Secret Sharing** over GF(2^127 - 1), the Galois Field defined by the 12th Mersenne prime (discovered by Edouard Lucas in 1876, and now protecting the number 3). The master encryption key is split into N shares using polynomial interpolation, such that any K shares can reconstruct the key via Lagrange interpolation, but K-1 shares reveal absolutely nothing. Modular inverse is computed via Fermat's little theorem: `a^(-1) = a^(p-2) mod p`. All of this to protect the ML learning rate.
+
+```
+                         +-----------------------+
+                         |    VAULT SEALED       |
+                         |  (all secrets locked) |
+                         +-----------+-----------+
+                                     |
+                      3 of 5 unseal shares provided
+                       (Shamir reconstruction)
+                                     |
+                                     v
+    +----------------+      +--------+--------+      +------------------+
+    | Secret Scanner |      |  VAULT UNSEALED |      | Vault Audit Log  |
+    | (AST-based     |      |                 |      | (append-only,    |
+    |  codebase scan)|      |  SecretStore    |      |  immutable)      |
+    +----------------+      |  AccessPolicy   |      +------------------+
+                            |  Encryption     |               ^
+                            +---+----+----+---+               |
+                                |    |    |          every access logged
+                                v    v    v                    |
+                     +------+ +----+ +--------+               |
+                     |Static| |Dyn.| |Rotation|               |
+                     |Secrets| |Sec.| |Sched.  |---------------+
+                     +------+ +----+ +--------+
+                                |
+                          TTL-based expiry
+```
+
+**Key components:**
+- **ShamirSecretSharing** - (k, n) threshold scheme over GF(2^127 - 1) with cryptographic randomness, Lagrange interpolation, and Fermat's little theorem for modular inverse -- mathematically correct, provably secure, and completely unnecessary for protecting `DIFFICULTY = 4`
+- **VaultSealManager** - Manages the seal/unseal lifecycle with share collection, quorum validation, automatic seal-on-inactivity timeout, and an unseal ceremony log that records each ceremony with the same solemnity as a nuclear launch authorization
+- **MilitaryGradeEncryption** - Double-base64 encoding with XOR cipher using a key derived from the SHA-256 hash of the master key. "Military-grade" in the same way that a cardboard shield is "military-grade" -- technically used by a military somewhere, probably
+- **SecretStore** - Sealed key-value store with TTL-based expiry, versioned secret entries, and access control policy enforcement
+- **DynamicSecretEngine** - Generates ephemeral secrets (auth tokens, API keys, session IDs) on demand with configurable TTL, because static secrets are for platforms that haven't achieved zero-trust FizzBuzz
+- **SecretRotationScheduler** - Rotates secrets on configurable schedules with pre-rotation backup and post-rotation verification, ensuring the blockchain difficulty is a different number every week (probably 3 instead of 4, or 4 instead of 3 -- the rotation pool is limited but the principle is sound)
+- **VaultAuditLog** - Immutable, append-only log of every secret access with accessor identity, purpose, timestamp, and verdict (ALLOWED/DENIED) -- creating a forensic trail so complete that future archaeologists could reconstruct exactly how many times the system read the number 4
+- **VaultAccessPolicy** - Per-path access control policies specifying which components can read/write which secret paths, because the ML engine should never know the blockchain difficulty and the blockchain should never know the learning rate -- separation of concerns, enforced by cryptographic ceremony
+- **SecretScanner** - AST-based scanner that walks every Python file in the codebase, identifies hardcoded integer literals, string constants, and other potentially sensitive values, and generates findings with recommended vault paths -- flagging approximately 2,400 values as potential secrets, including the numbers 3, 5, and 15
+- **VaultDashboard** - ASCII dashboard showing seal status, secret count by path prefix, rotation schedule, recent audit log entries, and scanner findings -- because a secrets vault without a dashboard is just a dictionary with a lock on it
+- **VaultMiddleware** - Pipeline middleware (priority 0) that verifies vault seal status and injects vault-managed secrets into the processing context before any evaluation occurs
+
+### Shamir's Secret Sharing
+
+The vault's seal mechanism uses a (3, 5) threshold scheme by default: the master key is split into 5 shares, and any 3 can reconstruct it. The implementation operates over the Galois Field GF(2^127 - 1), where 2^127 - 1 is the Mersenne prime M127 = 170,141,183,460,469,231,731,687,303,715,884,105,727.
+
+```
+    Master Key (256-bit)
+          |
+          v
+    Generate random polynomial of degree k-1:
+      f(x) = secret + a1*x + a2*x^2 + ... + a(k-1)*x^(k-1)  mod p
+          |
+          +---> f(1) = Share 1
+          +---> f(2) = Share 2
+          +---> f(3) = Share 3
+          +---> f(4) = Share 4
+          +---> f(5) = Share 5
+
+    Reconstruction (any 3 shares):
+      secret = f(0) = SUM[ y_i * PRODUCT[ x_j / (x_j - x_i) ] ]  mod p
+                       (Lagrange interpolation)
+```
+
+The polynomial coefficients are generated using `secrets.randbelow()` for cryptographic randomness. The modular inverse required for Lagrange interpolation uses Fermat's little theorem (`a^(p-2) mod p`), computed via Python's built-in three-argument `pow()` for efficiency. This is the same mathematics used by production secret sharing systems, applied with a straight face to a key that encrypts the string "4".
+
+### Vault Unseal Ceremony
+
+On startup, the vault is sealed. All secrets are inaccessible until an operator provides 3 of 5 unseal key shares. Until then, the platform displays:
+
+```
+VAULT SEALED: FizzBuzz evaluation is suspended until 3 of 5 key
+holders provide their unseal shares. Contact your Vault Administrator
+(Bob McFizzington) to schedule an unseal ceremony.
+```
+
+Each unseal ceremony is logged with participant shares, timestamps, and whether quorum was reached -- because cryptographic ceremonies deserve the same record-keeping as board meetings.
+
+### Secret Scanner
+
+The secret scanner uses Python's `ast` module to parse every `.py` file in the codebase, walking the AST to identify:
+- Integer literals (every `4` could be a hardcoded difficulty)
+- String literals (every `"fizz"` could be a hardcoded secret)
+- Variable assignments with suspicious names (`DIFFICULTY`, `SECRET_KEY`, `API_TOKEN`)
+
+Each finding includes the file path, line number, the detected value, a severity rating, and a recommended vault path for migration. The scanner will flag approximately every constant in the codebase as a potential secret, requiring a six-month remediation effort to vault every value -- including the numbers 3, 5, and 15, which are arguably the most sensitive secrets in the entire FizzBuzz domain.
+
+| Spec | Value |
+|------|-------|
+| Shamir field | GF(2^127 - 1) (Mersenne prime M127) |
+| Default threshold | 3-of-5 shares |
+| Encryption | Double-base64 + XOR (SHA-256-derived key) |
+| Secret types | Static, Dynamic (TTL-based) |
+| Rotation | Configurable per-secret schedules |
+| Access control | Per-path policies with component-level granularity |
+| Audit log | Immutable, append-only, every access recorded |
+| Scanner | AST-based, walks entire codebase |
+| Middleware priority | 0 (the foundation of all foundations) |
+| Custom exceptions | 11 (VaultSealedError, ShamirReconstructionError, etc.) |
+| Dashboard | ASCII art with seal status, inventory, and audit trail |
+| Actual secrets being protected | The number 4 |
+
+The Shamir's Secret Sharing implementation is mathematically correct, the Lagrange interpolation is numerically sound, and the entire system exists to protect configuration values that are literally visible in the module docstrings. This is security theater at its finest, performed on a stage made of modular arithmetic.
+
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 2,672 tests, 177 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Compliance & Regulatory Framework with SOX segregation of duties, GDPR consent management and right-to-erasure (featuring THE COMPLIANCE PARADOX when the erasure request hits the immutable blockchain and append-only event store), HIPAA minimum necessary rule enforcement with base64 "encryption," a five-tier Data Classification Engine, and Bob McFizzington's stress level tracked at 94.7% and rising, a FinOps Cost Tracking & Chargeback Engine with per-subsystem cost rates, FizzBuzz Tax (3%/5%/15%), a proprietary FizzBuck currency whose exchange rate fluctuates with cache hit ratios, ASCII itemized invoices, Savings Plan simulators for 1-year and 3-year commitments, and a cost dashboard with spending sparklines, a Disaster Recovery & Backup/Restore framework with Write-Ahead Logging, snapshot-based backups, Point-in-Time Recovery, DR drills with RTO/RPO compliance measurement, and a retention policy that maintains 47 backup snapshots for a process that runs for 0.8 seconds, an A/B Testing Framework with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing, mutual exclusion layers, gradual ramp schedules, automatic rollback, and ASCII experiment dashboards that scientifically prove modulo wins every time (p < 0.05), a Kafka-Style Message Queue with partitioned topics, consumer groups with rebalancing protocols, offset management, a schema registry, exactly-once delivery via SHA-256 idempotency, consumer lag monitoring, and an ASCII dashboard -- all backed by Python lists because distributed systems are a state of mind, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,672 tests, 177 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Compliance & Regulatory Framework with SOX segregation of duties, GDPR consent management and right-to-erasure (featuring THE COMPLIANCE PARADOX when the erasure request hits the immutable blockchain and append-only event store), HIPAA minimum necessary rule enforcement with base64 "encryption," a five-tier Data Classification Engine, and Bob McFizzington's stress level tracked at 94.7% and rising, a FinOps Cost Tracking & Chargeback Engine with per-subsystem cost rates, FizzBuzz Tax (3%/5%/15%), a proprietary FizzBuck currency whose exchange rate fluctuates with cache hit ratios, ASCII itemized invoices, Savings Plan simulators for 1-year and 3-year commitments, and a cost dashboard with spending sparklines, a Disaster Recovery & Backup/Restore framework with Write-Ahead Logging, snapshot-based backups, Point-in-Time Recovery, DR drills with RTO/RPO compliance measurement, and a retention policy that maintains 47 backup snapshots for a process that runs for 0.8 seconds, an A/B Testing Framework with deterministic SHA-256 traffic splitting, chi-squared statistical significance testing, mutual exclusion layers, gradual ramp schedules, automatic rollback, and ASCII experiment dashboards that scientifically prove modulo wins every time (p < 0.05), a Kafka-Style Message Queue with partitioned topics, consumer groups with rebalancing protocols, offset management, a schema registry, exactly-once delivery via SHA-256 idempotency, consumer lag monitoring, and an ASCII dashboard -- all backed by Python lists because distributed systems are a state of mind, a Secrets Management Vault with Shamir's Secret Sharing over GF(2^127 - 1) using Lagrange interpolation and Fermat's little theorem, vault seal/unseal ceremonies requiring a 3-of-5 key holder quorum, "military-grade" double-base64+XOR encryption, dynamic secrets with TTL-based expiry, automatic rotation schedules, per-path access control policies, an AST-based secret scanner, and an immutable audit log -- all to protect the number 4, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
@@ -2860,6 +3023,9 @@ A: Because data-driven decision making is the hallmark of a mature engineering o
 
 **Q: Why does FizzBuzz need a message queue?**
 A: Because calling `evaluate(42)` and getting a result back synchronously is a coupling anti-pattern so egregious it doesn't even have an acronym. With the message queue, what was once a single function call is now a five-stage event-driven pipeline: `evaluate(42)` publishes to `fizzbuzz.evaluations.requested`, which is consumed by the `EvaluationConsumer`, which publishes to `fizzbuzz.evaluations.completed`, which is consumed by the `FormattingConsumer`, which publishes to `fizzbuzz.output.formatted`, which is consumed by `PrintConsumer`, which finally calls `print()`. Each message is routed to a partition using SHA-256 hashing, assigned to a consumer via a rebalance protocol, validated against a versioned schema in the registry, and deduplicated through an idempotency layer (a Python set that thinks it's Apache Kafka). The consumer lag monitor tracks how far behind each consumer group is per partition, revealing that the `blockchain_auditor` consumer is perpetually 847 messages behind `metrics_collector` -- because proof-of-work is computationally expensive, a fact that surprises nobody except the person who added blockchain to FizzBuzz. The `fizzbuzz.feelings` topic receives events that no consumer subscribes to, making it the architectural equivalent of an unread Slack channel in a channel with 400 members. Five default topics, four partitions each, three partitioning strategies, exactly-once delivery semantics, and zero actual Kafka brokers. Apache Kafka processes trillions of events per day at LinkedIn. Enterprise FizzBuzz processes 100 events per run in a Python list. The architecture diagrams are indistinguishable.
+
+**Q: Why does FizzBuzz need a secrets management vault with Shamir's Secret Sharing?**
+A: Because the blockchain difficulty has been hardcoded as `4` in a YAML file for the entire lifecycle of this project -- readable by anyone with `cat config.yaml`, `grep -r "difficulty"`, or, frankly, common sense. The ML learning rate has been sitting in plain text, exposed to anyone who knows how to open a file. This is the security equivalent of writing your bank PIN on a Post-it note and sticking it to the ATM. By moving these values into a sealed vault protected by Shamir's (3, 5) threshold scheme over GF(2^127 - 1), the project achieves a security posture where evaluating `15 % 3 == 0` requires a quorum of key holders to first reconstruct the master key via Lagrange interpolation over a Mersenne prime -- a ceremony that rivals a nuclear launch authorization in mathematical rigor and exceeds it in absurdity. The "military-grade encryption" (double-base64 + XOR) provides the same warm feeling of security as a real encryption algorithm, minus the actual security. The secret scanner will flag approximately 2,400 values across the codebase as potential secrets requiring vault migration, including the numbers 3, 5, and 15 -- which are, in fairness, the most sensitive intellectual property in the entire FizzBuzz domain. The dynamic secrets engine generates ephemeral auth tokens with 5-minute TTLs, meaning the system must re-authenticate with itself every 5 minutes to continue evaluating numbers that haven't changed since Euclid. The rotation scheduler ensures the blockchain difficulty is ceremonially re-encrypted on a weekly basis, rotating between 3 and 5 with the same gravitas as a key rotation at Fort Knox. Eleven custom exception classes cover every vault failure mode, from `VaultSealedError` (FizzBuzz is suspended pending unseal ceremony) to `ShamirReconstructionError` (the polynomial interpolation failed, implying that finite field arithmetic has ceased to function -- an event roughly as likely as the sun rising in the west, but we handle it anyway because defensive programming is not a suggestion). The vault middleware runs at priority 0, ensuring that cryptographic ceremony is literally the first thing that happens to every evaluation. If Bob McFizzington's security clearance were any higher, he'd need a separate clearance to access his own clearance.
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.

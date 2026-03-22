@@ -351,6 +351,23 @@ class EventType(Enum):
     DR_DRILL_FAILED = auto()
     DR_DASHBOARD_RENDERED = auto()
 
+    # Secrets Management Vault events
+    VAULT_INITIALIZED = auto()
+    VAULT_SEALED = auto()
+    VAULT_UNSEALED = auto()
+    VAULT_UNSEAL_SHARE_SUBMITTED = auto()
+    VAULT_SECRET_STORED = auto()
+    VAULT_SECRET_RETRIEVED = auto()
+    VAULT_SECRET_DELETED = auto()
+    VAULT_SECRET_ROTATED = auto()
+    VAULT_ACCESS_DENIED = auto()
+    VAULT_ACCESS_GRANTED = auto()
+    VAULT_AUDIT_ENTRY = auto()
+    VAULT_SCAN_STARTED = auto()
+    VAULT_SCAN_COMPLETED = auto()
+    VAULT_SCAN_SECRET_FOUND = auto()
+    VAULT_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

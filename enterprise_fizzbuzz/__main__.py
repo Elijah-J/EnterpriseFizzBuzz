@@ -177,6 +177,18 @@ from enterprise_fizzbuzz.infrastructure.message_queue import (
     Producer,
     create_message_queue_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.secrets_vault import (
+    DynamicSecretEngine,
+    SecretRotationScheduler,
+    SecretScanner,
+    SecretStore,
+    ShamirSecretSharing,
+    VaultAccessPolicy,
+    VaultAuditLog,
+    VaultDashboard,
+    VaultMiddleware,
+    VaultSealManager,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -883,6 +895,43 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--mq-lag",
         action="store_true",
         help="Display consumer lag report after execution",
+    )
+
+    # Secrets Management Vault
+    parser.add_argument(
+        "--vault",
+        action="store_true",
+        help="Enable the Secrets Management Vault with Shamir's Secret Sharing (the number 3 deserves better security)",
+    )
+
+    parser.add_argument(
+        "--vault-unseal",
+        action="store_true",
+        help="Automatically unseal the vault using generated shares (because manual key ceremonies are tedious)",
+    )
+
+    parser.add_argument(
+        "--vault-status",
+        action="store_true",
+        help="Display the vault status and seal state after execution",
+    )
+
+    parser.add_argument(
+        "--vault-scan",
+        action="store_true",
+        help="Run the AST-based secret scanner on the codebase (flags ALL integer literals)",
+    )
+
+    parser.add_argument(
+        "--vault-dashboard",
+        action="store_true",
+        help="Display the comprehensive vault ASCII dashboard after execution",
+    )
+
+    parser.add_argument(
+        "--vault-rotate",
+        action="store_true",
+        help="Force an immediate rotation of all rotatable secrets",
     )
 
     return parser
@@ -1771,6 +1820,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("ab_testing")
         if args.mq:
             active_subsystems.append("message_queue")
+        if args.vault:
+            active_subsystems.append("secrets_vault")
         if strategy == EvaluationStrategy.MACHINE_LEARNING:
             active_subsystems.append("ml_inference")
 
@@ -1927,6 +1978,171 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Message queue not enabled. Use --mq to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Secrets Management Vault setup
+    # ----------------------------------------------------------------
+    vault_seal_manager = None
+    vault_secret_store = None
+    vault_audit_log = None
+    vault_rotation_scheduler = None
+    vault_middleware = None
+    vault_scan_findings = None
+
+    if args.vault or args.vault_status or args.vault_scan or args.vault_dashboard or args.vault_rotate:
+        shamir = ShamirSecretSharing(
+            threshold=config.vault_shamir_threshold,
+            num_shares=config.vault_shamir_num_shares,
+        )
+        vault_seal_manager = VaultSealManager(
+            shamir=shamir,
+            event_bus=event_bus,
+        )
+        vault_audit_log = VaultAuditLog()
+        vault_access_policy = VaultAccessPolicy(config.vault_access_policies)
+
+        # Initialize the vault
+        unseal_shares = vault_seal_manager.initialize()
+
+        # Auto-unseal if requested (or always auto-unseal for convenience)
+        if args.vault_unseal or args.vault:
+            for share in unseal_shares[:config.vault_shamir_threshold]:
+                vault_seal_manager.submit_unseal_share(share)
+
+        if not vault_seal_manager.is_sealed:
+            # Create secret store with the master key
+            master_key_bytes = vault_seal_manager.get_master_key_bytes()
+            vault_secret_store = SecretStore(master_key_bytes)
+
+            # Populate with FizzBuzz configuration secrets
+            vault_secret_store.put(
+                "fizzbuzz/rules/fizz_divisor", "3",
+                metadata={"description": "The sacred Fizz divisor"},
+            )
+            vault_secret_store.put(
+                "fizzbuzz/rules/buzz_divisor", "5",
+                metadata={"description": "The venerable Buzz divisor"},
+            )
+            vault_secret_store.put(
+                "fizzbuzz/blockchain/difficulty", str(args.mining_difficulty),
+                metadata={"description": "Proof-of-work mining difficulty"},
+            )
+            vault_secret_store.put(
+                "fizzbuzz/ml/learning_rate", "0.1",
+                metadata={"description": "Neural network learning rate"},
+            )
+            vault_secret_store.put(
+                "fizzbuzz/cache/ttl_seconds", str(config.cache_ttl_seconds),
+                metadata={"description": "Cache TTL in seconds"},
+            )
+            vault_secret_store.put(
+                "fizzbuzz/sla/latency_threshold_ms", str(config.sla_latency_threshold_ms),
+                metadata={"description": "SLA latency threshold"},
+            )
+            vault_secret_store.put(
+                "fizzbuzz/infrastructure/token_secret",
+                config.rbac_token_secret,
+                metadata={"description": "RBAC token signing secret"},
+            )
+
+            # Set up rotation scheduler
+            if config.vault_rotation_enabled:
+                vault_rotation_scheduler = SecretRotationScheduler(
+                    secret_store=vault_secret_store,
+                    rotatable_paths=config.vault_rotatable_secrets,
+                    interval_evaluations=config.vault_rotation_interval,
+                    event_bus=event_bus,
+                )
+
+                # Register rotation generators
+                import random as _vault_random
+                vault_rotation_scheduler.register_generator(
+                    "fizzbuzz/blockchain/difficulty",
+                    lambda: str(_vault_random.randint(1, 5)),
+                )
+                vault_rotation_scheduler.register_generator(
+                    "fizzbuzz/ml/learning_rate",
+                    lambda: str(round(_vault_random.uniform(0.001, 0.5), 4)),
+                )
+                vault_rotation_scheduler.register_generator(
+                    "fizzbuzz/cache/ttl_seconds",
+                    lambda: str(_vault_random.randint(60, 7200)),
+                )
+                vault_rotation_scheduler.register_generator(
+                    "fizzbuzz/sla/latency_threshold_ms",
+                    lambda: str(round(_vault_random.uniform(10.0, 500.0), 1)),
+                )
+
+            # Create vault middleware
+            vault_middleware = VaultMiddleware(
+                seal_manager=vault_seal_manager,
+                secret_store=vault_secret_store,
+                audit_log=vault_audit_log,
+                rotation_scheduler=vault_rotation_scheduler,
+                event_bus=event_bus,
+            )
+
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | VAULT: Secrets Management ENABLED & UNSEALED            |\n"
+                "  | Shamir's Secret Sharing: 3-of-5 threshold scheme        |\n"
+                "  | Encryption: Military-Grade Double-Base64 + XOR          |\n"
+                "  | The number 3 is now behind enterprise-grade security.   |\n"
+                "  | Actual security provided: approximately zero.           |\n"
+                "  +---------------------------------------------------------+"
+            )
+        else:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | WARNING: VAULT IS SEALED                                |\n"
+                "  | The vault requires 3-of-5 unseal shares to operate.    |\n"
+                "  | Use --vault-unseal to auto-submit shares.               |\n"
+                "  | Vault-dependent operations will be skipped.             |\n"
+                "  | The FizzBuzz secrets remain imprisoned.                 |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+        # Handle --vault-scan (can run regardless of seal state)
+        if args.vault_scan:
+            scanner = SecretScanner(
+                flag_integers=config.vault_scanner_flag_integers,
+            )
+            vault_scan_findings = []
+            for scan_path in config.vault_scanner_paths:
+                vault_scan_findings.extend(scanner.scan_directory(scan_path))
+
+            print(VaultDashboard.render_scan_report(
+                vault_scan_findings,
+                width=config.vault_dashboard_width,
+            ))
+
+        # Handle --vault-rotate (force immediate rotation)
+        if args.vault_rotate and vault_rotation_scheduler is not None and vault_secret_store is not None:
+            # Force rotation by setting evaluation count to interval boundary
+            vault_rotation_scheduler._evaluation_count = config.vault_rotation_interval - 1
+            rotated = vault_rotation_scheduler.tick()
+            if rotated:
+                print(f"\n  Force-rotated {len(rotated)} secrets: {', '.join(rotated)}\n")
+            else:
+                print("\n  No secrets were rotated (no generators registered).\n")
+
+    elif args.vault_status or args.vault_dashboard:
+        print("\n  Vault not enabled. Use --vault to enable.\n")
+        if not (args.vault_scan):
+            pass  # Continue execution
+    elif args.vault_scan:
+        # Allow scanning without full vault setup
+        scanner = SecretScanner(
+            flag_integers=config.vault_scanner_flag_integers,
+        )
+        vault_scan_findings = []
+        for scan_path in config.vault_scanner_paths:
+            vault_scan_findings.extend(scanner.scan_directory(scan_path))
+
+        print(VaultDashboard.render_scan_report(
+            vault_scan_findings,
+            width=config.vault_dashboard_width,
+        ))
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -2076,6 +2292,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if mq_middleware is not None:
         builder.with_middleware(mq_middleware)
+
+    if vault_middleware is not None:
+        builder.with_middleware(vault_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -2620,6 +2839,44 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.mq_lag:
             print(MQDashboard.render_lag(mq_broker, width=config.mq_dashboard_width + 4))
+
+    # Vault dashboard and status
+    if args.vault_dashboard and vault_seal_manager is not None:
+        print(VaultDashboard.render(
+            seal_manager=vault_seal_manager,
+            secret_store=vault_secret_store,
+            audit_log=vault_audit_log,
+            rotation_scheduler=vault_rotation_scheduler,
+            scan_findings=vault_scan_findings,
+            width=config.vault_dashboard_width,
+        ))
+    elif args.vault_dashboard:
+        print("\n  Vault not enabled. Use --vault to enable.\n")
+
+    if args.vault_status and vault_seal_manager is not None:
+        seal_status = "SEALED" if vault_seal_manager.is_sealed else "UNSEALED"
+        init_status = "YES" if vault_seal_manager.is_initialized else "NO"
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | VAULT STATUS                                            |\n"
+            "  +---------------------------------------------------------+\n"
+            f"  | Status:     {seal_status:<45}|\n"
+            f"  | Initialized: {init_status:<44}|\n"
+            f"  | Shares:     {vault_seal_manager.shares_submitted}/{vault_seal_manager.shares_required}"
+            + " " * max(0, 44 - len(f"{vault_seal_manager.shares_submitted}/{vault_seal_manager.shares_required}"))
+            + "|\n"
+            "  +---------------------------------------------------------+"
+        )
+        if vault_secret_store is not None:
+            print(f"  | Secrets:    {vault_secret_store.total_secrets:<45}|")
+            print(f"  | Versions:   {vault_secret_store.total_versions:<45}|")
+            print("  +---------------------------------------------------------+")
+        if vault_audit_log is not None:
+            print(f"  | Audit Entries: {vault_audit_log.total_entries:<42}|")
+            print("  +---------------------------------------------------------+")
+        print()
+    elif args.vault_status:
+        print("\n  Vault not enabled. Use --vault to enable.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:
