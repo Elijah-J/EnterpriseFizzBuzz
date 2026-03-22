@@ -697,6 +697,89 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                 "contact_email": "bob.mcfizzington@enterprise.example.com",
                 "license_name": "Enterprise FizzBuzz Public License v1.0",
             },
+            "api_gateway": {
+                "enabled": False,
+                "versions": {
+                    "v1": {
+                        "status": "DEPRECATED",
+                        "sunset_date": "2025-12-31",
+                        "deprecation_urgency": "CRITICAL",
+                    },
+                    "v2": {
+                        "status": "ACTIVE",
+                        "sunset_date": None,
+                        "deprecation_urgency": None,
+                    },
+                    "v3": {
+                        "status": "ACTIVE",
+                        "sunset_date": None,
+                        "deprecation_urgency": None,
+                    },
+                },
+                "default_version": "v2",
+                "routes": [
+                    {
+                        "path": "/api/{version}/fizzbuzz/{number}",
+                        "method": "GET",
+                        "handler": "evaluate_number",
+                        "versions": ["v1", "v2", "v3"],
+                        "description": "Evaluate a single number through the FizzBuzz pipeline",
+                    },
+                    {
+                        "path": "/api/{version}/fizzbuzz/range",
+                        "method": "POST",
+                        "handler": "evaluate_range",
+                        "versions": ["v2", "v3"],
+                        "description": "Evaluate a range of numbers (batch endpoint)",
+                    },
+                    {
+                        "path": "/api/{version}/fizzbuzz/feelings",
+                        "method": "GET",
+                        "handler": "get_feelings",
+                        "versions": ["v2", "v3"],
+                        "description": "How does the FizzBuzz engine feel about its existence?",
+                    },
+                    {
+                        "path": "/api/{version}/health",
+                        "method": "GET",
+                        "handler": "health_check",
+                        "versions": ["v1", "v2", "v3"],
+                        "description": "Gateway health check endpoint",
+                    },
+                    {
+                        "path": "/api/{version}/metrics",
+                        "method": "GET",
+                        "handler": "get_metrics",
+                        "versions": ["v3"],
+                        "description": "Prometheus-style metrics (v3 only)",
+                    },
+                ],
+                "api_keys": {
+                    "default_quota": 1000,
+                    "key_prefix": "efp_",
+                    "key_length": 32,
+                },
+                "transformers": {
+                    "request": {
+                        "normalizer": True,
+                        "enricher": True,
+                        "validator": True,
+                        "deprecation_injector": True,
+                    },
+                    "response": {
+                        "compressor": True,
+                        "pagination_wrapper": True,
+                        "hateoas_enricher": True,
+                    },
+                },
+                "replay_journal": {
+                    "enabled": True,
+                    "max_entries": 10000,
+                },
+                "dashboard": {
+                    "width": 60,
+                },
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -2459,6 +2542,76 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """API license name."""
         self._ensure_loaded()
         return self._raw_config.get("openapi", {}).get("license_name", "Enterprise FizzBuzz Public License v1.0")
+
+    # ----------------------------------------------------------------
+    # API Gateway properties
+    # ----------------------------------------------------------------
+
+    @property
+    def api_gateway_enabled(self) -> bool:
+        """Whether the API Gateway subsystem is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("enabled", False)
+
+    @property
+    def api_gateway_versions(self) -> dict[str, Any]:
+        """Version configuration for the API Gateway."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("versions", {})
+
+    @property
+    def api_gateway_default_version(self) -> str:
+        """Default API version when none is specified."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("default_version", "v2")
+
+    @property
+    def api_gateway_routes(self) -> list[dict[str, Any]]:
+        """Route definitions for the API Gateway."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("routes", [])
+
+    @property
+    def api_gateway_api_keys_default_quota(self) -> int:
+        """Default request quota per API key."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("api_keys", {}).get("default_quota", 1000)
+
+    @property
+    def api_gateway_api_keys_prefix(self) -> str:
+        """Prefix for generated API keys."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("api_keys", {}).get("key_prefix", "efp_")
+
+    @property
+    def api_gateway_api_keys_length(self) -> int:
+        """Length of generated API keys (after prefix)."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("api_keys", {}).get("key_length", 32)
+
+    @property
+    def api_gateway_transformers(self) -> dict[str, Any]:
+        """Transformer configuration for request/response pipelines."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("transformers", {})
+
+    @property
+    def api_gateway_replay_journal_enabled(self) -> bool:
+        """Whether the request replay journal is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("replay_journal", {}).get("enabled", True)
+
+    @property
+    def api_gateway_replay_journal_max_entries(self) -> int:
+        """Maximum entries in the request replay journal."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("replay_journal", {}).get("max_entries", 10000)
+
+    @property
+    def api_gateway_dashboard_width(self) -> int:
+        """ASCII dashboard width for the API Gateway dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("api_gateway", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

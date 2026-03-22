@@ -392,6 +392,19 @@ class EventType(Enum):
     PIPELINE_BACKFILL_COMPLETED = auto()
     PIPELINE_DASHBOARD_RENDERED = auto()
 
+    # API Gateway events
+    GATEWAY_REQUEST_RECEIVED = auto()
+    GATEWAY_REQUEST_ROUTED = auto()
+    GATEWAY_REQUEST_TRANSFORMED = auto()
+    GATEWAY_RESPONSE_TRANSFORMED = auto()
+    GATEWAY_VERSION_RESOLVED = auto()
+    GATEWAY_DEPRECATION_WARNING = auto()
+    GATEWAY_API_KEY_VALIDATED = auto()
+    GATEWAY_API_KEY_REJECTED = auto()
+    GATEWAY_QUOTA_EXCEEDED = auto()
+    GATEWAY_REQUEST_REPLAYED = auto()
+    GATEWAY_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

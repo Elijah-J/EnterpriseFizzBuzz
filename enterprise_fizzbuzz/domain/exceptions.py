@@ -4355,6 +4355,212 @@ class TagNotFoundError(OpenAPIError):
         self.tag_name = tag_name
 
 
+class GatewayError(FizzBuzzError):
+    """Base exception for all API Gateway errors.
+
+    When your API Gateway for a CLI application that has no HTTP server
+    encounters an error, you've achieved a level of architectural ambition
+    that most enterprise architects can only dream of. These exceptions
+    cover everything from route resolution failures to version deprecation
+    tantrums to request transformation meltdowns — all for an API that
+    exists entirely in the imagination of the YAML configuration file.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-GW00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class RouteNotFoundError(GatewayError):
+    """Raised when no route matches the incoming API request path.
+
+    The request arrived at the gateway's door, knocked politely, and
+    was turned away because no route existed to handle it. Perhaps the
+    path was misspelled, perhaps it never existed, or perhaps the
+    routing table was last updated during the previous fiscal quarter.
+    """
+
+    def __init__(self, path: str, method: str) -> None:
+        super().__init__(
+            f"No route found for {method} {path}. The gateway searched "
+            f"every routing table, consulted the map, and found only wilderness.",
+            error_code="EFP-GW01",
+            context={"path": path, "method": method},
+        )
+        self.path = path
+        self.method = method
+
+
+class VersionNotSupportedError(GatewayError):
+    """Raised when the requested API version is not supported.
+
+    The client requested an API version that either never existed,
+    has been deprecated into oblivion, or belongs to a future release
+    that exists only in the product roadmap. Time travel is not yet
+    supported by the Enterprise FizzBuzz Platform gateway.
+    """
+
+    def __init__(self, version: str, supported_versions: list[str]) -> None:
+        super().__init__(
+            f"API version '{version}' is not supported. "
+            f"Supported versions: {', '.join(supported_versions)}. "
+            f"The gateway recommends upgrading to a version that exists.",
+            error_code="EFP-GW02",
+            context={"version": version, "supported_versions": supported_versions},
+        )
+        self.version = version
+        self.supported_versions = supported_versions
+
+
+class VersionDeprecatedError(GatewayError):
+    """Raised when the requested API version is deprecated.
+
+    The client is clinging to an API version that has been formally
+    deprecated. Like a software archaeologist unearthing ancient
+    endpoints, you are accessing routes that time forgot. The Sunset
+    header has been set. The countdown has begun. Please migrate
+    before the version is removed entirely and your requests fall
+    into the void.
+    """
+
+    def __init__(self, version: str, sunset_date: str) -> None:
+        super().__init__(
+            f"API version '{version}' is DEPRECATED. Sunset date: {sunset_date}. "
+            f"Your requests are living on borrowed time. Please migrate "
+            f"to a supported version before it's too late.",
+            error_code="EFP-GW03",
+            context={"version": version, "sunset_date": sunset_date},
+        )
+        self.version = version
+        self.sunset_date = sunset_date
+
+
+class RequestTransformationError(GatewayError):
+    """Raised when a request transformer fails to process the request.
+
+    The request entered the transformation pipeline full of hope and
+    left as a mangled data structure that no downstream handler could
+    parse. The transformer chain is supposed to enrich, normalize,
+    and validate — not destroy. Something went very wrong in the
+    metadata enrichment phase, probably the lunar phase calculator.
+    """
+
+    def __init__(self, transformer_name: str, reason: str) -> None:
+        super().__init__(
+            f"Request transformer '{transformer_name}' failed: {reason}. "
+            f"The request has been irrevocably transformed into something "
+            f"no downstream handler can recognize.",
+            error_code="EFP-GW04",
+            context={"transformer_name": transformer_name, "reason": reason},
+        )
+        self.transformer_name = transformer_name
+
+
+class ResponseTransformationError(GatewayError):
+    """Raised when a response transformer fails to process the response.
+
+    The response was perfectly fine until the transformation pipeline
+    got its hands on it. Now it's been gzipped, base64-encoded,
+    wrapped in pagination metadata, and adorned with HATEOAS links
+    to endpoints that don't exist — and something in that process
+    went sideways.
+    """
+
+    def __init__(self, transformer_name: str, reason: str) -> None:
+        super().__init__(
+            f"Response transformer '{transformer_name}' failed: {reason}. "
+            f"The response has been lost in the transformation pipeline. "
+            f"The original data is irretrievable. Thoughts and prayers.",
+            error_code="EFP-GW05",
+            context={"transformer_name": transformer_name, "reason": reason},
+        )
+        self.transformer_name = transformer_name
+
+
+class APIKeyInvalidError(GatewayError):
+    """Raised when the provided API key is invalid or revoked.
+
+    The API key you presented has been examined by the gateway's
+    key validation service and found to be either invalid, revoked,
+    expired, or simply not a real Enterprise FizzBuzz Platform API key.
+    Perhaps you generated it at a different FizzBuzz platform. Perhaps
+    you made it up. Either way, access is denied with extreme prejudice.
+    """
+
+    def __init__(self, key_prefix: str, reason: str) -> None:
+        super().__init__(
+            f"API key '{key_prefix}...' is invalid: {reason}. "
+            f"Please generate a new key using --api-key-generate.",
+            error_code="EFP-GW06",
+            context={"key_prefix": key_prefix, "reason": reason},
+        )
+
+
+class APIKeyQuotaExceededError(GatewayError):
+    """Raised when an API key has exhausted its request quota.
+
+    Your API key has been used so many times that it has worn out.
+    Like a subway pass that's been swiped too many times, it simply
+    refuses to grant passage. The quota exists to protect the platform
+    from being overwhelmed by excessive FizzBuzz requests, which is
+    a real and present danger in today's fast-paced modulo economy.
+    """
+
+    def __init__(self, key_prefix: str, quota_limit: int, quota_used: int) -> None:
+        super().__init__(
+            f"API key '{key_prefix}...' has exceeded its quota: "
+            f"{quota_used}/{quota_limit} requests consumed. "
+            f"Consider purchasing the Enterprise FizzBuzz Unlimited plan.",
+            error_code="EFP-GW07",
+            context={"key_prefix": key_prefix, "quota_limit": quota_limit, "quota_used": quota_used},
+        )
+
+
+class RequestReplayError(GatewayError):
+    """Raised when request replay from the journal fails.
+
+    The append-only request journal faithfully recorded every request
+    that passed through the gateway. When you asked to replay them,
+    something went wrong — perhaps the journal was corrupted, perhaps
+    the requests reference routes that no longer exist, or perhaps
+    replaying modulo arithmetic requests is simply not as straightforward
+    as the architecture diagrams suggested.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"Request replay failed: {reason}. The journal entries are "
+            f"intact but the replay engine has lost confidence in its "
+            f"ability to re-execute them faithfully.",
+            error_code="EFP-GW08",
+            context={"reason": reason},
+        )
+
+
+class GatewayDashboardRenderError(GatewayError):
+    """Raised when the gateway ASCII dashboard fails to render.
+
+    The dashboard — a lovingly crafted ASCII art visualization of
+    your API Gateway's routing tables, version status, and request
+    statistics — has failed to render. The gateway itself continues
+    to function perfectly; it is only the observation of the gateway
+    that has failed. Schrodinger's dashboard: simultaneously rendered
+    and unrendered until you look at it.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"Gateway dashboard render failed: {reason}. "
+            f"The ASCII art remains undrawn. The statistics unvisualized. "
+            f"The gateway, however, continues to route — unobserved.",
+            error_code="EFP-GW09",
+            context={"reason": reason},
+        )
+
+
 class PipelineDashboardRenderError(DataPipelineError):
     """Raised when the pipeline ASCII dashboard fails to render.
 

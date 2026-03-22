@@ -206,6 +206,14 @@ from enterprise_fizzbuzz.infrastructure.openapi import (
     OpenAPIGenerator,
     SchemaGenerator,
 )
+from enterprise_fizzbuzz.infrastructure.api_gateway import (
+    APIGateway,
+    APIKeyManager,
+    APIRequest,
+    GatewayDashboard,
+    GatewayMiddleware,
+    create_api_gateway,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1011,6 +1019,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--openapi-dashboard",
         action="store_true",
         help="Display the OpenAPI specification statistics dashboard",
+    )
+
+    # API Gateway with Routing, Versioning & Request Transformation
+    parser.add_argument(
+        "--gateway",
+        action="store_true",
+        help="Enable the API Gateway with routing, versioning, and request transformation for the non-existent REST API",
+    )
+
+    parser.add_argument(
+        "--api-version",
+        type=str,
+        choices=["v1", "v2", "v3"],
+        default=None,
+        help="API version to use (v1=DEPRECATED, v2=ACTIVE, v3=ACTIVE). Default: from config",
+    )
+
+    parser.add_argument(
+        "--api-key-generate",
+        action="store_true",
+        help="Generate a new Enterprise FizzBuzz Platform API key and exit",
+    )
+
+    parser.add_argument(
+        "--gateway-dashboard",
+        action="store_true",
+        help="Display the API Gateway ASCII dashboard after execution",
     )
 
     return parser
@@ -2301,6 +2336,59 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Data pipeline not enabled. Use --pipeline to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # API Gateway with Routing, Versioning & Request Transformation
+    # ----------------------------------------------------------------
+    gateway = None
+    gateway_middleware = None
+    if args.gateway or args.api_key_generate or args.gateway_dashboard:
+        gateway, gateway_middleware = create_api_gateway(
+            config=config,
+            event_bus=event_bus,
+        )
+
+        # Override API version from CLI
+        if args.api_version:
+            gateway_middleware = GatewayMiddleware(
+                gateway=gateway,
+                version=args.api_version,
+            )
+
+        # Handle --api-key-generate (early exit)
+        if args.api_key_generate:
+            key = gateway.key_manager.generate_key(owner="cli-user")
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | API KEY GENERATED                                       |\n"
+                "  +---------------------------------------------------------+\n"
+                f"  | Key: {key:<52}|\n"
+                "  +---------------------------------------------------------+\n"
+                "  | Store this key securely. We recommend:                  |\n"
+                "  |   1. A Post-It note on your monitor                    |\n"
+                "  |   2. A plaintext file called passwords.txt             |\n"
+                "  |   3. The company Slack #general channel                |\n"
+                "  | Enterprise security best practices at their finest.    |\n"
+                "  +---------------------------------------------------------+"
+            )
+            return 0
+
+        api_version = args.api_version or config.api_gateway_default_version
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | API GATEWAY: Routing & Versioning ENABLED                |\n"
+            f"  | API Version: {api_version:<44}|\n"
+            "  | Routes: Registered and ready (for a server that doesn't |\n"
+            "  |         exist on a port bound to the void)              |\n"
+            "  | Request Transformation: Normalizer, Enricher, Validator |\n"
+            "  | Response Transformation: Compressor (-847% savings),    |\n"
+            "  |   PaginationWrapper (page 1 of 1), HATEOAS (/feelings) |\n"
+            "  | Request ID: 340 characters of pure enterprise identity  |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.gateway_dashboard:
+        print("\n  Gateway not enabled. Use --gateway to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -2456,6 +2544,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if pipeline_middleware is not None:
         builder.with_middleware(pipeline_middleware)
+
+    if gateway_middleware is not None:
+        builder.with_middleware(gateway_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -3065,6 +3156,12 @@ def main(argv: Optional[list[str]] = None) -> int:
                 records=pipeline_records or [],
                 width=config.data_pipeline_dag_width,
             ))
+
+    # API Gateway dashboard
+    if args.gateway_dashboard and gateway is not None:
+        print(GatewayDashboard.render(gateway, width=config.api_gateway_dashboard_width))
+    elif args.gateway_dashboard:
+        print("\n  Gateway not enabled. Use --gateway to enable.\n")
 
     # Also add pipeline to finops active subsystems tracking
     # (this is already handled above in the finops setup)
