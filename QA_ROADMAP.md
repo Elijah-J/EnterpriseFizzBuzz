@@ -24,8 +24,8 @@ The platform has 14 test files covering the major subsystems (auth, cache, chaos
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 2
-- Remaining: 8
+- Implemented: 3
+- Remaining: 7
 
 ## Test Items
 
@@ -68,7 +68,7 @@ Test the following:
 
 ### 3. Output Formatters (tests/test_formatters.py)
 
-**Status:** PENDING
+**Status:** DONE (49 test methods, 77 with parametrization)
 **Description:** The platform has four output formatters (plain text, JSON, XML, CSV) and none of them have tests. Every formatter implements the `IFormatter` interface and must handle single results, batch results, and session summaries.
 
 Test the following:
