@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 7
-- Remaining: 3
+- Implemented: 8
+- Remaining: 2
 
 ---
 
@@ -229,7 +229,7 @@ Test the following with real subsystem instances:
 
 ### 8. Integration: Dashboard Rendering After Real Evaluations (tests/integration/test_dashboards_live.py)
 
-**Status:** PENDING
+**Status:** DONE (32 tests)
 **Description:** Every subsystem has an ASCII dashboard. Unit tests render dashboards with mock data. No test renders a dashboard after a real evaluation session and verifies it contains actual, non-zero metrics from the run. A dashboard full of zeros is a dashboard that proves nothing.
 
 Test the following by running real evaluations and then rendering the corresponding dashboard:
