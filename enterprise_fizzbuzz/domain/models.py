@@ -474,6 +474,14 @@ class EventType(Enum):
     GITOPS_RECONCILIATION_COMPLETED = auto()
     GITOPS_DASHBOARD_RENDERED = auto()
 
+    # Formal Verification & Proof System events
+    VERIFICATION_STARTED = auto()
+    VERIFICATION_PROPERTY_CHECKED = auto()
+    VERIFICATION_PROOF_CONSTRUCTED = auto()
+    VERIFICATION_HOARE_TRIPLE_CHECKED = auto()
+    VERIFICATION_COMPLETED = auto()
+    VERIFICATION_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

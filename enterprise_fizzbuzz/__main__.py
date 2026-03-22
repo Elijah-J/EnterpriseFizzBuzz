@@ -189,6 +189,11 @@ from enterprise_fizzbuzz.infrastructure.secrets_vault import (
     VaultMiddleware,
     VaultSealManager,
 )
+from enterprise_fizzbuzz.infrastructure.formal_verification import (
+    PropertyType,
+    PropertyVerifier,
+    VerificationDashboard,
+)
 from enterprise_fizzbuzz.infrastructure.gitops import (
     GitOpsController,
     GitOpsDashboard,
@@ -1262,6 +1267,34 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Detect configuration drift between committed and running state",
     )
 
+    # Formal Verification & Proof System
+    parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="Run the Formal Verification engine: prove totality, determinism, completeness, and correctness of FizzBuzz evaluation via structural induction",
+    )
+
+    parser.add_argument(
+        "--verify-property",
+        type=str,
+        choices=["totality", "determinism", "completeness", "correctness"],
+        default=None,
+        metavar="PROPERTY",
+        help="Verify a single property (totality | determinism | completeness | correctness)",
+    )
+
+    parser.add_argument(
+        "--proof-tree",
+        action="store_true",
+        help="Display the Gentzen-style natural deduction proof tree for the induction proof",
+    )
+
+    parser.add_argument(
+        "--verify-dashboard",
+        action="store_true",
+        help="Display the Formal Verification ASCII dashboard with QED status and proof obligations",
+    )
+
     return parser
 
 
@@ -1391,6 +1424,89 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
             return 0
+
+    # ----------------------------------------------------------------
+    # Formal Verification & Proof System (early exit commands)
+    # ----------------------------------------------------------------
+    if args.verify or args.verify_property or args.proof_tree or args.verify_dashboard:
+        verifier = PropertyVerifier(
+            rules=config.rules,
+            proof_depth=config.formal_verification_proof_depth,
+            timeout_ms=config.formal_verification_timeout_ms,
+        )
+
+        if args.verify_property:
+            # Verify a single property
+            prop_map = {
+                "totality": ("verify_totality", "TOTALITY"),
+                "determinism": ("verify_determinism", "DETERMINISM"),
+                "completeness": ("verify_completeness", "COMPLETENESS"),
+                "correctness": ("verify_correctness", "CORRECTNESS"),
+            }
+            method_name, prop_name = prop_map[args.verify_property]
+            print(
+                "  +---------------------------------------------------------+\n"
+                f"  | FORMAL VERIFICATION: {prop_name:<35}|\n"
+                "  | Verifying property against StandardRuleEngine oracle... |\n"
+                "  +---------------------------------------------------------+"
+            )
+            print()
+
+            obligation = getattr(verifier, method_name)()
+            status_icon = "\u2713 QED" if obligation.is_discharged else "\u2717 FAIL"
+            print(f"  [{status_icon}] {prop_name}: {obligation.description}")
+            print(f"  Time: {obligation.elapsed_ms:.2f}ms")
+            if obligation.counterexample is not None:
+                print(f"  Counterexample: {obligation.counterexample}")
+            print()
+
+            if obligation.proof_tree is not None and args.proof_tree:
+                from enterprise_fizzbuzz.infrastructure.formal_verification import VerificationReport
+                mini_report = VerificationReport(
+                    obligations=[obligation],
+                    total_elapsed_ms=obligation.elapsed_ms,
+                    proof_depth=config.formal_verification_proof_depth,
+                    rules=config.rules,
+                )
+                print(VerificationDashboard.render_proof_tree(
+                    mini_report, width=config.formal_verification_dashboard_width
+                ))
+
+            return 0
+
+        # Full verification
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | ENTERPRISE FIZZBUZZ FORMAL VERIFICATION ENGINE           |\n"
+            "  | Constructing proofs of totality, determinism,            |\n"
+            "  | completeness, and correctness via structural induction.  |\n"
+            "  | Because trust is earned, not assumed.                    |\n"
+            "  +---------------------------------------------------------+"
+        )
+        print()
+        print(f"  Proof depth: {config.formal_verification_proof_depth}")
+        print(f"  Rules: {len(config.rules)}")
+        print()
+
+        report = verifier.verify_all()
+
+        # Print summary
+        print(report.summary())
+        print()
+
+        # Print proof tree if requested
+        if args.proof_tree:
+            print(VerificationDashboard.render_proof_tree(
+                report, width=config.formal_verification_dashboard_width
+            ))
+
+        # Print dashboard if requested
+        if args.verify_dashboard:
+            print(VerificationDashboard.render(
+                report, width=config.formal_verification_dashboard_width
+            ))
+
+        return 0
 
     # ----------------------------------------------------------------
     # Configuration Diff (--config-diff, early exit)
