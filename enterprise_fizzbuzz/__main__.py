@@ -69,7 +69,7 @@ from enterprise_fizzbuzz.infrastructure.middleware import (
     TranslationMiddleware,
     ValidationMiddleware,
 )
-from enterprise_fizzbuzz.domain.models import AuthContext, EvaluationStrategy, FizzBuzzRole, OutputFormat
+from enterprise_fizzbuzz.domain.models import AuthContext, Event, EventType, EvaluationStrategy, FizzBuzzRole, OutputFormat
 from enterprise_fizzbuzz.infrastructure.observers import ConsoleObserver, EventBus, StatisticsObserver
 from enterprise_fizzbuzz.infrastructure.adapters.strategy_adapters import StrategyAdapterFactory
 from enterprise_fizzbuzz.infrastructure.rules_engine import RuleEngineFactory
@@ -353,6 +353,16 @@ from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
     P2PNetwork,
+)
+from enterprise_fizzbuzz.infrastructure.digital_twin import (
+    MonteCarloEngine,
+    PredictiveAnomalyDetector,
+    TwinDashboard,
+    TwinDriftMonitor,
+    TwinMiddleware,
+    TwinModel,
+    StateSync,
+    WhatIfSimulator,
 )
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
@@ -1706,6 +1716,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the P2P Gossip Network ASCII dashboard after execution",
     )
 
+    # Digital Twin Simulation
+    parser.add_argument(
+        "--twin",
+        action="store_true",
+        help="Enable the Digital Twin: a real-time simulation of the platform itself (a simulation of a simulation of n%%3)",
+    )
+
+    parser.add_argument(
+        "--twin-scenario",
+        type=str,
+        metavar="SCENARIO",
+        default=None,
+        help='Run a what-if scenario against the twin (e.g. --twin-scenario "blockchain.latency_ms=1.0;cache.failure_prob=0.5")',
+    )
+
+    parser.add_argument(
+        "--twin-dashboard",
+        action="store_true",
+        help="Display the Digital Twin ASCII dashboard with Monte Carlo histogram and drift gauge",
+    )
+
     return parser
 
 
@@ -2646,7 +2677,6 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         # Handle --webhook-test
         if args.webhook_test:
-            from enterprise_fizzbuzz.domain.models import Event, EventType
             test_event = Event(
                 event_type=EventType.SESSION_STARTED,
                 payload={"test": True, "message": "Webhook connectivity test"},
@@ -4143,6 +4173,94 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # Digital Twin Simulation setup
+    # ----------------------------------------------------------------
+    twin_model = None
+    twin_middleware = None
+    twin_mc_result = None
+    twin_drift_monitor = None
+    twin_anomaly_detector = None
+    twin_what_if_result = None
+    twin_state_sync = None
+
+    if args.twin or args.twin_dashboard or args.twin_scenario:
+        # Detect which subsystems are active to build the component graph
+        active_flags: dict[str, bool] = {
+            "cache": args.cache,
+            "circuit_breaker": args.circuit_breaker,
+            "blockchain": args.blockchain,
+            "tracing": tracing_enabled,
+            "sla_monitor": args.sla,
+            "compliance": args.compliance,
+            "service_mesh": args.service_mesh,
+            "chaos_monkey": args.chaos,
+            "finops": args.finops,
+            "event_sourcing": args.event_sourcing,
+            "feature_flags": args.feature_flags,
+        }
+
+        twin_model = TwinModel(
+            active_flags=active_flags,
+            jitter_stddev=config.digital_twin_jitter_stddev,
+            failure_jitter=config.digital_twin_failure_jitter,
+        )
+
+        twin_drift_monitor = TwinDriftMonitor(
+            threshold_fdu=config.digital_twin_drift_threshold_fdu,
+        )
+
+        twin_anomaly_detector = PredictiveAnomalyDetector(
+            anomaly_sigma=config.digital_twin_anomaly_sigma,
+        )
+
+        # Subscribe state sync observer
+        twin_state_sync = StateSync(twin_model)
+        event_bus.subscribe(twin_state_sync)
+
+        # Run Monte Carlo simulation
+        mc_engine = MonteCarloEngine(twin_model)
+        twin_mc_result = mc_engine.run(n=config.digital_twin_monte_carlo_runs)
+
+        # Build twin middleware
+        twin_middleware = TwinMiddleware(
+            model=twin_model,
+            anomaly_detector=twin_anomaly_detector,
+            drift_monitor=twin_drift_monitor,
+            event_bus=event_bus,
+        )
+
+        # Run what-if scenario if provided
+        if args.twin_scenario:
+            simulator = WhatIfSimulator(twin_model)
+            twin_what_if_result = simulator.simulate_scenario(
+                args.twin_scenario,
+                monte_carlo_runs=min(500, config.digital_twin_monte_carlo_runs),
+            )
+
+        # Publish model-built event
+        event_bus.publish(Event(
+            event_type=EventType.TWIN_MODEL_BUILT,
+            payload={
+                "components": twin_model.component_count,
+                "build_order": twin_model.build_order,
+                "monte_carlo_runs": config.digital_twin_monte_carlo_runs,
+            },
+            source="DigitalTwin",
+        ))
+
+        active_count = sum(1 for v in active_flags.values() if v)
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | DIGITAL TWIN: Simulation Mirror ENABLED                 |\n"
+            f"  | Components: {twin_model.component_count:<44}|\n"
+            f"  | Active optional subsystems: {active_count:<28}|\n"
+            f"  | Monte Carlo runs: {config.digital_twin_monte_carlo_runs:<37}|\n"
+            f"  | Drift threshold: {config.digital_twin_drift_threshold_fdu:.1f} FDU{' ' * 33}|\n"
+            "  | A simulation of a simulation of modulo arithmetic.      |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -4256,6 +4374,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if p2p_middleware is not None:
         builder.with_middleware(p2p_middleware)
+
+    # Add Digital Twin middleware (priority -4, captures full pipeline overhead)
+    if twin_middleware is not None:
+        builder.with_middleware(twin_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -5304,6 +5426,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.p2p_dashboard:
         print("\n  P2P network not enabled. Use --p2p to enable.\n")
+
+    # Digital Twin Dashboard
+    if args.twin_dashboard and twin_model is not None:
+        print(TwinDashboard.render(
+            model=twin_model,
+            mc_result=twin_mc_result,
+            drift_monitor=twin_drift_monitor,
+            anomaly_detector=twin_anomaly_detector,
+            what_if_result=twin_what_if_result,
+            width=config.digital_twin_dashboard_width,
+            show_histogram=config.digital_twin_dashboard_show_histogram,
+            show_drift_gauge=config.digital_twin_dashboard_show_drift_gauge,
+            histogram_buckets=config.digital_twin_histogram_buckets,
+        ))
+    elif args.twin_dashboard:
+        print("\n  Digital Twin not enabled. Use --twin to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

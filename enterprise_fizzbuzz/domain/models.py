@@ -586,6 +586,12 @@ class EventType(Enum):
     P2P_MERKLE_SYNC = auto()
     P2P_DASHBOARD_RENDERED = auto()
 
+    # Digital Twin events
+    TWIN_MODEL_BUILT = auto()
+    TWIN_SIMULATION_COMPLETED = auto()
+    TWIN_DRIFT_DETECTED = auto()
+    TWIN_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

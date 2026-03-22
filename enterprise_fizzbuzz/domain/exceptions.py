@@ -7325,3 +7325,131 @@ class P2PNetworkPartitionError(P2PNetworkError):
         )
         self.partition_a = partition_a
         self.partition_b = partition_b
+
+
+class DigitalTwinError(FizzBuzzError):
+    """Base exception for all Digital Twin simulation errors.
+
+    When your simulation of a simulation of modulo arithmetic encounters
+    an error, you have achieved a level of meta-failure that transcends
+    conventional debugging. These exceptions cover everything from model
+    construction failures to Monte Carlo convergence issues to drift
+    detection meltdowns, all in service of predicting the outcome of
+    n % 3 before actually computing n % 3.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-DT00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class TwinModelConstructionError(DigitalTwinError):
+    """Raised when the digital twin model fails to construct its component DAG.
+
+    The twin attempted to mirror the platform's subsystem topology but
+    encountered a configuration state so degenerate that even a simulation
+    refused to model it. If the real platform is running fine but the twin
+    can't model it, the twin is arguably the smarter one.
+    """
+
+    def __init__(self, component: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to construct twin component '{component}': {reason}. "
+            f"The digital twin has declined to model this subsystem.",
+            error_code="EFP-DT01",
+            context={"component": component, "reason": reason},
+        )
+        self.component = component
+
+
+class TwinSimulationDivergenceError(DigitalTwinError):
+    """Raised when a twin simulation diverges beyond acceptable thresholds.
+
+    The digital twin predicted one outcome and reality delivered another,
+    and the divergence exceeds the configured tolerance. In a real digital
+    twin deployment, this would trigger a model recalibration. Here, it
+    means our prediction of modulo arithmetic was wrong, which raises
+    profound questions about determinism.
+    """
+
+    def __init__(self, predicted: float, actual: float, divergence_fdu: float) -> None:
+        super().__init__(
+            f"Twin simulation diverged: predicted={predicted:.4f}, "
+            f"actual={actual:.4f}, divergence={divergence_fdu:.4f} FDU. "
+            f"The simulation and reality have agreed to disagree.",
+            error_code="EFP-DT02",
+            context={
+                "predicted": predicted,
+                "actual": actual,
+                "divergence_fdu": divergence_fdu,
+            },
+        )
+        self.divergence_fdu = divergence_fdu
+
+
+class MonteCarloConvergenceError(DigitalTwinError):
+    """Raised when the Monte Carlo engine fails to converge within N runs.
+
+    After thousands of random simulations of modulo arithmetic, the
+    statistical distribution refused to stabilize. Either the variance
+    is too high, the sample size too small, or the random number generator
+    has developed opinions about divisibility. In any case, the confidence
+    intervals remain stubbornly wide.
+    """
+
+    def __init__(self, n_simulations: int, variance: float) -> None:
+        super().__init__(
+            f"Monte Carlo failed to converge after {n_simulations} simulations "
+            f"(variance={variance:.6f}). The random number generator appears to "
+            f"be philosophically opposed to convergence.",
+            error_code="EFP-DT03",
+            context={"n_simulations": n_simulations, "variance": variance},
+        )
+        self.n_simulations = n_simulations
+
+
+class WhatIfScenarioParseError(DigitalTwinError):
+    """Raised when a what-if scenario string fails to parse.
+
+    The what-if scenario parser expected 'param=value' pairs but received
+    something that defies syntactic comprehension. The scenario description
+    is neither valid configuration nor valid English, leaving the simulator
+    in a state of existential ambiguity.
+    """
+
+    def __init__(self, scenario: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to parse what-if scenario '{scenario}': {reason}. "
+            f"Expected format: 'param=value;param2=value2'. "
+            f"The simulator cannot hypothesize about unparseable futures.",
+            error_code="EFP-DT04",
+            context={"scenario": scenario, "reason": reason},
+        )
+        self.scenario = scenario
+
+
+class TwinDriftThresholdExceededError(DigitalTwinError):
+    """Raised when cumulative twin drift exceeds the configured FDU threshold.
+
+    The digital twin has drifted so far from reality that it is no longer
+    a useful model of the platform. At this point, the twin is essentially
+    a work of fiction — a speculative narrative about what FizzBuzz might
+    have been, had the universe taken a different path through the modulo
+    landscape.
+    """
+
+    def __init__(self, cumulative_fdu: float, threshold_fdu: float) -> None:
+        super().__init__(
+            f"Cumulative twin drift ({cumulative_fdu:.4f} FDU) exceeds threshold "
+            f"({threshold_fdu:.4f} FDU). The digital twin is now officially "
+            f"fan fiction. Consider rebuilding the model.",
+            error_code="EFP-DT05",
+            context={
+                "cumulative_fdu": cumulative_fdu,
+                "threshold_fdu": threshold_fdu,
+            },
+        )
+        self.cumulative_fdu = cumulative_fdu

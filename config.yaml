@@ -1331,6 +1331,28 @@ p2p:
   dashboard:
     width: 60                                  # ASCII dashboard width
 
+# Digital Twin Simulation configuration
+# Because the only thing more important than running FizzBuzz is running
+# a real-time synchronized simulation of FizzBuzz running, so you can
+# predict what FizzBuzz will do before FizzBuzz does it. The digital twin
+# mirrors every subsystem as a probabilistic component model, walks the
+# component DAG to predict latency and cost, runs Monte Carlo simulations
+# to generate confidence intervals, and detects drift between the twin
+# and reality in FizzBuck Divergence Units (FDUs). It is, in essence,
+# a simulation of a simulation of modulo arithmetic.
+digital_twin:
+  enabled: false                               # Master switch — opt-in via --twin
+  monte_carlo_runs: 1000                       # Number of Monte Carlo simulations per evaluation
+  jitter_stddev: 0.05                          # Standard deviation for Gaussian jitter on component metrics
+  failure_jitter: 0.02                         # Random jitter added to component failure probabilities
+  drift_threshold_fdu: 5.0                     # Maximum cumulative drift in FDU before alarm
+  anomaly_sigma: 2.0                           # Number of standard deviations for anomaly detection
+  dashboard:
+    width: 60                                  # ASCII dashboard width
+    show_histogram: true                       # Show Monte Carlo histogram in dashboard
+    show_drift_gauge: true                     # Show drift gauge in dashboard
+    histogram_buckets: 20                      # Number of histogram buckets for Monte Carlo distribution
+
 # Observer configuration
 observers:
   console_observer:
