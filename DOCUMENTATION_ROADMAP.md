@@ -30,8 +30,8 @@ There is no `docs/` directory, no developer guide, no architecture decision reco
 
 ## Backlog Status
 - Total items: 8
-- Implemented: 6
-- Remaining: 2
+- Implemented: 7
+- Remaining: 1
 
 ## Documentation Items
 
@@ -155,7 +155,8 @@ Each ADR should be 60-120 lines. Use the standard format. Let the decisions spea
 
 ### 7. Exception Catalog (docs/exceptions.md)
 
-**Status:** PENDING
+**Status:** DONE
+**Output path:** `docs/exceptions.md`
 **Description:** The platform has 69 custom exception classes spread across `domain/exceptions.py` and various infrastructure modules. The README mentions the count but doesn't list them. Create a complete catalog.
 
 Cover the following:
