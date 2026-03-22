@@ -379,6 +379,10 @@ from enterprise_fizzbuzz.infrastructure.recommendations import (
     RecommendationDashboard,
     RecommendationEngine,
 )
+from enterprise_fizzbuzz.infrastructure.dependent_types import (
+    ProofEngine,
+    TypeDashboard,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -1821,6 +1825,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--archaeology-dashboard",
         action="store_true",
         help="Display the Archaeological Recovery System ASCII dashboard after execution",
+    )
+
+    # Dependent Type System & Curry-Howard Proof Engine
+    parser.add_argument(
+        "--dependent-types",
+        action="store_true",
+        help="Enable the Dependent Type System & Curry-Howard Proof Engine (every evaluation becomes a theorem)",
+    )
+
+    parser.add_argument(
+        "--prove",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Construct a fully witnessed proof for a specific number (e.g. --prove 15)",
+    )
+
+    parser.add_argument(
+        "--type-check",
+        action="store_true",
+        help="Run bidirectional type checking on all proof terms after evaluation",
+    )
+
+    parser.add_argument(
+        "--types-dashboard",
+        action="store_true",
+        help="Display the Dependent Type System & Curry-Howard Proof Engine ASCII dashboard",
     )
 
     return parser
@@ -4464,6 +4495,50 @@ def main(argv: Optional[list[str]] = None) -> int:
             "  +---------------------------------------------------------+"
         )
 
+    # ----------------------------------------------------------------
+    # Dependent Type System & Curry-Howard Proof Engine setup
+    # ----------------------------------------------------------------
+    proof_engine = None
+    dt_proofs: list = []
+
+    if args.dependent_types or args.prove is not None or args.type_check or args.types_dashboard:
+        proof_engine = ProofEngine(
+            max_beta_reductions=config.dependent_types_max_beta_reductions,
+            max_unification_depth=config.dependent_types_max_unification_depth,
+            enable_cache=config.dependent_types_enable_proof_cache,
+            cache_size=config.dependent_types_proof_cache_size,
+            enable_type_inference=config.dependent_types_enable_type_inference,
+            strict_mode=config.dependent_types_strict_mode,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | DEPENDENT TYPE SYSTEM & CURRY-HOWARD PROOF ENGINE       |\n"
+            "  | Propositions as Types | Proofs as Programs              |\n"
+            "  | Bidirectional type checking | Beta-normalization        |\n"
+            '  | "We replaced n%3==0 with 800 lines of type theory."    |\n'
+            "  | Every modulo is now a theorem. You're welcome.          |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Early exit: prove a single number
+        if args.prove is not None:
+            proof = proof_engine.prove(args.prove)
+            print(TypeDashboard.render_single_proof(
+                proof,
+                width=config.dependent_types_dashboard_width,
+            ))
+            if args.types_dashboard:
+                print(TypeDashboard.render(
+                    proof_engine,
+                    proofs=[proof],
+                    width=config.dependent_types_dashboard_width,
+                    show_curry_howard=config.dependent_types_dashboard_show_curry_howard,
+                    show_proof_tree=config.dependent_types_dashboard_show_proof_tree,
+                    show_complexity_index=config.dependent_types_dashboard_show_complexity_index,
+                ))
+            return 0
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -4975,6 +5050,15 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(f"\n  {locale_mgr.t('messages.wall_clock', time=f'{wall_time_ms:.2f}')}")
         else:
             print(f"\n  Wall clock time: {wall_time_ms:.2f}ms")
+
+    # ----------------------------------------------------------------
+    # Dependent Type System post-execution
+    # ----------------------------------------------------------------
+    if proof_engine is not None and (args.dependent_types or args.type_check):
+        # Prove every number in the range
+        dt_proofs = proof_engine.batch_prove(start, end)
+        print(f"\n  Dependent Types: constructed {len(dt_proofs)} proof(s), "
+              f"avg PCI = {proof_engine.average_complexity_index:.1f}")
 
     # ----------------------------------------------------------------
     # Recommendation Engine post-execution
@@ -5716,6 +5800,19 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.archaeology_dashboard:
         print("\n  Archaeological Recovery System not enabled. Use --archaeology to enable.\n")
+
+    # Dependent Type System Dashboard
+    if args.types_dashboard and proof_engine is not None:
+        print(TypeDashboard.render(
+            proof_engine,
+            proofs=dt_proofs if dt_proofs else None,
+            width=config.dependent_types_dashboard_width,
+            show_curry_howard=config.dependent_types_dashboard_show_curry_howard,
+            show_proof_tree=config.dependent_types_dashboard_show_proof_tree,
+            show_complexity_index=config.dependent_types_dashboard_show_complexity_index,
+        ))
+    elif args.types_dashboard:
+        print("\n  Dependent Type System not enabled. Use --dependent-types to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
