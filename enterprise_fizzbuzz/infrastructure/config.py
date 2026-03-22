@@ -414,6 +414,73 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "compliance": {
+                "enabled": False,
+                "sox": {
+                    "enabled": True,
+                    "segregation_strict": True,
+                    "audit_trail_retention_days": 2555,
+                    "personnel_roster": [
+                        {
+                            "name": "Alice Fizzworth",
+                            "title": "Senior Fizz Evaluation Specialist",
+                            "clearance": "FIZZ_CLEARED",
+                        },
+                        {
+                            "name": "Charlie Buzzman",
+                            "title": "Principal Buzz Assessment Engineer",
+                            "clearance": "BUZZ_CLEARED",
+                        },
+                        {
+                            "name": "Diana Formatson",
+                            "title": "Chief Output Formatting Officer",
+                            "clearance": "FORMAT_CLEARED",
+                        },
+                        {
+                            "name": "Eve Auditrix",
+                            "title": "Director of FizzBuzz Audit & Compliance",
+                            "clearance": "AUDIT_CLEARED",
+                        },
+                        {
+                            "name": "Frank Oversite",
+                            "title": "VP of Modulo Governance",
+                            "clearance": "OVERSIGHT_CLEARED",
+                        },
+                    ],
+                },
+                "gdpr": {
+                    "enabled": True,
+                    "auto_consent": True,
+                    "consent_expiry_days": 365,
+                    "data_retention_days": 90,
+                    "erasure_enabled": True,
+                    "dpo_email": "dpo@enterprise-fizzbuzz.example.com",
+                },
+                "hipaa": {
+                    "enabled": True,
+                    "minimum_necessary_level": "OPERATIONS",
+                    "encryption_algorithm": "military_grade_base64",
+                    "phi_audit_logging": True,
+                    "covered_entity": "Enterprise FizzBuzz Healthcare Division",
+                },
+                "compliance_officer": {
+                    "name": "Bob McFizzington",
+                    "title": "Chief FizzBuzz Compliance Officer",
+                    "email": "bob.compliance@enterprise-fizzbuzz.example.com",
+                    "phone": "+1-555-COMPLY",
+                    "stress_level": 94.7,
+                    "available": False,
+                    "certifications": [
+                        "Certified FizzBuzz Compliance Auditor (CFCA)",
+                        "SOX Section 404 FizzBuzz Controls Specialist",
+                        "GDPR Data Protection FizzBuzz Practitioner",
+                        "HIPAA Privacy Officer for Modulo Operations",
+                    ],
+                },
+                "dashboard": {
+                    "width": 60,
+                },
+            },
             "observers": {
                 "console_observer": {"enabled": False},
                 "statistics_observer": {"enabled": True},
@@ -1566,6 +1633,100 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """ASCII dashboard width in characters."""
         self._ensure_loaded()
         return self._raw_config.get("rate_limiting", {}).get("dashboard", {}).get("width", 60)
+
+    # ----------------------------------------------------------------
+    # Compliance & Regulatory Framework configuration properties
+    # ----------------------------------------------------------------
+
+    @property
+    def compliance_enabled(self) -> bool:
+        """Whether the Compliance & Regulatory Framework is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("enabled", False)
+
+    @property
+    def compliance_sox_enabled(self) -> bool:
+        """Whether SOX compliance is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("sox", {}).get("enabled", True)
+
+    @property
+    def compliance_sox_segregation_strict(self) -> bool:
+        """Whether SOX strict segregation of duties is enforced."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("sox", {}).get("segregation_strict", True)
+
+    @property
+    def compliance_sox_personnel_roster(self) -> list[dict[str, str]]:
+        """The virtual personnel roster for SOX duty assignment."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("sox", {}).get("personnel_roster", [])
+
+    @property
+    def compliance_gdpr_enabled(self) -> bool:
+        """Whether GDPR compliance is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("gdpr", {}).get("enabled", True)
+
+    @property
+    def compliance_gdpr_auto_consent(self) -> bool:
+        """Whether GDPR consent is auto-granted."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("gdpr", {}).get("auto_consent", True)
+
+    @property
+    def compliance_gdpr_erasure_enabled(self) -> bool:
+        """Whether GDPR right-to-erasure is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("gdpr", {}).get("erasure_enabled", True)
+
+    @property
+    def compliance_hipaa_enabled(self) -> bool:
+        """Whether HIPAA compliance is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("hipaa", {}).get("enabled", True)
+
+    @property
+    def compliance_hipaa_minimum_necessary_level(self) -> str:
+        """The default HIPAA minimum necessary access level."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("hipaa", {}).get("minimum_necessary_level", "OPERATIONS")
+
+    @property
+    def compliance_hipaa_encryption_algorithm(self) -> str:
+        """The HIPAA 'encryption' algorithm (military-grade base64)."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("hipaa", {}).get("encryption_algorithm", "military_grade_base64")
+
+    @property
+    def compliance_officer_name(self) -> str:
+        """The name of the Chief Compliance Officer."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("compliance_officer", {}).get("name", "Bob McFizzington")
+
+    @property
+    def compliance_officer_stress_level(self) -> float:
+        """Bob McFizzington's current stress level (percentage)."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("compliance_officer", {}).get("stress_level", 94.7)
+
+    @property
+    def compliance_officer_available(self) -> bool:
+        """Whether the compliance officer is available (spoiler: no)."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("compliance_officer", {}).get("available", False)
+
+    @property
+    def compliance_officer_certifications(self) -> list[str]:
+        """The compliance officer's certifications."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("compliance_officer", {}).get("certifications", [])
+
+    @property
+    def compliance_dashboard_width(self) -> int:
+        """ASCII dashboard width for compliance dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("compliance", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

@@ -2,8 +2,8 @@
 
 ## Backlog Status
 - Total ideas: 6
-- Implemented: 1
-- Remaining: 5
+- Implemented: 2
+- Remaining: 4
 
 ## Feature Ideas
 
@@ -45,7 +45,7 @@
 **Estimated complexity:** Medium
 
 ### 3. Compliance & Regulatory Framework (SOX, GDPR, HIPAA for FizzBuzz Data)
-**Status:** PENDING
+**Status:** DONE
 **Tagline:** "FizzBuzz is now SOX-compliant, GDPR-ready, and HIPAA-adjacent, because regulatory overhead is the truest measure of enterprise maturity."
 **Description:** Implement a comprehensive compliance and regulatory framework that subjects every FizzBuzz evaluation to the same regulatory scrutiny normally reserved for financial transactions, personal health records, and nuclear launch codes. The framework supports three compliance regimes: **SOX (Sarbanes-Oxley)** -- every evaluation must have an auditable chain of custody, segregation of duties (the component that determines divisibility cannot also format the output), and quarterly compliance attestation reports signed by the Chief FizzBuzz Officer (Bob McFizzington, who holds all C-level titles); **GDPR** -- numbers are classified as Personally Identifiable Information (a number could be someone's age, phone digit, or favorite integer, and under GDPR's broad definition of PII, even the number 7 has privacy rights), requiring consent tracking, right-to-erasure support (the `forget` command purges a number from the evaluation cache, event store, blockchain, and ML training data, then generates a Data Deletion Certificate), and a Data Protection Impact Assessment for each new evaluation strategy; **HIPAA** -- FizzBuzz results are treated as Protected Health Information (if a hospital patient's room number is 15 and the evaluation result is "FizzBuzz," that's technically PHI), requiring encryption at rest (base64, naturally), access logging, and a minimum necessary rule (the formatting service only receives the classification result, not the original number -- information compartmentalization at its finest). The framework includes a Compliance Dashboard that shows the current compliance posture across all three regimes, a Policy Engine that evaluates compliance rules as a decision tree before each operation, and an automated audit report generator that produces a 50-page compliance summary (in ASCII, because PDF generation would require a third-party library and violate the "pure stdlib" policy). Non-compliant evaluations are quarantined in a `ComplianceHold` state until a compliance officer (Bob) manually approves them via the `--compliance-approve` flag.
 **Why it's enterprise:** Real enterprises spend 30-40% of engineering effort on compliance. EnterpriseFizzBuzz was leaving regulatory debt on the table by not treating `evaluate(42)` as a regulated financial transaction. Under SOX, every FizzBuzz result is now an "internal control" that must be independently verifiable -- the blockchain audit trail finally has a regulatory justification beyond "it seemed cool." Under GDPR, the right-to-erasure implementation is particularly delightful: when a user exercises their right to be forgotten for the number 42, the system must purge it from the in-memory cache (easy), the event store (hard, because event stores are append-only by design), the blockchain (impossible, because immutability is the whole point), and the neural network's training data (requires retraining the model from scratch without the number 42, which subtly changes the weights and means the model has technically "forgotten" it). The HIPAA minimum-necessary rule creates a beautiful information flow problem: the `ClassificationService` knows the number but not the result, the `FormattingService` knows the result but not the number, and the `AuditService` knows both but is sworn to secrecy.

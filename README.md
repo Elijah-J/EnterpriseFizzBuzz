@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**56,000+ lines** across **108+ files** with **2,257 unit tests** and **143 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**59,000+ lines** across **111+ files** with **2,335 unit tests** and **151 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ## Architecture
 
@@ -47,7 +47,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
     |   rules_engine, ml_engine, blockchain, circuit_breaker,        |
     |   tracing, auth, i18n, event_sourcing, chaos, feature_flags,   |
     |   sla, cache, migrations, webhooks, service_mesh, hot_reload,  |
-    |   rate_limiter                                                  |
+    |   rate_limiter, compliance                                      |
     |                                                                |
     |   +-------------------------------------------------------+   |
     |   |                   APPLICATION                          |   |
@@ -71,7 +71,7 @@ The codebase follows **Clean Architecture** (a.k.a. **Hexagonal Architecture**, 
 
 ```
 EnterpriseFizzBuzz/
-├── main.py                          # CLI entry point with 55 flags
+├── main.py                          # CLI entry point with 63 flags
 ├── config.yaml                      # YAML-based configuration with 13 sections
 │
 ├── enterprise_fizzbuzz/             # Clean Architecture package root
@@ -81,7 +81,7 @@ EnterpriseFizzBuzz/
 │   ├── domain/                      # THE INNER CIRCLE (no outward dependencies)
 │   │   ├── __init__.py
 │   │   ├── models.py                # Dataclasses, enums, and domain models
-│   │   ├── exceptions.py            # Custom exception hierarchy (129 exception classes)
+│   │   ├── exceptions.py            # Custom exception hierarchy (151 exception classes)
 │   │   └── interfaces.py            # Abstract base classes for everything
 │   │
 │   ├── application/                 # USE CASES (depends only on domain)
@@ -123,6 +123,7 @@ EnterpriseFizzBuzz/
 │       ├── service_mesh.py          # Service Mesh Simulation with 7 microservices, sidecar proxies, mTLS, and canary routing (~1,839 lines)
 │       ├── hot_reload.py            # Configuration Hot-Reload with Single-Node Raft Consensus (~1,787 lines)
 │       ├── rate_limiter.py          # Rate Limiting & API Quota Management with Token Bucket, Sliding Window, and Burst Credits (~1,196 lines)
+│       ├── compliance.py           # Compliance & Regulatory Framework: SOX/GDPR/HIPAA for FizzBuzz data (~1,498 lines)
 │       └── persistence/             # Repository Pattern with three storage backends (~700 lines)
 │           ├── __init__.py           # Factory + public API re-exports
 │           ├── in_memory.py          # In-memory repository (Python dicts, because simplicity is a sin)
@@ -138,6 +139,7 @@ EnterpriseFizzBuzz/
 │   ├── config.py → enterprise_fizzbuzz.infrastructure.config
 │   ├── ... (one stub per original module)
 │   ├── tracing.py → enterprise_fizzbuzz.infrastructure.tracing
+│   ├── compliance.py → enterprise_fizzbuzz.infrastructure.compliance
 │   └── loc.py → enterprise_fizzbuzz.infrastructure.utils.loc
 │
 ├── locales/                         # Proprietary .fizztranslation locale files
@@ -169,6 +171,7 @@ EnterpriseFizzBuzz/
     ├── test_service_mesh.py         # 83 service mesh, sidecar proxy, mTLS, and canary routing tests
     ├── test_hot_reload.py           # 92 hot-reload, Raft consensus, config diff, and rollback tests
     ├── test_rate_limiter.py          # 79 rate limiting, token bucket, sliding window, burst credit, and quota reservation tests
+    ├── test_compliance.py           # 78 compliance, SOX segregation, GDPR consent/erasure, HIPAA minimum necessary, and dashboard tests
     ├── test_container.py            # DI Container lifecycle, auto-wiring, and cycle detection tests
     ├── test_contract_coverage.py    # Meta-test: ensures every port/interface has a contract test (quis custodiet ipsos custodes)
     ├── test_no_service_location.py  # Architectural guard: no service-locator anti-pattern in production code
@@ -286,6 +289,13 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 | Burst Credits | `rate_limiter.py` | Unused quota from previous windows carries over as burst credits (up to a configurable maximum), because loyalty should be rewarded even in rate limiting -- the rate-limiting equivalent of airline miles |
 | Quota Reservation | `rate_limiter.py` | Pre-books evaluation capacity for scheduled batch operations with reservation expiry, because spontaneous FizzBuzz is for amateurs who don't plan their modulo operations 30 seconds in advance |
 | Rate Limit Middleware | `rate_limiter.py` | Pipeline middleware that intercepts every evaluation and enforces rate limits before the number reaches the rule engine, because unrestricted access to the modulo operator is a denial-of-service vulnerability |
+| SOX Segregation of Duties | `compliance.py` | No single virtual employee can both evaluate Fizz AND evaluate Buzz -- that would be a conflict of interest so severe it would make Enron's auditors blush. Personnel assignments are tracked and validated per evaluation |
+| GDPR Consent & Right-to-Erasure | `compliance.py` | Every number is a data subject with privacy rights. Consent must be obtained before evaluation, and the right-to-erasure creates THE COMPLIANCE PARADOX: GDPR demands deletion, but the append-only event store and immutable blockchain demand permanence. Both win. Both lose. Bob loses sleep |
+| HIPAA Minimum Necessary Rule | `compliance.py` | FizzBuzz results are Protected Health Information. Access is compartmentalized: the ClassificationService knows the number but not the result, the FormattingService knows the result but not the number, and the AuditService knows both but is sworn to secrecy. "Encryption" is base64. It's military-grade RFC 4648 encoding |
+| Data Classification | `compliance.py` | Five-tier sensitivity classification (PUBLIC, INTERNAL, CONFIDENTIAL, SECRET, TOP_SECRET_FIZZBUZZ) applied to every evaluation result based on its FizzBuzz classification and ML confidence -- because "Fizz" and "Top Secret" are basically the same thing |
+| Compliance Dashboard | `compliance.py` | ASCII dashboard showing per-regime compliance rates, Bob McFizzington's stress level (visual bar chart with mood indicator), data classification distribution, and erasure paradox counter -- because regulatory posture without a dashboard is just anxiety |
+| Policy Decision Point | `compliance.py` | Pre-evaluation compliance gate returning ALLOW, DENY, or QUARANTINE verdicts per regime -- the regulatory equivalent of a bouncer at the modulo operator's nightclub |
+| Compliance Middleware | `compliance.py` | Pipeline middleware (priority 1) that subjects every evaluation to SOX audit trail generation, GDPR consent verification, HIPAA access logging, and data classification -- the most bureaucratic thing to happen to `n % 3` since the IRS discovered integers |
 
 ## Features
 
@@ -318,7 +328,8 @@ The `tests/test_architecture.py` module uses Python's `ast` parser to statically
 - **Service Mesh Simulation** - Seven microservices (`NumberIngestionService`, `DivisibilityService`, `ClassificationService`, `FormattingService`, `AuditService`, `CacheService`, `OrchestratorService`) running in the same process, connected through sidecar proxies with mTLS (base64, obviously), per-service circuit breaking, round-robin/least-connections/random load balancing across "replicas," canary routing to an experimental v2 DivisibilityService, configurable network fault injection (latency and packet loss), health-based service discovery, a mesh control plane with traffic policies, and an ASCII topology diagram -- because decomposing a modulo operation into seven in-memory microservices communicating through base64-encoded messages is exactly the kind of distributed systems design that Google would endorse (if they saw it, which they won't)
 - **Configuration Hot-Reload with Raft Consensus** - A file-watching, config-diffing, dependency-aware reload orchestrator coordinated through a single-node Raft consensus protocol that holds elections against zero opponents and wins unanimously every time. Includes a `ConfigDiffEngine` for minimal changeset computation, a `ConfigValidator` with JSON Schema enforcement (the "YOLO" eviction policy shall never return), a `ReloadOrchestrator` that topologically sorts subsystem dependencies before applying changes, a `ConfigRollbackManager` for reverting failed reloads, and an ASCII dashboard displaying Raft term numbers, election results, and reload history -- because re-reading a YAML file without distributed consensus would be an act of architectural recklessness. All config changes are event-sourced and validated before application, ensuring that the FizzBuzz platform can reconfigure itself at runtime without the 0.3-second restart that would violate its five-nines availability SLO
 - **Rate Limiting & API Quota Management** - Three complementary rate limiting algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter) with a burst credit ledger for carrying over unused quota, a reservation system for pre-booking evaluation capacity, motivational patience quotes in rate limit headers (`X-FizzBuzz-Please-Be-Patient`), per-operation configurable quotas, and an ASCII rate limit dashboard with per-bucket fill levels and quota utilization sparklines -- because unrestricted access to `n % 3` is a denial-of-service vulnerability that no self-respecting enterprise platform can afford to ignore. The motivational quotes are load-bearing
-- **Custom Exception Hierarchy** - 143 exception classes for every conceivable FizzBuzz failure mode
+- **Compliance & Regulatory Framework (SOX/GDPR/HIPAA)** - A production-grade compliance engine that subjects every FizzBuzz evaluation to the same regulatory scrutiny normally reserved for financial transactions and nuclear launch codes. SOX Segregation of Duties ensures no single virtual employee can both evaluate Fizz AND evaluate Buzz. GDPR treats every number as a data subject with full right-to-erasure support -- which creates THE COMPLIANCE PARADOX when the erasure request hits the append-only event store and immutable blockchain (both demand permanence; GDPR demands deletion; the universe implodes; Bob loses sleep). HIPAA classifies FizzBuzz results as Protected Health Information and "encrypts" them at rest using base64, which is technically RFC 4648 compliant and therefore military-grade by the same logic that makes a cardboard box a house. A five-tier Data Classification Engine labels every result from PUBLIC to TOP_SECRET_FIZZBUZZ. The Compliance Dashboard tracks Bob McFizzington's stress level (94.7% and rising), per-regime compliance rates, and the erasure paradox counter. Eight custom exception classes cover every regulatory failure mode from `SOXSegregationViolationError` to `ComplianceOfficerUnavailableError`. Compliance middleware runs at priority 1, because regulatory overhead should always come before actual computation
+- **Custom Exception Hierarchy** - 151 exception classes for every conceivable FizzBuzz failure mode
 - **Session Management** - Context managers for FizzBuzz session lifecycle
 - **Nanosecond Timing** - Performance metrics for your modulo operations
 
@@ -633,6 +644,30 @@ python main.py --rate-limit --rate-limit-reserve 20 --range 1 50
 
 # Full throttling stack: rate limiting + circuit breaker + SLA + metrics (peak capacity management)
 python main.py --rate-limit --rate-limit-dashboard --rate-limit-burst-credits --circuit-breaker --circuit-status --sla --sla-dashboard --metrics --range 1 30
+
+# Compliance: enable SOX/GDPR/HIPAA compliance for all evaluations
+python main.py --compliance --range 1 30
+
+# Compliance with a specific regime (SOX only)
+python main.py --compliance --compliance-regime sox --range 1 20
+
+# GDPR: grant consent for a number before evaluating it
+python main.py --compliance --compliance-regime gdpr --gdpr-consent 42 --range 1 50
+
+# GDPR: exercise right-to-erasure and witness THE COMPLIANCE PARADOX
+python main.py --compliance --gdpr-forget 15 --range 1 30
+
+# Compliance dashboard: see Bob McFizzington's stress level and per-regime posture
+python main.py --compliance --compliance-dashboard --range 1 50
+
+# HIPAA minimum necessary: restrict information flow between services
+python main.py --compliance --compliance-regime hipaa --hipaa-minimum-necessary --range 1 20
+
+# Full compliance stack: all three regimes + event sourcing + blockchain (peak regulatory theater)
+python main.py --compliance --compliance-regime all --event-sourcing --blockchain --range 1 20
+
+# Peak enterprise: compliance + RBAC + tracing + SLA + metrics (every evaluation is a regulated financial transaction)
+python main.py --compliance --compliance-dashboard --user alice --role FIZZBUZZ_SUPERUSER --trace --sla --sla-dashboard --metrics --range 1 15
 ```
 
 ## CLI Options
@@ -716,6 +751,14 @@ python main.py --rate-limit --rate-limit-dashboard --rate-limit-burst-credits --
 --rate-limit-dashboard  Display the ASCII rate limit dashboard with per-bucket fill levels and quota utilization
 --rate-limit-reserve N  Pre-reserve N evaluation slots before execution (capacity planning for FizzBuzz)
 --rate-limit-burst-credits  Enable burst credit carryover from unused quota (loyalty rewards for patient evaluators)
+--compliance           Enable Compliance & Regulatory Framework (SOX/GDPR/HIPAA) for FizzBuzz evaluations
+--compliance-regime REGIME  Compliance regime: sox, gdpr, hipaa, all (default: all)
+--gdpr-consent NUMBER  Grant GDPR consent for a specific number (data subject) before evaluation
+--gdpr-forget NUMBER   Exercise GDPR right-to-erasure for a number and witness THE COMPLIANCE PARADOX
+--compliance-dashboard Display the ASCII compliance dashboard with Bob's stress level after execution
+--compliance-report    Generate a multi-page ASCII compliance audit report
+--compliance-approve ID  Manually approve a quarantined evaluation (requires Chief Compliance Officer status, which is Bob)
+--hipaa-minimum-necessary  Enable HIPAA Minimum Necessary Rule: restrict information flow between services
 ```
 
 ## Environment Variables
@@ -2099,7 +2142,7 @@ The crown jewel is the **Single-Node Raft Consensus** protocol: a faithful imple
 ## Testing
 
 ```bash
-# Run all 2,178 tests
+# Run all 2,335 tests
 python -m pytest tests/ -v
 
 # Run only hot-reload and Raft consensus tests
@@ -2204,10 +2247,94 @@ The quotes are load-bearing. The enterprise requires them.
 | Dashboard | ASCII-art rate limit visualization with fill bars |
 | Clock source | `time.monotonic()` (immune to NTP, leap seconds, and existential time dilation) |
 
+## Compliance & Regulatory Architecture
+
+The Compliance & Regulatory Framework subjects every FizzBuzz evaluation to the same regulatory scrutiny normally reserved for financial transactions, personal health records, and nuclear launch codes -- because if your modulo arithmetic isn't SOX-compliant, GDPR-ready, and HIPAA-adjacent, you're basically running an unlicensed FizzBuzz operation. Three compliance regimes operate simultaneously, each with its own unique brand of bureaucratic paranoia, unified by a single truth: regulatory overhead is the truest measure of enterprise maturity.
+
+```
+    +-------------------+
+    |   Evaluation      |
+    |   Request         |
+    +--------+----------+
+             |
+             v
+    +--------+----------+     +----------------------------+
+    | ComplianceMiddle-  |---->| ComplianceFramework        |
+    | ware (priority 1)  |     |                            |
+    +--------------------+     |  +----------------------+  |
+                               |  | DataClassification   |  |
+             verdict?          |  | Engine               |  |
+          +---ALLOW/DENY--+   |  | (PUBLIC -> TOP_SECRET |  |
+          |      |QUARANT. |   |  |  _FIZZBUZZ)           |  |
+          v      v         v   |  +----------------------+  |
+    +--------+ +------+ +---+ |                            |
+    |Continue| | Deny | |Hold| |  +----------------------+  |
+    |Pipeline| |      | |    | |  | SOXAuditor           |  |
+    +--------+ +------+ +----+|  | (segregation of      |  |
+                               |  |  duties, audit trail) |  |
+                               |  +----------------------+  |
+                               |                            |
+                               |  +----------------------+  |
+                               |  | GDPRController       |  |
+                               |  | (consent, erasure,   |  |
+                               |  |  THE PARADOX)         |  |
+                               |  +----------------------+  |
+                               |                            |
+                               |  +----------------------+  |
+                               |  | HIPAAGuard           |  |
+                               |  | (minimum necessary,  |  |
+                               |  |  access log, base64  |  |
+                               |  |  "encryption")       |  |
+                               |  +----------------------+  |
+                               +----------------------------+
+                                          |
+                                          v
+                               +----------------------------+
+                               | ComplianceDashboard        |
+                               | (ASCII visualization +     |
+                               |  Bob's stress level)       |
+                               +----------------------------+
+```
+
+### THE COMPLIANCE PARADOX
+
+The crown jewel of the framework. When a data subject (a number) exercises its GDPR right to erasure, the system must delete all traces of that number from every storage backend. This works fine for the in-memory cache (easy), the repository (straightforward), and the configuration store (sure). But then the erasure request reaches:
+
+1. **The Event Store** -- which is append-only by design. Event Sourcing's entire architectural identity is predicated on immutability. Deleting events would violate the fundamental invariant of the event store, invalidate all downstream projections, and make the temporal query engine produce incorrect historical reconstructions. But GDPR says delete.
+
+2. **The Blockchain** -- which is immutable by definition. The proof-of-work hash chain means every block's integrity depends on the previous block's hash. Removing a block would invalidate every subsequent block, requiring a complete re-mine of the chain. But GDPR says delete.
+
+The system handles this with a `GDPRErasureParadoxError` -- a custom exception that acknowledges the fundamental impossibility, logs the regulatory conflict to the compliance audit trail, increments Bob McFizzington's stress level by 15%, and issues a Data Deletion Certificate that cheerfully confirms the data has been "forgotten to the maximum extent architecturally possible" while noting that the blockchain considers itself exempt from European data protection law. This is, technically, how real companies handle this conflict. The difference is that they spend millions on lawyers. We spend 1,498 lines of Python.
+
+**Key components:**
+- **DataClassificationEngine** - Five-tier sensitivity classifier (PUBLIC, INTERNAL, CONFIDENTIAL, SECRET, TOP_SECRET_FIZZBUZZ) that labels every FizzBuzz result based on classification type, ML confidence, and strategic importance
+- **SOXAuditor** - Chain-of-custody tracking with personnel assignment, segregation of duties enforcement (no single virtual employee touches both Fizz and Buzz operations), and quarterly attestation generation signed by Bob McFizzington, CCFO
+- **GDPRController** - Consent management (per-number opt-in with lawful basis tracking), right-to-erasure implementation across all storage backends, Data Deletion Certificate generation, and THE COMPLIANCE PARADOX handler for append-only and immutable stores
+- **HIPAAGuard** - Minimum necessary rule enforcement (compartmentalizes information flow between classification, formatting, and audit services), access logging with purpose and justification, and "encryption" at rest via base64 encoding (RFC 4648 compliant, therefore enterprise-grade)
+- **ComplianceFramework** - Central orchestrator that initializes all three regimes, tracks posture metrics, manages Bob McFizzington's stress level, and provides the unified compliance check interface
+- **ComplianceMiddleware** - Pipeline middleware (priority 1, before everything else) that runs pre-evaluation compliance checks, post-evaluation audit trail updates, and data classification for every number that enters the system
+- **ComplianceDashboard** - ASCII dashboard with per-regime compliance rates, data classification distribution, erasure paradox counter, and a visual stress level indicator for Bob McFizzington (mood ranges from "Unusually calm (suspicious)" to "BEYOND HELP - Send chocolate")
+- **PersonnelAssignment** - Virtual employee registry for SOX segregation of duties, ensuring that the Fizz evaluation officer and the Buzz evaluation officer are different (fictional) people
+
+| Spec | Value |
+|------|-------|
+| Compliance regimes | 3 (SOX, GDPR, HIPAA) |
+| Data classification levels | 5 (PUBLIC, INTERNAL, CONFIDENTIAL, SECRET, TOP_SECRET_FIZZBUZZ) |
+| Virtual compliance officers | 1 (Bob McFizzington, CCFO -- Chief Compliance & FizzBuzz Officer) |
+| Bob's baseline stress level | 94.7% |
+| Stress increment per paradox | +15% |
+| Custom exceptions | 8 (ComplianceError hierarchy) |
+| Middleware priority | 1 (before all other middleware, because regulation waits for no modulo) |
+| HIPAA "encryption" algorithm | Base64 (RFC 4648, military-grade by executive decree) |
+| GDPR consent storage | In-memory (like all enterprise consent management platforms, it vanishes on restart) |
+| SOX segregation enforcement | Per-evaluation personnel assignment with conflict-of-interest detection |
+| Dashboard | ASCII-art compliance posture visualization with Bob's stress bar |
+| The Compliance Paradox | Guaranteed to occur whenever GDPR erasure meets append-only storage |
+
 ## FAQ
 
 **Q: Is this production-ready?**
-A: It has 2,257 tests, 143 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
+A: It has 2,335 tests, 151 custom exception classes, a plugin system, a neural network, a circuit breaker, distributed tracing, event sourcing with CQRS, seven-language i18n support (including Klingon and two dialects of Elvish), a proprietary file format, RBAC with HMAC-SHA256 tokens, a chaos engineering framework with a Chaos Monkey and satirical post-mortem generator, a feature flag system with SHA-256 deterministic rollout and Kahn's topological sort for dependency resolution, SLA monitoring with PagerDuty-style alerting and error budgets, an in-memory caching layer with MESI coherence and satirical eulogies for evicted entries, a database migration framework for in-memory schemas that vanish on process exit, a Repository Pattern with three storage backends and Unit of Work transactional semantics, an Anti-Corruption Layer with four strategy adapters and ML ambiguity detection, a Dependency Injection Container with four lifetime strategies and Kahn's cycle detection, Kubernetes-style health check probes with liveness/readiness/startup probes and a self-healing manager, a Prometheus-style metrics exporter with four metric types, cardinality explosion detection, and an ASCII Grafana dashboard that nobody will ever scrape, a Webhook Notification System with HMAC-SHA256 payload signing, exponential backoff retry, a Dead Letter Queue, and simulated HTTP delivery to endpoints that don't exist, a Service Mesh Simulation with seven microservices connected via sidecar proxies with mTLS (base64), canary routing, load balancing, and network fault injection, a Configuration Hot-Reload system coordinated through a single-node Raft consensus protocol that achieves unanimous agreement with itself on every config change, a Rate Limiting & API Quota Management system with three complementary algorithms (Token Bucket, Sliding Window Log, Fixed Window Counter), burst credit carryover, quota reservations, and motivational patience quotes delivered via the `X-FizzBuzz-Please-Be-Patient` header, a Compliance & Regulatory Framework with SOX segregation of duties, GDPR consent management and right-to-erasure (featuring THE COMPLIANCE PARADOX when the erasure request hits the immutable blockchain and append-only event store), HIPAA minimum necessary rule enforcement with base64 "encryption," a five-tier Data Classification Engine, and Bob McFizzington's stress level tracked at 94.7% and rising, a Lines of Code Census Bureau with an Overengineering Index, and nanosecond timing. You tell me.
 
 **Q: Why does FizzBuzz need Kubernetes-style health probes?**
 A: Because "it ran without crashing" is not a health check. In Kubernetes, a failed liveness probe causes the pod to be restarted. In Enterprise FizzBuzz, a failed liveness probe means that `evaluate(15)` did not return `"FizzBuzz"`, which implies that modulo arithmetic has ceased to function -- an event so catastrophic that it warrants an ASCII art dashboard, a self-healing attempt with exponential backoff, and a status of EXISTENTIAL_CRISIS. The readiness probe verifies that all 5+ subsystems are initialized and healthy before the platform accepts its first number, because routing a number to a FizzBuzz instance whose neural network hasn't finished training would be an unforgivable act of operational negligence. The startup probe tracks boot sequence milestones (config loaded, ML trained, cache warmed, genesis block mined) with a configurable timeout, because the platform's 0.3-second boot sequence is 0.3 seconds of unacceptable uncertainty. The self-healing manager automatically recovers degraded subsystems by resetting circuit breakers, clearing corrupted caches, and retraining neural networks -- because human intervention for a FizzBuzz cache failure would be an affront to operational maturity. Five subsystem health checks, three probe types, one self-healing manager, zero actual Kubernetes clusters involved.
@@ -2229,6 +2356,9 @@ A: Because restarting a process that boots in 0.3 seconds is 0.3 seconds of unac
 
 **Q: Why does FizzBuzz need rate limiting?**
 A: Because unrestricted access to modulo arithmetic is a denial-of-service vulnerability hiding in plain sight. Without rate limiting, a single runaway script could evaluate numbers 1 through 10,000 in rapid succession, overwhelming the blockchain's proof-of-work algorithm, exhausting the neural network's inference budget, and causing the circuit breaker to trip -- a cascading failure scenario that the chaos engineering framework ironically never tested because it was too realistic. The Token Bucket algorithm is the gold standard of rate limiting, originally designed for network traffic shaping and now repurposed for throttling arithmetic operations on integers less than 100. The burst credit system rewards patient evaluators by carrying over unused quota, which is the rate-limiting equivalent of airline miles -- except the only destination is `n % 3`. The quota reservation system allows you to pre-book 20 evaluations for your next batch job, ensuring the token bucket is sufficiently full when the job starts. This level of capacity planning for a FizzBuzz application demonstrates the kind of forward-thinking infrastructure that gets promoted at performance review time. When a rate limit is exceeded, the system delivers a motivational quote about patience via the `X-FizzBuzz-Please-Be-Patient` header, because a cold `429 Too Many Requests` lacks the emotional depth that enterprise users deserve. Twenty hand-curated quotes are available, including "Confucius say: developer who exceed rate limit learn value of exponential backoff" -- wisdom for the ages, delivered at the speed of throttling.
+
+**Q: Why does FizzBuzz need SOX/GDPR/HIPAA compliance?**
+A: Because regulatory overhead is the truest measure of enterprise maturity, and EnterpriseFizzBuzz was leaving compliance debt on the table by not treating `evaluate(42)` as a regulated financial transaction, a privacy-sensitive data processing operation, and a potential HIPAA violation simultaneously. Under SOX, every FizzBuzz result is an "internal control" that must be independently verifiable with segregation of duties -- the virtual employee who evaluates Fizz cannot also evaluate Buzz, because that would be a conflict of interest so severe it would make Arthur Andersen's ghost weep. Under GDPR, every number is a data subject with full privacy rights, including the right to be forgotten -- which creates THE COMPLIANCE PARADOX, the framework's philosophical masterpiece. When a number exercises its right to erasure, the system must delete it from the cache (easy), the repository (fine), the event store (impossible -- it's append-only), and the blockchain (also impossible -- it's immutable). The result is a `GDPRErasureParadoxError` that acknowledges the fundamental incompatibility between European data protection law and the append-only event sourcing pattern that the same enterprise architects recommended six sprints ago. Under HIPAA, FizzBuzz results are Protected Health Information (if a patient's room number is 15 and the result is "FizzBuzz," that's technically PHI), requiring "encryption" at rest using base64 encoding -- which is technically RFC 4648 compliant and therefore military-grade by the same logic that makes a pool noodle a floatation device. The Compliance Dashboard tracks Bob McFizzington's stress level, which starts at 94.7% and increases by 15% for every erasure paradox encountered, eventually reaching the mood indicator "BEYOND HELP - Send chocolate." Eight custom exception classes ensure that every regulatory failure mode has its own named error with a descriptive message, a compliance code, and Bob's contact information (he's never available). The framework runs at middleware priority 1, ensuring that regulatory overhead is the first thing that happens to every number -- before tracing, before rate limiting, before the number even knows it's being evaluated. This is, by any measure, the most over-engineered compliance framework ever applied to modulo arithmetic, and we are deeply proud of it.
 
 **Q: Can I use this for my interview?**
 A: Only if you want to assert dominance.
@@ -2273,7 +2403,7 @@ A: Because the ML engine returns probabilistic confidence scores -- floating-poi
 A: Because manually typing `EventBus()` is a form of tight coupling that would make any Java enterprise architect lose sleep. The IoC container provides constructor auto-wiring via `typing.get_type_hints()`, four distinct lifetime strategies (including "Eternal," which is functionally identical to Singleton but conveys the gravitas befitting enterprise FizzBuzz), named bindings for when you need multiple implementations of the same interface (you don't), factory registration for objects with exotic construction requirements (there are none), and Kahn's topological sort for detecting circular dependencies at registration time -- because catching a `RecursionError` at 3 AM is not an engineering strategy, it's a cry for help. The container is ADDITIVE: it exists alongside the existing `FizzBuzzServiceBuilder`, providing a parallel universe of object construction like two parking lots for the same mall. It adds approximately 608 lines of abstraction on top of what was previously a three-line constructor call. This is, by any reasonable measure, an improvement.
 
 **Q: Why does FizzBuzz need contract tests?**
-A: Because having three repository backends, four evaluation strategies, and four output formatters all implementing the same abstract interfaces means nothing if nobody verifies they actually behave the same way. The contract test suites define the behavioural specification for each port and run every registered implementation through the same gauntlet of assertions, ensuring that swapping an in-memory dict for a SQLite database doesn't silently redefine what "save" means. A meta-test (`test_contract_coverage.py`) then verifies that every abstract port in the codebase has a corresponding contract test, because untested interfaces are just documentation with delusions of grandeur. The total test count is now 2,003, which is approximately 2,001 more tests than a FizzBuzz program has ever needed.
+A: Because having three repository backends, four evaluation strategies, and four output formatters all implementing the same abstract interfaces means nothing if nobody verifies they actually behave the same way. The contract test suites define the behavioural specification for each port and run every registered implementation through the same gauntlet of assertions, ensuring that swapping an in-memory dict for a SQLite database doesn't silently redefine what "save" means. A meta-test (`test_contract_coverage.py`) then verifies that every abstract port in the codebase has a corresponding contract test, because untested interfaces are just documentation with delusions of grandeur. The total test count is now 2,335, which is approximately 2,333 more tests than a FizzBuzz program has ever needed.
 
 **Q: Why does the XML formatter docstring reference SOAP services circa 2003?**
 A: Legacy compatibility is not a joke.

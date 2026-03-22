@@ -138,6 +138,15 @@ from enterprise_fizzbuzz.infrastructure.webhooks import (
     WebhookObserver,
     WebhookSignatureEngine,
 )
+from enterprise_fizzbuzz.infrastructure.compliance import (
+    ComplianceDashboard,
+    ComplianceFramework,
+    ComplianceMiddleware,
+    DataClassificationEngine,
+    GDPRController,
+    HIPAAGuard,
+    SOXAuditor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -685,6 +694,45 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--quota",
         action="store_true",
         help="Display quota status summary after execution",
+    )
+
+    # Compliance & Regulatory Framework
+    parser.add_argument(
+        "--compliance",
+        action="store_true",
+        help="Enable SOX/GDPR/HIPAA compliance framework for FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--gdpr-erase",
+        type=int,
+        metavar="NUMBER",
+        default=None,
+        help="Submit a GDPR right-to-erasure request for the specified number (triggers THE COMPLIANCE PARADOX)",
+    )
+
+    parser.add_argument(
+        "--sox-audit",
+        action="store_true",
+        help="Display the SOX segregation of duties audit trail after execution",
+    )
+
+    parser.add_argument(
+        "--hipaa-check",
+        action="store_true",
+        help="Display HIPAA PHI access log and encryption statistics after execution",
+    )
+
+    parser.add_argument(
+        "--compliance-report",
+        action="store_true",
+        help="Generate a comprehensive compliance report after execution",
+    )
+
+    parser.add_argument(
+        "--compliance-dashboard",
+        action="store_true",
+        help="Display the compliance & regulatory ASCII dashboard after execution",
     )
 
     return parser
@@ -1431,6 +1479,87 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  Rate limiting not enabled. Use --rate-limit to enable.\n")
         return 0
 
+    # ----------------------------------------------------------------
+    # Compliance & Regulatory Framework setup
+    # ----------------------------------------------------------------
+    compliance_framework = None
+    compliance_middleware = None
+    if args.compliance or args.gdpr_erase is not None or args.compliance_dashboard or args.compliance_report:
+        sox_auditor = SOXAuditor(
+            personnel_roster=config.compliance_sox_personnel_roster,
+            strict_mode=config.compliance_sox_segregation_strict,
+            event_bus=event_bus,
+        ) if config.compliance_sox_enabled else None
+
+        gdpr_controller = GDPRController(
+            auto_consent=config.compliance_gdpr_auto_consent,
+            erasure_enabled=config.compliance_gdpr_erasure_enabled,
+            event_bus=event_bus,
+        ) if config.compliance_gdpr_enabled else None
+
+        hipaa_guard = HIPAAGuard(
+            minimum_necessary_level=config.compliance_hipaa_minimum_necessary_level,
+            encryption_algorithm=config.compliance_hipaa_encryption_algorithm,
+            event_bus=event_bus,
+        ) if config.compliance_hipaa_enabled else None
+
+        compliance_framework = ComplianceFramework(
+            sox_auditor=sox_auditor,
+            gdpr_controller=gdpr_controller,
+            hipaa_guard=hipaa_guard,
+            event_bus=event_bus,
+            bob_stress_level=config.compliance_officer_stress_level,
+        )
+
+        compliance_middleware = ComplianceMiddleware(
+            compliance_framework=compliance_framework,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | COMPLIANCE: SOX/GDPR/HIPAA Framework ENABLED            |\n"
+            "  | Segregation of duties: ENFORCED (no dual FizzBuzz roles) |\n"
+            "  | GDPR consent: AUTO-GRANTED (for convenience)            |\n"
+            "  | HIPAA encryption: MILITARY-GRADE BASE64                 |\n"
+            "  | Compliance Officer: Bob McFizzington (UNAVAILABLE)      |\n"
+            f"  | Bob's stress level: {config.compliance_officer_stress_level:.1f}%"
+            + " " * max(0, 37 - len(f"{config.compliance_officer_stress_level:.1f}%"))
+            + "|\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Handle --gdpr-erase (early exit)
+        if args.gdpr_erase is not None:
+            if gdpr_controller is not None:
+                certificate = compliance_framework.process_erasure_request(args.gdpr_erase)
+                print(ComplianceDashboard.render_erasure_certificate(certificate))
+                print(
+                    f"  Bob McFizzington's stress level is now "
+                    f"{compliance_framework.bob_stress_level:.1f}%.\n"
+                    f"  Please send thoughts and prayers to "
+                    f"{config.compliance_officer_name}.\n"
+                )
+            else:
+                print("\n  GDPR is not enabled in the compliance configuration.\n")
+            return 0
+
+    elif args.gdpr_erase is not None:
+        print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
+        return 0
+    elif args.sox_audit:
+        print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
+        return 0
+    elif args.hipaa_check:
+        print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
+        return 0
+    elif args.compliance_dashboard:
+        print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
+        return 0
+    elif args.compliance_report:
+        print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
+        return 0
+
     # Chaos Engineering setup
     chaos_monkey = None
     chaos_middleware = None
@@ -1565,6 +1694,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if rate_limit_middleware is not None:
         builder.with_middleware(rate_limit_middleware)
+
+    if compliance_middleware is not None:
+        builder.with_middleware(compliance_middleware)
 
     # Add feature flag middleware (priority -3, runs before tracing)
     if flag_middleware is not None:
@@ -1952,6 +2084,59 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
     elif args.quota:
         print("\n  Rate limiting not enabled. Use --rate-limit to enable.\n")
+
+    # Compliance dashboard and reports
+    if args.compliance_dashboard and compliance_framework is not None:
+        print(ComplianceDashboard.render(compliance_framework, width=config.compliance_dashboard_width))
+    elif args.compliance_dashboard:
+        print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
+
+    if args.compliance_report and compliance_framework is not None:
+        print(ComplianceDashboard.render_report(compliance_framework))
+    elif args.compliance_report:
+        print("\n  Compliance framework not enabled. Use --compliance to enable.\n")
+
+    if args.sox_audit and compliance_framework is not None:
+        posture = compliance_framework.get_posture_summary()
+        sox_trail = posture.get("sox_stats", [])
+        if sox_trail:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | SOX SEGREGATION OF DUTIES AUDIT TRAIL                   |\n"
+                "  +---------------------------------------------------------+"
+            )
+            for entry in sox_trail[-10:]:  # Last 10 entries
+                assignments = entry.get("assignments", {})
+                segregated = entry.get("segregation_satisfied", False)
+                status = "OK" if segregated else "VIOLATION"
+                print(f"  | Number {entry.get('number', '?'):>5} [{status}]")
+                for role, person in assignments.items():
+                    print(f"  |   {role}: {person.get('name', '?')}")
+            if len(sox_trail) > 10:
+                print(f"  | ... and {len(sox_trail) - 10} more entries")
+            print("  +---------------------------------------------------------+")
+            print()
+        else:
+            print("\n  No SOX audit trail entries recorded.\n")
+
+    if args.hipaa_check and compliance_framework is not None:
+        posture = compliance_framework.get_posture_summary()
+        hipaa_stats = posture.get("hipaa_stats", {})
+        if hipaa_stats:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | HIPAA PHI ACCESS LOG & ENCRYPTION STATISTICS            |\n"
+                "  +---------------------------------------------------------+\n"
+                f"  | PHI Encryptions:    {hipaa_stats.get('phi_encryptions', 0):<37}|\n"
+                f"  | PHI Redactions:     {hipaa_stats.get('phi_redactions', 0):<37}|\n"
+                f"  | PHI Access Events:  {hipaa_stats.get('phi_access_events', 0):<37}|\n"
+                f"  | Algorithm:          {hipaa_stats.get('encryption_algorithm', 'N/A'):<37}|\n"
+                f"  | Actual Security:    {hipaa_stats.get('actual_security_provided', 'None'):<37}|\n"
+                "  +---------------------------------------------------------+"
+            )
+            print()
+        else:
+            print("\n  No HIPAA statistics recorded.\n")
 
     # Stop the hot-reload watcher on exit
     if hot_reload_watcher is not None and hot_reload_watcher.is_running:

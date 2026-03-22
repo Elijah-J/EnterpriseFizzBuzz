@@ -449,6 +449,65 @@ rate_limiting:
   dashboard:
     width: 60                          # ASCII dashboard width
 
+# Compliance & Regulatory Framework configuration
+# Because the only thing standing between your FizzBuzz platform and
+# a regulatory enforcement action is this YAML section. SOX ensures
+# segregation of duties (no single engineer can evaluate both Fizz
+# AND Buzz). GDPR ensures every number's right to be forgotten — even
+# though the append-only event store and immutable blockchain make that
+# architecturally impossible (THE COMPLIANCE PARADOX). HIPAA ensures
+# that FizzBuzz results are treated as Protected Health Information
+# and "encrypted" with military-grade base64 encoding.
+compliance:
+  enabled: false                        # Master switch — opt-in via --compliance
+  sox:
+    enabled: true                       # Enable SOX segregation of duties
+    segregation_strict: true            # Strict mode: Fizz evaluator != Buzz evaluator
+    audit_trail_retention_days: 2555    # 7 years, as required by SOX Section 802
+    personnel_roster:                   # Virtual personnel for duty assignment
+      - name: "Alice Fizzworth"
+        title: "Senior Fizz Evaluation Specialist"
+        clearance: "FIZZ_CLEARED"
+      - name: "Charlie Buzzman"
+        title: "Principal Buzz Assessment Engineer"
+        clearance: "BUZZ_CLEARED"
+      - name: "Diana Formatson"
+        title: "Chief Output Formatting Officer"
+        clearance: "FORMAT_CLEARED"
+      - name: "Eve Auditrix"
+        title: "Director of FizzBuzz Audit & Compliance"
+        clearance: "AUDIT_CLEARED"
+      - name: "Frank Oversite"
+        title: "VP of Modulo Governance"
+        clearance: "OVERSIGHT_CLEARED"
+  gdpr:
+    enabled: true                       # Enable GDPR consent & erasure
+    auto_consent: true                  # Automatically grant consent (for convenience)
+    consent_expiry_days: 365            # Consent expires after 1 year
+    data_retention_days: 90             # FizzBuzz results retained for 90 days
+    erasure_enabled: true               # Allow right-to-erasure requests
+    dpo_email: "dpo@enterprise-fizzbuzz.example.com"  # Data Protection Officer
+  hipaa:
+    enabled: true                       # Enable HIPAA minimum necessary rule
+    minimum_necessary_level: "OPERATIONS"  # Default access level for PHI
+    encryption_algorithm: "military_grade_base64"  # "Encryption" algorithm
+    phi_audit_logging: true             # Log all PHI access events
+    covered_entity: "Enterprise FizzBuzz Healthcare Division"
+  compliance_officer:
+    name: "Bob McFizzington"
+    title: "Chief FizzBuzz Compliance Officer"
+    email: "bob.compliance@enterprise-fizzbuzz.example.com"
+    phone: "+1-555-COMPLY"
+    stress_level: 94.7                  # Percentage (starts high, only goes up)
+    available: false                    # Perpetually unavailable
+    certifications:
+      - "Certified FizzBuzz Compliance Auditor (CFCA)"
+      - "SOX Section 404 FizzBuzz Controls Specialist"
+      - "GDPR Data Protection FizzBuzz Practitioner"
+      - "HIPAA Privacy Officer for Modulo Operations"
+  dashboard:
+    width: 60                           # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

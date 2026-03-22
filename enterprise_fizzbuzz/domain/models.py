@@ -274,6 +274,26 @@ class EventType(Enum):
     RATE_LIMIT_RESERVATION_EXPIRED = auto()
     RATE_LIMIT_DASHBOARD_RENDERED = auto()
 
+    # Compliance & Regulatory Framework events
+    COMPLIANCE_CHECK_STARTED = auto()
+    COMPLIANCE_CHECK_PASSED = auto()
+    COMPLIANCE_CHECK_FAILED = auto()
+    COMPLIANCE_VIOLATION_DETECTED = auto()
+    COMPLIANCE_DATA_CLASSIFIED = auto()
+    SOX_SEGREGATION_ENFORCED = auto()
+    SOX_SEGREGATION_VIOLATION = auto()
+    SOX_AUDIT_TRAIL_RECORDED = auto()
+    GDPR_CONSENT_REQUESTED = auto()
+    GDPR_CONSENT_GRANTED = auto()
+    GDPR_CONSENT_DENIED = auto()
+    GDPR_ERASURE_REQUESTED = auto()
+    GDPR_ERASURE_PARADOX_DETECTED = auto()
+    GDPR_ERASURE_CERTIFICATE_ISSUED = auto()
+    HIPAA_PHI_DETECTED = auto()
+    HIPAA_PHI_ENCRYPTED = auto()
+    HIPAA_MINIMUM_NECESSARY_APPLIED = auto()
+    COMPLIANCE_DASHBOARD_RENDERED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.
@@ -601,3 +621,202 @@ class FizzBuzzSessionSummary:
         if self.total_processing_time_ms > 0:
             return self.total_numbers / (self.total_processing_time_ms / 1000)
         return float("inf")
+
+
+class ComplianceRegime(Enum):
+    """Regulatory compliance regimes supported by the Enterprise FizzBuzz Platform.
+
+    Because even modulo arithmetic must comply with the full weight of
+    international financial, data protection, and healthcare regulations.
+    The fact that FizzBuzz has no financial statements, processes no personal
+    data, and treats no patients is entirely beside the point.
+
+    SOX:   Sarbanes-Oxley compliance for FizzBuzz financial controls.
+           Segregation of duties ensures no single engineer can both
+           evaluate Fizz AND evaluate Buzz. That would be a conflict of
+           interest of the highest order.
+    GDPR:  General Data Protection Regulation compliance for FizzBuzz
+           personal data. Every number is a potential data subject.
+           Every "Fizz" is personally identifiable information. Probably.
+    HIPAA: Health Insurance Portability and Accountability Act compliance.
+           Because FizzBuzz results could theoretically be Protected Health
+           Information if you squint hard enough and have a sufficiently
+           creative compliance officer.
+    """
+
+    SOX = auto()
+    GDPR = auto()
+    HIPAA = auto()
+
+
+class ComplianceVerdict(Enum):
+    """The outcome of a compliance check against a regulatory framework.
+
+    COMPLIANT:       Everything is fine. The FizzBuzz operation satisfied
+                     all regulatory requirements. Sleep well tonight.
+    NON_COMPLIANT:   A violation has been detected. Regulatory fines may
+                     be forthcoming. Bob McFizzington's stress level has
+                     increased by an amount proportional to the severity.
+    PARTIALLY_COMPLIANT: Some controls passed, some failed. This is the
+                     compliance equivalent of a C+ grade — technically
+                     passing but deeply unsatisfying to everyone involved.
+    UNDER_REVIEW:    The compliance status is still being evaluated. The
+                     committee has not yet reached consensus on whether
+                     computing 15 % 3 constitutes a regulated activity.
+    PARADOX_DETECTED: A logical paradox has been encountered in the
+                     compliance framework itself. This happens exclusively
+                     with GDPR right-to-erasure requests against immutable
+                     data stores, which is THE COMPLIANCE PARADOX.
+    """
+
+    COMPLIANT = auto()
+    NON_COMPLIANT = auto()
+    PARTIALLY_COMPLIANT = auto()
+    UNDER_REVIEW = auto()
+    PARADOX_DETECTED = auto()
+
+
+class DataClassificationLevel(Enum):
+    """Data classification levels for FizzBuzz output sensitivity.
+
+    PUBLIC:              Plain numbers. Nobody cares about "7".
+    INTERNAL:            Fizz or Buzz results. Mildly interesting to
+                         competitors in the FizzBuzz-as-a-Service market.
+    CONFIDENTIAL:        FizzBuzz results. The combination of both Fizz
+                         and Buzz in a single output is considered a
+                         trade secret by the legal department.
+    SECRET:              FizzBuzz results for numbers divisible by 15
+                         that also happen to be prime... wait, that's
+                         impossible. SECRET is for results that required
+                         ML-strategy evaluation with confidence < 0.9.
+    TOP_SECRET_FIZZBUZZ: Reserved for the crown jewels: FizzBuzz results
+                         that have been verified by at least two independent
+                         evaluation strategies and blessed by the Chief
+                         FizzBuzz Compliance Officer (Bob McFizzington).
+    """
+
+    PUBLIC = auto()
+    INTERNAL = auto()
+    CONFIDENTIAL = auto()
+    SECRET = auto()
+    TOP_SECRET_FIZZBUZZ = auto()
+
+
+class GDPRErasureStatus(Enum):
+    """Status of a GDPR right-to-erasure (right-to-be-forgotten) request.
+
+    REQUESTED:          The data subject (a number) has requested erasure.
+    IN_PROGRESS:        The erasure pipeline is attempting to comply.
+    PARADOX_ENCOUNTERED: The system discovered that the data exists in an
+                         append-only event store AND an immutable blockchain.
+                         Deleting from either would violate their fundamental
+                         architectural guarantees. Compliance has reached an
+                         irreconcilable paradox. The universe holds its breath.
+    PARTIALLY_ERASED:   Some data stores complied. Others refused on
+                         philosophical grounds.
+    CERTIFICATE_ISSUED: A formal erasure certificate has been issued,
+                         which itself contains a record of the data that
+                         was supposedly erased, thereby partially un-erasing
+                         it. The irony is not lost on the compliance team.
+    APPEALED:           The data subject has appealed the paradox. The
+                         appeal is pending review by the International
+                         Court of FizzBuzz Data Protection.
+    """
+
+    REQUESTED = auto()
+    IN_PROGRESS = auto()
+    PARADOX_ENCOUNTERED = auto()
+    PARTIALLY_ERASED = auto()
+    CERTIFICATE_ISSUED = auto()
+    APPEALED = auto()
+
+
+class HIPAAMinimumNecessaryLevel(Enum):
+    """Minimum necessary access levels for HIPAA-protected FizzBuzz data.
+
+    FULL_ACCESS:    Complete, unredacted FizzBuzz results. Reserved for
+                    the attending FizzBuzz physician and the patient
+                    (the number itself).
+    TREATMENT:      Access limited to the FizzBuzz result and matched
+                    rules. No processing metadata. For healthcare
+                    providers directly involved in the number's care.
+    OPERATIONS:     Access limited to aggregate statistics only. Individual
+                    FizzBuzz results are redacted and replaced with
+                    "[PHI REDACTED — MINIMUM NECESSARY]".
+    RESEARCH:       De-identified data only. Numbers are replaced with
+                    sequential identifiers, and all FizzBuzz labels are
+                    replaced with cryptographic hashes. IRB approval required.
+    """
+
+    FULL_ACCESS = auto()
+    TREATMENT = auto()
+    OPERATIONS = auto()
+    RESEARCH = auto()
+
+
+@dataclass(frozen=True)
+class ComplianceCheckResult:
+    """The result of a compliance check against one or more regulatory regimes.
+
+    This frozen dataclass captures the outcome of subjecting a FizzBuzz
+    evaluation to the full scrutiny of SOX, GDPR, and/or HIPAA compliance
+    frameworks. It is immutable because compliance results, like diamond
+    and regret, are forever.
+
+    Attributes:
+        regime: The regulatory framework that performed the check.
+        verdict: The compliance outcome.
+        violations: List of specific violations detected, if any.
+        details: Human-readable explanation of the compliance determination.
+        checked_at: When the check was performed (UTC).
+        check_id: Unique identifier for audit trail purposes.
+        bob_stress_delta: How much Bob McFizzington's stress level
+            increased as a result of this check. Always positive.
+    """
+
+    regime: ComplianceRegime
+    verdict: ComplianceVerdict
+    violations: tuple[str, ...] = ()
+    details: str = ""
+    checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    check_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    bob_stress_delta: float = 0.0
+
+
+@dataclass(frozen=True)
+class DataDeletionCertificate:
+    """Formal certificate documenting a GDPR data erasure attempt.
+
+    This certificate serves as proof that an erasure was attempted,
+    which ironically creates a new record about the data that was
+    supposed to be deleted. The certificate itself contains enough
+    metadata to partially reconstruct what was erased, because
+    enterprise compliance documentation is nothing if not thorough.
+
+    The compliance team is aware of this irony. They have chosen to
+    document it in this docstring, which itself is now part of the
+    permanent record. It's turtles all the way down.
+
+    Attributes:
+        certificate_id: Unique identifier for this certificate.
+        data_subject: The number (data subject) whose erasure was requested.
+        requested_at: When the erasure was requested.
+        status: Current status of the erasure request.
+        stores_checked: Data stores that were checked for the subject's data.
+        stores_erased: Data stores from which data was successfully erased.
+        stores_refused: Data stores that refused to erase (with reasons).
+        paradox_explanation: If a paradox was encountered, the philosophical
+            explanation of why deletion is impossible. This field is always
+            populated because THE COMPLIANCE PARADOX is inevitable.
+        issued_at: When this certificate was issued (UTC).
+    """
+
+    certificate_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    data_subject: int = 0
+    requested_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    status: GDPRErasureStatus = GDPRErasureStatus.REQUESTED
+    stores_checked: tuple[str, ...] = ()
+    stores_erased: tuple[str, ...] = ()
+    stores_refused: tuple[str, ...] = ()
+    paradox_explanation: str = ""
+    issued_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
