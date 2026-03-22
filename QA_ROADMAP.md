@@ -24,8 +24,8 @@ The platform has 14 test files covering the major subsystems (auth, cache, chaos
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 9
-- Remaining: 1
+- Implemented: 10
+- Remaining: 0
 
 ## Test Items
 
@@ -219,7 +219,7 @@ Use `subprocess.run` with `capture_output=True`. Set a timeout (30 seconds shoul
 
 ### 10. Lines of Code Census Bureau (tests/test_loc.py)
 
-**Status:** PENDING
+**Status:** DONE (35 test methods, 54 with parametrization)
 **Description:** The LOC counter is a tool that lives in the repo and measures the repo. It has classes, data models, and an ASCII dashboard renderer. It should have tests, because an untested metrics tool in a repo with 829+ tests would be an embarrassment to Bob.
 
 Test the following:
