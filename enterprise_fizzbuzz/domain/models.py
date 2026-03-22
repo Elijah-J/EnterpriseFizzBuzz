@@ -415,6 +415,16 @@ class EventType(Enum):
     GRAPH_COMMUNITY_DETECTED = auto()
     GRAPH_DASHBOARD_RENDERED = auto()
 
+    # Genetic Algorithm events
+    GENETIC_EVOLUTION_STARTED = auto()
+    GENETIC_GENERATION_COMPLETED = auto()
+    GENETIC_MUTATION_APPLIED = auto()
+    GENETIC_CROSSOVER_PERFORMED = auto()
+    GENETIC_MASS_EXTINCTION = auto()
+    GENETIC_CONVERGENCE_DETECTED = auto()
+    GENETIC_HALL_OF_FAME_UPDATED = auto()
+    GENETIC_EVOLUTION_COMPLETED = auto()
+
     # Blue/Green Deployment Simulation events
     DEPLOYMENT_STARTED = auto()
     DEPLOYMENT_SLOT_PROVISIONED = auto()

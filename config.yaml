@@ -868,6 +868,39 @@ graph_db:
   dashboard:
     width: 60                            # ASCII dashboard width
 
+# Genetic Algorithm for Optimal FizzBuzz Rule Discovery
+# Because the canonical FizzBuzz rules {3:"Fizz", 5:"Buzz"} were
+# clearly discovered by early humans through millions of years of
+# natural selection. This module recreates that evolutionary journey
+# in silico, using tournament selection, single-point crossover, and
+# five mutation operators — only to inevitably rediscover that 3 and 5
+# are, in fact, the optimal divisors. Darwin would be so proud.
+genetic_algorithm:
+  enabled: false                         # Master switch — opt-in via --genetic
+  population_size: 50                    # Number of chromosomes per generation
+  generations: 100                       # Maximum generations before giving up
+  mutation_rate: 0.15                    # Probability of mutation per gene
+  crossover_rate: 0.7                    # Probability of crossover per mating
+  tournament_size: 5                     # Tournament selection pool size
+  elitism_count: 2                       # Top N chromosomes preserved each generation
+  max_genes: 8                           # Maximum genes (rules) per chromosome
+  min_genes: 1                           # Minimum genes (rules) per chromosome
+  canonical_seed_pct: 0.10               # Fraction of initial population seeded with {3:Fizz, 5:Buzz}
+  convergence_threshold: 0.95            # Fitness above which we declare victory
+  diversity_floor: 0.05                  # Diversity below which mass extinction is triggered
+  mass_extinction_survivor_pct: 0.20     # Fraction of population that survives mass extinction
+  hall_of_fame_size: 10                  # Top-N all-time chromosomes to remember
+  fitness_weights:                       # Multi-objective fitness function weights
+    accuracy: 0.50                       # Weight for FizzBuzz correctness
+    coverage: 0.15                       # Weight for how many numbers get labels
+    distinctness: 0.10                   # Weight for unique label diversity
+    phonetic_harmony: 0.10               # Weight for consonant-vowel euphony
+    mathematical_elegance: 0.15          # Weight for prime/small divisor preference
+  seed: null                             # Random seed for reproducibility (null = entropy)
+  dashboard:
+    width: 60                            # ASCII dashboard width
+    fitness_chart_height: 10             # Height of the fitness sparkline chart
+
 # Observer configuration
 observers:
   console_observer:
