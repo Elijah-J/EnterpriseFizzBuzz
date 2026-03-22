@@ -30,8 +30,8 @@ There is no `docs/` directory, no developer guide, no architecture decision reco
 
 ## Backlog Status
 - Total items: 8
-- Implemented: 1
-- Remaining: 7
+- Implemented: 2
+- Remaining: 6
 
 ## Documentation Items
 
@@ -57,7 +57,8 @@ This document is for someone who needs to find where something lives and how it 
 
 ### 2. Configuration Reference (docs/configuration.md)
 
-**Status:** PENDING
+**Status:** DONE
+**Output path:** `docs/configuration.md`
 **Description:** A complete reference for every configuration surface in the platform. Currently, configuration lives in three places: `config.yaml`, environment variables (`EFP_*`), and CLI flags. The README lists CLI flags and some env vars, but there is no single document that maps all three layers together and explains the precedence rules.
 
 Cover the following:
