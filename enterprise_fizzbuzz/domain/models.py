@@ -560,6 +560,23 @@ class EventType(Enum):
     SELF_MODIFY_SAFETY_VIOLATION = auto()
     SELF_MODIFY_DASHBOARD_RENDERED = auto()
 
+    # FizzKube Container Orchestration events
+    FIZZKUBE_POD_CREATED = auto()
+    FIZZKUBE_POD_SCHEDULED = auto()
+    FIZZKUBE_POD_RUNNING = auto()
+    FIZZKUBE_POD_SUCCEEDED = auto()
+    FIZZKUBE_POD_FAILED = auto()
+    FIZZKUBE_NODE_ADDED = auto()
+    FIZZKUBE_NODE_CONDITION_CHANGED = auto()
+    FIZZKUBE_SCHEDULER_FILTER = auto()
+    FIZZKUBE_SCHEDULER_SCORE = auto()
+    FIZZKUBE_REPLICASET_RECONCILE = auto()
+    FIZZKUBE_HPA_SCALE = auto()
+    FIZZKUBE_HPA_DECISION = auto()
+    FIZZKUBE_ETCD_PUT = auto()
+    FIZZKUBE_ETCD_GET = auto()
+    FIZZKUBE_DASHBOARD_RENDERED = auto()
+
     # Compliance Chatbot events
     CHATBOT_QUERY_RECEIVED = auto()
     CHATBOT_INTENT_CLASSIFIED = auto()

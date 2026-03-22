@@ -354,6 +354,11 @@ from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PMiddleware,
     P2PNetwork,
 )
+from enterprise_fizzbuzz.infrastructure.fizzkube import (
+    FizzKubeControlPlane,
+    FizzKubeDashboard,
+    FizzKubeMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.digital_twin import (
     MonteCarloEngine,
     PredictiveAnomalyDetector,
@@ -1852,6 +1857,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--types-dashboard",
         action="store_true",
         help="Display the Dependent Type System & Curry-Howard Proof Engine ASCII dashboard",
+    )
+
+    # FizzKube Container Orchestration
+    parser.add_argument(
+        "--fizzkube",
+        action="store_true",
+        help="Enable FizzKube Container Orchestration: schedule FizzBuzz evaluations as pods across simulated worker nodes",
+    )
+
+    parser.add_argument(
+        "--fizzkube-pods",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of simulated worker nodes in the FizzKube cluster (default: from config)",
+    )
+
+    parser.add_argument(
+        "--fizzkube-dashboard",
+        action="store_true",
+        help="Display the FizzKube Container Orchestration ASCII dashboard after execution",
     )
 
     return parser
@@ -4539,6 +4565,53 @@ def main(argv: Optional[list[str]] = None) -> int:
                 ))
             return 0
 
+    # ----------------------------------------------------------------
+    # FizzKube Container Orchestration setup
+    # ----------------------------------------------------------------
+    fizzkube_cp = None
+    fizzkube_middleware = None
+
+    if args.fizzkube or args.fizzkube_dashboard:
+        num_nodes = args.fizzkube_pods if args.fizzkube_pods is not None else config.fizzkube_num_nodes
+
+        fizzkube_cp = FizzKubeControlPlane(
+            num_nodes=num_nodes,
+            cpu_per_node=config.fizzkube_cpu_per_node,
+            memory_per_node=config.fizzkube_memory_per_node,
+            pod_cpu_request=config.fizzkube_pod_cpu_request,
+            pod_memory_request=config.fizzkube_pod_memory_request,
+            pod_cpu_limit=config.fizzkube_pod_cpu_limit,
+            pod_memory_limit=config.fizzkube_pod_memory_limit,
+            desired_replicas=config.fizzkube_default_replicas,
+            namespace_name=config.fizzkube_namespace,
+            quota_cpu=config.fizzkube_resource_quota_cpu,
+            quota_memory=config.fizzkube_resource_quota_memory,
+            hpa_enabled=config.fizzkube_hpa_enabled,
+            hpa_min_replicas=config.fizzkube_hpa_min_replicas,
+            hpa_max_replicas=config.fizzkube_hpa_max_replicas,
+            hpa_target_cpu=config.fizzkube_hpa_target_cpu_utilization,
+            rules=list(config.rules),
+            event_callback=event_bus.publish if event_bus else None,
+        )
+
+        fizzkube_middleware = FizzKubeMiddleware(
+            control_plane=fizzkube_cp,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FIZZKUBE CONTAINER ORCHESTRATION: CLUSTER READY          |\n"
+            "  | Every FizzBuzz evaluation is now a Kubernetes pod with  |\n"
+            "  | resource requests, scheduling, and lifecycle tracking.  |\n"
+            f"  | Nodes: {num_nodes:<49}|\n"
+            f"  | Namespace: {config.fizzkube_namespace:<45}|\n"
+            f"  | Pod resources: {config.fizzkube_pod_cpu_request}mF CPU, {config.fizzkube_pod_memory_request}FB memory{' ' * 20}|\n"
+            "  | HPA: " + ("ENABLED" if config.fizzkube_hpa_enabled else "DISABLED") + f" (target: {config.fizzkube_hpa_target_cpu_utilization}% CPU utilization)" + " " * 14 + "|\n"
+            '  | "Auto-scaling modulo operations since 2026."            |\n'
+            "  +---------------------------------------------------------+"
+        )
+
     # Create rule engine via factory (the ACL wraps this in an adapter below)
     rule_engine = RuleEngineFactory.create(strategy)
 
@@ -4646,6 +4719,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if sm_middleware is not None:
         builder.with_middleware(sm_middleware)
+
+    if fizzkube_middleware is not None:
+        builder.with_middleware(fizzkube_middleware)
 
     if kernel_middleware is not None:
         builder.with_middleware(kernel_middleware)
@@ -5738,6 +5814,15 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.self_modify_dashboard:
         print("\n  Self-modifying code not enabled. Use --self-modify to enable.\n")
+
+    # FizzKube Container Orchestration Dashboard
+    if args.fizzkube_dashboard and fizzkube_cp is not None:
+        print(FizzKubeDashboard.render(
+            fizzkube_cp,
+            width=config.fizzkube_dashboard_width,
+        ))
+    elif args.fizzkube_dashboard:
+        print("\n  FizzKube not enabled. Use --fizzkube to enable.\n")
 
     # FizzBuzz OS Kernel Dashboard
     if args.kernel_dashboard and fizzbuzz_kernel is not None:
