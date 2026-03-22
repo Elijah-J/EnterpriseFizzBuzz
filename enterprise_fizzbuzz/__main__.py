@@ -237,6 +237,12 @@ from enterprise_fizzbuzz.infrastructure.nlq import (
     NLQDashboard,
     NLQEngine,
 )
+from enterprise_fizzbuzz.infrastructure.load_testing import (
+    LoadTestDashboard,
+    PerformanceReport,
+    WorkloadProfile,
+    run_load_test,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -1151,6 +1157,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--nlq-interactive",
         action="store_true",
         help="Start the NLQ interactive REPL for conversational FizzBuzz queries",
+    )
+
+    # Load Testing Framework
+    parser.add_argument(
+        "--load-test",
+        action="store_true",
+        help="Run a load test against the FizzBuzz evaluation engine (because n%%3 needs stress testing)",
+    )
+
+    parser.add_argument(
+        "--load-profile",
+        type=str,
+        choices=["smoke", "load", "stress", "spike", "endurance"],
+        default=None,
+        help="Workload profile for the load test (default: from config)",
+    )
+
+    parser.add_argument(
+        "--load-vus",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of Virtual Users for the load test (default: from config/profile)",
+    )
+
+    parser.add_argument(
+        "--load-dashboard",
+        action="store_true",
+        help="Display the full ASCII load test dashboard after execution",
     )
 
     return parser
@@ -3460,6 +3495,56 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     # Also add pipeline to finops active subsystems tracking
     # (this is already handled above in the finops setup)
+
+    # ----------------------------------------------------------------
+    # Load Testing Framework
+    # ----------------------------------------------------------------
+    if args.load_test:
+        profile_name = args.load_profile or config.load_testing_default_profile
+        profile_map = {
+            "smoke": WorkloadProfile.SMOKE,
+            "load": WorkloadProfile.LOAD,
+            "stress": WorkloadProfile.STRESS,
+            "spike": WorkloadProfile.SPIKE,
+            "endurance": WorkloadProfile.ENDURANCE,
+        }
+        lt_profile = profile_map.get(profile_name, WorkloadProfile.SMOKE)
+        lt_vus = args.load_vus or config.load_testing_default_vus
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | ENTERPRISE FIZZBUZZ LOAD TESTING FRAMEWORK               |\n"
+            "  | Stress-testing modulo arithmetic since 2026              |\n"
+            "  +---------------------------------------------------------+"
+        )
+        print(f"  Profile: {profile_name.upper()} | VUs: {lt_vus}")
+        print(f"  Numbers per VU: {config.load_testing_numbers_per_vu}")
+        print()
+        print("  Spawning virtual users...")
+        print()
+
+        lt_report, lt_latencies = run_load_test(
+            lt_profile,
+            config.rules,
+            num_vus=lt_vus,
+            numbers_per_vu=config.load_testing_numbers_per_vu,
+            event_callback=event_bus.publish if event_bus else None,
+            timeout_seconds=config.load_testing_timeout_seconds,
+        )
+
+        print(f"  Load test complete: {lt_report.total_requests} requests in {lt_report.elapsed_seconds:.3f}s")
+        print(f"  Throughput: {lt_report.requests_per_second:.1f} req/s")
+        print(f"  Error rate: {lt_report.error_rate * 100:.2f}%")
+        print(f"  Performance grade: {lt_report.grade.value}")
+        print()
+
+        if args.load_dashboard:
+            print(LoadTestDashboard.render(
+                lt_report,
+                latencies_ms=lt_latencies,
+                width=config.load_testing_dashboard_width,
+                histogram_buckets=config.load_testing_histogram_buckets,
+            ))
 
     # ----------------------------------------------------------------
     # Genetic Algorithm for Optimal FizzBuzz Rule Discovery

@@ -449,6 +449,14 @@ class EventType(Enum):
     NLQ_QUERY_EXECUTED = auto()
     NLQ_SESSION_STARTED = auto()
 
+    # Load Testing Framework events
+    LOAD_TEST_STARTED = auto()
+    LOAD_TEST_COMPLETED = auto()
+    LOAD_TEST_VU_SPAWNED = auto()
+    LOAD_TEST_VU_COMPLETED = auto()
+    LOAD_TEST_REQUEST_COMPLETED = auto()
+    LOAD_TEST_BOTTLENECK_IDENTIFIED = auto()
+
 
 class ProbeType(Enum):
     """Kubernetes-style health check probe classification.

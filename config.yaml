@@ -922,6 +922,27 @@ nlq:
     - "STATISTICS"                       # What is the most common classification?
     - "EXPLAIN"                          # Why is 9 Fizz?
 
+# Load Testing Framework configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is proving that you can compute it correctly at scale,
+# under simulated production traffic from hundreds of virtual users
+# who all urgently need modulo arithmetic results. If your FizzBuzz
+# platform can't handle 10,000 concurrent divisibility checks,
+# can you really call it enterprise-grade?
+load_testing:
+  enabled: false                         # Master switch — opt-in via --load-test
+  default_profile: "smoke"               # smoke | load | stress | spike | endurance
+  default_vus: 10                        # Default number of Virtual Users
+  default_duration_seconds: 30           # Default test duration
+  ramp_up_seconds: 5                     # Time to ramp up to full VU count
+  ramp_down_seconds: 3                   # Time to ramp down after test completion
+  numbers_per_vu: 100                    # How many FizzBuzz evaluations each VU performs
+  think_time_ms: 0                       # Simulated user think time between requests (0=none)
+  timeout_seconds: 300                   # Maximum load test duration before forced stop
+  dashboard:
+    width: 60                            # ASCII dashboard width
+    histogram_buckets: 10                # Number of histogram bars in latency distribution
+
 # Observer configuration
 observers:
   console_observer:
