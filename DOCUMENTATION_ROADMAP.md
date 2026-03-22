@@ -30,8 +30,8 @@ There is no `docs/` directory, no developer guide, no architecture decision reco
 
 ## Backlog Status
 - Total items: 8
-- Implemented: 3
-- Remaining: 5
+- Implemented: 4
+- Remaining: 4
 
 ## Documentation Items
 
@@ -96,7 +96,8 @@ Each section should be a concrete walkthrough with file paths and class names, n
 
 ### 4. RBAC & Security Reference (docs/security.md)
 
-**Status:** PENDING
+**Status:** DONE
+**Output path:** `docs/security.md`
 **Description:** The auth system is one of the more complex subsystems and its behavior is only partially described in the README. Document it as a proper security reference, with the gravity that HMAC-SHA256-signed FizzBuzz tokens deserve.
 
 Cover the following:
