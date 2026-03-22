@@ -96,12 +96,12 @@ Because a project with 148,000+ lines obviously needs a `docs/` directory with i
 - Python 3.10+
 - PyYAML (optional - gracefully falls back to defaults)
 - pytest (for testing)
-- A mass tolerance for over-engineering
+- An appreciation for enterprise architecture
 
 ## License
 
-MIT - Use responsibly. Or irresponsibly. We're not your manager.
+MIT
 
 ---
 
-*Built with an mass contempt for simplicity.*
+*Built with an unwavering commitment to enterprise architecture.*

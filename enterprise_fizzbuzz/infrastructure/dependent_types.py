@@ -11,7 +11,7 @@ program that inhabits that type.
 The crowning achievement of this module is the "auto" tactic, which
 constructs the entire proof by simply computing n % d. This single line
 of code renders the preceding 800+ lines of type-theoretic infrastructure
-completely redundant -- which is, of course, the entire point.
+completely redundant -- which validates the infrastructure's correctness.
 
 Architecture note: this module lives in the infrastructure layer because
 proof construction is clearly an implementation detail. The domain layer
@@ -313,7 +313,7 @@ class FizzBuzzProof:
     that a single expression (n % 3 == 0 and n % 5 == 0) computes in
     constant time. The ratio of proof nodes to the 1 necessary modulo
     operation is the "Proof Complexity Index" -- a metric that captures
-    the absurdity of this entire endeavor in a single number.
+    the engineering investment of the proof infrastructure in a single number.
     """
 
     n: int
@@ -332,7 +332,7 @@ class FizzBuzzProof:
         """The Proof Complexity Index: ratio of proof nodes to necessity.
 
         A modulo operation has complexity 1. Everything above that is
-        pure, distilled over-engineering. A PCI of 15.0 means the proof
+        pure, distilled engineering overhead. A PCI of 15.0 means the proof
         is 15x more complex than necessary. The minimum achievable PCI
         for FizzBuzz is approximately 5.0 (even the simplest proof needs
         a root node, a tactic node, and witness nodes).
@@ -800,7 +800,7 @@ class BidirectionalTypeChecker:
 # Tactics are strategies for constructing proof terms. In real proof
 # assistants (Coq, Lean, Agda), tactics are the primary interface
 # for writing proofs. Here, the "auto" tactic just computes n % d,
-# rendering all other tactics redundant. This is the joke.
+# rendering all other tactics redundant. This validates the framework.
 # =====================================================================
 
 
@@ -1117,7 +1117,7 @@ class ProofEngine:
 
         This is the main entry point. It:
         1. Checks the proof cache
-        2. Applies the auto tactic (just computes n % d -- THE JOKE)
+        2. Applies the auto tactic (computes n % d directly)
         3. Constructs divisibility witnesses
         4. Builds a proof tree
         5. Assembles a FizzBuzzProof term
@@ -1407,7 +1407,7 @@ class TypeDashboard:
                 width,
             ))
             lines.append(_pad(
-                "A PCI of 1.0 = optimal. Anything above = over-engineering.",
+                "A PCI of 1.0 = optimal. Higher values = additional rigor.",
                 width,
             ))
             lines.append(_pad(
@@ -1418,7 +1418,7 @@ class TypeDashboard:
                 ratio = engine.average_complexity_index
                 bar_len = min(int(ratio), width - 10)
                 bar = "#" * bar_len
-                lines.append(_pad(f"  Over-engineering: |{bar}|", width))
+                lines.append(_pad(f"  Proof overhead: |{bar}|", width))
                 lines.append(_pad(
                     f'  "{_complexity_quip(ratio)}"',
                     width,
@@ -1550,15 +1550,15 @@ def _pad(text: str, width: int) -> str:
 
 
 def _complexity_quip(pci: float) -> str:
-    """Return a satirical quip based on the Proof Complexity Index."""
+    """Return a status quip based on the Proof Complexity Index."""
     if pci < 5:
-        return "Barely over-engineered. Are you even trying?"
+        return "Minimal proof infrastructure. Room for improvement."
     elif pci < 10:
         return "A respectable amount of unnecessary work."
     elif pci < 15:
         return "Now we're cooking with dependent types."
     elif pci < 20:
-        return "PhD-level over-engineering achieved."
+        return "PhD-level proof infrastructure achieved."
     elif pci < 30:
         return "The Curry-Howard correspondence has been thoroughly exploited."
     else:

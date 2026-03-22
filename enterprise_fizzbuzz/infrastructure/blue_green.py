@@ -8,10 +8,8 @@ a single variable from one StandardRuleEngine to another identical
 StandardRuleEngine. Both engines compute FizzBuzz in the same way,
 using the same rules, producing the same results. The shadow traffic
 comparison confirms this. The smoke tests confirm this. The bake period
-confirms this. And yet, the ceremony must proceed — because in enterprise
-software, the ritual is the point.
-
-Zero users are impacted by the deployment. (There is one user.)
+confirms this. The deployment ceremony ensures that every release follows the same
+validated, auditable process regardless of the change scope.
 """
 
 from __future__ import annotations
@@ -71,7 +69,7 @@ class DeploymentPhase(Enum):
 
     Each phase must be completed before the next can begin. Skipping
     phases is not permitted, even when every phase does essentially
-    nothing meaningful. The ceremony is the point.
+    nothing meaningful. Phase discipline ensures process integrity.
     """
 
     IDLE = auto()
@@ -367,9 +365,8 @@ class BakePeriodMonitor:
     FizzBuzz evaluations over a few milliseconds and declares victory.
 
     The bake period for a process that runs for 0.8 seconds total is
-    approximately 50ms, which is both absurdly long (relative to the
-    operation) and absurdly short (relative to real bake periods).
-    This IS the joke.
+    approximately 50ms, calibrated to the platform's evaluation
+    throughput and scaled proportionally to the deployment scope.
     """
 
     def __init__(
@@ -488,10 +485,10 @@ class CutoverManager:
     ) -> None:
         """Execute the atomic cutover from one slot to another.
 
-        This is the most over-engineered variable assignment in the
-        history of computer science. Three events. A dramatic pause.
-        Nanosecond timing. All to change which StandardRuleEngine
-        instance a variable points to.
+        Performs the atomic cutover with full event emission,
+        timing instrumentation, and audit logging. The cutover
+        is recorded at nanosecond precision for post-deployment
+        analysis and compliance reporting.
         """
         # Event 1: Cutover initiated — the point of no return
         self._emit(Event(
@@ -1035,7 +1032,7 @@ class DeploymentDashboard:
     Because every enterprise deployment deserves a beautiful ASCII
     dashboard that presents deployment metrics, phase results, and
     slot status in a format that looks like it came from a 1980s
-    mainframe. The aesthetic is the point.
+    mainframe terminal for maximum operational readability.
     """
 
     @staticmethod

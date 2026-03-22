@@ -323,7 +323,7 @@ class Breakpoint:
     Breakpoints can trigger on specific numbers, classification types
     (Fizz/Buzz/FizzBuzz/Plain), or arbitrary conditions. Because
     setting a breakpoint on "n == 15" for a FizzBuzz program is the
-    pinnacle of software debugging methodology.
+    standard for software debugging methodology.
 
     Attributes:
         id: Unique breakpoint identifier.
@@ -1638,11 +1638,11 @@ class FizzDAPDashboard:
             lines.append(left(f"[{bar}]"))
             lines.append(left(""))
             if dci > 100:
-                lines.append(left("Status: MAGNIFICENTLY OVER-ENGINEERED"))
+                lines.append(left("Status: COMPREHENSIVE COVERAGE ACHIEVED"))
                 lines.append(left(f"Every line of FizzBuzz is supported by"))
                 lines.append(left(f"{dci:.0f} lines of debugging infrastructure."))
             else:
-                lines.append(left("Status: INSUFFICIENTLY OVER-ENGINEERED"))
+                lines.append(left("Status: COVERAGE BELOW TARGET"))
                 lines.append(left("We need more debugging code. Much more."))
 
         # Footer

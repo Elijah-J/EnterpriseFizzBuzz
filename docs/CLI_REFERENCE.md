@@ -277,10 +277,10 @@ python main.py --cache --cache-warm --cache-stats --circuit-breaker --circuit-st
 # Caching + chaos: watch the monkey corrupt cached results
 python main.py --cache --cache-stats --chaos --chaos-level 3 --range 1 30
 
-# Full enterprise stack: caching + SLA + tracing + RBAC (peak over-engineering)
+# Full enterprise stack: caching + SLA + tracing + RBAC
 python main.py --cache --cache-stats --sla --sla-dashboard --trace --user alice --role FIZZBUZZ_SUPERUSER --range 1 20
 
-# Repository Pattern: persist results in-memory (the default, because persistence is aspirational)
+# Repository Pattern: persist results in-memory (the default backend)
 python main.py --repository memory --range 1 20
 
 # Repository Pattern: persist results to SQLite (an actual database, for once)
@@ -1031,7 +1031,7 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --chaos               Enable Chaos Engineering fault injection (the monkey awakens)
 --chaos-level N       Chaos severity level 1-5 (1=gentle breeze, 5=apocalypse)
 --gameday SCENARIO    Run a Game Day chaos scenario (modulo_meltdown, confidence_crisis, slow_burn, total_chaos)
---post-mortem         Generate a satirical post-mortem incident report after chaos execution
+--post-mortem         Generate a post-mortem incident report after chaos execution
 --feature-flags      Enable the Feature Flag / Progressive Rollout subsystem
 --flag NAME=VALUE    Override a feature flag (e.g. --flag wuzz_rule_experimental=true)
 --list-flags         Display all registered feature flags and exit

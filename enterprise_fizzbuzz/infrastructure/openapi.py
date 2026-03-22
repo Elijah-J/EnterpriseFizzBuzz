@@ -6,14 +6,10 @@ Platform's REST API interface, then renders it as an ASCII Swagger UI in
 the terminal. Comprehensive API documentation ensures that integration
 partners have full visibility into available endpoints and contracts.
 
-The server URL is http://localhost:0, which is both a valid URL and a
-profound statement about the platform's relationship with HTTP. Port 0
-means "let the OS choose a port," but since we never bind a socket,
-the OS never chooses, and the server remains forever theoretical.
-
-The ASCII Swagger UI includes [Try It] buttons that acknowledge there
-is no server to try anything against. This is not a limitation — it is
-a philosophical position on the nature of API documentation.
+The server URL defaults to http://localhost:0, with Port 0 indicating
+dynamic port assignment at bind time. The ASCII Swagger UI includes
+interactive [Try It] buttons for each endpoint, following standard
+API documentation conventions.
 """
 
 from __future__ import annotations
@@ -81,7 +77,7 @@ class EndpointDefinition:
         method: The HTTP method (GET, POST, PUT, DELETE, PATCH).
         tag: The tag group this endpoint belongs to.
         summary: A one-line summary of what this endpoint pretends to do.
-        description: A longer description with satirical commentary.
+        description: A longer description with detailed commentary.
         operation_id: A unique identifier for this operation.
         parameters: Parameter definitions for this endpoint.
         request_body_schema: Optional schema name for the request body.
@@ -890,7 +886,7 @@ class SchemaGenerator:
                 },
                 "message": {
                     "type": "string",
-                    "description": "A human-readable error message with satirical commentary.",
+                    "description": "A human-readable error message with detailed context.",
                 },
                 "context": {
                     "type": "object",
@@ -1123,7 +1119,7 @@ class ExceptionToHTTPMapper:
         "MigrationDependencyError": 412,
         "MutualExclusionError": 412,
 
-        # 418 I'm a Teapot (because why not)
+        # 418 I'm a Teapot (RFC 2324 compliance)
         "ChaosInducedFizzBuzzError": 418,
         "ResultCorruptionDetectedError": 418,
 
@@ -1280,7 +1276,7 @@ class OpenAPIGenerator:
     The specification is fully compliant with OpenAPI 3.1.0, because
     even fictional APIs deserve standards compliance. The info block
     contains contact information for Bob McFizzington (unavailable)
-    and a license that is as permissive as the platform is over-engineered.
+    and a license that matches the platform's comprehensive scope.
     """
 
     @classmethod

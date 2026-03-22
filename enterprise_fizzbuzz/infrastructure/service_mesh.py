@@ -161,8 +161,7 @@ class VirtualService(ABC):
     providing a name, version, and a handle() method that
     processes MeshRequests and returns MeshResponses. The ABC
     ensures consistency across all seven microservices, because
-    even in a satirical over-engineered system, interface
-    contracts are sacred.
+    interface contracts are sacred across all microservices.
     """
 
     @abstractmethod
@@ -1072,7 +1071,7 @@ class LoadBalancer:
 
     In production, load balancing decisions happen at Layer 4 or
     Layer 7 of the OSI model. Here, they happen at Layer 8: the
-    satirical application layer, where all requests are equal but
+    platform application layer, where all requests are equal but
     some are more equal than others.
     """
 

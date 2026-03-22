@@ -258,7 +258,7 @@ Chaos Engineering fault injection subsystem.
 
 **Default fault types:** `RESULT_CORRUPTION`, `LATENCY_INJECTION`, `EXCEPTION_INJECTION`, `RULE_ENGINE_FAILURE`, `CONFIDENCE_MANIPULATION`.
 
-Additional CLI flags: `--gameday SCENARIO` (run a Game Day; valid: `modulo_meltdown`, `confidence_crisis`, `slow_burn`, `total_chaos`; defaults to `total_chaos`), `--post-mortem` (generate satirical incident report). No environment variable overrides.
+Additional CLI flags: `--gameday SCENARIO` (run a Game Day; valid: `modulo_meltdown`, `confidence_crisis`, `slow_burn`, `total_chaos`; defaults to `total_chaos`), `--post-mortem` (generate incident report). No environment variable overrides.
 
 ### feature_flags
 

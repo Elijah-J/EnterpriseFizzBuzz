@@ -79,8 +79,8 @@ class ConfigCommit:
 
         The hash is derived from the JSON-serialized tree, the parent SHA,
         and the commit message. This is real cryptographic hashing applied
-        to fake version control for satirical configuration management.
-        The hash is genuine even if the use case is absurd.
+        to configuration version control for the platform's GitOps workflow.
+        The hash ensures tamper-evident configuration history.
         """
         payload = (
             json.dumps(self.tree, sort_keys=True, default=str)
@@ -100,9 +100,8 @@ class ConfigBranch:
     """A mutable pointer to a commit, forming a branch reference.
 
     In real git, a branch is just a pointer to a commit. Here, it's
-    also just a pointer to a commit. Some things are universal truths
-    that transcend the boundary between real software and satirical
-    over-engineering.
+    also just a pointer to a commit. Some design patterns are universal
+    regardless of scale.
     """
 
     name: str
@@ -763,7 +762,7 @@ class ApprovalGate:
         """Request approval for a change proposal.
 
         In single-operator mode, this always returns True with a
-        satirical approval message. In committee mode, it also
+        an approval message. In committee mode, it also
         returns True because the committee has zero members and
         therefore no objections. Consensus by absence.
         """

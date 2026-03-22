@@ -621,6 +621,22 @@ class EventType(Enum):
     DAP_EXPRESSION_EVALUATED = auto()
     DAP_DASHBOARD_RENDERED = auto()
 
+    # Intellectual Property Office events
+    IP_TRADEMARK_REGISTERED = auto()
+    IP_TRADEMARK_RENEWED = auto()
+    IP_TRADEMARK_EXPIRED = auto()
+    IP_TRADEMARK_SEARCH = auto()
+    IP_PATENT_FILED = auto()
+    IP_PATENT_GRANTED = auto()
+    IP_PATENT_REJECTED = auto()
+    IP_PATENT_PRIOR_ART_FOUND = auto()
+    IP_COPYRIGHT_REGISTERED = auto()
+    IP_LICENSE_GRANTED = auto()
+    IP_LICENSE_REVOKED = auto()
+    IP_DISPUTE_FILED = auto()
+    IP_DISPUTE_RESOLVED = auto()
+    IP_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.
@@ -1109,7 +1125,7 @@ class ComplianceRegime(Enum):
     Because even modulo arithmetic must comply with the full weight of
     international financial, data protection, and healthcare regulations.
     The fact that FizzBuzz has no financial statements, processes no personal
-    data, and treats no patients is entirely beside the point.
+    data, and treats no patients does not exempt it from compliance.
 
     SOX:   Sarbanes-Oxley compliance for FizzBuzz financial controls.
            Segregation of duties ensures no single engineer can both

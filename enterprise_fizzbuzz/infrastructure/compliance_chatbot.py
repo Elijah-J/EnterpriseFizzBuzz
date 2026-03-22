@@ -1716,8 +1716,8 @@ class ComplianceChatbot:
 def _wrap_text(text: str, width: int) -> list[str]:
     """Wrap text to fit within a specified width.
 
-    A hand-rolled text wrapper because importing textwrap for a
-    satirical compliance chatbot felt like admitting defeat.
+    A hand-rolled text wrapper to avoid external dependencies in
+    the compliance chatbot's rendering pipeline.
 
     Args:
         text: The text to wrap.

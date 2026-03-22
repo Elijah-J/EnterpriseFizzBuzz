@@ -9,7 +9,7 @@ process that could just... read the file again.
 Key components:
 - ConfigDiffer: Deep recursive diff of nested config trees
 - ConfigValidator: Validates proposed configuration changes
-- SingleNodeRaftConsensus: THE JOKE — full Raft with 1 node. Elections
+- SingleNodeRaftConsensus: Full Raft implementation with 1 node. Elections
   always win unanimously in 0ms. Heartbeats to 0 followers. 100%
   consensus reliability. This is what peak democracy looks like.
 - SubsystemDependencyGraph: Topological sort for reload ordering

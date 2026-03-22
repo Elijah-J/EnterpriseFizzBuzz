@@ -70,8 +70,8 @@ plugins:
 # Circuit breaker configuration
 # Protects the FizzBuzz evaluation pipeline from cascading failures
 # by monitoring error rates and temporarily rejecting requests when
-# the system is unhealthy. Because even modulo arithmetic deserves
-# fault tolerance.
+# the system is unhealthy. Ensures fault tolerance across the
+# evaluation pipeline.
 circuit_breaker:
   enabled: false
   failure_threshold: 5          # Number of failures before tripping
@@ -87,8 +87,8 @@ circuit_breaker:
 
 # Internationalization (i18n) configuration
 # Controls the locale-aware translation subsystem.
-# Because FizzBuzz output in only one language is a clear
-# violation of enterprise globalization standards.
+# Ensures compliance with enterprise globalization standards
+# by supporting locale-aware output translation.
 i18n:
   enabled: true                 # Master switch for the i18n subsystem
   locale: "en"                  # Active locale (overridable via --locale or EFP_LOCALE)
@@ -199,8 +199,8 @@ feature_flags:
 # Because the only thing more important than computing FizzBuzz
 # correctly is proving, with mathematical certainty, that you
 # computed it within the agreed-upon latency budget. Service Level
-# Agreements for modulo arithmetic: the pinnacle of enterprise
-# engineering.
+# Agreements for the evaluation pipeline ensure contractual
+# performance guarantees are met.
 sla:
   enabled: false                    # Master switch — opt-in via --sla
   slos:
@@ -236,17 +236,17 @@ cache:
   max_size: 1024                     # Maximum number of cached FizzBuzz results
   ttl_seconds: 3600.0                # Time-to-live for cache entries (1 hour)
   eviction_policy: "lru"             # lru | lfu | fifo | dramatic_random
-  enable_coherence_protocol: true    # Enable MESI state tracking (pointless but thorough)
-  enable_eulogies: true              # Generate satirical obituaries for evicted entries
+  enable_coherence_protocol: true    # Enable MESI state tracking for cache consistency
+  enable_eulogies: true              # Generate obituaries for evicted entries
   warming:
     enabled: false                   # Pre-populate cache on startup (defeats the purpose)
     range_start: 1                   # Warming range start
     range_end: 100                   # Warming range end
 
 # Database Migration Framework configuration
-# Because managing schema migrations for in-memory data structures
-# that vanish when the process exits is the pinnacle of ephemeral
-# database administration. Every dict deserves a migration history.
+# Manages schema migrations for in-memory data structures,
+# providing a versioned DDL lifecycle with forward and reverse
+# migration support.
 migrations:
   enabled: false                     # Master switch — opt-in via --migrate
   auto_apply: false                  # Automatically apply pending migrations on startup
@@ -429,11 +429,9 @@ hot_reload:
     show_raft_details: true           # Show Raft consensus details in dashboard
 
 # Rate Limiting & API Quota Management configuration
-# Because unrestricted access to modulo arithmetic is a security
-# vulnerability of the highest order. Without rate limiting, a
-# malicious actor could evaluate FizzBuzz at an unconscionable
-# rate, consuming precious CPU cycles that could be better spent
-# on more important operations, like rate limiting itself.
+# Rate limiting protects the evaluation pipeline from abuse.
+# Without rate limiting, unrestricted access could overwhelm
+# downstream subsystems and exhaust computational resources.
 rate_limiting:
   enabled: false                       # Master switch — opt-in via --rate-limit
   algorithm: "token_bucket"            # token_bucket | sliding_window | fixed_window
@@ -746,8 +744,8 @@ data_pipeline:
     width: 60                           # ASCII dashboard width
 
 # OpenAPI Specification Generator & ASCII Swagger UI configuration
-# Because documenting an API that does not exist is the pinnacle of
-# enterprise documentation culture. The specification is fully
+# Generates a complete OpenAPI 3.1.0 specification following
+# specification-first design methodology. The specification is fully
 # compliant with OpenAPI 3.1.0, the server URL is http://localhost:0
 # (which does not exist), and the ASCII Swagger UI features [Try It]
 # buttons that honestly acknowledge there is nothing to try.
@@ -1188,7 +1186,7 @@ cross_compiler:
   enabled: false                               # Master switch — opt-in via --compile-to
   verify_round_trip: true                      # Verify generated code matches Python reference
   verification_range_end: 100                  # Verify for n=1..N
-  emit_comments: true                          # Include satirical comments in generated code
+  emit_comments: true                          # Include descriptive comments in generated code
   dashboard:
     width: 60                                  # ASCII dashboard width
     show_ir: false                             # Show IR instructions in dashboard
@@ -1561,6 +1559,25 @@ fizzdap:
     show_stack_trace: true                # Show synthetic stack trace in dashboard
     show_variables: true                  # Show variable inspector in dashboard
     show_complexity_index: true           # Show Debug Complexity Index in dashboard
+
+# FizzBuzz Intellectual Property Office configuration
+# Because the labels "Fizz", "Buzz", and "FizzBuzz" are registered
+# trademarks, the rule {3:"Fizz"} is a granted patent, and every
+# output sequence is a copyrightable work. The IP Office enforces
+# all of this with phonetic similarity analysis (Soundex + Metaphone),
+# Kolmogorov complexity estimation, Levenshtein distance scoring,
+# and — when disputes arise — formal judicial opinions issued by
+# the FizzBuzz Intellectual Property Tribunal. Because modulo
+# arithmetic deserves the same IP protection as pharmaceuticals.
+ip_office:
+  enabled: false                          # Master switch — opt-in via --ip-office
+  trademark_similarity_threshold: 0.7     # Phonetic similarity above this = confusingly similar
+  patent_novelty_threshold: 0.5           # Prior art similarity below this = novel
+  copyright_originality_threshold: 0.3    # Levenshtein distance above this = original
+  default_license: "FBPL"                 # FBPL (permissive), FBEL (enterprise), FBCL (copyleft)
+  trademark_renewal_days: 365             # Trademark registration validity period
+  dashboard:
+    width: 60                             # ASCII dashboard width
 
 # Observer configuration
 observers:

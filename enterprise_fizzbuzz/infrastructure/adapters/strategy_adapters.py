@@ -18,9 +18,9 @@ The ACL provides:
     - Cross-strategy disagreement tracking for audit compliance
     - Event emission for observability of classification edge cases
 
-All four strategy adapters live in this single file because creating
-four separate files for four classes that each do essentially the same
-thing would be over-engineering even by this project's standards.
+All four strategy adapters live in this single file as they share
+a common structure and are closely related in purpose, following
+the cohesion principle of grouping related adapters together.
 """
 
 from __future__ import annotations

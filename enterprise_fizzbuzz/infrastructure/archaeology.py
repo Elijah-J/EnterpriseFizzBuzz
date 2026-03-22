@@ -511,7 +511,7 @@ class EvidenceCollector:
         ]
 
     def collect_cache_eulogies(self, number: int) -> list[EvidenceFragment]:
-        """Excavate evidence from satirical obituaries of evicted cache entries.
+        """Excavate evidence from commemorative records of evicted cache entries.
 
         The cache eulogies stratum is the least reliable of all. It contains
         the flowery prose composed by the cache eviction subsystem to

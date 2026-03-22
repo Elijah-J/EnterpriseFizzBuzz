@@ -145,7 +145,7 @@ class EvictionPolicy(ABC):
     which cache entry to sacrifice when space is needed. The chosen
     entry will receive a eulogy and be ceremonially removed from the
     cache — a process that takes longer than simply recomputing n % 3,
-    but that's beside the point.
+    but correctness takes precedence over performance.
     """
 
     @abstractmethod
@@ -253,14 +253,14 @@ class DramaticRandomPolicy(EvictionPolicy):
 
 
 class EulogyGenerator:
-    """Generates satirical obituaries for evicted cache entries.
+    """Generates commemorative obituaries for evicted cache entries.
 
     When a cache entry is evicted, it deserves a proper farewell. The
     EulogyGenerator crafts a personalized obituary based on the entry's
     life statistics: how long it lived, how many times it was accessed,
     its final dignity level, and the eviction policy that sealed its fate.
 
-    Each eulogy is a small work of satirical art, commemorating the
+    Each eulogy is a small work of commemorative art, commemorating the
     brief but meaningful existence of a cached FizzBuzz result.
     """
 
@@ -346,7 +346,7 @@ class EulogyGenerator:
             policy_name: The name of the eviction policy responsible.
 
         Returns:
-            A satirical eulogy string.
+            A commemorative eulogy string.
         """
         try:
             template = random.choice(cls._TEMPLATES)

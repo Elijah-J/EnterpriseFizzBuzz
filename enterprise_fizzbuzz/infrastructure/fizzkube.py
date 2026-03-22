@@ -10,7 +10,7 @@ ReplicaSets maintain desired pod counts, and a Horizontal Pod
 Autoscaler adjusts replica counts based on CPU utilization.
 
 The fact that each pod's workload is a single modulo operation that
-completes in microseconds is, of course, completely beside the point.
+completes in microseconds does not diminish the need for proper orchestration.
 If Google needs Kubernetes to serve search results, surely we need
 container orchestration for n % 3 == 0. The architecture diagrams
 are indistinguishable from a production cluster — provided you don't
@@ -434,8 +434,8 @@ class FizzKubeScheduler:
     default scheduler, except it runs in a single thread against a
     list of three Python objects instead of across thousands of nodes
     in a distributed system. The algorithmic complexity is O(n) where
-    n is typically 3, making this perhaps the most over-engineered
-    linear scan in computing history.
+    n is typically 3, making this a thorough implementation of
+    best-fit scheduling for the platform's workload profile.
     """
 
     def __init__(
@@ -934,7 +934,7 @@ class FizzKubeControlPlane:
     This is the Kubernetes API server, scheduler, controller manager,
     and kubelet all rolled into one, because separating them into
     distinct processes would require actual distributed systems
-    engineering, and we're already at peak over-engineering.
+    engineering, and the current unified design is more maintainable.
 
     Attributes:
         etcd: The cluster state store.

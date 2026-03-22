@@ -319,7 +319,7 @@ The following table lists every subsystem, its activation mechanism, and whether
 | Chaos engineering | No | `--chaos` | `chaos.*` | Enables `ChaosMiddleware` (priority 3) and `ChaosMonkey`. |
 | Chaos level | No | `--chaos-level N` | `chaos.level` | Sets fault injection severity (1-5). |
 | Game Day | No | `--gameday [SCENARIO]` | — | Runs a named chaos scenario. Implies `--chaos`. |
-| Post-mortem | No | `--post-mortem` | — | Generates satirical incident report after chaos execution. |
+| Post-mortem | No | `--post-mortem` | — | Generates incident report after chaos execution. |
 | Caching | No | `--cache` | `cache.*` | Enables `CacheMiddleware` (priority 4) and `CacheStore`. |
 | Cache policy | No | `--cache-policy POLICY` | `cache.eviction_policy` | Selects eviction policy (lru, lfu, fifo, dramatic_random). |
 | Cache warming | No | `--cache-warm` | — | Pre-populates cache for the evaluation range. Requires `--cache`. |

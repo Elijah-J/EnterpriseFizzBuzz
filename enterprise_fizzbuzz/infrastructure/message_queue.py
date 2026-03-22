@@ -215,7 +215,7 @@ class RebalanceReport:
 
 
 # ============================================================
-# Partition — THE JOKE
+# Partition
 # ============================================================
 
 
@@ -1557,7 +1557,7 @@ class MessageQueueBridge(IObserver):
     This observer subscribes to the EventBus and forwards relevant
     events to the message queue as messages. It is the glue between
     the Observer pattern (already in the codebase) and the pub/sub
-    pattern (newly over-engineered).
+    pattern (added for decoupled event distribution).
 
     Event routing:
     - NUMBER_PROCESSING_STARTED -> evaluations.requested

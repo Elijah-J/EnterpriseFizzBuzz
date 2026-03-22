@@ -237,7 +237,7 @@ class Tokenizer:
 # The five canonical intents of the Enterprise FizzBuzz NLQ system.
 # Each represents a fundamentally different way to interrogate the
 # sacred modulo operator, and each requires its own execution path,
-# response format, and satirical commentary.
+# response format, and execution strategy.
 # ============================================================
 
 
@@ -273,7 +273,7 @@ class IntentClassifier:
 
     The decision tree has been validated against a test suite of
     approximately "enough" queries, achieving an accuracy of
-    "good enough for satirical software."
+    "sufficient for production use."
     """
 
     def classify(self, tokens: list[Token]) -> Intent:
@@ -390,8 +390,8 @@ class EntityExtractor:
     classification filters, and numeric property filters.
 
     It uses a single-pass algorithm with lookahead, because
-    multi-pass extraction would be even more over-engineered
-    than this already is.
+    multi-pass extraction is unnecessary given the query grammar's
+    limited ambiguity.
     """
 
     def extract(self, tokens: list[Token], intent: Intent) -> QueryEntities:
@@ -514,9 +514,8 @@ class EntityExtractor:
 # intents and converts them into real StandardRuleEngine calls,
 # then formats the results for human consumption.
 #
-# This is where the satirical meets the functional — the
-# executor actually computes correct FizzBuzz results while
-# wrapping them in enterprise-grade verbosity.
+# The executor computes correct FizzBuzz results and presents
+# them with enterprise-grade formatting and context.
 # ============================================================
 
 
@@ -593,7 +592,7 @@ class QueryExecutor:
     """Executes parsed NLQ queries against the FizzBuzz evaluation engine.
 
     Uses the real StandardRuleEngine for evaluation, because even
-    satirical software should produce correct results. The executor
+    all software should produce correct results. The executor
     dispatches to intent-specific handlers, each of which runs the
     engine, filters results, and formats the output with maximum
     enterprise verbosity.
@@ -1110,7 +1109,7 @@ class NLQDashboard:
 # ============================================================
 # The NLQEngine is the maestro of the NLQ pipeline, coordinating
 # the tokenizer, intent classifier, entity extractor, and query
-# executor into a harmonious symphony of over-engineering.
+# executor into a cohesive query processing pipeline.
 #
 # Pipeline: Query -> Tokenize -> Classify -> Extract -> Execute
 # ============================================================

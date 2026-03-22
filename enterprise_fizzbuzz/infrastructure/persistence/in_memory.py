@@ -3,7 +3,7 @@ Enterprise FizzBuzz Platform - In-Memory Repository & Unit of Work
 
 Implements the Repository Pattern and Unit of Work Pattern using a
 Python dictionary as the backing store. This is, objectively, the
-most over-engineered way to append items to a list ever conceived.
+most comprehensive way to manage an in-memory collection with transactional semantics.
 
 The InMemoryRepository maintains a committed store and a pending
 buffer. On commit(), pending items are merged into the committed

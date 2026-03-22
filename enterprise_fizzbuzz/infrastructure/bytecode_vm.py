@@ -1013,8 +1013,8 @@ class Disassembler:
 # - Instruction count: 4 bytes (little-endian uint32)
 # - Base64-encoded JSON payload
 #
-# The format is simultaneously over-engineered (magic header,
-# version byte) and under-engineered (JSON inside base64).
+# The format includes a magic header and version byte for forward
+# compatibility, with a base64-encoded JSON payload for portability.
 # This duality is a feature.
 # ============================================================
 

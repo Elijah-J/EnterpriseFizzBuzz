@@ -807,6 +807,6 @@ All file paths above are relative to `enterprise_fizzbuzz/`.
 
 The Enterprise FizzBuzz Platform has 24,800 lines of code, 69 custom exception classes, 829 tests, a neural network, a blockchain, a cache with funeral rites, and support for three fictional languages. It computes `n % 3`.
 
-When adding features, resist the urge to simplify. The architecture is the joke, and the joke only works if every addition is treated with the same deadly seriousness as the original. If you're adding a feature and it doesn't feel over-engineered enough, add another layer of abstraction. If your middleware doesn't have its own dashboard, is it really middleware? If your locale file doesn't include a constructed language, are you truly committed to globalization?
+When adding features, maintain the same engineering standards as the existing codebase. Every subsystem should be treated with full production rigor. If you're adding a feature, ensure it has proper middleware integration, an ASCII dashboard, and comprehensive test coverage. If your middleware doesn't have its own dashboard, it isn't production-ready. If your locale file doesn't include a constructed language, your globalization coverage has gaps.
 
 Welcome aboard. Bob is on call if you need anything.

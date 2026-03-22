@@ -392,9 +392,9 @@ class LoadGenerator:
 
     Manages the lifecycle of VUs including ramp-up, steady-state,
     and ramp-down phases. Uses stdlib concurrent.futures because
-    importing a third-party load testing library for a satirical
-    FizzBuzz project would be the only genuinely unacceptable form
-    of over-engineering in this codebase.
+    importing a third-party load testing library would introduce
+    unnecessary external dependencies when stdlib provides
+    adequate concurrency primitives.
     """
 
     def __init__(
@@ -956,8 +956,8 @@ class LoadTestDashboard:
     Renders a comprehensive performance dashboard including a latency
     histogram, percentile table, bottleneck ranking, throughput metrics,
     and a performance grade with commentary. All rendered in glorious
-    ASCII art, because Grafana costs money and this is a satirical
-    FizzBuzz project.
+    ASCII art, providing zero-dependency visualization without
+    requiring external dashboarding tools.
     """
 
     @staticmethod

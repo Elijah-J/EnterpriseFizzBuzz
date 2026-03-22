@@ -307,7 +307,7 @@ The framework is built around a singleton **ChaosMonkey** orchestrator that mana
 - **FaultInjector** - Strategy pattern with five concrete injectors, one per fault type
 - **ChaosMiddleware** - Pipeline integration at priority 3, with pre-eval (exceptions, latency) and post-eval (corruption, confidence) injection phases
 - **GameDayRunner** - Multi-phase chaos experiment orchestrator with four pre-built scenarios
-- **PostMortemGenerator** - Satirical ASCII incident report generator with timeline, impact assessment, root cause analysis ("spoiler: it was the Chaos Monkey"), and action items (none of which will actually be implemented)
+- **PostMortemGenerator** - ASCII incident report generator with timeline, impact assessment, root cause analysis, and action items
 
 ### Fault Types
 
@@ -445,7 +445,7 @@ Because even Kahn never imagined his algorithm being used to determine whether p
 
 ## SLA Monitoring Architecture
 
-The SLA Monitoring subsystem implements a production-grade Service Level Agreement enforcement framework for the Enterprise FizzBuzz Platform -- because computing `n % 3` without contractual latency guarantees, error budgets, and a multi-tier escalation policy would be unconscionable in a production environment.
+The SLA Monitoring subsystem implements a production-grade Service Level Agreement enforcement framework for the Enterprise FizzBuzz Platform -- because computing `n % 3` without contractual latency guarantees, error budgets, and a multi-tier escalation policy would be unacceptable in a production environment.
 
 Every FizzBuzz evaluation is measured against three SLOs, its impact on the error budget is calculated in real time, and if things go sideways, Bob McFizzington gets paged. Bob is always on call. Bob cannot escape.
 
@@ -881,9 +881,9 @@ The persistence layer follows the **Ports & Adapters** pattern: abstract contrac
 
 | Backend | Storage Medium | Durability | When To Use | Enterprise Justification |
 |---------|---------------|------------|-------------|-------------------------|
-| `memory` | Python dict | None (dies with the process) | Default. Fast, ephemeral, and ultimately pointless | The architectural equivalent of writing your grocery list on a napkin in a hurricane |
-| `sqlite` | SQLite database file | Full (survives restarts) | When you need FizzBuzz results to persist across process boundaries | Finally, a real database. Your DBA would be proud, if they knew this existed |
-| `filesystem` | JSON files on disk | Full (one file per result) | When you want artisanal, hand-crafted persistence | Each FizzBuzz result gets its own lovingly serialized JSON file, like a digital snowflake |
+| `memory` | Python dict | None (dies with the process) | Default. Fast and ephemeral | Suitable for single-run evaluation sessions where persistence is not required |
+| `sqlite` | SQLite database file | Full (survives restarts) | When you need FizzBuzz results to persist across process boundaries | Full ACID compliance with schema migration support |
+| `filesystem` | JSON files on disk | Full (one file per result) | When you need human-readable persistence with per-record granularity | Each FizzBuzz result is serialized to its own JSON file for maximum inspectability |
 
 ### Unit of Work Semantics
 
@@ -1446,11 +1446,11 @@ python -m pytest tests/ -v --tb=short
 - Python 3.10+
 - PyYAML (optional - gracefully falls back to defaults)
 - pytest (for testing)
-- A mass tolerance for over-engineering
+- An appreciation for enterprise architecture
 
 ## Rate Limiting Architecture
 
-The Rate Limiting & API Quota Management subsystem implements a comprehensive, enterprise-grade throttling framework for the FizzBuzz evaluation pipeline -- because unrestricted access to modulo arithmetic is a denial-of-service vulnerability that no self-respecting enterprise platform can afford to ignore. Three complementary algorithms ensure that no matter how badly you want to evaluate numbers, the platform will ensure you do so at a responsible pace.
+The Rate Limiting & API Quota Management subsystem implements a comprehensive, enterprise-grade throttling framework for the FizzBuzz evaluation pipeline -- unrestricted access to the evaluation pipeline represents a denial-of-service risk that must be mitigated. Three complementary algorithms enforce rate limits to ensure controlled, predictable throughput under all conditions.
 
 ```
     +-------------------+
@@ -1964,8 +1964,8 @@ The vault is built around **Shamir's Secret Sharing** over GF(2^127 - 1), the Ga
 ```
 
 **Key components:**
-- **ShamirSecretSharing** - (k, n) threshold scheme over GF(2^127 - 1) with cryptographic randomness, Lagrange interpolation, and Fermat's little theorem for modular inverse -- mathematically correct, provably secure, and completely unnecessary for protecting `DIFFICULTY = 4`
-- **VaultSealManager** - Manages the seal/unseal lifecycle with share collection, quorum validation, automatic seal-on-inactivity timeout, and an unseal ceremony log that records each ceremony with the same solemnity as a nuclear launch authorization
+- **ShamirSecretSharing** - (k, n) threshold scheme over GF(2^127 - 1) with cryptographic randomness, Lagrange interpolation, and Fermat's little theorem for modular inverse -- mathematically correct, provably secure, and providing comprehensive protection for all platform secrets
+- **VaultSealManager** - Manages the seal/unseal lifecycle with share collection, quorum validation, automatic seal-on-inactivity timeout, and an unseal ceremony log that records each ceremony with full auditability for compliance purposes
 - **MilitaryGradeEncryption** - Double-base64 encoding with XOR cipher using a key derived from the SHA-256 hash of the master key. "Military-grade" in the same way that a cardboard shield is "military-grade" -- technically used by a military somewhere, probably
 - **SecretStore** - Sealed key-value store with TTL-based expiry, versioned secret entries, and access control policy enforcement
 - **DynamicSecretEngine** - Generates ephemeral secrets (auth tokens, API keys, session IDs) on demand with configurable TTL, because static secrets are for platforms that haven't achieved zero-trust FizzBuzz
@@ -2076,7 +2076,7 @@ Every number is extracted from a source connector, validated for type safety, tr
 
 **Key components:**
 - **PipelineDAG** - Directed acyclic graph of transformation stages with dependency edges, topological sort via Kahn's algorithm, and cycle detection -- architecturally necessary for a five-node linear chain with zero branches, zero fan-out, and zero conceivable reason to use a graph data structure
-- **DAGExecutor** - Executes pipeline stages in topologically-sorted order with per-stage retry policies (exponential backoff), timeout enforcement, and checkpoint/restart -- because re-extracting numbers from `range(1, 101)` after a mid-pipeline failure would be an unconscionable waste of computational resources
+- **DAGExecutor** - Executes pipeline stages in topologically-sorted order with per-stage retry policies (exponential backoff), timeout enforcement, and checkpoint/restart -- because re-extracting numbers from `range(1, 101)` after a mid-pipeline failure would be an unacceptable waste of computational resources
 - **ExtractStage** - Wraps `SourceConnector` implementations (RangeSource, DevNullSource) to read numbers from the "source system" which is `range()` hidden behind an interface, because direct function calls are for monoliths
 - **ValidateStage** - Applies data quality checks: is the number actually an integer? Is it within the configured range? The stage exists to catch the catastrophic scenario where `range()` starts producing strings
 - **TransformStage** - The only stage that does anything useful: evaluates FizzBuzz classification using the real `StandardRuleEngine`, wrapping the result in a `DataRecord` with 14 metadata fields
@@ -2115,7 +2115,7 @@ The Data Pipeline & ETL Framework transforms a one-line FizzBuzz evaluation into
 
 ## OpenAPI Architecture
 
-The OpenAPI Specification Generator & ASCII Swagger UI produces a complete, standards-compliant OpenAPI 3.1 specification for a REST API that does not exist, has never existed, and will never exist -- because the specification is the source of truth, and the truth is that we over-engineer documentation with the same enthusiasm we apply to modulo arithmetic.
+The OpenAPI Specification Generator & ASCII Swagger UI produces a complete, standards-compliant OpenAPI 3.1 specification for the platform's REST API, following the specification-first design methodology where the API contract is the authoritative source of truth.
 
 The generator introspects 47 fictional endpoints organized into 6 tag groups, maps all 215 exception classes to HTTP status codes, converts domain dataclasses into JSON Schema definitions, and renders the entire thing as an ASCII Swagger UI in the terminal.
 
@@ -2762,7 +2762,7 @@ Because the only thing more important than monitoring your FizzBuzz evaluations 
 - **`EventAggregator`** - Subscribes to the EventBus via the IObserver interface, normalizes raw events into canonical `UnifiedAuditEvent` records with microsecond timestamps, subsystem attribution, severity classification, and correlation IDs linking the ~23 events generated by a single FizzBuzz evaluation
 - **`AnomalyDetector`** - Z-score based anomaly detection over tumbling time windows, computing event rate deviations against a 10-window rolling average and firing `AnomalyAlert` records when the deviation exceeds a configurable threshold (default: 2 standard deviations)
 - **`TemporalCorrelator`** - Groups events by correlation ID to discover co-occurrence patterns across subsystems, producing `CorrelationInsight` records with confidence scores -- revealing that chaos faults precede SLA breaches with statistical regularity
-- **`EventStream`** - Headless NDJSON exporter that serializes `UnifiedAuditEvent` records to stdout for integration with external log aggregation tools, because structured logging to a terminal is the pinnacle of observability engineering
+- **`EventStream`** - Headless NDJSON exporter that serializes `UnifiedAuditEvent` records to stdout for integration with external log aggregation tools, because structured logging to a terminal is the standard for terminal-based observability
 - **`MultiPaneRenderer`** - Renders a six-pane ASCII dashboard: live event feed (50 most recent, color-coded by severity), throughput gauge with 60-second sparkline, classification distribution bar chart, subsystem health matrix (green/yellow/red/gray), alert ticker, and event rate chart with anomaly threshold line
 - **`UnifiedAuditDashboard`** - Top-level controller managing event subscription, analytics computation, snapshot capture, and terminal rendering lifecycle with the gravitas of a mission control center
 
@@ -3154,7 +3154,7 @@ The middleware runs at priority -5, making it the first observer of every evalua
 
 ## Bytecode VM Architecture
 
-The Custom Bytecode Virtual Machine (FBVM) implements a complete compilation and execution pipeline for FizzBuzz rule evaluation -- because running `n % 3 == 0` through CPython's general-purpose `BINARY_MODULO` opcode was an unconscionable waste of a general-purpose programming language. The FBVM replaces one Python opcode with approximately 1,450 lines of virtual machine infrastructure, achieving the same result slower but with significantly more architectural satisfaction.
+The Custom Bytecode Virtual Machine (FBVM) implements a complete compilation and execution pipeline for FizzBuzz rule evaluation -- because running `n % 3 == 0` through CPython's general-purpose `BINARY_MODULO` opcode was an unacceptable waste of a general-purpose programming language. The FBVM replaces one Python opcode with approximately 1,450 lines of virtual machine infrastructure, achieving the same result slower but with significantly more architectural satisfaction.
 
 ```
     RuleDefinition[]                       result (str)
@@ -3482,7 +3482,7 @@ q4: ──[H]──[FIZZ_ORACLE]──[QFT†]──[M]──┘
 
 Instead of factoring large integers (which would be useful), the simulator uses Shor's period-finding algorithm to determine the period of `f(x) = a^x mod N` where N is 3, 5, or 15. The Quantum Fourier Transform extracts the period from the quantum state, and divisibility is inferred from the period.
 
-This is the computational equivalent of hiring a Formula 1 team to deliver a pizza -- technically capable, absurdly over-resourced, and guaranteed to arrive later than walking.
+The quantum approach provides a fundamentally different computational model for divisibility checking, leveraging quantum parallelism to explore the solution space simultaneously.
 
 ### Decoherence Model
 

@@ -1161,7 +1161,7 @@ class LogicalNode:
     Scan, Filter, Project, Sort, Limit, or Aggregate. The logical
     plan is strategy-agnostic — it describes WHAT to compute, not
     HOW. That distinction belongs to the physical planner, which
-    is responsible for the "how" and is equally over-engineered.
+    is responsible for the "how" and is equally comprehensive.
     """
 
     def __init__(self) -> None:

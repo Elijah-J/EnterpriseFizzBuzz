@@ -401,6 +401,15 @@ from enterprise_fizzbuzz.infrastructure.dependent_types import (
     ProofEngine,
     TypeDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.ip_office import (
+    CopyrightRegistry,
+    IPDisputeTribunal,
+    IPOfficeDashboard,
+    LicenseManager,
+    LicenseType,
+    PatentExaminer,
+    TrademarkRegistry,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -616,7 +625,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--post-mortem",
         action="store_true",
-        help="Generate a satirical post-mortem incident report after chaos execution",
+        help="Generate a post-mortem incident report after chaos execution",
     )
 
     # SLA Monitoring
@@ -1960,6 +1969,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--dap-dashboard",
         action="store_true",
         help="Display the FizzDAP ASCII dashboard with breakpoints, stack trace, variables, and Debug Complexity Index",
+    )
+
+    # FizzBuzz Intellectual Property Office
+    parser.add_argument(
+        "--ip-office",
+        action="store_true",
+        help="Enable the FizzBuzz Intellectual Property Office: trademark, patent, copyright, and dispute resolution",
+    )
+
+    parser.add_argument(
+        "--trademark",
+        type=str,
+        metavar="LABEL",
+        default=None,
+        help="Apply for trademark registration of a FizzBuzz label (e.g. --trademark 'Wuzz')",
+    )
+
+    parser.add_argument(
+        "--patent",
+        type=str,
+        metavar="DESCRIPTION",
+        default=None,
+        help="File a patent application for a FizzBuzz rule (e.g. --patent 'Divisibility by 7 yields Bazz')",
+    )
+
+    parser.add_argument(
+        "--ip-dashboard",
+        action="store_true",
+        help="Display the FizzBuzz Intellectual Property Office ASCII dashboard",
     )
 
     return parser
@@ -4695,6 +4733,93 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzBuzz Intellectual Property Office setup
+    # ----------------------------------------------------------------
+    ip_trademark_registry = None
+    ip_patent_examiner = None
+    ip_copyright_registry = None
+    ip_license_manager = None
+    ip_tribunal = None
+
+    if args.ip_office or args.trademark or args.patent or args.ip_dashboard:
+        ip_trademark_registry = TrademarkRegistry(
+            similarity_threshold=config.ip_office_trademark_similarity_threshold,
+            renewal_days=config.ip_office_trademark_renewal_days,
+        )
+        ip_patent_examiner = PatentExaminer(
+            novelty_threshold=config.ip_office_patent_novelty_threshold,
+        )
+        ip_copyright_registry = CopyrightRegistry(
+            originality_threshold=config.ip_office_copyright_originality_threshold,
+        )
+        ip_license_manager = LicenseManager()
+        ip_tribunal = IPDisputeTribunal()
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZBUZZ INTELLECTUAL PROPERTY OFFICE                    |\n"
+            "  | Trademarks | Patents | Copyrights | Licenses | Disputes |\n"
+            "  | Soundex + Metaphone | Kolmogorov | Levenshtein          |\n"
+            '  | "Your modulo operation may be patented."                 |\n'
+            "  +---------------------------------------------------------+"
+        )
+
+        if args.trademark:
+            result = ip_trademark_registry.apply(
+                mark=args.trademark,
+                applicant="CLI User",
+                description=f"Trademark application for '{args.trademark}' via CLI",
+            )
+            status_str = result.status.name
+            print(f"\n  Trademark Application: {result.application_id}")
+            print(f"    Mark:   {result.mark}")
+            print(f"    Status: {status_str}")
+            if result.status.name == "OPPOSED":
+                similar = ip_trademark_registry.search_similar(args.trademark)
+                if similar:
+                    print("    Conflicts:")
+                    for mark, score in similar:
+                        print(f"      - '{mark}' (similarity: {score:.2%})")
+            elif result.registered_at:
+                print(f"    Registered: {result.registered_at.strftime('%Y-%m-%d')}")
+                print(f"    Expires:    {result.expires_at.strftime('%Y-%m-%d')}")
+            print()
+
+        if args.patent:
+            # Parse the patent description: try to extract divisor and label
+            desc = args.patent
+            divisor = 7  # default
+            label = "Custom"
+            parts = desc.lower().split()
+            for i, p in enumerate(parts):
+                if p == "by" and i + 1 < len(parts):
+                    try:
+                        divisor = int(parts[i + 1])
+                    except ValueError:
+                        pass
+                if p == "yields" and i + 1 < len(parts):
+                    label = parts[i + 1].capitalize()
+
+            result = ip_patent_examiner.examine(
+                title=f"Method for FizzBuzz Evaluation: {desc}",
+                description=desc,
+                divisor=divisor,
+                label=label,
+                inventor="CLI User",
+            )
+            print(f"\n  Patent Application: {result.patent_id}")
+            print(f"    Title:             {result.title}")
+            print(f"    Status:            {result.status.name}")
+            print(f"    Novelty:           {result.novelty_score:.2f}")
+            print(f"    Non-obviousness:   {result.non_obviousness_score:.2f}")
+            print(f"    Utility:           {result.utility_score:.2f}")
+            if result.prior_art_refs:
+                print("    Prior Art:")
+                for ref in result.prior_art_refs:
+                    print(f"      - {ref}")
+            print()
+
+    # ----------------------------------------------------------------
     # FizzPM Package Manager setup
     # ----------------------------------------------------------------
     fizzpm_manager = None
@@ -6181,6 +6306,19 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.fizzsql_dashboard:
         print("\n  FizzSQL not enabled. Use --fizzsql to enable.\n")
+
+    # IP Office Dashboard
+    if args.ip_dashboard and ip_trademark_registry is not None:
+        print(IPOfficeDashboard.render(
+            trademark_registry=ip_trademark_registry,
+            patent_examiner=ip_patent_examiner,
+            copyright_registry=ip_copyright_registry,
+            license_manager=ip_license_manager,
+            tribunal=ip_tribunal,
+            width=config.ip_office_dashboard_width,
+        ))
+    elif args.ip_dashboard:
+        print("\n  IP Office not enabled. Use --ip-office to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

@@ -1338,7 +1338,7 @@ class SLADashboard:
         lines.append(f"  |  Phone            : {on_call.get('phone', 'N/A'):<37}|")
         lines.append(f"  |  Email            : {on_call.get('email', 'N/A')[:37]:<37}|")
 
-        # Escalation chain (satirical)
+        # Escalation chain
         escalation = sla_monitor.on_call_schedule.get_escalation_contacts()
         lines.append("  |" + "-" * w + "|")
         lines.append("  |" + " ESCALATION CHAIN".ljust(w) + "|")

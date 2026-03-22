@@ -916,8 +916,7 @@ class FizzBuzzKernel:
 
     Orchestrates process creation, scheduling, memory management,
     interrupt handling, and FizzBuzz evaluation. This is the beating
-    heart of the most over-engineered modulo arithmetic platform ever
-    conceived. Every number in the evaluation range becomes a process
+    heart of the platform's process-oriented evaluation architecture. Every number in the evaluation range becomes a process
     with its own PID, PCB, virtual address space, and scheduling
     priority. The kernel boots, spawns processes, runs the scheduler,
     handles interrupts, and shuts down -- all to compute the same
@@ -1460,7 +1459,7 @@ class KernelDashboard:
     Renders a multi-pane dashboard showing the process table, memory
     map, interrupt log, scheduler state, and kernel statistics. Because
     the only thing better than a FizzBuzz OS kernel is a terminal
-    dashboard that visualizes every pointless detail of its operation.
+    dashboard that visualizes every operational detail of the kernel.
     """
 
     @staticmethod

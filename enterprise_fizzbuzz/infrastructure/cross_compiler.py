@@ -68,7 +68,7 @@ class IRInstruction:
     Attributes:
         opcode: The operation to perform.
         operands: Operand values (semantics depend on opcode).
-        comment: Optional comment for debugging and satirical purposes.
+        comment: Optional comment for debugging and documentation purposes.
     """
 
     opcode: IROpCode
@@ -475,7 +475,7 @@ class RustCodeGenerator:
                 "///",
                 "/// Builds the label by concatenating all matching rule labels,",
                 "/// because FizzBuzz is fundamentally a string concatenation",
-                "/// problem that we have over-engineered into a type system exercise.",
+                "/// problem that we have elevated into a type system exercise.",
             ])
         lines.append("fn fizzbuzz(n: i64) -> String {")
         lines.append("    let mut label = String::new();")
@@ -831,13 +831,13 @@ class CompilerDashboard:
             lines.append(kv("Verification time:", f"{verification.verification_time_ms:.3f}ms"))
             lines.append(border)
 
-        # Satirical analysis
+        # Enterprise analysis
         lines.append(centered("Enterprise Analysis"))
         lines.append(border)
         if overhead > 20:
             verdict = "MAXIMUM ENTERPRISE ACHIEVED"
         elif overhead > 10:
-            verdict = "Acceptably Over-Engineered"
+            verdict = "Acceptably Comprehensive"
         elif overhead > 5:
             verdict = "Needs More Boilerplate"
         else:

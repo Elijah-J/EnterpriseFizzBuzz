@@ -17,8 +17,8 @@ Features:
       co-occurrence patterns. Groundbreaking intelligence: evaluating
       15 triggers both Fizz and Buzz. Who knew.
     - EventStream: Exports events as Newline-Delimited JSON to stdout,
-      because structured logging to a terminal is the pinnacle of
-      observability engineering.
+      providing structured logging output for integration with external
+      log aggregation systems.
     - MultiPaneRenderer: Renders a six-pane ASCII dashboard with live
       feed, throughput metrics, classification distribution, health
       matrix, alert ticker, and event rate sparkline. All in glorious

@@ -125,7 +125,7 @@ class ConfigHealthCheck(SubsystemHealthCheck):
     Verifies that the ConfigurationManager singleton is loaded
     and can provide basic configuration values. If the config
     system is down, nothing else matters — it's the foundation
-    upon which all other over-engineering is built.
+    upon which all other subsystems depend.
     """
 
     def __init__(self, config: Any = None) -> None:

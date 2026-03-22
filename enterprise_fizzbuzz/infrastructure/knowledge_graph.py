@@ -678,7 +678,7 @@ class FizzSPARQLParser:
         pattern   ::= term term term
         term      ::= variable | prefixed_uri | literal
 
-    The parser is deliberately over-engineered for a language that
+    The parser is production-grade for a language that
     supports exactly one query form. In enterprise software, every
     parser must be recursive descent, even when a regular expression
     would suffice.

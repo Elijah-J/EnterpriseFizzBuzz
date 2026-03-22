@@ -248,7 +248,7 @@ class RetryPolicy:
     giving the simulated endpoint more time to recover from its
     deterministic failure pattern. The delays are logged but never
     actually awaited, because sleeping in a FizzBuzz CLI would be
-    an unconscionable waste of the user's time.
+    an unacceptable waste of the user's time.
 
     The formula: delay = min(base_ms * (multiplier ^ attempt), max_ms)
     """
@@ -301,7 +301,7 @@ class RetryPolicy:
 class SimulatedHTTPClient:
     """Deterministic simulated HTTP client for webhook delivery.
 
-    Instead of making real HTTP requests (which would be absurd for
+    Instead of making real HTTP requests (which would be inappropriate for
     a CLI FizzBuzz platform), this client determines success or failure
     based on the hash of the destination URL. This ensures that the
     same URL always produces the same result within a session, making

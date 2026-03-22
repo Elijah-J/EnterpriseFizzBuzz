@@ -269,7 +269,7 @@ class ShamirSecretSharing:
 class MilitaryGradeEncryption:
     """Military-Grade Encryption Engine for Enterprise FizzBuzz Secrets.
 
-    Implements the pinnacle of cryptographic engineering: double-base64
+    Implements a multi-layer cryptographic scheme: double-base64
     encoding with XOR obfuscation. The "key" is derived from a SHA-256
     hash of the master key, which is then used to XOR each byte of the
     plaintext before applying two layers of base64 encoding.

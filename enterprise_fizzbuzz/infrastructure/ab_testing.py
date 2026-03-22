@@ -3,11 +3,9 @@ Enterprise FizzBuzz Platform - A/B Testing Framework Module
 
 Implements a comprehensive, enterprise-grade A/B testing framework for
 evaluating FizzBuzz evaluation strategies against each other with full
-statistical rigor. Because the only thing better than computing FizzBuzz
-correctly is scientifically proving that you computed it correctly using
-the CORRECT strategy — even though every strategy produces identical
-results for every input. This framework provides the statistical foundation
-necessary for data-driven strategy selection.
+statistical rigor. This framework provides the statistical foundation necessary for
+data-driven strategy selection, enabling rigorous comparison of
+evaluation strategies under controlled experimental conditions.
 
 Features:
     - Deterministic hash-based traffic splitting (same number = same group)

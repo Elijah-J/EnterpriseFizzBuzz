@@ -990,7 +990,7 @@ class M002AddIsPrime(Migration):
     Because every FizzBuzz database needs to know which numbers are
     prime. We use trial division for the backfill, because implementing
     a Miller-Rabin probabilistic primality test for numbers under 100
-    would be over-engineering, and we would never do that.
+    would exceed the requirements for numbers under 100.
     """
 
     migration_id = "m002_add_is_prime"

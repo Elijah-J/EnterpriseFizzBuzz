@@ -762,7 +762,7 @@ class GameDayPhase:
         fault_types: Which fault types to arm during this phase.
         severity: The severity level for this phase.
         duration_evals: How many evaluations this phase lasts.
-        description: Satirical description of what this phase tests.
+        description: Description of what this phase tests.
     """
 
     name: str
@@ -1024,7 +1024,7 @@ class GameDayRunner:
 
 
 class PostMortemGenerator:
-    """Generates satirical ASCII incident reports from chaos events.
+    """Generates ASCII incident reports from chaos events.
 
     In real SRE practice, post-mortems are blameless documents that
     analyze incidents and propose improvements. In the Enterprise
@@ -1117,7 +1117,7 @@ class PostMortemGenerator:
             scenario_name: Optional Game Day scenario name for the header.
 
         Returns:
-            A multi-line ASCII string containing the satirical incident report.
+            A multi-line ASCII string containing the incident report.
         """
         events = chaos_monkey.events
         summary = chaos_monkey.get_summary()

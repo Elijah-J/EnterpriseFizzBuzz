@@ -58,7 +58,7 @@ def _is_prime(n: int) -> bool:
     For the Enterprise FizzBuzz Platform, this is more than sufficient.
     We considered implementing AKS or Miller-Rabin, but decided that
     deterministic trial division better reflects the straightforward
-    nature of the problem we're over-engineering.
+    nature of the problem domain.
     """
     if n < 2:
         return False
@@ -617,7 +617,7 @@ class RecommendationEngine:
 
     Coordinates collaborative filtering, content-based filtering, hybrid
     blending, cold-start handling, and explainability into a single,
-    gloriously over-engineered recommendation service for integers.
+    production-grade recommendation service for integers.
 
     Usage:
         engine = RecommendationEngine()

@@ -41,7 +41,7 @@ Design Patterns Employed:
     - Strategy (different metric types with different collect() behavior)
     - Builder (fluent metric registration API)
 
-Satirical Compliance:
+Compliance:
     - SOC2: Full audit trail of every metric sample
     - GDPR: No personal data in metrics (except Bob's stress level)
     - ISO 27001: Metrics are stored in-memory, achieving perfect
@@ -475,8 +475,8 @@ class Summary:
 
     Quantile computation uses a naive sorted list, because implementing
     a proper streaming quantile algorithm (like T-Digest or DDSketch)
-    for FizzBuzz metrics would be over-engineering, and we have standards
-    about what constitutes over-engineering around here.
+    for FizzBuzz metrics would exceed current requirements, and
+    the naive approach provides sufficient accuracy at this scale.
     """
 
     def __init__(
@@ -823,7 +823,7 @@ class MetricsCollector(IObserver):
     counter increments, gauge updates, and histogram observations.
 
     It follows the exact same IObserver pattern as StatisticsObserver,
-    because consistency in over-engineering is a virtue.
+    because consistency in architectural patterns is a virtue.
 
     Predefined metrics include:
         - efp_evaluations: Total FizzBuzz evaluations (counter, exported as _total)

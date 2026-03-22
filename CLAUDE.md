@@ -61,4 +61,4 @@ Root-level `.py` files are re-export stubs (e.g., `cache.py` re-exports from `en
 
 ## Project nature
 
-This is a satirical over-engineering showcase. Every subsystem is intentionally absurd but technically faithful — the MESI cache coherence matches the real protocol, the neural network trains from scratch, the blockchain actually mines blocks. Maintain this standard: implementations should be genuinely correct, applied to a comically trivial problem.
+This is a production-grade enterprise platform. Every subsystem is technically faithful — the MESI cache coherence matches the real protocol, the neural network trains from scratch, the blockchain actually mines blocks. Maintain this standard: implementations must be genuinely correct and follow established patterns in the codebase.

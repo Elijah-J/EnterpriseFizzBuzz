@@ -515,7 +515,7 @@ class GDPRController:
             A DataDeletionCertificate documenting the attempt.
 
         Raises:
-            GDPRErasureParadoxError: Always. That's the joke.
+            GDPRErasureParadoxError: Always, due to immutable storage conflicts.
         """
         if self._event_bus is not None:
             self._event_bus.publish(Event(
