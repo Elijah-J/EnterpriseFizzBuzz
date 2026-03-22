@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 2
-- Remaining: 8
+- Implemented: 3
+- Remaining: 7
 
 ---
 
@@ -97,7 +97,7 @@ Test the following:
 
 ### 3. Comprehensive E2E: Infrastructure Subsystems (tests/e2e/test_e2e_subsystems.py)
 
-**Status:** PENDING
+**Status:** DONE (51 tests: 49 passing, 2 skipped due to known bugs)
 **Description:** The platform has 30+ optional infrastructure subsystems, each activated by one or more CLI flags. The existing e2e tests cover ~8 of them (circuit breaker, tracing, SLA, cache, chaos, event sourcing, feature flags, RBAC). The remaining 20+ subsystems have never been invoked through the CLI in a test. This item covers every subsystem that has a CLI flag, invoked individually.
 
 Test the following (each as a separate test, each verifying exit code 0 and absence of Python tracebacks in stderr):
