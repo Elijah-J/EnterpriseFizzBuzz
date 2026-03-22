@@ -42,8 +42,8 @@ What's missing:
 
 ## Backlog Status
 - Total items: 10
-- Implemented: 5
-- Remaining: 5
+- Implemented: 6
+- Remaining: 4
 
 ---
 
@@ -185,7 +185,7 @@ Test the following by importing and composing real middleware classes:
 
 ### 6. Integration: Event Bus Cross-Subsystem Communication (tests/integration/test_event_integration.py)
 
-**Status:** PENDING
+**Status:** DONE (32 tests)
 **Description:** The event bus is the nervous system of the platform. Every subsystem publishes events, and several subsystems subscribe to events from others (SLA monitors evaluation events, the audit dashboard aggregates all events, the metrics exporter counts events by type). No test verifies that events published by one real subsystem are received and correctly processed by another real subsystem.
 
 Test the following by instantiating real subsystems with a shared event bus:
