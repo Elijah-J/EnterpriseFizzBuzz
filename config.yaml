@@ -1631,6 +1631,24 @@ billing:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzNAS Neural Architecture Search configuration
+# Automates the discovery of optimal neural network topologies for
+# integer divisibility classification. Rather than hand-tuning the
+# MLP architecture (Input(2)->Dense(16,sigmoid)->Dense(1,sigmoid)),
+# FizzNAS explores the space of possible layer widths, activation
+# functions, and network depths to find Pareto-optimal architectures
+# that balance accuracy, parameter count, and inference latency.
+# Three search strategies are available: random sampling (baseline),
+# evolutionary search (tournament selection + mutation), and DARTS
+# (differentiable architecture search with continuous relaxation).
+nas:
+  enabled: false                          # Master switch — opt-in via --nas
+  strategy: "evolutionary"                # random | evolutionary | darts
+  budget: 50                              # Total fitness evaluations (architectures trained)
+  seed: 42                                # RNG seed for reproducibility
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

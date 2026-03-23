@@ -8894,3 +8894,92 @@ class DunningEscalationError(SubscriptionBillingError):
         self.contract_id = contract_id
         self.current_state = current_state
         self.retry_count = retry_count
+
+
+# ============================================================
+# Neural Architecture Search (FizzNAS) Exceptions
+# ============================================================
+
+
+class NeuralArchitectureSearchError(FizzBuzzError):
+    """Base exception for all FizzNAS Neural Architecture Search failures.
+
+    Neural Architecture Search is a computationally intensive process
+    that explores vast topology spaces to find the optimal network
+    structure for integer divisibility classification. When the search
+    encounters an irrecoverable condition — an invalid genome encoding,
+    an infeasible search space, or a fitness evaluation catastrophe —
+    this exception hierarchy ensures that the failure is surfaced with
+    full diagnostic context for the NAS operations team.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        if "error_code" not in kwargs:
+            kwargs["error_code"] = "EFP-NAS00"
+        super().__init__(message, **kwargs)
+
+
+class InvalidGenomeError(NeuralArchitectureSearchError):
+    """Raised when an architecture genome fails structural validation.
+
+    Each genome must encode a valid neural network topology: positive
+    layer widths within the search space bounds, recognized activation
+    function identifiers, and a depth that does not exceed the maximum
+    allowed by the search configuration. A genome that violates any of
+    these constraints cannot be instantiated into a trainable network
+    and must be rejected before fitness evaluation begins.
+    """
+
+    def __init__(self, genome_str: str, reason: str) -> None:
+        super().__init__(
+            f"Invalid architecture genome '{genome_str}': {reason}",
+            error_code="EFP-NAS01",
+            context={"genome": genome_str, "reason": reason},
+        )
+        self.genome_str = genome_str
+        self.reason = reason
+
+
+class SearchSpaceExhaustedError(NeuralArchitectureSearchError):
+    """Raised when the NAS budget is consumed without finding a viable architecture.
+
+    The search budget — measured in total fitness evaluations — places
+    a hard ceiling on computational expenditure. If the budget is
+    exhausted before any candidate architecture achieves the minimum
+    acceptable fitness threshold, this exception signals that the
+    search space may be too constrained, the fitness landscape too
+    rugged, or the budget too small for the topology complexity
+    required to classify integers by their divisibility properties.
+    """
+
+    def __init__(self, budget: int, evaluated: int) -> None:
+        super().__init__(
+            f"Search space exhausted: {evaluated}/{budget} evaluations consumed "
+            f"without finding a viable architecture.",
+            error_code="EFP-NAS02",
+            context={"budget": budget, "evaluated": evaluated},
+        )
+        self.budget = budget
+        self.evaluated = evaluated
+
+
+class NASFitnessEvaluationError(NeuralArchitectureSearchError):
+    """Raised when fitness evaluation of a candidate architecture fails.
+
+    Fitness evaluation involves instantiating a neural network from
+    the genome specification, training it on the divisibility dataset,
+    and measuring accuracy, parameter count, and inference latency.
+    If any stage of this pipeline raises an unrecoverable error —
+    numerical instability during training, NaN loss values, or
+    architecture instantiation failure — the candidate is marked
+    as non-viable and this exception carries the diagnostic details.
+    """
+
+    def __init__(self, genome_str: str, reason: str) -> None:
+        super().__init__(
+            f"NAS fitness evaluation failed for genome '{genome_str}': {reason}",
+            error_code="EFP-NAS03",
+            context={"genome": genome_str, "reason": reason},
+        )
+        self.genome_str = genome_str
+        self.reason = reason

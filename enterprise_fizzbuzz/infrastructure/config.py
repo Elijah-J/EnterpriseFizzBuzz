@@ -1345,6 +1345,15 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "nas": {
+                "enabled": False,
+                "strategy": "evolutionary",
+                "budget": 50,
+                "seed": 42,
+                "dashboard": {
+                    "width": 60,
+                },
+            },
         }
 
     def _apply_environment_overrides(self) -> None:
@@ -5166,6 +5175,40 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Dashboard width for the billing dashboard."""
         self._ensure_loaded()
         return self._raw_config.get("billing", {}).get("dashboard", {}).get("width", 60)
+
+    # ------------------------------------------------------------------
+    # FizzNAS Neural Architecture Search properties
+    # ------------------------------------------------------------------
+
+    @property
+    def nas_enabled(self) -> bool:
+        """Whether FizzNAS Neural Architecture Search is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("nas", {}).get("enabled", False)
+
+    @property
+    def nas_strategy(self) -> str:
+        """NAS search strategy: random, evolutionary, or darts."""
+        self._ensure_loaded()
+        return self._raw_config.get("nas", {}).get("strategy", "evolutionary")
+
+    @property
+    def nas_budget(self) -> int:
+        """Total number of fitness evaluations (architectures to train)."""
+        self._ensure_loaded()
+        return self._raw_config.get("nas", {}).get("budget", 50)
+
+    @property
+    def nas_seed(self) -> int:
+        """RNG seed for NAS reproducibility."""
+        self._ensure_loaded()
+        return self._raw_config.get("nas", {}).get("seed", 42)
+
+    @property
+    def nas_dashboard_width(self) -> int:
+        """Dashboard width for the NAS dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("nas", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
