@@ -527,6 +527,13 @@ from enterprise_fizzbuzz.infrastructure.audio_synth import (
     SynthDashboard,
     SynthMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.protein_folding import (
+    FoldingDashboard,
+    FoldingMiddleware,
+    MonteCarloFolder,
+    PDBWriter,
+    fold_fizzbuzz,
+)
 from enterprise_fizzbuzz.infrastructure.virtual_fs import (
     FizzFS,
     FizzShell,
@@ -2612,6 +2619,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--synth-dashboard",
         action="store_true",
         help="Display the FizzSynth ASCII dashboard with waveform visualization and polyrhythm analysis",
+    )
+
+    # FizzFold — Protein Folding Simulator
+    parser.add_argument(
+        "--fold",
+        action="store_true",
+        help="Enable FizzFold: interpret FizzBuzz output as amino acid sequences and fold them using Monte Carlo simulated annealing",
+    )
+
+    parser.add_argument(
+        "--fold-pdb",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help="Write the folded protein structure to a PDB-format file",
+    )
+
+    parser.add_argument(
+        "--fold-steps",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Number of Monte Carlo steps for the simulated annealing schedule (default: 10000)",
+    )
+
+    parser.add_argument(
+        "--fold-dashboard",
+        action="store_true",
+        help="Display the FizzFold ASCII dashboard with energy curve, contact map, and folding statistics",
     )
 
     # FizzFS — In-Memory Virtual File System
@@ -6525,6 +6561,30 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzFold — Protein Folding Simulator
+    # ----------------------------------------------------------------
+    fold_middleware_instance = None
+
+    if args.fold or args.fold_pdb or args.fold_dashboard:
+        fold_steps = args.fold_steps or 10000
+        fold_middleware_instance = FoldingMiddleware(
+            max_steps=fold_steps,
+            pdb_output_path=args.fold_pdb,
+            enable_dashboard=args.fold_dashboard,
+        )
+        builder.with_middleware(fold_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZFOLD: PROTEIN FOLDING SIMULATOR                     |\n"
+                f"  |   MC Steps: {fold_steps:<10d}  Cooling: geometric (0.995) |\n"
+                "  |   Energy: LJ + H-bond + hydrophobic + bond restraints   |\n"
+                "  |   FIZZBUZZ = Phe-Ile-Glx-Glx-Asx-Sec-Glx-Glx          |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzFS — In-Memory Virtual File System (pipeline integration)
     # ----------------------------------------------------------------
     fizzfs_instance = None
@@ -8519,6 +8579,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.synth_dashboard:
         print("\n  FizzSynth not enabled. Use --synth to enable.\n")
+
+    # FizzFold Dashboard (post-execution)
+    if args.fold_dashboard and fold_middleware_instance is not None:
+        last_folder = fold_middleware_instance.last_folder
+        last_conf = fold_middleware_instance.last_conformation
+        if last_folder is not None and last_conf is not None:
+            print(FoldingDashboard.render(
+                folder=last_folder,
+                conformation=last_conf,
+            ))
+        else:
+            print("\n  FizzFold: no sequences were folded during this run.\n")
+    elif args.fold_dashboard:
+        print("\n  FizzFold not enabled. Use --fold to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzNet TCP/IP Protocol Stack
