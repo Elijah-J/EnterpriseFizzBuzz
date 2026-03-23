@@ -6,6 +6,8 @@ import type {
   SLAStatus,
   ConsensusStatus,
   CostSummary,
+  TimeSeriesData,
+  MetricDefinition,
 } from "./types";
 
 /**
@@ -65,4 +67,20 @@ export interface IDataProvider {
    * Used by the Cost widget to display current-period spend and trend.
    */
   getCostSummary(): Promise<CostSummary>;
+
+  /**
+   * Retrieve time series data for a named metric over the specified
+   * duration. Used by the Real-Time Metrics Dashboard for detailed
+   * metric visualization.
+   *
+   * @param metricName - Canonical metric name (e.g., "fizzbuzz_evaluations_total")
+   * @param duration - Time window in seconds to retrieve data for
+   */
+  getMetricTimeSeries(metricName: string, duration: number): Promise<TimeSeriesData>;
+
+  /**
+   * List all metrics registered with the platform's telemetry subsystem.
+   * Returns metric definitions including name, type, description, and unit.
+   */
+  listMetrics(): Promise<MetricDefinition[]>;
 }
