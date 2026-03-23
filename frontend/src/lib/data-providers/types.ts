@@ -987,3 +987,102 @@ export interface GAConfig {
   /** Maximum number of generations before termination. */
   maxGenerations: number;
 }
+
+// ---------------------------------------------------------------------------
+// Digital Twin Situation Room types
+// ---------------------------------------------------------------------------
+
+/** Per-subsystem comparison between live platform telemetry and twin model prediction. */
+export interface TwinSubsystemState {
+  /** Subsystem name matching SubsystemHealth.name. */
+  name: string;
+  /** Current live platform value for the primary metric. */
+  liveValue: number;
+  /** Digital twin's predicted value for the same metric. */
+  twinValue: number;
+  /** Unit of the metric (e.g., "ms", "eval/s", "FB$"). */
+  unit: string;
+  /** Drift between live and twin as a signed percentage. */
+  driftPercent: number;
+  /** Whether the subsystem is enabled in the twin model. */
+  enabled: boolean;
+}
+
+/** Complete digital twin state including synchronization health and aggregate drift. */
+export interface TwinState {
+  /** Per-subsystem comparison between live platform and twin model. */
+  subsystemStates: TwinSubsystemState[];
+  /** Overall synchronization health of the twin. */
+  syncStatus: "synchronized" | "drifting" | "desynchronized";
+  /** ISO 8601 timestamp of last successful state sync. */
+  lastSyncAt: string;
+  /** Aggregate drift in FizzBuck Divergence Units (FBDUs). */
+  aggregateDriftFBDU: number;
+  /** Number of Monte Carlo simulations backing the current model. */
+  simulationCount: number;
+  /** Twin model construction timestamp. */
+  modelBuiltAt: string;
+}
+
+/** A single data point in a Monte Carlo projection fan chart. */
+export interface TwinProjectionPoint {
+  /** Unix timestamp in milliseconds. */
+  timestamp: number;
+  /** Predicted mean value at this time step. */
+  mean: number;
+  /** Lower bound of the 90% confidence interval. */
+  ci90Lower: number;
+  /** Upper bound of the 90% confidence interval. */
+  ci90Upper: number;
+  /** Lower bound of the 50% confidence interval. */
+  ci50Lower: number;
+  /** Upper bound of the 50% confidence interval. */
+  ci50Upper: number;
+}
+
+/** Monte Carlo projection dataset for a single metric over a specified horizon. */
+export interface TwinProjection {
+  /** Metric being projected. */
+  metric: string;
+  /** Human-readable metric label. */
+  metricLabel: string;
+  /** Unit of the projected metric. */
+  unit: string;
+  /** Projection horizon in seconds. */
+  horizonSeconds: number;
+  /** Number of Monte Carlo simulations used. */
+  simulationCount: number;
+  /** Ordered projection data points (fan chart data). */
+  points: TwinProjectionPoint[];
+}
+
+/** Parameter overrides and projected impact for a what-if analysis scenario. */
+export interface WhatIfScenario {
+  /** Unique scenario identifier. */
+  id: string;
+  /** Human-readable scenario name. */
+  name: string;
+  /** Description of what this scenario tests. */
+  description: string;
+  /** Parameter overrides applied to the twin model. */
+  parameterOverrides: Record<string, string | number | boolean>;
+  /** Projected outcome after applying the overrides. */
+  projectedOutcome: WhatIfOutcome;
+}
+
+/** Projected platform metrics after applying what-if parameter overrides. */
+export interface WhatIfOutcome {
+  /** Predicted mean evaluation latency in ms. */
+  predictedLatencyMs: number;
+  /** Predicted cost per evaluation in FizzBucks. */
+  predictedCostFB: number;
+  /** Predicted failure rate (0..1). */
+  predictedFailureRate: number;
+  /** Predicted throughput in evaluations per second. */
+  predictedThroughput: number;
+  /** Change vs current baseline as signed percentages. */
+  latencyChangePercent: number;
+  costChangePercent: number;
+  failureRateChangePercent: number;
+  throughputChangePercent: number;
+}

@@ -63,6 +63,11 @@ import type {
   PaxosMessage,
   PaxosMessageType,
   PartitionSimulationResult,
+  TwinSubsystemState,
+  TwinState,
+  TwinProjection,
+  TwinProjectionPoint,
+  WhatIfOutcome,
 } from "./types";
 
 /**
@@ -2558,6 +2563,175 @@ export class SimulationProvider implements IDataProvider {
       topology,
       messages,
       summary,
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // Digital Twin Situation Room
+  // -------------------------------------------------------------------------
+
+  async getTwinState(): Promise<TwinState> {
+    const now = Date.now();
+
+    // Define subsystem metric profiles: base value and unit for the primary
+    // observable that the digital twin tracks per subsystem.
+    const subsystemProfiles: { name: string; baseValue: number; unit: string }[] = [
+      { name: "MESI Cache Coherence", baseValue: 2.1, unit: "ms" },
+      { name: "Blockchain Ledger", baseValue: 34.7, unit: "ms" },
+      { name: "Neural Network Inference", baseValue: 8.4, unit: "ms" },
+      { name: "Rule Engine", baseValue: 0.42, unit: "ms" },
+      { name: "Service Mesh Proxy", baseValue: 1.8, unit: "ms" },
+      { name: "Event Sourcing Store", baseValue: 5.6, unit: "ms" },
+      { name: "Rate Limiter", baseValue: 0.15, unit: "ms" },
+      { name: "Circuit Breaker Mesh", baseValue: 0.31, unit: "ms" },
+      { name: "SLA Monitor", baseValue: 1247, unit: "eval/s" },
+      { name: "Feature Flag Evaluator", baseValue: 0.08, unit: "ms" },
+    ];
+
+    const subsystemStates: TwinSubsystemState[] = subsystemProfiles.map((profile) => {
+      const liveValue = gaussianRandom(profile.baseValue, profile.baseValue * 0.05);
+      // Twin prediction carries a slight systematic drift (1-5%)
+      const driftFactor = 1 + (Math.random() * 0.04 + 0.01) * (Math.random() > 0.5 ? 1 : -1);
+      const twinValue = liveValue * driftFactor;
+      const driftPercent = liveValue !== 0
+        ? ((twinValue - liveValue) / liveValue) * 100
+        : 0;
+
+      return {
+        name: profile.name,
+        liveValue: Math.round(liveValue * 1000) / 1000,
+        twinValue: Math.round(twinValue * 1000) / 1000,
+        unit: profile.unit,
+        driftPercent: Math.round(driftPercent * 100) / 100,
+        enabled: true,
+      };
+    });
+
+    // Compute aggregate drift as RMS of per-subsystem drift values, scaled to FBDUs
+    const driftSquares = subsystemStates.map((s) => s.driftPercent * s.driftPercent);
+    const rmsDrift = Math.sqrt(driftSquares.reduce((sum, d) => sum + d, 0) / driftSquares.length);
+    const aggregateDriftFBDU = Math.round(rmsDrift * 0.47 * 100) / 100; // FBDU scaling factor
+
+    let syncStatus: TwinState["syncStatus"];
+    if (rmsDrift < 2) {
+      syncStatus = "synchronized";
+    } else if (rmsDrift < 5) {
+      syncStatus = "drifting";
+    } else {
+      syncStatus = "desynchronized";
+    }
+
+    return {
+      subsystemStates,
+      syncStatus,
+      lastSyncAt: new Date(now - Math.floor(Math.random() * 3000)).toISOString(),
+      aggregateDriftFBDU,
+      simulationCount: 10000 + Math.floor(Math.random() * 5000),
+      modelBuiltAt: new Date(now - 86_400_000 - Math.floor(Math.random() * 3_600_000)).toISOString(),
+    };
+  }
+
+  async runProjection(metric: string, horizonSeconds: number): Promise<TwinProjection> {
+    const now = Date.now();
+    const numPoints = 30;
+    const stepMs = (horizonSeconds * 1000) / numPoints;
+
+    // Metric-specific base parameters for projection generation
+    const metricProfiles: Record<string, { label: string; unit: string; baseValue: number; trend: number; sigma: number }> = {
+      latency: { label: "Evaluation Latency", unit: "ms", baseValue: 12.4, trend: 0.02, sigma: 1.2 },
+      throughput: { label: "Throughput", unit: "eval/s", baseValue: 1247, trend: -0.5, sigma: 45 },
+      cost: { label: "Cost per Evaluation", unit: "FB$", baseValue: 0.034, trend: 0.0001, sigma: 0.003 },
+      failure_rate: { label: "Failure Rate", unit: "%", baseValue: 0.02, trend: 0.0002, sigma: 0.005 },
+    };
+
+    const profile = metricProfiles[metric] ?? metricProfiles["latency"];
+
+    const points: TwinProjectionPoint[] = [];
+    for (let i = 0; i < numPoints; i++) {
+      const timestamp = now + stepMs * (i + 1);
+      // Mean follows a slight trend line
+      const mean = profile.baseValue + profile.trend * (i + 1) + gaussianRandom(0, profile.sigma * 0.1);
+      // Uncertainty grows with the square root of the time step index
+      const sigmaAtStep = profile.sigma * Math.sqrt((i + 1) / numPoints);
+      const ci50Lower = mean - 0.674 * sigmaAtStep;
+      const ci50Upper = mean + 0.674 * sigmaAtStep;
+      const ci90Lower = mean - 1.645 * sigmaAtStep;
+      const ci90Upper = mean + 1.645 * sigmaAtStep;
+
+      points.push({
+        timestamp: Math.round(timestamp),
+        mean: Math.round(mean * 1000) / 1000,
+        ci50Lower: Math.round(Math.max(0, ci50Lower) * 1000) / 1000,
+        ci50Upper: Math.round(ci50Upper * 1000) / 1000,
+        ci90Lower: Math.round(Math.max(0, ci90Lower) * 1000) / 1000,
+        ci90Upper: Math.round(ci90Upper * 1000) / 1000,
+      });
+    }
+
+    return {
+      metric,
+      metricLabel: profile.label,
+      unit: profile.unit,
+      horizonSeconds,
+      simulationCount: 10000 + Math.floor(Math.random() * 5000),
+      points,
+    };
+  }
+
+  async runWhatIfScenario(overrides: Record<string, string | number | boolean>): Promise<WhatIfOutcome> {
+    // Baseline metrics representing current platform steady-state
+    const baselineLatency = 12.4;
+    const baselineCost = 0.034;
+    const baselineFailureRate = 0.0002;
+    const baselineThroughput = 1247;
+
+    // Start from baseline
+    let latencyMultiplier = 1.0;
+    let costMultiplier = 1.0;
+    let failureRateMultiplier = 1.0;
+    let throughputMultiplier = 1.0;
+
+    // Apply each override as a modifier to relevant metrics
+    for (const [key, value] of Object.entries(overrides)) {
+      if (key === "cache.capacity" && typeof value === "number") {
+        // Doubling cache capacity reduces latency by ~15%, improves throughput by ~15%
+        const capacityRatio = value / 1024;
+        latencyMultiplier *= 1 - 0.15 * Math.log2(capacityRatio);
+        throughputMultiplier *= 1 + 0.15 * Math.log2(capacityRatio);
+        costMultiplier *= 1 + 0.03 * Math.log2(capacityRatio); // slight memory cost increase
+      } else if (key === "blockchain.enabled" && value === false) {
+        // Disabling blockchain reduces cost by ~40% and latency by ~35%
+        latencyMultiplier *= 0.65;
+        costMultiplier *= 0.60;
+        failureRateMultiplier *= 2.0; // audit risk increases
+        throughputMultiplier *= 1.22;
+      } else if (key === "evaluation.strategy" && value === "quantum") {
+        // Quantum strategy: lower median latency but higher variance, increased cost
+        latencyMultiplier *= 0.72;
+        costMultiplier *= 2.8;
+        failureRateMultiplier *= 1.5;
+        throughputMultiplier *= 0.85;
+      } else {
+        // Unknown overrides introduce minor perturbation
+        latencyMultiplier *= 1 + (Math.random() - 0.5) * 0.05;
+        costMultiplier *= 1 + (Math.random() - 0.5) * 0.05;
+      }
+    }
+
+    const predictedLatencyMs = Math.round(baselineLatency * latencyMultiplier * 100) / 100;
+    const predictedCostFB = Math.round(baselineCost * costMultiplier * 1000) / 1000;
+    const predictedFailureRate = Math.round(baselineFailureRate * failureRateMultiplier * 10000) / 10000;
+    const predictedThroughput = Math.round(baselineThroughput * throughputMultiplier);
+
+    return {
+      predictedLatencyMs,
+      predictedCostFB,
+      predictedFailureRate,
+      predictedThroughput,
+      latencyChangePercent: Math.round(((predictedLatencyMs - baselineLatency) / baselineLatency) * 10000) / 100,
+      costChangePercent: Math.round(((predictedCostFB - baselineCost) / baselineCost) * 10000) / 100,
+      failureRateChangePercent: Math.round(((predictedFailureRate - baselineFailureRate) / baselineFailureRate) * 10000) / 100,
+      throughputChangePercent: Math.round(((predictedThroughput - baselineThroughput) / baselineThroughput) * 10000) / 100,
     };
   }
 }

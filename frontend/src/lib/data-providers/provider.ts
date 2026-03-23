@@ -42,6 +42,9 @@ import type {
   ClusterTopology,
   LeaderElection,
   PartitionSimulationResult,
+  TwinState,
+  TwinProjection,
+  WhatIfOutcome,
 } from "./types";
 
 /**
@@ -367,4 +370,27 @@ export interface IDataProvider {
    * @param nodeIds - Node identifiers to isolate behind the partition
    */
   simulatePartition(nodeIds: string[]): Promise<PartitionSimulationResult>;
+
+  /**
+   * Retrieve the current digital twin state including per-subsystem
+   * live-vs-twin comparison, sync status, and aggregate drift.
+   */
+  getTwinState(): Promise<TwinState>;
+
+  /**
+   * Run a Monte Carlo projection for a named metric over the specified
+   * horizon. Returns a fan chart dataset with confidence intervals.
+   *
+   * @param metric - Metric identifier (e.g., "latency", "throughput", "cost", "failure_rate")
+   * @param horizonSeconds - How far into the future to project
+   */
+  runProjection(metric: string, horizonSeconds: number): Promise<TwinProjection>;
+
+  /**
+   * Execute a what-if scenario by applying parameter overrides to the
+   * twin model and returning the projected outcome.
+   *
+   * @param overrides - Parameter key-value overrides to apply
+   */
+  runWhatIfScenario(overrides: Record<string, string | number | boolean>): Promise<WhatIfOutcome>;
 }

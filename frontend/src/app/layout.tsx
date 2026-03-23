@@ -164,6 +164,14 @@ export default function RootLayout({
                   Chaos Engineering
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/digital-twin"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Digital Twin
+                </Link>
+              </li>
             </ul>
             <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
               Research

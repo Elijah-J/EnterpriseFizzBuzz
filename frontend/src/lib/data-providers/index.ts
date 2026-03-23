@@ -68,6 +68,12 @@ export type {
   PaxosMessageType,
   ClusterTopology,
   PartitionSimulationResult,
+  TwinSubsystemState,
+  TwinState,
+  TwinProjectionPoint,
+  TwinProjection,
+  WhatIfScenario,
+  WhatIfOutcome,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";
