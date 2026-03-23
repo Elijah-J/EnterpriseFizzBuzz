@@ -161,3 +161,78 @@ export interface CostSummary {
   /** Cost per individual evaluation in FizzBucks. */
   costPerEvaluation: number;
 }
+
+// ---------------------------------------------------------------------------
+// Compliance Center types
+// ---------------------------------------------------------------------------
+
+/** Regulatory framework compliance status. */
+export interface ComplianceFramework {
+  /** Unique framework identifier (e.g., "SOX", "GDPR", "HIPAA", "FIZZBUZZ-ISO-27001"). */
+  id: string;
+  /** Full display name of the framework. */
+  name: string;
+  /** Current compliance score as a percentage (0-100). */
+  complianceScore: number;
+  /** Total number of controls defined under this framework. */
+  totalControls: number;
+  /** Number of controls currently passing validation. */
+  passingControls: number;
+  /** Number of controls that have failed their most recent assessment. */
+  failingControls: number;
+  /** Number of controls not yet assessed in the current audit cycle. */
+  pendingControls: number;
+  /** Overall framework status derived from control pass rates and finding severity. */
+  status: "compliant" | "at-risk" | "non-compliant";
+  /** ISO 8601 timestamp of the most recent audit run. */
+  lastAuditDate: string;
+  /** ISO 8601 timestamp of the next scheduled audit. */
+  nextAuditDate: string;
+  /** Number of open findings against this framework. */
+  openFindings: number;
+}
+
+/** Severity classification for compliance findings. */
+export type FindingSeverity = "critical" | "high" | "medium" | "low";
+
+/** A compliance finding representing a control deficiency or policy violation. */
+export interface ComplianceFinding {
+  /** Unique finding identifier (e.g., "CF-2024-0847"). */
+  id: string;
+  /** Framework this finding is associated with. */
+  frameworkId: string;
+  /** Control identifier within the framework (e.g., "SOX-404.3", "GDPR-Art.17"). */
+  controlId: string;
+  /** Severity of the finding. */
+  severity: FindingSeverity;
+  /** Short title summarizing the finding. */
+  title: string;
+  /** Detailed description of the deficiency, its impact, and recommended remediation. */
+  description: string;
+  /** Current lifecycle status. */
+  status: "open" | "in-progress" | "remediated" | "accepted-risk";
+  /** ISO 8601 timestamp when the finding was identified. */
+  identifiedAt: string;
+  /** ISO 8601 timestamp of the remediation deadline, if applicable. */
+  dueDate?: string;
+  /** Engineer or team assigned to remediation. */
+  assignee?: string;
+}
+
+/** An entry in the compliance audit log. */
+export interface AuditEntry {
+  /** Unique audit entry identifier. */
+  id: string;
+  /** ISO 8601 timestamp of the event. */
+  timestamp: string;
+  /** Category of audit action. */
+  action: "audit-run" | "finding-created" | "finding-updated" | "control-assessed" | "policy-change" | "evidence-uploaded";
+  /** Framework associated with this entry, if applicable. */
+  frameworkId?: string;
+  /** Principal who performed the action (user or automated system). */
+  actor: string;
+  /** Human-readable summary of the audit event. */
+  description: string;
+  /** Arbitrary metadata for drill-down. */
+  metadata?: Record<string, string>;
+}

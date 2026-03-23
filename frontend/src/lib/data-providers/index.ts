@@ -11,6 +11,10 @@ export type {
   TimeSeriesData,
   TimeSeriesDataPoint,
   MetricDefinition,
+  ComplianceFramework,
+  ComplianceFinding,
+  AuditEntry,
+  FindingSeverity,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";
