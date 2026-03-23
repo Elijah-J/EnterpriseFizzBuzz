@@ -5322,7 +5322,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     schema_planner = None
 
     if args.schema_evolution or args.schema_check or args.schema_dashboard:
-        from enterprise_fizzbuzz.infrastructure.schema_evolution import (
+        from enterprise_fizzbuzz.infrastructure.migrations import (
             CompatibilityMode as SchemaCompatMode,
             ConsensusApprover,
             MigrationPlanner,
@@ -5357,7 +5357,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
         if args.schema_check:
-            from enterprise_fizzbuzz.infrastructure.schema_evolution import (
+            from enterprise_fizzbuzz.infrastructure.migrations import (
                 CompatibilityChecker,
                 build_evaluation_result_lineage,
             )
@@ -7738,7 +7738,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     # FizzSchema Dashboard
     # ----------------------------------------------------------------
     if args.schema_dashboard and schema_registry is not None:
-        from enterprise_fizzbuzz.infrastructure.schema_evolution import SchemaDashboard
+        from enterprise_fizzbuzz.infrastructure.migrations import SchemaDashboard
         print(SchemaDashboard.render(
             registry=schema_registry,
             approver=schema_approver,

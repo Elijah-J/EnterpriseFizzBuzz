@@ -11,6 +11,8 @@ import type {
   HealthCheckPoint,
   SLAHistoryPoint,
   Incident,
+  Trace,
+  Alert,
 } from "./types";
 
 /**
@@ -107,4 +109,25 @@ export interface IDataProvider {
    * with severity classification and resolution status.
    */
   getIncidents(): Promise<Incident[]>;
+
+  /**
+   * Retrieve recent distributed traces from the evaluation pipeline.
+   * Each trace captures the full span tree of a single FizzBuzz evaluation
+   * including middleware, cache, rule engine, and blockchain commit stages.
+   *
+   * @param limit - Maximum number of traces to return (default: 25)
+   */
+  getTraces(limit?: number): Promise<Trace[]>;
+
+  /**
+   * Retrieve a single trace by its trace identifier. Returns null if the
+   * trace has been evicted from the retention window.
+   */
+  getTrace(traceId: string): Promise<Trace | null>;
+
+  /**
+   * Retrieve all active alerts from the platform monitoring subsystem.
+   * Alerts are returned in severity-descending, time-descending order.
+   */
+  getAlerts(): Promise<Alert[]>;
 }

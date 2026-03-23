@@ -1,6 +1,13 @@
 """
 Enterprise FizzBuzz Platform - Digital Twin Simulation Module
 
+A real-time simulation of the platform simulating FizzBuzz. The prediction
+takes longer than the computation it predicts, but the value lies in
+knowing the answer before you know the answer. Drift is measured in
+FizzBuck Divergence Units (FBDUs), a proprietary metric for quantifying
+how far a simulation of modulo arithmetic has strayed from actual modulo
+arithmetic.
+
 Implements a real-time synchronized simulation model of the Enterprise
 FizzBuzz Platform itself. The digital twin mirrors every active subsystem
 as a probabilistic component in a directed acyclic graph, predicts

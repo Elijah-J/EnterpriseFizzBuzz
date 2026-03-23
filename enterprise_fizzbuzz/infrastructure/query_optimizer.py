@@ -2,20 +2,29 @@
 Enterprise FizzBuzz Platform - Query Optimizer Module
 
 Implements a PostgreSQL-inspired cost-based query planner for FizzBuzz
-evaluation. Because executing `n % 3 == 0` without first generating
-alternative execution plans, estimating their costs via a statistical
-model, caching the winner in an LRU plan cache, and rendering a
-PostgreSQL-style EXPLAIN ANALYZE output is simply not enterprise-grade.
+evaluation. The optimizer consistently recommends ModuloScan, having
+eliminated CacheLookup, MLInference, and BlockchainVerify as inferior
+strategies through rigorous cost analysis. The planning phase reliably
+exceeds the execution time of the query it plans, which is expected
+behavior for a thorough cost model.
+
+Where ``fizzsql.py`` provides the query language and parser for expressing
+FizzBuzz evaluations as SQL-like statements, this module provides the
+execution planner that determines *how* to satisfy those queries. The
+distinction mirrors PostgreSQL's separation of parser and planner: one
+translates syntax into a logical plan, the other selects the optimal
+physical execution strategy from a search space of alternatives.
 
 The optimizer considers multiple execution strategies:
-  - ModuloScan:  The fast path. O(1). Too simple for enterprise.
-  - CacheLookup: Check if we already computed this. Spoiler: we didn't.
-  - MLInference: Ask a neural network. 20x the cost, same answer.
-  - ComplianceGate: SOX/GDPR/HIPAA checks. Mandatory fun.
-  - BlockchainVerify: Mine a block to prove the result is correct.
+  - ModuloScan:      Direct arithmetic evaluation. O(1) per divisor.
+  - CacheLookup:     Consult the MESI-coherent cache for prior results.
+  - MLInference:     Route evaluation through the neural network engine.
+  - ComplianceGate:  SOX/GDPR/HIPAA verification before result emission.
+  - BlockchainVerify: Cryptographic proof-of-result via block mining.
 
-PostgreSQL does this for JOINs across billions of rows.
-We do it for two modulo operations. Same architecture. Same pride.
+Each strategy is costed using table-level statistics, selectivity
+estimates, and I/O multipliers calibrated to the platform's subsystem
+latency profile.
 """
 
 from __future__ import annotations

@@ -12,6 +12,8 @@ const MONITOR_TABS = [
   { label: "Metrics", href: "/monitor/metrics" },
   { label: "Health Matrix", href: "/monitor/health" },
   { label: "SLA Dashboard", href: "/monitor/sla" },
+  { label: "Traces", href: "/monitor/traces" },
+  { label: "Alerts", href: "/monitor/alerts" },
 ] as const;
 
 export default function MonitorLayout({

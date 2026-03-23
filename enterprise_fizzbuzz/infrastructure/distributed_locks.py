@@ -1,6 +1,9 @@
 """
 Enterprise FizzBuzz Platform - Distributed Lock Manager (FizzLock)
 
+Preventing deadlocks between operations that complete faster than the
+lock acquisition itself. Correctness demands no less.
+
 Provides a hierarchical, multi-granularity lock manager for coordinating
 concurrent FizzBuzz evaluation across subsystems. Implements the standard
 five lock modes (X, S, IS, IX, U) with a verified 5x5 compatibility matrix,
@@ -15,6 +18,9 @@ coordinated locking, concurrent evaluations risk reading stale intermediate
 results, producing inconsistent audit trails, or corrupting the MESI cache
 coherence protocol. FizzLock ensures serializability across the full
 evaluation hierarchy: platform > namespace > subsystem > number > field.
+The critical section — evaluating ``n % 3`` — executes in microseconds,
+which makes robust deadlock detection all the more essential: at that
+timescale, even brief contention windows represent unacceptable risk.
 """
 
 from __future__ import annotations

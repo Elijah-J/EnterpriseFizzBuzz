@@ -14,6 +14,9 @@ export type {
   HealthCheckPoint,
   SLAHistoryPoint,
   Incident,
+  TraceSpan,
+  Trace,
+  Alert,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

@@ -1,6 +1,10 @@
 """
 Enterprise FizzBuzz Platform - Change Data Capture (FizzCDC) Module
 
+Streaming changes from data structures that exist for approximately
+0.8 seconds, because real-time visibility into ephemeral state is a
+non-negotiable operational requirement.
+
 Implements a production-grade Change Data Capture pipeline for streaming
 platform state changes to downstream consumers. The architecture follows
 the transactional outbox pattern: capture agents detect state mutations
@@ -8,7 +12,15 @@ across subsystems (cache, blockchain, SLA, compliance), wrap them in
 schema-validated ChangeEvent envelopes with before/after snapshots, and
 write them to an in-memory outbox. A background relay thread sweeps the
 outbox at a configurable interval and publishes events to pluggable sink
-connectors.
+connectors (themselves backed by in-memory Python lists, as all
+production sinks should be).
+
+The events captured here are, by design, already present in the event
+sourcing store. FizzCDC provides a secondary real-time projection of
+changes that the event store already durably records, ensuring that
+consumers who cannot query the event store directly — or who prefer a
+push-based model — receive timely notification of state transitions
+that will cease to exist when the process terminates.
 
 Schema evolution is managed by a central CDCSchemaRegistry that assigns
 SHA-256 fingerprints to each registered schema and validates every event
