@@ -5288,7 +5288,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     sli_middleware_instance = None
 
     if args.sli or args.sli_dashboard:
-        from enterprise_fizzbuzz.infrastructure.sli_framework import (
+        from enterprise_fizzbuzz.infrastructure.sla import (
             SLIDashboard,
             SLIMiddleware,
             bootstrap_sli_registry,
@@ -7754,7 +7754,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     # FizzSLI Dashboard
     # ----------------------------------------------------------------
     if args.sli_dashboard and sli_registry is not None:
-        from enterprise_fizzbuzz.infrastructure.sli_framework import SLIDashboard
+        from enterprise_fizzbuzz.infrastructure.sla import SLIDashboard
         print(SLIDashboard.render(
             registry=sli_registry,
             width=config.sli_dashboard_width,
