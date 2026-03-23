@@ -292,6 +292,13 @@ from enterprise_fizzbuzz.infrastructure.dns_server import (
     DNSMiddleware as DNSMiddlewareClass,
     create_dns_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.gpu_shader import (
+    FizzGLSLCompiler,
+    GPUSimulator,
+    ShaderDashboard,
+    ShaderMiddleware as ShaderMiddlewareClass,
+    create_shader_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.probabilistic import (
     ProbabilisticDashboard,
     ProbabilisticMiddleware,
@@ -3120,6 +3127,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--dns-dashboard",
         action="store_true",
         help="Display the FizzDNS ASCII dashboard with query stats, zone inventory, and cache stats",
+    )
+
+    # FizzShader GPU Compute Simulator
+    parser.add_argument(
+        "--shader",
+        action="store_true",
+        help="Enable the FizzShader GPU simulator for parallel FizzBuzz classification via compute shaders",
+    )
+
+    parser.add_argument(
+        "--shader-cores",
+        type=int,
+        default=4,
+        metavar="N",
+        help="Number of simulated GPU shader cores (default: 4)",
+    )
+
+    parser.add_argument(
+        "--shader-compile",
+        action="store_true",
+        help="Print the compiled shader disassembly listing and exit",
+    )
+
+    parser.add_argument(
+        "--shader-dashboard",
+        action="store_true",
+        help="Display the FizzShader GPU ASCII dashboard with occupancy, divergence, and memory stats",
     )
 
     return parser
@@ -7428,6 +7462,45 @@ def main(argv: Optional[list[str]] = None) -> int:
         middlewares.append(dns_middleware_instance)
         logger.info("FizzDNS Authoritative DNS Server enabled for fizzbuzz.local")
 
+    # FizzShader — GPU Compute Simulator
+    # ----------------------------------------------------------------
+    shader_gpu = None
+    shader_program = None
+    shader_middleware_instance = None
+
+    shader_active = (
+        args.shader or args.shader_dashboard or args.shader_compile
+    )
+
+    if shader_active:
+        shader_gpu, shader_program, shader_middleware_instance = (
+            create_shader_subsystem(num_cores=args.shader_cores)
+        )
+
+        if args.shader_compile:
+            print()
+            print(shader_program.disassemble())
+            print()
+
+        builder.with_middleware(shader_middleware_instance)
+        logger.info(
+            "FizzShader GPU simulator enabled: %d cores, %d instructions",
+            args.shader_cores,
+            shader_program.instruction_count,
+        )
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZSHADER: GPU COMPUTE SIMULATOR ENABLED               |\n"
+                f"  |   Shader cores: {args.shader_cores:<41} |\n"
+                f"  |   Warp size: 32 threads (SIMT)                         |\n"
+                f"  |   Workgroup size: {shader_program.local_size_x:<39} |\n"
+                f"  |   Instructions: {shader_program.instruction_count:<41} |\n"
+                "  |   Memory: L1(4cy) -> L2(20cy) -> Global(400cy)         |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # FizzContract — Smart Contract VM
     # ----------------------------------------------------------------
     contract_deployer = None
@@ -9929,6 +10002,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(DNSDashboard.render(dns_resolver_obj, negative_cache=dns_neg_cache_obj))
     elif args.dns_dashboard:
         print("\n  FizzDNS not enabled. Use --dns to enable.\n")
+
+    # FizzShader Dashboard (post-execution)
+    if args.shader_dashboard and shader_gpu is not None:
+        print()
+        print(ShaderDashboard.render(shader_gpu))
+    elif args.shader_dashboard:
+        print("\n  FizzShader not enabled. Use --shader to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

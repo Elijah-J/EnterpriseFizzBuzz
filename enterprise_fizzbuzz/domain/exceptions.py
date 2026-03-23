@@ -12232,3 +12232,102 @@ class DNSZoneTransferError(DNSError):
         )
         self.zone_origin = zone_origin
         self.reason = reason
+
+
+class ShaderError(FizzBuzzError):
+    """Base exception for all FizzShader GPU subsystem errors.
+
+    GPU shader compilation and execution errors are surfaced through
+    this hierarchy. In a production deployment, shader compilation
+    failures would trigger a fallback to the CPU-based rule engine,
+    though this represents a significant regression in computational
+    parallelism for FizzBuzz classification.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        error_code: str = "EFP-GPU0",
+        context: Optional[dict[str, Any]] = None,
+    ) -> None:
+        super().__init__(message, error_code=error_code, context=context)
+
+
+class ShaderCompilationError(ShaderError):
+    """Raised when the FizzGLSL compiler fails to compile a shader.
+
+    Shader compilation errors can be caused by invalid GLSL syntax,
+    unsupported shader features, or resource limit violations. Each
+    error includes the source line number and a descriptive message
+    to aid in debugging the shader code.
+    """
+
+    def __init__(self, source_line: int, errors: list[str]) -> None:
+        error_text = "; ".join(errors)
+        super().__init__(
+            f"Shader compilation failed at line {source_line}: {error_text}",
+            error_code="EFP-GPU1",
+            context={"source_line": source_line, "errors": errors},
+        )
+        self.source_line = source_line
+        self.compilation_errors = errors
+
+
+class ShaderExecutionError(ShaderError):
+    """Raised when the virtual GPU encounters a runtime error during execution.
+
+    Runtime errors include illegal memory accesses, register file overflow,
+    infinite loop detection, and warp scheduling deadlocks. These indicate
+    a defect in the shader program or the virtual GPU simulator itself.
+    """
+
+    def __init__(self, core_id: int, warp_id: int, reason: str) -> None:
+        super().__init__(
+            f"Shader execution error on core {core_id}, warp {warp_id}: {reason}",
+            error_code="EFP-GPU2",
+            context={"core_id": core_id, "warp_id": warp_id, "reason": reason},
+        )
+        self.core_id = core_id
+        self.warp_id = warp_id
+        self.reason = reason
+
+
+class WarpDivergenceError(ShaderError):
+    """Raised when warp divergence exceeds the configured threshold.
+
+    Excessive divergence indicates that threads within warps are taking
+    different branch paths at an alarming rate. For FizzBuzz classification,
+    divergence is inherent (numbers have different divisibility properties),
+    but catastrophic divergence suggests a compiler or scheduler defect.
+    """
+
+    def __init__(self, warp_id: int, divergence_rate: float) -> None:
+        super().__init__(
+            f"Warp {warp_id} divergence rate {divergence_rate:.1%} exceeds "
+            f"acceptable threshold for FizzBuzz workload",
+            error_code="EFP-GPU3",
+            context={"warp_id": warp_id, "divergence_rate": divergence_rate},
+        )
+        self.warp_id = warp_id
+        self.divergence_rate = divergence_rate
+
+
+class GPUMemoryError(ShaderError):
+    """Raised when a shader accesses memory outside allocated bounds.
+
+    The virtual GPU enforces strict memory bounds checking on all
+    load and store operations. Out-of-bounds accesses would cause
+    undefined behavior on real GPU hardware; here, they are caught
+    and reported with full diagnostic context.
+    """
+
+    def __init__(self, address: int, core_id: int, reason: str) -> None:
+        super().__init__(
+            f"GPU memory error at address 0x{address:08x} on core {core_id}: {reason}",
+            error_code="EFP-GPU4",
+            context={"address": address, "core_id": core_id, "reason": reason},
+        )
+        self.address = address
+        self.core_id = core_id
+        self.reason = reason
