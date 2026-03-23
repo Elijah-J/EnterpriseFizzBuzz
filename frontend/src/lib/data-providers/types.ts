@@ -1263,6 +1263,70 @@ export interface CacheAccessCell {
   result: "hit" | "miss";
 }
 
+// ---------------------------------------------------------------------------
+// Federated Learning types
+// ---------------------------------------------------------------------------
+
+/** Operational status of a federated learning client node. */
+export type FLClientStatus = "training" | "idle" | "uploading" | "offline";
+
+/** Aggregation strategy used by the central server. */
+export type FLAggregationMethod = "federated-averaging" | "federated-sgd" | "secure-aggregation";
+
+/** A federated learning client participating in distributed model training. */
+export interface FLClient {
+  /** Unique client node identifier. */
+  id: string;
+  /** Human-readable client name (e.g., "eu-west-fizz-01"). */
+  name: string;
+  /** Geographic region where this client operates. */
+  region: string;
+  /** Current operational status. */
+  status: FLClientStatus;
+  /** Local model accuracy on the client's private evaluation dataset (0..1). */
+  localAccuracy: number;
+  /** Number of FizzBuzz evaluation records in the client's local dataset. */
+  dataSize: number;
+  /** Number of training rounds this client has participated in. */
+  roundsParticipated: number;
+  /** Cumulative differential privacy epsilon budget consumed by this client. */
+  privacyBudgetUsed: number;
+}
+
+/** A single federated learning training round. */
+export interface FLTrainingRound {
+  /** Sequential round number (1-indexed). */
+  roundNumber: number;
+  /** Client IDs that participated in this round. */
+  participants: string[];
+  /** Aggregation method used for this round. */
+  aggregationMethod: FLAggregationMethod;
+  /** Global model accuracy after aggregation (0..1). */
+  globalAccuracy: number;
+  /** Differential privacy epsilon spent in this round. */
+  privacyBudgetSpent: number;
+  /** Wall-clock duration of the round in milliseconds. */
+  durationMs: number;
+  /** Per-client weight contributions (client ID -> weight fraction 0..1). */
+  clientWeights: Record<string, number>;
+}
+
+/** Current state of the global federated model. */
+export interface FLModelState {
+  /** Current global model accuracy (0..1). */
+  globalAccuracy: number;
+  /** Remaining differential privacy epsilon budget. */
+  privacyBudgetRemaining: number;
+  /** Total training rounds completed. */
+  totalRounds: number;
+  /** Rate of accuracy improvement per round (moving average). */
+  convergenceRate: number;
+  /** Maximum weight divergence across clients (0..1), measuring model heterogeneity. */
+  weightDivergence: number;
+  /** Total epsilon budget allocated for the training session. */
+  totalPrivacyBudget: number;
+}
+
 /** Projected platform metrics after applying what-if parameter overrides. */
 export interface WhatIfOutcome {
   /** Predicted mean evaluation latency in ms. */

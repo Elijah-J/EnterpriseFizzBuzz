@@ -54,6 +54,9 @@ import type {
   CacheStats,
   MESITransition,
   CacheEulogy,
+  FLClient,
+  FLTrainingRound,
+  FLModelState,
 } from "./types";
 
 /**
@@ -468,4 +471,30 @@ export interface IDataProvider {
    * @param limit - Maximum number of eulogies to return (default: 20)
    */
   getCacheEulogies(limit?: number): Promise<CacheEulogy[]>;
+
+  /**
+   * Retrieve all federated learning client nodes and their current status.
+   * Returns clients sorted by region, then by name.
+   */
+  getFLClients(): Promise<FLClient[]>;
+
+  /**
+   * Retrieve the federated learning training round history.
+   * Returns rounds ordered by round number (ascending).
+   */
+  getFLTrainingHistory(): Promise<FLTrainingRound[]>;
+
+  /**
+   * Retrieve the current global federated model state including
+   * accuracy, privacy budget, and convergence metrics.
+   */
+  getFLModelState(): Promise<FLModelState>;
+
+  /**
+   * Initiate the next federated learning training round.
+   * Selects participating clients, performs local training simulation,
+   * aggregates updates, and returns the completed round record.
+   * Returns null if the privacy budget is exhausted.
+   */
+  startFLTrainingRound(): Promise<FLTrainingRound | null>;
 }
