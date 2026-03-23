@@ -668,6 +668,11 @@ from enterprise_fizzbuzz.infrastructure.smart_contracts import (
     ContractOpcode,
     DEFAULT_GAS_LIMIT,
 )
+from enterprise_fizzbuzz.infrastructure.bootloader import (
+    BootDashboard,
+    BootMiddleware,
+    KernelLoader,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -3250,6 +3255,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--clock-dashboard",
         action="store_true",
         help="Display the FizzClock NTP synchronization ASCII dashboard after execution",
+    )
+
+    # FizzBoot x86 Bootloader Simulation
+    parser.add_argument(
+        "--boot",
+        action="store_true",
+        help="Enable FizzBoot x86 bootloader simulation (POST, MBR, GDT, Protected Mode)",
+    )
+
+    parser.add_argument(
+        "--boot-verbose",
+        action="store_true",
+        help="Display detailed boot sequence log with timestamps",
+    )
+
+    parser.add_argument(
+        "--boot-dashboard",
+        action="store_true",
+        help="Display the FizzBoot x86 bootloader dashboard after execution",
     )
 
     return parser
@@ -6993,6 +7017,27 @@ def main(argv: Optional[list[str]] = None) -> int:
     if auth_context is not None:
         builder.with_auth_context(auth_context)
 
+    # Add FizzBoot x86 bootloader middleware (priority -20, runs before everything)
+    boot_middleware_instance = None
+    boot_active = args.boot or args.boot_verbose or args.boot_dashboard
+
+    if boot_active:
+        boot_middleware_instance = BootMiddleware(
+            verbose=args.boot_verbose,
+            show_dashboard=False,  # Dashboard is rendered post-execution
+            event_bus=event_bus,
+        )
+        builder.with_middleware(boot_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZBOOT: x86 BOOTLOADER SIMULATION                     |\n"
+                "  |   BIOS POST | MBR | A20 Gate | GDT | Protected Mode    |\n"
+                "  |   Kernel loaded at 0x00100000 (1 MB boundary)           |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add FizzOTel middleware (priority -10, runs before all others)
     if otel_middleware is not None:
         builder.with_middleware(otel_middleware)
@@ -10254,6 +10299,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(CPIDashboard.render(pipeline_sim))
     elif args.cpu_dashboard:
         print("\n  FizzCPU not enabled. Use --cpu-pipeline to enable.\n")
+
+    # FizzBoot Dashboard (post-execution)
+    if args.boot_dashboard and boot_middleware_instance is not None and boot_middleware_instance.loader is not None:
+        print()
+        print(BootDashboard.render(boot_middleware_instance.loader))
+    elif args.boot_dashboard and not boot_active:
+        print("\n  FizzBoot not enabled. Use --boot to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
