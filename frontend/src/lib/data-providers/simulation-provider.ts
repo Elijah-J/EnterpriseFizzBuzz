@@ -79,6 +79,9 @@ import type {
   CacheStats,
   MESITransition,
   CacheEulogy,
+  FLClient,
+  FLTrainingRound,
+  FLModelState,
 } from "./types";
 
 /**
@@ -1294,6 +1297,15 @@ export class SimulationProvider implements IDataProvider {
 
   /** Cached result of the most recent genetic algorithm evolution run. */
   private _evolutionCache: GAEvolutionHistory | null = null;
+
+  /** Federated learning client pool, lazily initialized on first access. */
+  private _flClients: FLClient[] | null = null;
+
+  /** Federated learning training round history, lazily initialized. */
+  private _flTrainingHistory: FLTrainingRound[] | null = null;
+
+  /** Total differential privacy epsilon budget for federated learning. */
+  private readonly _flTotalPrivacyBudget = 10.0;
 
   async evaluate(request: EvaluationRequest): Promise<EvaluationSession> {
     const { start, end, strategy } = request;
@@ -3235,6 +3247,216 @@ export class SimulationProvider implements IDataProvider {
     }
 
     return eulogies;
+  }
+
+  // -------------------------------------------------------------------------
+  // Federated Learning — privacy-preserving distributed model training
+  // -------------------------------------------------------------------------
+
+  /**
+   * Lazily initialize the federated learning client pool and pre-seeded
+   * training history. This ensures deterministic state across multiple
+   * calls within a single session.
+   */
+  private _initFLState(): void {
+    if (this._flClients !== null) return;
+
+    const clientDefs: Array<{ id: string; name: string; region: string; dataSize: number }> = [
+      { id: "fl-client-us-east-01", name: "us-east-fizz-01", region: "US-East", dataSize: 15_000 },
+      { id: "fl-client-eu-west-01", name: "eu-west-fizz-01", region: "EU-West", dataSize: 12_000 },
+      { id: "fl-client-ap-south-01", name: "ap-south-fizz-01", region: "AP-South", dataSize: 8_000 },
+      { id: "fl-client-eu-north-01", name: "eu-north-fizz-01", region: "EU-North", dataSize: 10_000 },
+      { id: "fl-client-us-west-01", name: "us-west-fizz-01", region: "US-West", dataSize: 11_000 },
+    ];
+
+    this._flClients = clientDefs.map((def) => ({
+      ...def,
+      status: "idle" as const,
+      localAccuracy: 0.5,
+      roundsParticipated: 0,
+      privacyBudgetUsed: 0,
+    }));
+
+    // Pre-generate 20 rounds of training history showing logarithmic convergence
+    const history: FLTrainingRound[] = [];
+    const totalDataSize = clientDefs.reduce((sum, c) => sum + c.dataSize, 0);
+
+    for (let r = 1; r <= 20; r++) {
+      // Select 3-5 random clients
+      const numParticipants = 3 + Math.floor(Math.random() * 3);
+      const shuffled = [...clientDefs].sort(() => Math.random() - 0.5);
+      const participants = shuffled.slice(0, numParticipants).map((c) => c.id);
+
+      // Logarithmic convergence: starts ~0.55, approaches ~0.99 asymptotically
+      const globalAccuracy = Math.min(0.99, 0.55 + 0.44 * (Math.log(r + 1) / Math.log(21)));
+
+      // Privacy budget: 0.3 to 0.5 epsilon per round
+      const privacyBudgetSpent = 0.3 + Math.random() * 0.2;
+
+      // Round duration: Gaussian around 1800ms, stddev 500ms, clamped to [800, 3000]
+      const rawDuration = gaussianRandom(1800, 500);
+      const durationMs = Math.round(Math.max(800, Math.min(3000, rawDuration)));
+
+      // Compute weight contributions proportional to data size with Gaussian noise
+      const clientWeights: Record<string, number> = {};
+      let weightSum = 0;
+      for (const pid of participants) {
+        const clientDef = clientDefs.find((c) => c.id === pid)!;
+        const rawWeight = (clientDef.dataSize / totalDataSize) + gaussianRandom(0, 0.02);
+        const clamped = Math.max(0.01, rawWeight);
+        clientWeights[pid] = clamped;
+        weightSum += clamped;
+      }
+      // Normalize to sum to 1.0
+      for (const pid of participants) {
+        clientWeights[pid] = Math.round((clientWeights[pid] / weightSum) * 10000) / 10000;
+      }
+
+      history.push({
+        roundNumber: r,
+        participants,
+        aggregationMethod: "federated-averaging",
+        globalAccuracy: Math.round(globalAccuracy * 10000) / 10000,
+        privacyBudgetSpent: Math.round(privacyBudgetSpent * 1000) / 1000,
+        durationMs,
+        clientWeights,
+      });
+
+      // Update client participation counts and privacy budget usage
+      for (const pid of participants) {
+        const client = this._flClients.find((c) => c.id === pid)!;
+        client.roundsParticipated += 1;
+        client.privacyBudgetUsed = Math.round((client.privacyBudgetUsed + privacyBudgetSpent) * 1000) / 1000;
+      }
+    }
+
+    // Update client local accuracies based on participation (diminishing returns toward 0.97)
+    for (const client of this._flClients) {
+      if (client.roundsParticipated > 0) {
+        client.localAccuracy = Math.round(
+          Math.min(0.97, 0.50 + 0.47 * (1 - Math.exp(-0.15 * client.roundsParticipated))) * 10000,
+        ) / 10000;
+      }
+    }
+
+    this._flTrainingHistory = history;
+  }
+
+  async getFLClients(): Promise<FLClient[]> {
+    this._initFLState();
+    // Return clients sorted by region, then by name
+    return [...this._flClients!].sort((a, b) => {
+      const regionCmp = a.region.localeCompare(b.region);
+      return regionCmp !== 0 ? regionCmp : a.name.localeCompare(b.name);
+    });
+  }
+
+  async getFLTrainingHistory(): Promise<FLTrainingRound[]> {
+    this._initFLState();
+    return [...this._flTrainingHistory!];
+  }
+
+  async getFLModelState(): Promise<FLModelState> {
+    this._initFLState();
+    const history = this._flTrainingHistory!;
+    const lastRound = history[history.length - 1];
+
+    const totalEpsilonSpent = history.reduce((sum, r) => sum + r.privacyBudgetSpent, 0);
+    const privacyBudgetRemaining = Math.round((this._flTotalPrivacyBudget - totalEpsilonSpent) * 1000) / 1000;
+
+    // Convergence rate: average accuracy delta over the last 5 rounds
+    const recentRounds = history.slice(-5);
+    let convergenceRate = 0;
+    if (recentRounds.length >= 2) {
+      const deltas: number[] = [];
+      for (let i = 1; i < recentRounds.length; i++) {
+        deltas.push(recentRounds[i].globalAccuracy - recentRounds[i - 1].globalAccuracy);
+      }
+      convergenceRate = Math.round((deltas.reduce((s, d) => s + d, 0) / deltas.length) * 100000) / 100000;
+    }
+
+    // Weight divergence: max minus min client weight from last round
+    const weights = Object.values(lastRound.clientWeights);
+    const weightDivergence = weights.length > 0
+      ? Math.round((Math.max(...weights) - Math.min(...weights)) * 10000) / 10000
+      : 0;
+
+    return {
+      globalAccuracy: lastRound.globalAccuracy,
+      privacyBudgetRemaining,
+      totalRounds: history.length,
+      convergenceRate,
+      weightDivergence,
+      totalPrivacyBudget: this._flTotalPrivacyBudget,
+    };
+  }
+
+  async startFLTrainingRound(): Promise<FLTrainingRound | null> {
+    this._initFLState();
+    const history = this._flTrainingHistory!;
+    const clients = this._flClients!;
+
+    // Check remaining privacy budget
+    const totalEpsilonSpent = history.reduce((sum, r) => sum + r.privacyBudgetSpent, 0);
+    const remaining = this._flTotalPrivacyBudget - totalEpsilonSpent;
+    if (remaining < 0.3) return null;
+
+    const lastRound = history[history.length - 1];
+    const nextRoundNumber = lastRound.roundNumber + 1;
+
+    // Select 3-5 random clients
+    const numParticipants = 3 + Math.floor(Math.random() * 3);
+    const shuffled = [...clients].sort(() => Math.random() - 0.5);
+    const participants = shuffled.slice(0, numParticipants).map((c) => c.id);
+
+    // Diminishing improvement: logarithmic approach to 0.99
+    const globalAccuracy = Math.min(0.99, Math.round((lastRound.globalAccuracy + Math.max(0.0005, 0.01 * (0.99 - lastRound.globalAccuracy))) * 10000) / 10000);
+
+    // Spend 0.3-0.5 epsilon
+    const privacyBudgetSpent = Math.round((0.3 + Math.random() * 0.2) * 1000) / 1000;
+
+    // Round duration
+    const rawDuration = gaussianRandom(1800, 500);
+    const durationMs = Math.round(Math.max(800, Math.min(3000, rawDuration)));
+
+    // Compute weights
+    const totalDataSize = clients.reduce((sum, c) => sum + c.dataSize, 0);
+    const clientWeights: Record<string, number> = {};
+    let weightSum = 0;
+    for (const pid of participants) {
+      const client = clients.find((c) => c.id === pid)!;
+      const rawWeight = (client.dataSize / totalDataSize) + gaussianRandom(0, 0.02);
+      const clamped = Math.max(0.01, rawWeight);
+      clientWeights[pid] = clamped;
+      weightSum += clamped;
+    }
+    for (const pid of participants) {
+      clientWeights[pid] = Math.round((clientWeights[pid] / weightSum) * 10000) / 10000;
+    }
+
+    const newRound: FLTrainingRound = {
+      roundNumber: nextRoundNumber,
+      participants,
+      aggregationMethod: "federated-averaging",
+      globalAccuracy,
+      privacyBudgetSpent,
+      durationMs,
+      clientWeights,
+    };
+
+    history.push(newRound);
+
+    // Update client participation counts, privacy budget, and local accuracies
+    for (const pid of participants) {
+      const client = clients.find((c) => c.id === pid)!;
+      client.roundsParticipated += 1;
+      client.privacyBudgetUsed = Math.round((client.privacyBudgetUsed + privacyBudgetSpent) * 1000) / 1000;
+      client.localAccuracy = Math.round(
+        Math.min(0.97, 0.50 + 0.47 * (1 - Math.exp(-0.15 * client.roundsParticipated))) * 10000,
+      ) / 10000;
+    }
+
+    return newRound;
   }
 }
 

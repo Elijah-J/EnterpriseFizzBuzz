@@ -214,6 +214,14 @@ export default function RootLayout({
                   Evolution Observatory
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/federated-learning"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Federated Learning
+                </Link>
+              </li>
             </ul>
           </nav>
         </aside>

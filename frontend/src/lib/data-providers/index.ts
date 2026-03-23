@@ -86,6 +86,11 @@ export type {
   MESITransition,
   CacheEulogy,
   CacheAccessCell,
+  FLClient,
+  FLClientStatus,
+  FLTrainingRound,
+  FLAggregationMethod,
+  FLModelState,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";
