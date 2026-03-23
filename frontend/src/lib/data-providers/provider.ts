@@ -13,6 +13,10 @@ import type {
   Incident,
   Trace,
   Alert,
+  ComplianceFramework,
+  ComplianceFinding,
+  AuditEntry,
+  FindingSeverity,
 } from "./types";
 
 /**
@@ -130,4 +134,26 @@ export interface IDataProvider {
    * Alerts are returned in severity-descending, time-descending order.
    */
   getAlerts(): Promise<Alert[]>;
+
+  /**
+   * Retrieve compliance status for all regulatory frameworks.
+   * Returns framework-level compliance scores, control counts,
+   * and audit scheduling information.
+   */
+  getComplianceFrameworks(): Promise<ComplianceFramework[]>;
+
+  /**
+   * Retrieve compliance findings, optionally filtered by framework
+   * and/or severity. Returns findings ordered by severity (critical first),
+   * then by identification date (most recent first).
+   */
+  getComplianceFindings(frameworkId?: string, severity?: FindingSeverity): Promise<ComplianceFinding[]>;
+
+  /**
+   * Retrieve the compliance audit log. Returns audit entries ordered
+   * by timestamp (most recent first).
+   *
+   * @param limit - Maximum number of entries to return (default: 50)
+   */
+  getAuditLog(limit?: number): Promise<AuditEntry[]>;
 }

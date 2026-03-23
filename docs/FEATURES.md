@@ -254,3 +254,7 @@ Context managers for FizzBuzz session lifecycle
 
 Performance metrics for all evaluation operations
 
+### Frontend Compliance Center (`/compliance`)
+
+A unified regulatory compliance monitoring dashboard providing cross-framework operational visibility across SOX, GDPR, HIPAA, and FizzBuzz-ISO-27001. The page renders four sections: an aggregate compliance score gauge with KPI tiles (total controls, passing, failing, open findings), per-framework compliance cards with control progress bars and audit date tracking, a filterable findings table with severity/framework/status facets and expandable detail rows, and a searchable audit log with action-type filtering. Framework status is derived from control pass rates (compliant at 95%+, at-risk at 80%+, non-compliant below 80%). All data is sourced through the simulation data provider and auto-refreshes on a 10-second interval, maintaining real-time compliance posture awareness consistent with enterprise GRC platform standards
+

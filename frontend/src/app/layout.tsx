@@ -107,8 +107,13 @@ export default function RootLayout({
               Platform
             </p>
             <ul className="space-y-1 text-sm text-panel-300">
-              <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
-                Compliance
+              <li>
+                <a
+                  href="/compliance"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Compliance
+                </a>
               </li>
               <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
                 Analytics
