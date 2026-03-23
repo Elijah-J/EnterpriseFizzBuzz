@@ -402,6 +402,11 @@ from enterprise_fizzbuzz.infrastructure.intent_log import (
     IntentMiddleware,
     WriteAheadIntentLog,
 )
+from enterprise_fizzbuzz.infrastructure.crdt import (
+    CRDTDashboard,
+    CRDTMergeEngine,
+    CRDTMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.recommendations import (
     RecommendationDashboard,
     RecommendationEngine,
@@ -2251,6 +2256,19 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--wal-dashboard",
         action="store_true",
         help="Display the FizzWAL ASCII dashboard with log stats, active transactions, checkpoint history, and recovery report",
+    )
+
+    # FizzCRDT — Conflict-Free Replicated Data Types
+    parser.add_argument(
+        "--crdt",
+        action="store_true",
+        help="Enable FizzCRDT: replicate classification state across simulated replicas using CvRDTs with join-semilattice merge",
+    )
+
+    parser.add_argument(
+        "--crdt-dashboard",
+        action="store_true",
+        help="Display the FizzCRDT ASCII dashboard with per-CRDT state, vector clocks, convergence stats, and merge history",
     )
 
     return parser
@@ -4911,6 +4929,29 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzCRDT — Conflict-Free Replicated Data Types setup
+    # ----------------------------------------------------------------
+    crdt_engine = None
+    crdt_middleware = None
+
+    if args.crdt or args.crdt_dashboard:
+        crdt_engine = CRDTMergeEngine()
+        crdt_middleware = CRDTMiddleware(
+            engine=crdt_engine,
+            replica_count=config.crdt_replica_count,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FizzCRDT: Conflict-Free Replicated Data Types ENABLED   |\n"
+            f"  | Replicas: {config.crdt_replica_count:<45}|\n"
+            f"  | Anti-entropy interval: {config.crdt_anti_entropy_interval:<32}|\n"
+            "  | Join-semilattice: commutative, associative, idempotent. |\n"
+            "  | Strong Eventual Consistency: guaranteed.                |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # Archaeological Recovery System setup
     # ----------------------------------------------------------------
     arch_engine = None
@@ -5463,6 +5504,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             rules=list(config.rules),
         )
         builder.with_middleware(qo_middleware)
+
+    # Add CRDT middleware (priority 870, between WAL and archaeology)
+    if crdt_middleware is not None:
+        builder.with_middleware(crdt_middleware)
 
     # Add WAL middleware (priority 850, between locks and archaeology)
     if wal_middleware is not None:
@@ -7210,6 +7255,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.wal_dashboard:
         print("\n  FizzWAL not enabled. Use --wal-intent to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzCRDT Dashboard
+    # ----------------------------------------------------------------
+    if args.crdt_dashboard and crdt_engine is not None:
+        print(CRDTDashboard.render(
+            engine=crdt_engine,
+            width=config.crdt_dashboard_width,
+        ))
+    elif args.crdt_dashboard:
+        print("\n  FizzCRDT not enabled. Use --crdt to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
