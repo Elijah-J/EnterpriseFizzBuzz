@@ -699,6 +699,19 @@ class EventType(Enum):
     APPROVAL_DELEGATION_RESOLVED = auto()
     APPROVAL_DASHBOARD_RENDERED = auto()
 
+    # FizzPager: Incident Paging & Escalation Engine events
+    PAGER_ALERT_RECEIVED = auto()
+    PAGER_ALERT_DEDUPLICATED = auto()
+    PAGER_ALERT_CORRELATED = auto()
+    PAGER_ALERT_SUPPRESSED = auto()
+    PAGER_INCIDENT_CREATED = auto()
+    PAGER_INCIDENT_ACKNOWLEDGED = auto()
+    PAGER_INCIDENT_ESCALATED = auto()
+    PAGER_INCIDENT_RESOLVED = auto()
+    PAGER_INCIDENT_CLOSED = auto()
+    PAGER_POSTMORTEM_GENERATED = auto()
+    PAGER_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

@@ -1287,6 +1287,10 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --bob-hours-awake N        Number of hours Bob has been awake (default: computed from --bob-shift-start). Affects circadian alertness score and fatigue accumulation rate
 --bob-shift-start HH:MM    Bob's shift start time in 24-hour format (default: 06:00). Used by the circadian model to compute current alertness and fatigue state
 --bob-dashboard            Display the FizzBob ASCII dashboard with circadian alertness sparkline, NASA-TLX radar chart, fatigue timeline, burnout countdown, and operator mode status
+--pager                    Enable the FizzPager Incident Paging & Escalation Engine: route all platform alerts through structured ingestion, deduplication, correlation, noise reduction, and 4-tier escalation to Bob McFizzington
+--pager-dashboard          Display the FizzPager ASCII dashboard with active incidents, alert volume sparkline, deduplication effectiveness, MTTA/MTTR metrics, on-call status, and noise reduction statistics
+--pager-severity LEVEL     Minimum alert severity for paging: P1, P2, P3, P4, P5. Alerts below this threshold are batched into daily digests (default: P3)
+--pager-simulate-incident  Simulate a synthetic P2 incident to exercise the full paging pipeline: alert ingestion, deduplication, correlation, escalation, acknowledgment, and postmortem generation
 --approval                 Enable the FizzApproval Multi-Party Approval Workflow Engine: route every evaluation through ITIL-compliant change management with CAB review, COI detection, and Sole Operator Exception handling
 --approval-dashboard       Display the FizzApproval ASCII dashboard with request queue, CAB meeting minutes, SOE statistics, policy distribution, and tamper-evident audit trail
 --approval-policy TYPE     Approval policy type: unanimous, majority, any_one, weighted, quorum. All resolve to M=1, N=1 (default: unanimous)

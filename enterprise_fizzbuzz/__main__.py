@@ -444,6 +444,12 @@ from enterprise_fizzbuzz.infrastructure.microkernel_ipc import (
     IPCKernel,
     IPCMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.pager import (
+    PagerDashboard,
+    PagerEngine,
+    PagerMiddleware,
+    create_pager_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.approval import (
     ApprovalDashboard,
     ApprovalEngine,
@@ -3423,6 +3429,30 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--bob-dashboard",
         action="store_true",
         help="Display the FizzBob cognitive load dashboard after execution",
+    )
+
+    # FizzPager — Incident Paging & Escalation Engine
+    parser.add_argument(
+        "--pager",
+        action="store_true",
+        help="Enable FizzPager: PagerDuty-style incident management with 4-tier escalation, alert dedup/correlation/noise reduction, and blameless postmortem generation",
+    )
+    parser.add_argument(
+        "--pager-dashboard",
+        action="store_true",
+        help="Display the FizzPager incident management dashboard after execution",
+    )
+    parser.add_argument(
+        "--pager-severity",
+        type=str,
+        default=None,
+        metavar="LEVEL",
+        help="Default incident severity level: P1, P2, P3, P4, or P5 (default: from config, typically P3)",
+    )
+    parser.add_argument(
+        "--pager-simulate-incident",
+        action="store_true",
+        help="Simulate an incident for each FizzBuzz evaluation to demonstrate the full incident lifecycle",
     )
 
     # FizzApproval — Multi-Party Approval Workflow Engine
@@ -7431,6 +7461,38 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzPager — Incident Paging & Escalation Engine (priority 82)
+    # ----------------------------------------------------------------
+    pager_engine = None
+    pager_middleware_instance = None
+
+    if args.pager or args.pager_dashboard or args.pager_simulate_incident:
+        pager_severity = args.pager_severity or config.pager_default_severity
+
+        pager_engine, pager_middleware_instance = create_pager_subsystem(
+            dedup_window=config.pager_dedup_window,
+            auto_acknowledge=config.pager_auto_acknowledge,
+            auto_resolve=config.pager_auto_resolve,
+            simulate_incident=args.pager_simulate_incident or config.pager_simulate_incident,
+            default_severity=pager_severity,
+            enable_dashboard=args.pager_dashboard,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(pager_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZPAGER: INCIDENT PAGING & ESCALATION ENGINE          |\n"
+                f"  | Severity: {pager_severity:<10} | Auto-ack: {'YES' if config.pager_auto_acknowledge else 'NO':<3}            |\n"
+                "  | L1 Bob -> L2 Sr Bob -> L3 Princ Bob -> L4 EVP Bob      |\n"
+                "  | Alert dedup | Correlation | Noise reduction             |\n"
+                "  | Blameless postmortem with timeline reconstruction.       |\n"
+                "  | Because every FizzBuzz needs 24/7 incident response.    |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzApproval — Multi-Party Approval Workflow Engine (priority 85)
     # ----------------------------------------------------------------
     approval_engine = None
@@ -10705,6 +10767,13 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  FizzPrint: No results to typeset.\n")
     elif args.typeset_dashboard and not typeset_active:
         print("\n  FizzPrint not enabled. Use --typeset to enable.\n")
+
+    # FizzPager Dashboard (post-execution)
+    if args.pager_dashboard and pager_middleware_instance is not None:
+        print()
+        print(pager_middleware_instance.render_dashboard(width=config.pager_dashboard_width))
+    elif args.pager_dashboard and pager_middleware_instance is None:
+        print("\n  FizzPager not enabled. Use --pager to enable.\n")
 
     # FizzApproval Dashboard (post-execution)
     if args.approval_dashboard and approval_middleware_instance is not None:

@@ -62,6 +62,7 @@ Error codes use the prefix `EFP-` followed by a subsystem identifier and a seque
 | `EFP-T00x` | Distributed tracing (removed -- absorbed into FizzOTel `EFP-OT0x`) |
 | `EFP-BOB0` through `EFP-BOB8` | Operator cognitive load (FizzBob) |
 | `EFP-APR0` through `EFP-APR7` | Approval workflow (FizzApproval) |
+| `EFP-PGR0` through `EFP-PGR7` | Incident paging & escalation (FizzPager) |
 
 Numeric ranges (`EFP-1000` through `EFP-9000`) were assigned to the original subsystems. Later additions use alphabetic prefixes to avoid collisions, a decision that was never formally documented but has been consistently followed.
 
@@ -333,6 +334,22 @@ These exceptions manage schema migrations for in-memory dicts that vanish when t
 
 `ApprovalError` is the base exception for the FizzApproval subsystem. `ApprovalPolicyError` carries `policy_name` and `reason` in its context, covering invalid policy definitions and policy conflicts. `ApprovalQuorumError` is raised when the CAB cannot achieve quorum, carrying `required` and `present` member counts -- though in practice, quorum (1 of 1) is always met. `ApprovalConflictOfInterestError` is raised when the COI checker identifies a conflict between the requestor and an approver; it carries `approver_id` and `reason`. Since Bob is both requestor and sole approver, this exception's detection logic fires on every request, but the Sole Operator Exception permits the workflow to proceed. `ApprovalDelegationError` covers delegation cycles, exceeded chain depth limits, and invalid delegate references, carrying `chain_depth` and `reason`. `ApprovalTimeoutError` is raised when a request exceeds its TTL without obtaining the required approvals, carrying `request_id` and `timeout_seconds`. `ApprovalAuditError` indicates that an audit entry could not be written or that a consistency check on the tamper-evident hash chain failed, carrying `entry_id` and `reason`. `ApprovalMiddlewareError` covers failures in the request creation, policy evaluation, and approval routing path within the middleware pipeline, carrying `evaluation_number` and `reason`.
 
+### Incident Paging & Escalation / FizzPager (`EFP-PGR0` through `EFP-PGR7`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `PagerError` | `FizzBuzzError` | `EFP-PGR0` | Base exception for all FizzPager incident paging and escalation errors |
+| `PagerAlertError` | `PagerError` | `EFP-PGR1` | An alert cannot be processed through the paging pipeline |
+| `PagerDeduplicationError` | `PagerError` | `EFP-PGR2` | Alert deduplication encountered an anomaly in key computation or window management |
+| `PagerCorrelationError` | `PagerError` | `EFP-PGR3` | Alert correlation failed to match or register incidents |
+| `PagerEscalationError` | `PagerError` | `EFP-PGR4` | Incident escalation encountered an invalid condition or misconfigured chain |
+| `PagerIncidentError` | `PagerError` | `EFP-PGR5` | An incident lifecycle operation failed (invalid state transition, missing incident, timeline corruption) |
+| `PagerScheduleError` | `PagerError` | `EFP-PGR6` | The on-call schedule encountered a configuration error (empty roster, invalid rotation) |
+| `PagerDashboardError` | `PagerError` | `EFP-PGR7` | The FizzPager ASCII dashboard failed to render a panel |
+| `PagerMiddlewareError` | `PagerError` | `EFP-PGR7` | The PagerMiddleware failed to process an evaluation |
+
+`PagerError` is the base exception for the FizzPager subsystem. `PagerAlertError` carries `alert_id` and `reason` in its context, covering failures during alert ingestion, deduplication, correlation, and noise reduction stages. `PagerDeduplicationError` carries `dedup_key` and `reason`, indicating failures in the sliding-window deduplication engine. `PagerCorrelationError` carries `correlation_key` and `reason`, covering failures in temporal proximity grouping and incident clustering. `PagerEscalationError` carries `incident_id`, `tier`, and `reason`, raised when attempting to escalate beyond the terminal tier (L4) or when the escalation chain is misconfigured. `PagerIncidentError` carries `incident_id` and `reason`, covering invalid state transitions in the 7-state incident lifecycle. `PagerScheduleError` carries `schedule_key` and `reason`, raised when the on-call schedule cannot determine a responder -- architecturally present for the hypothetical case where the roster is empty, though the roster has never contained fewer than one entry. `PagerDashboardError` carries `panel` and `reason`, covering rendering failures in individual dashboard panels. `PagerMiddlewareError` carries `evaluation_number` and `reason`, covering failures in alert creation, incident simulation, and metadata injection within the middleware pipeline. `PagerDashboardError` and `PagerMiddlewareError` share error code `EFP-PGR7`, as both represent terminal presentation-layer failures.
+
 ### Repository / Unit of Work (`EFP-RP0x`)
 
 | Class | Parent | Code | Description |
@@ -444,6 +461,15 @@ Exception
         │     ├── ApprovalTimeoutError       EFP-APR5
         │     ├── ApprovalAuditError         EFP-APR6
         │     └── ApprovalMiddlewareError    EFP-APR7
+        ├── PagerError                        EFP-PGR0
+        │     ├── PagerAlertError            EFP-PGR1
+        │     ├── PagerDeduplicationError    EFP-PGR2
+        │     ├── PagerCorrelationError      EFP-PGR3
+        │     ├── PagerEscalationError       EFP-PGR4
+        │     ├── PagerIncidentError         EFP-PGR5
+        │     ├── PagerScheduleError         EFP-PGR6
+        │     ├── PagerDashboardError        EFP-PGR7
+        │     └── PagerMiddlewareError       EFP-PGR7
         └── RepositoryError                  EFP-RP00
               ├── ResultNotFoundError        EFP-RP01
               ├── UnitOfWorkError            EFP-RP02

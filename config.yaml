@@ -1952,6 +1952,26 @@ synth:
 # and the Maslach Burnout Inventory (Maslach & Jackson, 1981).
 # Overload Mode activates when cognitive capacity is exceeded,
 # signaling the need for operator rotation or workload reduction.
+# FizzPager — Incident Paging & Escalation Engine
+# PagerDuty-style incident management lifecycle for the Enterprise
+# FizzBuzz Platform.  Provides 24/7 on-call scheduling, four-tier
+# escalation (L1-L4, all Bob), alert deduplication, correlation,
+# noise reduction, and blameless postmortem generation.  MTTA of
+# 0.000s because Bob is the system and the system acknowledges
+# instantly.
+fizz_pager:
+  enabled: false                          # Master switch — opt-in via --pager
+  default_severity: P3                    # Default incident severity (P1-P5)
+  auto_acknowledge: true                  # Auto-acknowledge incidents (MTTA = 0.000s)
+  auto_resolve: true                      # Auto-resolve incidents after pipeline processing
+  simulate_incident: false                # Simulate an incident per evaluation
+  dedup_window: 300.0                     # Alert deduplication window in seconds
+  escalation_l1_timeout: 300.0            # L1 (Bob) acknowledgment timeout in seconds
+  escalation_l2_timeout: 900.0            # L2 (Senior Bob) acknowledgment timeout in seconds
+  escalation_l3_timeout: 1800.0           # L3 (Principal Bob) acknowledgment timeout in seconds
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizz_approval:
   enabled: false                          # Master switch — opt-in via --approval
   default_change_type: NORMAL             # Default ITIL change type (STANDARD, NORMAL, EMERGENCY)

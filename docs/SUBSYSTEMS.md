@@ -57,6 +57,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [OS Kernel Architecture](#os-kernel-architecture)
 - [P2P Network Architecture](#p2p-network-architecture)
 - [FizzBob Operator Cognitive Load Architecture](#fizzbob-operator-cognitive-load-architecture)
+- [FizzPager Incident Paging & Escalation Architecture](#fizzpager-incident-paging--escalation-architecture)
 
 ---
 
@@ -4539,3 +4540,134 @@ FizzApproval integrates with:
 | Test count | 164 |
 
 FizzBob ensures that the platform's most critical component -- the human being upon whom every subsystem depends -- receives the same operational monitoring, capacity planning, and failure protection afforded to the cache coherence protocol, the garbage collector, and the blockchain audit ledger. Aviation has mandatory crew rest regulations (14 CFR Part 117). Nuclear power plants have NRC fitness-for-duty requirements (10 CFR Part 26). The Enterprise FizzBuzz Platform now has FizzBob.
+
+---
+
+## FizzPager Incident Paging & Escalation Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/pager.py`
+
+FizzPager is a PagerDuty-inspired incident paging and escalation engine that provides the nervous system connecting the platform's 106 subsystems to its sole on-call responder. The engine implements structured alert ingestion, deduplication, correlation, noise reduction, multi-channel notification, acknowledgment tracking, 4-tier escalation, and full incident lifecycle management -- following the alert intelligence and event management patterns described in Chapter 6 of Google's SRE book ("Monitoring Distributed Systems") and the PagerDuty Incident Response documentation.
+
+### Alert Ingestion Pipeline
+
+Every platform subsystem publishes alerts through `FizzPager.ingest(alert)`. Each alert is a structured event with:
+
+- **alert_id**: UUID uniquely identifying this alert instance
+- **source_subsystem**: one of 106 infrastructure modules
+- **severity**: P1-Critical, P2-High, P3-Medium, P4-Low, P5-Informational
+- **title**: short summary for notification subject lines
+- **description**: detailed context for the responder
+- **dedup_key**: stable identifier for deduplicating repeated instances of the same condition
+- **tags**: key-value metadata for routing and correlation
+- **runbook_url**: link to the relevant operational runbook section (maintained by Bob)
+
+The ingestion pipeline validates alert schemas, assigns received-at timestamps, and enforces per-subsystem rate limits (configurable, default: 10 alerts per minute per subsystem). Alerts exceeding the rate limit are batched into summary notifications. Malformed alerts are routed to a dead-letter queue.
+
+### Alert Deduplication & Correlation
+
+The `AlertDeduplicator` maintains a sliding window of recent alerts indexed by deduplication key. Alerts sharing the same dedup key within the configurable window (default: 5 minutes) are merged into a single alert with an `occurrence_count` field. This reduces the alert volume delivered to the operator by orders of magnitude during cascading failure scenarios.
+
+The `AlertCorrelator` groups temporally proximate alerts (within 30 seconds) from related subsystems into `IncidentCluster` records. A GC pause spike, a cache eviction surge, and an SLA latency breach occurring within 30 seconds are presented as one correlated incident rather than three independent pages.
+
+Flapping detection identifies alerts that fire and clear repeatedly within a short window (3+ times within 10 minutes) and suppresses them with a single summary notification. This prevents the on-call engineer's phone from vibrating at a frequency that encodes the offending subsystem's name in Morse code.
+
+### On-Call Schedule & Incident Commander
+
+The `OnCallSchedule` determines the current on-call responder using the formula:
+
+```
+roster[(epoch_hours // rotation_hours) % len(roster)]
+```
+
+With a rotation period of 168 hours (one week) and a roster containing one entry (Bob McFizzington), the formula `(epoch_hours // 168) % 1` evaluates to 0 for every rotation period since the Unix epoch. Bob has been on call for every shift since January 1, 1970.
+
+The `IncidentCommander` assigns incident ownership using the formula:
+
+```
+team[assignment_count % len(team)]
+```
+
+With a team of one, `count % 1` evaluates to 0 for every assignment. Bob McFizzington is the incident commander for every incident. This is not a rotation; it is arithmetic.
+
+### 4-Tier Escalation Chain
+
+When an incident is not acknowledged within the configured timeout, it escalates through four tiers:
+
+| Tier | Title | Notification Format | Responder |
+|------|-------|---------------------|-----------|
+| L1 | On-Call Engineer | "Alert: {title}" | Bob McFizzington |
+| L2 | Senior On-Call | "URGENT -- Unacknowledged: {title}" | Bob McFizzington |
+| L3 | Incident Manager | "CRITICAL ESCALATION -- Response Required: {title}" | Bob McFizzington |
+| L4 | Executive VP / Managing Director | "EXECUTIVE ESCALATION TO MANAGING DIRECTOR: {title}" | Bob McFizzington |
+
+Each tier increases the urgency of the notification message. The responder does not change, because there is only one person in the roster. The escalation chain faithfully models the full multi-tier protocol so that when a second engineer is hired, the infrastructure will be ready.
+
+### Noise Reduction Engine
+
+The noise reduction engine scores each alert by relevance (0-100) based on historical false-positive rates, correlation with active incidents, and the operator's current circadian state. Alerts during the circadian nadir (2:00 AM - 5:00 AM) are scored higher because waking Bob for a P4 alert at 3 AM is an organizational risk.
+
+Suppression rules allow configurable filtering of alerts by subsystem, severity, and time window. The alert fatigue index tracks page volume, acknowledgment latency trends, and the ratio of actionable to non-actionable alerts. When the fatigue index exceeds the configured threshold (default: 75), the noise reduction engine raises the severity floor for paging, delivering only P1 and P2 alerts as pages and batching P3-P5 into a daily digest.
+
+FizzBob integration: when the operator's cognitive load index exceeds the overload threshold, FizzPager suppresses P3-P5 alerts entirely, deferring them to the low-priority queue. This prevents alert cascades from compounding an already-overloaded operator's cognitive state.
+
+### 7-State Incident Lifecycle
+
+Every incident traverses a 7-state lifecycle:
+
+```
+TRIGGERED -> ACKNOWLEDGED -> INVESTIGATING -> MITIGATING -> RESOLVED -> POSTMORTEM -> CLOSED
+```
+
+- **TRIGGERED**: an alert has been generated and is awaiting acknowledgment
+- **ACKNOWLEDGED**: the on-call responder has confirmed receipt
+- **INVESTIGATING**: active root-cause analysis is underway
+- **MITIGATING**: a remediation action is in progress
+- **RESOLVED**: the incident has been resolved and normal operation restored
+- **POSTMORTEM**: a blameless postmortem review is in progress
+- **CLOSED**: the postmortem has been reviewed and accepted
+
+State transitions are governed by a valid-transition map and enforced by the `IncidentCommander`. Backward transitions are not permitted except from POSTMORTEM to INVESTIGATING (when new evidence is discovered during blameless review). Every transition is recorded as a domain event in the event sourcing journal.
+
+### Post-Incident Review
+
+When an incident is resolved, the engine generates a post-incident review template with timeline, root cause analysis fields, action items, and a "lessons learned" section. The review is authored by Bob, reviewed by Bob, and the action items are assigned to Bob.
+
+### Dashboard
+
+The `PagerDashboard` renders an ASCII operational awareness display with:
+
+- Active incidents by severity, subsystem, and age
+- Alert volume timeline (last 24 hours, sparkline)
+- Deduplication effectiveness (alerts received vs. pages sent)
+- MTTA and MTTR by severity
+- On-call status (Bob McFizzington: ON CALL -- as always)
+- Alert fatigue index (current value and 7-day trend)
+- Noise reduction statistics (alerts suppressed, flapping detections, correlations formed)
+
+### Integration Points
+
+FizzPager integrates with:
+
+- **FizzBob**: operator cognitive load state gates alert suppression; overload triggers P3-P5 suppression
+- **SLA Monitoring**: error budget breaches generate P1/P2 alerts routed through FizzPager
+- **Compliance Framework**: pager events logged as compliance-auditable operational actions
+- **Event Sourcing**: all incident state transitions recorded as domain events
+- **Middleware Pipeline**: `PagerMiddleware` runs at priority 82, before ApprovalMiddleware (85) and BobMiddleware (90)
+
+### FizzPager Statistics
+
+| Spec | Value |
+|------|-------|
+| Incident states | 7 (TRIGGERED through CLOSED) |
+| Escalation tiers | 4 (L1-L4, all Bob McFizzington) |
+| Alert severity levels | 5 (P1-Critical through P5-Informational) |
+| On-call roster size | 1 |
+| MTTA | 0.000s (Bob is the only engineer) |
+| Custom exceptions | 9 (EFP-PGR0 through EFP-PGR7) |
+| EventType entries | 11 |
+| CLI flags | 4 (`--pager`, `--pager-dashboard`, `--pager-severity`, `--pager-simulate-incident`) |
+| Module size | ~3,108 lines |
+| Test count | 144 |
+
+FizzPager ensures that the platform's 106 subsystems can reach their sole operator through a structured, deduplicated, correlated, and noise-reduced alert channel rather than undifferentiated print statements. Every production operations team uses a paging system. The Enterprise FizzBuzz Platform now has one.
