@@ -213,16 +213,15 @@ from enterprise_fizzbuzz.infrastructure.formal_verification import (
     PropertyVerifier,
     VerificationDashboard,
 )
-from enterprise_fizzbuzz.infrastructure.fbaas import (
+from enterprise_fizzbuzz.infrastructure.billing import (
     BillingEngine,
     FBaaSDashboard,
     FBaaSMiddleware,
+    FBaaSUsageMeter,
     FizzStripeClient,
     OnboardingWizard,
     ServiceLevelAgreement,
-    SubscriptionTier,
     TenantManager,
-    UsageMeter,
     create_fbaas_subsystem,
 )
 from enterprise_fizzbuzz.infrastructure.gitops import (
@@ -4257,11 +4256,12 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if args.fbaas or args.fbaas_onboard or args.fbaas_billing:
         tier_map = {
-            "free": SubscriptionTier.FREE,
-            "pro": SubscriptionTier.PRO,
-            "enterprise": SubscriptionTier.ENTERPRISE,
+            "free": BillingSubscriptionTier.FREE,
+            "pro": BillingSubscriptionTier.PROFESSIONAL,
+            "professional": BillingSubscriptionTier.PROFESSIONAL,
+            "enterprise": BillingSubscriptionTier.ENTERPRISE,
         }
-        fbaas_tier = tier_map.get(args.fbaas_tier or config.fbaas_default_tier, SubscriptionTier.FREE)
+        fbaas_tier = tier_map.get(args.fbaas_tier or config.fbaas_default_tier, BillingSubscriptionTier.FREE)
         fbaas_watermark = config.fbaas_free_watermark
 
         (
@@ -4291,7 +4291,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             f"  | Tier: {fbaas_tier.name:<50}|\n"
             f"  | Tenant: {fbaas_tenant.tenant_id:<48}|\n"
             f"  | SLA Uptime: {f'{sla.uptime_target:.2%}':<44}|\n"
-            f"  | Watermark: {('ACTIVE (Free tier)' if fbaas_tier == SubscriptionTier.FREE else 'DISABLED'):<45}|\n"
+            f"  | Watermark: {('ACTIVE (Free tier)' if fbaas_tier == BillingSubscriptionTier.FREE else 'DISABLED'):<45}|\n"
             "  | Billing: Simulated Stripe (in-memory ledger)            |\n"
             "  | Every evaluation is metered. Nothing is real.           |\n"
             "  +---------------------------------------------------------+"

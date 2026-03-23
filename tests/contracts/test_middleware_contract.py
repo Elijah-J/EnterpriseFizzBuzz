@@ -255,13 +255,13 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
     # FBaaSMiddleware: requires Tenant, UsageMeter, BillingEngine
     if name == "FBaaSMiddleware":
         try:
-            from enterprise_fizzbuzz.infrastructure.fbaas import (
+            from enterprise_fizzbuzz.infrastructure.billing import (
                 BillingEngine,
+                FBaaSUsageMeter as UsageMeter,
                 FizzStripeClient,
                 SubscriptionTier,
                 Tenant,
                 TenantManager,
-                UsageMeter,
             )
             tenant = Tenant(
                 tenant_id="contract-test-tenant",

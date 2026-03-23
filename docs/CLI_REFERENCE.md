@@ -1221,7 +1221,7 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --verify-dashboard         Display the Formal Verification ASCII dashboard with QED status and proof obligations
 --fbaas                    Enable FizzBuzz-as-a-Service (FBaaS): multi-tenant SaaS simulation with subscription tiers, usage metering, and billing
 --fbaas-tenant NAME        Tenant organization name for FBaaS onboarding (default: "Default Tenant")
---fbaas-tier TIER          Subscription tier: free, pro, enterprise (default: free). Determines daily quota and feature access
+--fbaas-tier TIER          Subscription tier: free, professional, enterprise (default: free). "pro" is accepted as alias for "professional". Determines daily quota and feature access
 --fbaas-dashboard          Display the ASCII FBaaS dashboard with MRR, tenant list, usage metrics, and billing log
 --fbaas-onboard            Display the ASCII onboarding wizard for the current tenant
 --fbaas-billing-log        Display the simulated Stripe billing event log

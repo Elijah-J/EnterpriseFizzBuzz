@@ -920,9 +920,10 @@ class TestFBaaSDashboardAfterRealEvaluations:
 
     def test_fbaas_dashboard_shows_tenant_in_roster(self, engine, default_rules):
         """Created tenant should appear in the dashboard's tenant roster."""
-        from enterprise_fizzbuzz.infrastructure.fbaas import (
+        from enterprise_fizzbuzz.infrastructure.billing import (
             BillingEngine, FBaaSDashboard, FBaaSMiddleware,
-            FizzStripeClient, SubscriptionTier, TenantManager, UsageMeter,
+            FBaaSUsageMeter as UsageMeter, FizzStripeClient,
+            SubscriptionTier, TenantManager,
         )
 
         tenant_mgr = TenantManager()
@@ -930,7 +931,7 @@ class TestFBaaSDashboardAfterRealEvaluations:
         stripe = FizzStripeClient()
         billing = BillingEngine(stripe, tenant_mgr)
 
-        tenant = tenant_mgr.create_tenant("Acme FizzBuzz Corp", SubscriptionTier.PRO)
+        tenant = tenant_mgr.create_tenant("Acme FizzBuzz Corp", SubscriptionTier.PROFESSIONAL)
         billing.onboard_tenant(tenant)
 
         middleware = FBaaSMiddleware(
@@ -952,9 +953,10 @@ class TestFBaaSDashboardAfterRealEvaluations:
 
     def test_fbaas_dashboard_shows_non_zero_evaluation_count(self, engine, default_rules):
         """Total evaluations should be non-zero after processing through FBaaS."""
-        from enterprise_fizzbuzz.infrastructure.fbaas import (
+        from enterprise_fizzbuzz.infrastructure.billing import (
             BillingEngine, FBaaSDashboard, FBaaSMiddleware,
-            FizzStripeClient, SubscriptionTier, TenantManager, UsageMeter,
+            FBaaSUsageMeter as UsageMeter, FizzStripeClient,
+            SubscriptionTier, TenantManager,
         )
 
         tenant_mgr = TenantManager()
@@ -984,9 +986,10 @@ class TestFBaaSDashboardAfterRealEvaluations:
 
     def test_fbaas_dashboard_shows_subscription_distribution(self, engine, default_rules):
         """Subscription tier distribution should show non-zero counts."""
-        from enterprise_fizzbuzz.infrastructure.fbaas import (
+        from enterprise_fizzbuzz.infrastructure.billing import (
             BillingEngine, FBaaSDashboard, FizzStripeClient,
-            SubscriptionTier, TenantManager, UsageMeter,
+            FBaaSUsageMeter as UsageMeter,
+            SubscriptionTier, TenantManager,
         )
 
         tenant_mgr = TenantManager()
@@ -995,7 +998,7 @@ class TestFBaaSDashboardAfterRealEvaluations:
         billing = BillingEngine(stripe, tenant_mgr)
 
         tenant_mgr.create_tenant("Free Co", SubscriptionTier.FREE)
-        tenant_mgr.create_tenant("Pro Inc", SubscriptionTier.PRO)
+        tenant_mgr.create_tenant("Pro Inc", SubscriptionTier.PROFESSIONAL)
 
         dashboard = FBaaSDashboard.render(tenant_mgr, usage_meter, billing, stripe)
 
@@ -1004,9 +1007,10 @@ class TestFBaaSDashboardAfterRealEvaluations:
 
     def test_fbaas_dashboard_shows_platform_summary(self, engine, default_rules):
         """Platform summary should include total tenant count and MRR."""
-        from enterprise_fizzbuzz.infrastructure.fbaas import (
+        from enterprise_fizzbuzz.infrastructure.billing import (
             BillingEngine, FBaaSDashboard, FBaaSMiddleware,
-            FizzStripeClient, SubscriptionTier, TenantManager, UsageMeter,
+            FBaaSUsageMeter as UsageMeter, FizzStripeClient,
+            SubscriptionTier, TenantManager,
         )
 
         tenant_mgr = TenantManager()

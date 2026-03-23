@@ -379,7 +379,7 @@ A: Because the Enterprise FizzBuzz Platform has been running as a CLI -- a *CLI*
 
 Without FBaaS, there's no way to charge anyone for FizzBuzz, which means there's no way to generate Monthly Recurring Revenue, which means the platform has zero ARR, which means every VC pitch deck that references this project will have a blank revenue slide.
 
-The Free tier gives hobbyist FizzBuzz enthusiasts 10 evaluations per day with a watermark (`[Powered by FBaaS Free Tier]`) appended to every result -- a scarlet letter of frugality designed to shame users into upgrading. The Pro tier ($29.99/month) removes the watermark and bumps the quota to 1,000, which is enough for casual professional FizzBuzz use but insufficient for anyone running a FizzBuzz-dependent production system.
+The Free tier gives hobbyist FizzBuzz enthusiasts 10 evaluations per day with a watermark (`[Powered by FBaaS Free Tier]`) appended to every result -- a scarlet letter of frugality designed to shame users into upgrading. The Developer tier ($9.99/month) provides 500 evaluations with basic feature access. The Professional tier ($29.99/month) removes the watermark and bumps the quota to 1,000, which is enough for casual professional FizzBuzz use but insufficient for anyone running a FizzBuzz-dependent production system.
 
 The Enterprise tier ($999.99/month) unlocks everything -- ML, chaos engineering, blockchain, compliance -- because organizations that pay $999.99/month for modulo arithmetic deserve access to the neural network that also does modulo arithmetic, just slower. The `FizzStripeClient` processes charges by appending JSON objects to a Python list with the same field names as real Stripe charge objects, achieving API parity without API connectivity.
 

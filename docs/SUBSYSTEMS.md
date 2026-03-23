@@ -3054,24 +3054,24 @@ FizzBuzz-as-a-Service (FBaaS) transforms the Enterprise FizzBuzz Platform from a
     +====================+
 
     Subscription Tiers:
-    +----------+------------+-----------+---------------------------+
-    | Tier     | Quota/Day  | Price/Mo  | Features                  |
-    +----------+------------+-----------+---------------------------+
-    | FREE     | 10         | $0.00     | standard only, watermark  |
-    | PRO      | 1,000      | $29.99    | +chain, async, tracing,   |
-    |          |            |           |  caching, feature flags   |
-    | ENTERPRISE| unlimited | $999.99   | ALL features, ML, chaos,  |
-    |          |            |           |  blockchain, compliance   |
-    +----------+------------+-----------+---------------------------+
+    +-------------+------------+-----------+---------------------------+
+    | Tier        | Quota/Day  | Price/Mo  | Features                  |
+    +-------------+------------+-----------+---------------------------+
+    | FREE        | 10         | $0.00     | standard only, watermark  |
+    | DEVELOPER   | 500        | $9.99     | +chain, caching           |
+    | PROFESSIONAL| 1,000      | $29.99    | +async, tracing, flags    |
+    | ENTERPRISE  | unlimited  | $999.99   | ALL features, ML, chaos,  |
+    |             |            |           |  blockchain, compliance   |
+    +-------------+------------+-----------+---------------------------+
 ```
 
 | Spec | Value |
 |------|-------|
-| Module | `enterprise_fizzbuzz/infrastructure/fbaas.py` |
-| Subscription tiers | 3 (Free, Pro, Enterprise) |
+| Module | `enterprise_fizzbuzz/infrastructure/billing.py` (consolidated from fbaas.py) |
+| Subscription tiers | 4 (Free, Developer, Professional, Enterprise) |
 | Tenant lifecycle states | 3 (Active, Suspended, Deactivated) |
-| Feature gates per tier | Free: 1, Pro: 6, Enterprise: 10 |
-| Daily quotas | Free: 10, Pro: 1,000, Enterprise: unlimited |
+| Feature gates per tier | Free: 1, Developer: 3, Professional: 6, Enterprise: 10 |
+| Daily quotas | Free: 10, Developer: 500, Professional: 1,000, Enterprise: unlimited |
 | Simulated Stripe operations | charge, subscribe, refund |
 | Custom exceptions | 7 (FBaaSError, TenantNotFoundError, FBaaSQuotaExhaustedError, TenantSuspendedError, FeatureNotAvailableError, BillingError, InvalidAPIKeyError) |
 | CLI flags | 7 (--fbaas, --fbaas-tenant, --fbaas-tier, --fbaas-dashboard, --fbaas-onboard, --fbaas-billing-log, --fbaas-usage) |

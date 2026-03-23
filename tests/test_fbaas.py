@@ -8,6 +8,9 @@ onboarding wizards, SLA targets, middleware behavior, and the
 FBaaS dashboard.
 
 Because even fictional cloud services deserve 100% test coverage.
+
+Note: FBaaS code has been consolidated into billing.py. These tests
+verify the tenant management layer within the unified billing module.
 """
 
 from __future__ import annotations
@@ -32,38 +35,43 @@ from enterprise_fizzbuzz.domain.models import (
     FizzBuzzResult,
     ProcessingContext,
 )
-from enterprise_fizzbuzz.infrastructure.fbaas import (
+from enterprise_fizzbuzz.infrastructure.billing import (
     BillingEngine,
-    BillingEvent,
     FBaaSDashboard,
     FBaaSMiddleware,
+    FBaaSUsageMeter,
     FizzStripeClient,
     OnboardingWizard,
     ServiceLevelAgreement,
+    StripeEvent,
     SubscriptionTier,
     Tenant,
     TenantManager,
     TenantStatus,
-    UsageMeter,
     _TIER_FEATURES,
     _TIER_PRICING,
     _TIER_QUOTAS,
     create_fbaas_subsystem,
 )
 
+# Backward-compatible alias used throughout tests
+BillingEvent = StripeEvent
+UsageMeter = FBaaSUsageMeter
+
 
 class TestSubscriptionTier(unittest.TestCase):
-    """Tests for the SubscriptionTier enum."""
+    """Tests for the SubscriptionTier enum (4-tier model)."""
 
     def test_tier_values_exist(self) -> None:
-        """All three subscription tiers should be defined."""
+        """All four subscription tiers should be defined."""
         self.assertIsNotNone(SubscriptionTier.FREE)
-        self.assertIsNotNone(SubscriptionTier.PRO)
+        self.assertIsNotNone(SubscriptionTier.DEVELOPER)
+        self.assertIsNotNone(SubscriptionTier.PROFESSIONAL)
         self.assertIsNotNone(SubscriptionTier.ENTERPRISE)
 
     def test_tier_count(self) -> None:
-        """There should be exactly three subscription tiers."""
-        self.assertEqual(len(SubscriptionTier), 3)
+        """There should be exactly four subscription tiers."""
+        self.assertEqual(len(SubscriptionTier), 4)
 
     def test_tier_quotas_defined(self) -> None:
         """Every tier must have a quota defined."""
@@ -99,9 +107,9 @@ class TestSubscriptionTier(unittest.TestCase):
         self.assertIn("chaos", enterprise_features)
         self.assertIn("blockchain", enterprise_features)
 
-    def test_pro_excludes_ml_and_chaos(self) -> None:
-        """Pro tier should NOT include ML or chaos engineering."""
-        pro_features = _TIER_FEATURES[SubscriptionTier.PRO]
+    def test_professional_excludes_ml_and_chaos(self) -> None:
+        """Professional tier should NOT include ML or chaos engineering."""
+        pro_features = _TIER_FEATURES[SubscriptionTier.PROFESSIONAL]
         self.assertNotIn("machine_learning", pro_features)
         self.assertNotIn("chaos", pro_features)
 
@@ -122,12 +130,12 @@ class TestTenant(unittest.TestCase):
         tenant = Tenant(
             tenant_id="test_123",
             name="Test Corp",
-            tier=SubscriptionTier.PRO,
+            tier=SubscriptionTier.PROFESSIONAL,
             api_key="fbaas_testkey123",
         )
         self.assertEqual(tenant.tenant_id, "test_123")
         self.assertEqual(tenant.name, "Test Corp")
-        self.assertEqual(tenant.tier, SubscriptionTier.PRO)
+        self.assertEqual(tenant.tier, SubscriptionTier.PROFESSIONAL)
         self.assertTrue(tenant.is_active())
 
     def test_suspended_tenant_is_not_active(self) -> None:
@@ -156,8 +164,8 @@ class TestTenantManager(unittest.TestCase):
         self.assertTrue(tenant.is_active())
 
     def test_create_tenant_with_tier(self) -> None:
-        tenant = self.manager.create_tenant("Pro Corp", SubscriptionTier.PRO)
-        self.assertEqual(tenant.tier, SubscriptionTier.PRO)
+        tenant = self.manager.create_tenant("Pro Corp", SubscriptionTier.PROFESSIONAL)
+        self.assertEqual(tenant.tier, SubscriptionTier.PROFESSIONAL)
 
     def test_get_tenant(self) -> None:
         created = self.manager.create_tenant("Lookup Corp")
@@ -220,7 +228,7 @@ class TestUsageMeter(unittest.TestCase):
         self.pro_tenant = Tenant(
             tenant_id="pro_1",
             name="Pro User",
-            tier=SubscriptionTier.PRO,
+            tier=SubscriptionTier.PROFESSIONAL,
             api_key="fbaas_pro1",
         )
         self.enterprise_tenant = Tenant(
@@ -281,7 +289,7 @@ class TestFizzStripeClient(unittest.TestCase):
         self.assertEqual(event.event_type, "charge")
 
     def test_create_subscription(self) -> None:
-        event = self.stripe.create_subscription("t1", SubscriptionTier.PRO)
+        event = self.stripe.create_subscription("t1", SubscriptionTier.PROFESSIONAL)
         self.assertTrue(event.event_id.startswith("sub_"))
         self.assertEqual(event.amount_cents, 2999)
 
@@ -307,13 +315,13 @@ class TestFizzStripeClient(unittest.TestCase):
         self.assertEqual(self.stripe.get_total_revenue_cents(), 300)
 
     def test_mrr(self) -> None:
-        self.stripe.create_subscription("t1", SubscriptionTier.PRO)
+        self.stripe.create_subscription("t1", SubscriptionTier.PROFESSIONAL)
         self.stripe.create_subscription("t2", SubscriptionTier.ENTERPRISE)
         self.assertEqual(self.stripe.get_mrr_cents(), 2999 + 99999)
 
 
 class TestBillingEvent(unittest.TestCase):
-    """Tests for the BillingEvent dataclass."""
+    """Tests for the BillingEvent (StripeEvent) dataclass."""
 
     def test_to_json(self) -> None:
         event = BillingEvent(
@@ -338,7 +346,7 @@ class TestBillingEngine(unittest.TestCase):
         self.engine = BillingEngine(self.stripe, self.manager)
 
     def test_onboard_tenant(self) -> None:
-        tenant = self.manager.create_tenant("Onboard Corp", SubscriptionTier.PRO)
+        tenant = self.manager.create_tenant("Onboard Corp", SubscriptionTier.PROFESSIONAL)
         event = self.engine.onboard_tenant(tenant)
         self.assertEqual(event.event_type, "subscription_created")
         self.assertEqual(event.amount_cents, 2999)
@@ -349,7 +357,7 @@ class TestBillingEngine(unittest.TestCase):
         self.assertIsNone(result)  # Free tier = no charge
 
     def test_charge_pro_tier(self) -> None:
-        tenant = self.manager.create_tenant("Pro Corp", SubscriptionTier.PRO)
+        tenant = self.manager.create_tenant("Pro Corp", SubscriptionTier.PROFESSIONAL)
         result = self.engine.charge_evaluation(tenant, count=5)
         self.assertIsNotNone(result)
         self.assertEqual(result.amount_cents, 15)  # 3 cents * 5
@@ -361,7 +369,7 @@ class TestBillingEngine(unittest.TestCase):
         self.assertEqual(result.amount_cents, 100)  # 10 cents * 10
 
     def test_get_tenant_spend(self) -> None:
-        tenant = self.manager.create_tenant("Spender", SubscriptionTier.PRO)
+        tenant = self.manager.create_tenant("Spender", SubscriptionTier.PROFESSIONAL)
         self.engine.charge_evaluation(tenant, count=10)
         spend = self.engine.get_tenant_spend(tenant.tenant_id)
         self.assertEqual(spend, 30)  # 3 * 10
@@ -397,8 +405,8 @@ class TestFBaaSMiddleware(unittest.TestCase):
         self.assertTrue(result.results[0].metadata.get("fbaas_watermarked"))
 
     def test_pro_tier_no_watermark(self) -> None:
-        """Pro tier should NOT have a watermark."""
-        tenant = self.manager.create_tenant("Pro User", SubscriptionTier.PRO)
+        """Professional tier should NOT have a watermark."""
+        tenant = self.manager.create_tenant("Pro User", SubscriptionTier.PROFESSIONAL)
         mw = FBaaSMiddleware(tenant, self.meter, self.billing, watermark="")
 
         ctx = self._make_context()
@@ -473,11 +481,11 @@ class TestFeatureGates(unittest.TestCase):
         self.assertFalse(FBaaSMiddleware.check_feature_gate(tenant, "machine_learning"))
 
     def test_pro_allows_tracing(self) -> None:
-        tenant = Tenant("t1", "Pro", SubscriptionTier.PRO, "key1")
+        tenant = Tenant("t1", "Pro", SubscriptionTier.PROFESSIONAL, "key1")
         self.assertTrue(FBaaSMiddleware.check_feature_gate(tenant, "tracing"))
 
     def test_pro_blocks_chaos(self) -> None:
-        tenant = Tenant("t1", "Pro", SubscriptionTier.PRO, "key1")
+        tenant = Tenant("t1", "Pro", SubscriptionTier.PROFESSIONAL, "key1")
         self.assertFalse(FBaaSMiddleware.check_feature_gate(tenant, "chaos"))
 
     def test_enterprise_allows_everything(self) -> None:
@@ -503,8 +511,8 @@ class TestOnboardingWizard(unittest.TestCase):
     """Tests for the ASCII onboarding wizard."""
 
     def test_render_contains_tenant_info(self) -> None:
-        tenant = Tenant("t_onboard", "Wizard Corp", SubscriptionTier.PRO, "fbaas_wizardkey")
-        output = OnboardingWizard.render(tenant, SubscriptionTier.PRO)
+        tenant = Tenant("t_onboard", "Wizard Corp", SubscriptionTier.PROFESSIONAL, "fbaas_wizardkey")
+        output = OnboardingWizard.render(tenant, SubscriptionTier.PROFESSIONAL)
         self.assertIn("t_onboard", output)
         self.assertIn("Wizard Corp", output)
         self.assertIn("PROFESSIONAL", output)
@@ -531,7 +539,7 @@ class TestServiceLevelAgreement(unittest.TestCase):
         self.assertAlmostEqual(sla.response_time_ms, 500.0)
 
     def test_pro_tier_sla(self) -> None:
-        sla = ServiceLevelAgreement.for_tier(SubscriptionTier.PRO)
+        sla = ServiceLevelAgreement.for_tier(SubscriptionTier.PROFESSIONAL)
         self.assertAlmostEqual(sla.uptime_target, 0.999)
         self.assertAlmostEqual(sla.response_time_ms, 100.0)
 
@@ -561,7 +569,7 @@ class TestFBaaSDashboard(unittest.TestCase):
         self.billing = BillingEngine(self.stripe, self.manager)
 
     def test_dashboard_renders(self) -> None:
-        tenant = self.manager.create_tenant("Dashboard Corp", SubscriptionTier.PRO)
+        tenant = self.manager.create_tenant("Dashboard Corp", SubscriptionTier.PROFESSIONAL)
         self.billing.onboard_tenant(tenant)
         self.meter.check_and_increment(tenant)
 
@@ -569,7 +577,7 @@ class TestFBaaSDashboard(unittest.TestCase):
             self.manager, self.meter, self.billing, self.stripe,
         )
         self.assertIn("FIZZBUZZ-AS-A-SERVICE DASHBOARD", output)
-        self.assertIn("PRO", output)
+        self.assertIn("PROFESSIONAL", output)
         self.assertIn("$29.99", output)
         self.assertIn("Total Tenants:", output)
 
@@ -713,7 +721,7 @@ class TestWatermarkCritical(unittest.TestCase):
         self.assertTrue(output.startswith("Fizz"))
 
     def test_pro_tier_result_clean(self) -> None:
-        output = self._run_evaluation(SubscriptionTier.PRO)
+        output = self._run_evaluation(SubscriptionTier.PROFESSIONAL)
         self.assertEqual(output, "Fizz")
         self.assertNotIn("[Powered by FBaaS Free Tier]", output)
 

@@ -427,14 +427,14 @@ class TestRateLimiterFBaaSQuotaInteraction:
         of capacity remaining.
         """
         from enterprise_fizzbuzz.domain.exceptions import FBaaSQuotaExhaustedError
-        from enterprise_fizzbuzz.infrastructure.fbaas import (
+        from enterprise_fizzbuzz.infrastructure.billing import (
             BillingEngine,
             FBaaSMiddleware,
+            FBaaSUsageMeter as UsageMeter,
             FizzStripeClient,
             SubscriptionTier,
             Tenant,
             TenantManager,
-            UsageMeter,
         )
         from enterprise_fizzbuzz.infrastructure.rate_limiter import (
             QuotaManager,
@@ -499,14 +499,14 @@ class TestRateLimiterFBaaSQuotaInteraction:
         The rate limiter should block before FBaaS has any objections.
         """
         from enterprise_fizzbuzz.domain.exceptions import RateLimitExceededError
-        from enterprise_fizzbuzz.infrastructure.fbaas import (
+        from enterprise_fizzbuzz.infrastructure.billing import (
             BillingEngine,
             FBaaSMiddleware,
+            FBaaSUsageMeter as UsageMeter,
             FizzStripeClient,
             SubscriptionTier,
             Tenant,
             TenantManager,
-            UsageMeter,
         )
         from enterprise_fizzbuzz.infrastructure.rate_limiter import (
             QuotaManager,
