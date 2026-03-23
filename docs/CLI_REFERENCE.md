@@ -1287,6 +1287,10 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --bob-hours-awake N        Number of hours Bob has been awake (default: computed from --bob-shift-start). Affects circadian alertness score and fatigue accumulation rate
 --bob-shift-start HH:MM    Bob's shift start time in 24-hour format (default: 06:00). Used by the circadian model to compute current alertness and fatigue state
 --bob-dashboard            Display the FizzBob ASCII dashboard with circadian alertness sparkline, NASA-TLX radar chart, fatigue timeline, burnout countdown, and operator mode status
+--approval                 Enable the FizzApproval Multi-Party Approval Workflow Engine: route every evaluation through ITIL-compliant change management with CAB review, COI detection, and Sole Operator Exception handling
+--approval-dashboard       Display the FizzApproval ASCII dashboard with request queue, CAB meeting minutes, SOE statistics, policy distribution, and tamper-evident audit trail
+--approval-policy TYPE     Approval policy type: unanimous, majority, any_one, weighted, quorum. All resolve to M=1, N=1 (default: unanimous)
+--approval-change-type TYPE  ITIL change type classification: standard (pre-approved), normal (full CAB review), emergency (fast-track with post-implementation audit). Default: normal
 ```
 
 ## Environment Variables

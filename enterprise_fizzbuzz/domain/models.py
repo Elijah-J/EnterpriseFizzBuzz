@@ -686,6 +686,19 @@ class EventType(Enum):
     BOB_EVALUATION_OBSERVED = auto()
     BOB_DASHBOARD_RENDERED = auto()
 
+    # FizzApproval — Multi-Party Approval Workflow Engine
+    APPROVAL_REQUEST_CREATED = auto()
+    APPROVAL_REQUEST_APPROVED = auto()
+    APPROVAL_REQUEST_REJECTED = auto()
+    APPROVAL_REQUEST_ESCALATED = auto()
+    APPROVAL_REQUEST_TIMED_OUT = auto()
+    APPROVAL_COI_DETECTED = auto()
+    APPROVAL_SOE_ISSUED = auto()
+    APPROVAL_CAB_CONVENED = auto()
+    APPROVAL_FOUR_EYES_CHECKED = auto()
+    APPROVAL_DELEGATION_RESOLVED = auto()
+    APPROVAL_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

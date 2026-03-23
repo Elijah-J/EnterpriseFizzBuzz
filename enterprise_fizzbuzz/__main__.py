@@ -444,6 +444,12 @@ from enterprise_fizzbuzz.infrastructure.microkernel_ipc import (
     IPCKernel,
     IPCMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.approval import (
+    ApprovalDashboard,
+    ApprovalEngine,
+    ApprovalMiddleware,
+    create_approval_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.fizzbob import (
     BobDashboard,
     BobMiddleware,
@@ -3417,6 +3423,32 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--bob-dashboard",
         action="store_true",
         help="Display the FizzBob cognitive load dashboard after execution",
+    )
+
+    # FizzApproval — Multi-Party Approval Workflow Engine
+    parser.add_argument(
+        "--approval",
+        action="store_true",
+        help="Enable FizzApproval: route every evaluation through ITIL v4 change management approval workflow with CAB review, four-eyes principle, and SOE handling",
+    )
+    parser.add_argument(
+        "--approval-dashboard",
+        action="store_true",
+        help="Display the FizzApproval workflow dashboard after execution",
+    )
+    parser.add_argument(
+        "--approval-policy",
+        type=str,
+        default=None,
+        metavar="TYPE",
+        help="Default approval policy type: STANDARD, NORMAL, or EMERGENCY (default: from config, typically NORMAL)",
+    )
+    parser.add_argument(
+        "--approval-change-type",
+        type=str,
+        default=None,
+        metavar="TYPE",
+        help="Default ITIL change type for evaluations: STANDARD, NORMAL, or EMERGENCY (default: from config, typically NORMAL)",
     )
 
     return parser
@@ -7399,6 +7431,40 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzApproval — Multi-Party Approval Workflow Engine (priority 85)
+    # ----------------------------------------------------------------
+    approval_engine = None
+    approval_middleware_instance = None
+
+    if args.approval or args.approval_dashboard:
+        approval_change_type = (
+            args.approval_change_type or args.approval_policy or config.approval_default_change_type
+        )
+
+        approval_engine, approval_middleware_instance = create_approval_subsystem(
+            default_change_type=approval_change_type,
+            default_timeout=config.approval_default_timeout,
+            required_eyes=config.approval_required_eyes,
+            max_delegation_depth=config.approval_max_delegation_depth,
+            quorum_size=config.approval_quorum_size,
+            enable_dashboard=args.approval_dashboard,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(approval_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZAPPROVAL: MULTI-PARTY APPROVAL WORKFLOW ENGINE      |\n"
+                f"  | Change type: {approval_change_type:<10} | Quorum: {config.approval_quorum_size}              |\n"
+                f"  | Four-eyes: {config.approval_required_eyes} required | Timeout: {config.approval_default_timeout:.0f}s          |\n"
+                "  | CAB review | COI detection | Delegation chain          |\n"
+                "  | SOE handling for single-operator deployments.           |\n"
+                "  | Because every FizzBuzz needs formal change approval.    |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzBob — Operator Cognitive Load Modeling Engine (priority 90)
     # ----------------------------------------------------------------
     bob_orchestrator = None
@@ -10639,6 +10705,13 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  FizzPrint: No results to typeset.\n")
     elif args.typeset_dashboard and not typeset_active:
         print("\n  FizzPrint not enabled. Use --typeset to enable.\n")
+
+    # FizzApproval Dashboard (post-execution)
+    if args.approval_dashboard and approval_middleware_instance is not None:
+        print()
+        print(approval_middleware_instance.render_dashboard(width=config.approval_dashboard_width))
+    elif args.approval_dashboard and approval_middleware_instance is None:
+        print("\n  FizzApproval not enabled. Use --approval to enable.\n")
 
     # FizzBob Dashboard (post-execution)
     if args.bob_dashboard and bob_middleware_instance is not None:

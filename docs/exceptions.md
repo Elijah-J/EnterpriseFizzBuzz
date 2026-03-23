@@ -61,6 +61,7 @@ Error codes use the prefix `EFP-` followed by a subsystem identifier and a seque
 | `EFP-SL0x` | SLA monitoring |
 | `EFP-T00x` | Distributed tracing (removed -- absorbed into FizzOTel `EFP-OT0x`) |
 | `EFP-BOB0` through `EFP-BOB8` | Operator cognitive load (FizzBob) |
+| `EFP-APR0` through `EFP-APR7` | Approval workflow (FizzApproval) |
 
 Numeric ranges (`EFP-1000` through `EFP-9000`) were assigned to the original subsystems. Later additions use alphabetic prefixes to avoid collisions, a decision that was never formally documented but has been consistently followed.
 
@@ -317,6 +318,21 @@ These exceptions manage schema migrations for in-memory dicts that vanish when t
 
 `OperatorModelError` is the base exception for the FizzBob subsystem. `CognitiveOverloadError` is raised when the NASA-TLX composite workload index exceeds 80 and includes `workload_index`, `threshold`, and all six TLX dimension scores in its context. `FatigueEmergencyError` is raised when the operator has been awake for 24+ consecutive hours and includes `hours_awake` and `fatigue_points` in its context. `BurnoutThresholdExceededError` carries `projected_burnout_date` and `current_fatigue_points` and is simultaneously logged to the compliance audit trail as a material SOX risk. `OperatorUnavailableError` is architecturally present for the hypothetical scenario in which Bob schedules PTO; it has never been raised in production.
 
+### Approval Workflow / FizzApproval (`EFP-APR0` through `EFP-APR7`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `ApprovalError` | `FizzBuzzError` | `EFP-APR0` | Base exception for all FizzApproval workflow engine errors |
+| `ApprovalPolicyError` | `ApprovalError` | `EFP-APR1` | An approval policy cannot be evaluated or applied |
+| `ApprovalQuorumError` | `ApprovalError` | `EFP-APR2` | The Change Advisory Board cannot achieve quorum |
+| `ApprovalConflictOfInterestError` | `ApprovalError` | `EFP-APR3` | A conflict of interest was detected in the approval chain |
+| `ApprovalDelegationError` | `ApprovalError` | `EFP-APR4` | The delegation chain encountered an invalid state |
+| `ApprovalTimeoutError` | `ApprovalError` | `EFP-APR5` | An approval request exceeded its time-to-live |
+| `ApprovalAuditError` | `ApprovalError` | `EFP-APR6` | The approval audit trail encountered an integrity failure |
+| `ApprovalMiddlewareError` | `ApprovalError` | `EFP-APR7` | The ApprovalMiddleware failed to process an evaluation |
+
+`ApprovalError` is the base exception for the FizzApproval subsystem. `ApprovalPolicyError` carries `policy_name` and `reason` in its context, covering invalid policy definitions and policy conflicts. `ApprovalQuorumError` is raised when the CAB cannot achieve quorum, carrying `required` and `present` member counts -- though in practice, quorum (1 of 1) is always met. `ApprovalConflictOfInterestError` is raised when the COI checker identifies a conflict between the requestor and an approver; it carries `approver_id` and `reason`. Since Bob is both requestor and sole approver, this exception's detection logic fires on every request, but the Sole Operator Exception permits the workflow to proceed. `ApprovalDelegationError` covers delegation cycles, exceeded chain depth limits, and invalid delegate references, carrying `chain_depth` and `reason`. `ApprovalTimeoutError` is raised when a request exceeds its TTL without obtaining the required approvals, carrying `request_id` and `timeout_seconds`. `ApprovalAuditError` indicates that an audit entry could not be written or that a consistency check on the tamper-evident hash chain failed, carrying `entry_id` and `reason`. `ApprovalMiddlewareError` covers failures in the request creation, policy evaluation, and approval routing path within the middleware pipeline, carrying `evaluation_number` and `reason`.
+
 ### Repository / Unit of Work (`EFP-RP0x`)
 
 | Class | Parent | Code | Description |
@@ -420,6 +436,14 @@ Exception
         │     ├── WorkloadEventValidationError EFP-BOB6
         │     ├── OperatorUnavailableError   EFP-BOB7
         │     └── OverloadControllerError    EFP-BOB8
+        ├── ApprovalError                     EFP-APR0
+        │     ├── ApprovalPolicyError        EFP-APR1
+        │     ├── ApprovalQuorumError        EFP-APR2
+        │     ├── ApprovalConflictOfInterestError EFP-APR3
+        │     ├── ApprovalDelegationError    EFP-APR4
+        │     ├── ApprovalTimeoutError       EFP-APR5
+        │     ├── ApprovalAuditError         EFP-APR6
+        │     └── ApprovalMiddlewareError    EFP-APR7
         └── RepositoryError                  EFP-RP00
               ├── ResultNotFoundError        EFP-RP01
               ├── UnitOfWorkError            EFP-RP02

@@ -1952,6 +1952,16 @@ synth:
 # and the Maslach Burnout Inventory (Maslach & Jackson, 1981).
 # Overload Mode activates when cognitive capacity is exceeded,
 # signaling the need for operator rotation or workload reduction.
+fizz_approval:
+  enabled: false                          # Master switch — opt-in via --approval
+  default_change_type: NORMAL             # Default ITIL change type (STANDARD, NORMAL, EMERGENCY)
+  default_timeout: 300.0                  # Approval request timeout in seconds
+  required_eyes: 2                        # Independent reviewers for four-eyes principle
+  max_delegation_depth: 10                # Maximum delegation chain depth before cycle detection
+  quorum_size: 1                          # Minimum CAB members for quorum
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizzbob:
   enabled: false                          # Master switch — opt-in via --bob
   hours_awake: 0.0                        # Initial hours-awake at shift start

@@ -4433,4 +4433,109 @@ FizzBob integrates with:
 | Module size | ~2,153 lines |
 | Test count | 137 |
 
+---
+
+## FizzApproval Multi-Party Approval Workflow Architecture
+
+Every enterprise platform requires formal approval workflows for operational changes. The absence of such workflows is a SOX compliance finding. The Enterprise FizzBuzz Platform has 106 subsystems, each of which may require configuration changes, deployment approvals, or compliance attestations -- and every one of those decisions is made by a single person: Bob McFizzington. He initiates the change, reviews the change, approves the change, implements the change, and audits the change. FizzApproval makes this reality explicit, auditable, and ITIL-compliant.
+
+The FizzApproval engine implements the ITIL v4 Change Enablement practice, adapted for the operational reality of a single-operator platform. The workflow faithfully models the full multi-party approval protocol so that when the team inevitably grows to two people, the infrastructure will be ready.
+
+### Component Architecture
+
+```
+                    +---------------------------+
+                    |     ApprovalEngine        |
+                    +---------------------------+
+                       /    |     |     \     \
+                      /     |     |      \     \
+            +--------+ +--------+ +-------+ +----------+ +--------+
+            |COI     | |Four-   | |Delega-| |Timeout   | |Audit   |
+            |Checker | |Eyes    | |tion   | |Manager   | |Log     |
+            |        | |Princi- | |Chain  | |          | |        |
+            +--------+ |ple     | +-------+ +----------+ +--------+
+                 |      +--------+    |           |            |
+                 v          v         v           v            v
+            Conflict   Four-Eyes  Delegation  Escalation   Tamper-
+            Detection  Validation Resolution  Timeout      Evident
+            (100%)     (SOE)      (Bob->Bob)  Management   Hash Chain
+```
+
+### ITIL Change Types
+
+Three ITIL change types are supported, each mapped to a policy type that governs the approval workflow:
+
+| Change Type | Policy Type | CAB Required | Approval Path |
+|------------|-------------|-------------|---------------|
+| STANDARD | PRE_APPROVED | No | Auto-approved via pre-vetted template |
+| NORMAL | FULL_CAB | Yes | Full CAB deliberation and vote |
+| EMERGENCY | FAST_TRACK | Expedited | Single senior approver; post-implementation review |
+
+### Approval Request Lifecycle
+
+Each approval request progresses through a defined state machine:
+
+```
+PENDING -> UNDER_REVIEW -> APPROVED | REJECTED | ESCALATED | TIMED_OUT
+                                                    |
+                                                WITHDRAWN
+```
+
+PENDING requests have been created but not yet assigned to a reviewer. UNDER_REVIEW requests have been picked up by the CAB and are awaiting a formal vote. Terminal states (APPROVED, REJECTED, ESCALATED, TIMED_OUT) are immutable once reached. The WITHDRAWN state covers requests voluntarily cancelled by the requestor before a decision was rendered.
+
+### Change Advisory Board
+
+The CAB consists of a single member: Bob McFizzington. He serves simultaneously as chairperson, voting member, and recording secretary. CAB meetings are convened for NORMAL change requests and require a quorum of 1, which is always met. Meeting minutes are formally recorded with attendee roster, agenda, deliberation notes, vote tally, and action items -- all attributed to the same individual.
+
+### Conflict of Interest Detection
+
+The `ConflictOfInterestChecker` screens all approvers for material conflicts with the change requestor. Since Bob is both the requestor and the sole approver for every change, the COI rate is 100%. Each detected conflict is formally resolved via Sole Operator Exception (SOE) per ITIL accommodation procedures for organizations where recusal would deadlock the approval pipeline.
+
+### Four-Eyes Principle
+
+The `FourEyesPrinciple` enforces the regulatory requirement (SOX, GDPR) that at least two independent reviewers approve each change. Since the platform has exactly one reviewer, the four-eyes check always fails, triggering a Sole Operator Exception. The SOE is logged with a formal justification noting that the principle cannot be satisfied without hiring additional personnel.
+
+### Delegation Chain
+
+The `DelegationChain` allows an approver to delegate approval authority to a designated delegate. Bob's delegation chain maps Bob to Bob, creating a cycle that is detected by the cycle detection algorithm and resolved via SOE. The delegation engine permits self-delegation cycles under the Sole Operator Exception, as prohibiting them would leave zero available approvers.
+
+### Escalation and Timeout
+
+The `ApprovalTimeoutManager` monitors request age and triggers escalation when the configured TTL expires. The three-tier escalation hierarchy (TEAM_LEAD, MANAGER, VP) each resolves to Bob. Escalation timeout intervals are configurable per change type.
+
+### Risk Assessment
+
+Five risk levels (NEGLIGIBLE, LOW, MODERATE, HIGH, CRITICAL) are computed from the change type, affected subsystem count, and historical failure rate. The risk level influences policy selection and the number of required approvals -- though since N=1, the number of required approvals is always 1 regardless of risk.
+
+### Audit Trail
+
+The `ApprovalAuditLog` maintains a tamper-evident record of every approval action. Each entry is SHA-256 hash-chained to the previous entry, creating an immutable history that cannot be retroactively modified without breaking the chain. Bob is the only person who would check the chain, and he is also the only person whose actions are recorded in it.
+
+### Integration Points
+
+FizzApproval integrates with:
+
+- **Compliance Framework**: SOE invocations logged as compliance events; segregation-of-duties reports generated for SOX audits
+- **FizzBob**: approval requests contribute to Bob's cognitive load budget; overload state affects escalation timing
+- **Event Sourcing**: all approval state transitions recorded as domain events
+- **Middleware Pipeline**: `ApprovalMiddleware` runs at priority 85, before BobMiddleware (90)
+
+### FizzApproval Statistics
+
+| Spec | Value |
+|------|-------|
+| Change types | 3 (STANDARD, NORMAL, EMERGENCY) |
+| Policy types | 5 (UNANIMOUS, MAJORITY, ANY_ONE, WEIGHTED, QUORUM) |
+| Approval states | 7 (PENDING through WITHDRAWN) |
+| Risk levels | 5 (NEGLIGIBLE through CRITICAL) |
+| CAB members | 1 (Bob McFizzington) |
+| COI rate | 100% |
+| SOE count per request | 3 (COI + four-eyes + delegation) |
+| Escalation tiers | 3 (Team Lead, Manager, VP -- all Bob) |
+| Custom exceptions | 8 (EFP-APR0 through EFP-APR7) |
+| EventType entries | 11 |
+| CLI flags | 4 (`--approval`, `--approval-dashboard`, `--approval-policy`, `--approval-change-type`) |
+| Module size | ~2,826 lines |
+| Test count | 164 |
+
 FizzBob ensures that the platform's most critical component -- the human being upon whom every subsystem depends -- receives the same operational monitoring, capacity planning, and failure protection afforded to the cache coherence protocol, the garbage collector, and the blockchain audit ledger. Aviation has mandatory crew rest regulations (14 CFR Part 117). Nuclear power plants have NRC fitness-for-duty requirements (10 CFR Part 26). The Enterprise FizzBuzz Platform now has FizzBob.

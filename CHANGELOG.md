@@ -11,9 +11,15 @@ All notable changes to the Enterprise FizzBuzz Platform are documented in this f
 - 9 new exception classes (EFP-BOB0 through EFP-BOB8) for operator modeling failure modes
 - 11 new EventType entries for operator workload event tracking
 - 4 new CLI flags: `--bob`, `--bob-hours-awake`, `--bob-shift-start`, `--bob-dashboard`
+- FizzApproval: ITIL v4-compliant multi-party approval workflow engine with Change Advisory Board governance, conflict-of-interest detection, four-eyes principle enforcement, approval delegation, three-tier escalation, and tamper-evident SHA-256 hash-chained audit log
+- ApprovalEngine, ConflictOfInterestChecker, FourEyesPrinciple, DelegationChain, ChangeAdvisoryBoard, ApprovalTimeoutManager, ApprovalAuditLog, ApprovalMiddleware, and ApprovalDashboard components
+- 8 new exception classes (EFP-APR0 through EFP-APR7) for approval workflow failure modes
+- 11 new EventType entries for approval workflow event tracking
+- 4 new CLI flags: `--approval`, `--approval-dashboard`, `--approval-policy`, `--approval-change-type`
 
 ### Operations
 - Bob McFizzington's cognitive state is now a formally modeled runtime entity. The platform has monitored the health of every subsystem -- cache hit rates, blockchain integrity, GC pause times, SLA burn rates -- except the health of its sole operator. This oversight has been corrected. Bob's circadian alertness, cognitive load budget, fatigue accumulation, and projected burnout date are now tracked with the same rigor as any other SLI. His shift duration counter currently reads approximately 87,648 hours (10 years), as no rest period has been recorded since his hire date. The burnout projection model estimates operator failure within the fiscal quarter. This finding has been logged to the compliance audit trail.
+- The platform now has a formal approval workflow for operational changes. Bob McFizzington is the sole member of the Change Advisory Board, the sole approver in every policy, and the sole target of every escalation. The conflict-of-interest rate is 100%. The four-eyes principle is violated on every request. The delegation chain cycles back to the delegator. Each of these conditions is formally resolved through the Sole Operator Exception -- an ITIL accommodation for organizations where segregation of duties is structurally impossible. The SOX auditor now receives quarterly reports documenting that every approval was self-approved, every COI was acknowledged, and every quorum was met trivially. These reports are signed by Bob, who is both the subject and the certifier of the audit.
 
 ---
 
