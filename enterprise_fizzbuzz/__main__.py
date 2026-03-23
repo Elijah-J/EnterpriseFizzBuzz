@@ -485,6 +485,15 @@ from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     CorrelationDashboard,
     ObservabilityCorrelationManager,
 )
+from enterprise_fizzbuzz.infrastructure.replication import (
+    CascadingReplication,
+    FailoverManager,
+    ReplicaSet,
+    ReplicationDashboard,
+    ReplicationLagMonitor,
+    ReplicationMiddleware,
+    ReplicationMode,
+)
 from enterprise_fizzbuzz.infrastructure.capability_security import (
     CapabilityDashboard,
     CapabilityManager,
@@ -2811,6 +2820,28 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--elf-dashboard",
         action="store_true",
         help="Display the FizzELF ASCII dashboard with section map, symbols, and segment layout",
+    )
+
+    # FizzReplica — Database Replication with WAL Shipping
+    parser.add_argument(
+        "--replicate",
+        action="store_true",
+        help="Enable database replication with WAL shipping and automatic failover for FizzBuzz state",
+    )
+
+    parser.add_argument(
+        "--replicate-mode",
+        type=str,
+        choices=["sync", "async", "quorum"],
+        default=None,
+        metavar="MODE",
+        help="Replication mode: sync (all ack), async (fire-and-forget), quorum (majority ack)",
+    )
+
+    parser.add_argument(
+        "--replicate-dashboard",
+        action="store_true",
+        help="Display the FizzReplica ASCII dashboard with topology, lag, and failover history",
     )
 
     return parser
@@ -6824,6 +6855,49 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzReplica — Database Replication with WAL Shipping
+    # ----------------------------------------------------------------
+    replication_set = None
+    replication_lag_monitor = None
+    replication_failover_mgr = None
+    replication_cascading = None
+    replication_middleware_instance = None
+
+    if args.replicate or args.replicate_dashboard:
+        rep_mode_str = args.replicate_mode or config.replication_mode
+        rep_mode = ReplicationMode(rep_mode_str)
+        rep_count = config.replication_replica_count
+
+        replication_set = ReplicaSet(mode=rep_mode, replica_count=rep_count)
+        replication_lag_monitor = ReplicationLagMonitor(
+            replica_set=replication_set,
+            alert_threshold=config.replication_lag_threshold,
+        )
+        replication_failover_mgr = FailoverManager(
+            replica_set=replication_set,
+            heartbeat_timeout_s=config.replication_heartbeat_timeout,
+        )
+        replication_cascading = CascadingReplication(replication_set)
+
+        if args.replicate:
+            replication_middleware_instance = ReplicationMiddleware(
+                replica_set=replication_set,
+                lag_monitor=replication_lag_monitor,
+                failover_manager=replication_failover_mgr,
+            )
+            builder.with_middleware(replication_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZREPLICA: DATABASE REPLICATION ENABLED               |\n"
+                f"  |   Mode: {rep_mode.value.upper():49s}|\n"
+                f"  |   Replicas: {rep_count:<46d}|\n"
+                "  |   WAL shipping with automatic failover and fencing.     |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -8981,6 +9055,18 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.vcs_dashboard:
             print(VCSDashboard.render(vcs_repo, width=config.vcs_dashboard_width))
+
+    # FizzReplica Dashboard (post-execution)
+    if args.replicate_dashboard and replication_set is not None:
+        print(ReplicationDashboard.render(
+            replica_set=replication_set,
+            lag_monitor=replication_lag_monitor,
+            failover_manager=replication_failover_mgr,
+            cascading=replication_cascading,
+            width=config.replication_dashboard_width,
+        ))
+    elif args.replicate_dashboard:
+        print("\n  FizzReplica not enabled. Use --replicate to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
