@@ -11186,3 +11186,57 @@ class FizzFoldConvergenceError(FizzFoldError):
         self.sequence = sequence
         self.final_energy = final_energy
         self.steps = steps
+
+
+class RayTracerError(FizzBuzzError):
+    """Base exception for all FizzTrace ray tracing subsystem errors.
+
+    The physically-based rendering pipeline involves numerous mathematical
+    operations — quadratic solvers, trigonometric functions, recursive ray
+    bouncing — each of which can fail under degenerate conditions. This
+    hierarchy classifies each failure mode to enable targeted diagnostics
+    at the rendering middleware level.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.get("error_code", "EFP-RT00"),
+            context=kwargs.get("context", {}),
+        )
+
+
+class RayTracerSceneError(RayTracerError):
+    """Raised when the scene configuration is invalid or degenerate.
+
+    A scene must contain at least one object for rendering to produce
+    meaningful output. An empty scene results in a pure background
+    image, which, while technically correct, does not convey any
+    FizzBuzz classification information and therefore fails to meet
+    the minimum viable rendering threshold.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"Scene configuration error: {reason}",
+            error_code="EFP-RT01",
+            context={"reason": reason},
+        )
+
+
+class RayTracerConvergenceError(RayTracerError):
+    """Raised when the path tracer fails to converge within the maximum depth.
+
+    If every sample ray reaches the maximum bounce depth without escaping
+    to the background or being terminated by Russian Roulette, the image
+    may contain significant bias. This condition is monitored but not
+    typically fatal — the rendering equation is being approximated, after all.
+    """
+
+    def __init__(self, max_depth: int, samples: int) -> None:
+        super().__init__(
+            f"Path tracer reached maximum depth {max_depth} on all {samples} samples. "
+            f"Consider increasing max_depth or reducing scene complexity.",
+            error_code="EFP-RT02",
+            context={"max_depth": max_depth, "samples": samples},
+        )

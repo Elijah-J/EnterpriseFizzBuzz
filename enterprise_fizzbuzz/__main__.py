@@ -527,6 +527,13 @@ from enterprise_fizzbuzz.infrastructure.audio_synth import (
     SynthDashboard,
     SynthMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.ray_tracer import (
+    FizzBuzzSceneBuilder as RayTraceSceneBuilder,
+    PPMWriter,
+    PathTracer,
+    RenderDashboard as RayTraceDashboard,
+    RenderMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.protein_folding import (
     FoldingDashboard,
     FoldingMiddleware,
@@ -2704,6 +2711,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizznet-dashboard",
         action="store_true",
         help="Display the FizzNet ASCII dashboard with packet counters, TCP state, and congestion window",
+    )
+
+    # FizzTrace — Physically-Based Ray Tracer
+    parser.add_argument(
+        "--raytrace",
+        action="store_true",
+        help="Enable FizzTrace: render FizzBuzz classifications as a physically-based 3D scene using Monte Carlo path tracing",
+    )
+
+    parser.add_argument(
+        "--raytrace-output",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help="Write the FizzTrace render to a PPM P3 image file",
+    )
+
+    parser.add_argument(
+        "--raytrace-width",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Render output width in pixels (default: 320)",
+    )
+
+    parser.add_argument(
+        "--raytrace-dashboard",
+        action="store_true",
+        help="Display the FizzTrace ASCII dashboard with ray statistics, material distribution, and render metrics",
     )
 
     return parser
@@ -6561,6 +6597,44 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzTrace — Physically-Based Ray Tracer
+    # ----------------------------------------------------------------
+    raytrace_scene_builder = None
+    raytrace_middleware_instance = None
+
+    if args.raytrace or args.raytrace_output or args.raytrace_dashboard:
+        rt_width = args.raytrace_width or config.raytrace_width
+        rt_height = int(rt_width * 3 / 4)  # 4:3 aspect ratio
+        rt_samples = config.raytrace_samples
+        rt_max_depth = config.raytrace_max_depth
+
+        raytrace_scene_builder = RayTraceSceneBuilder()
+        rt_tracer = PathTracer(
+            samples_per_pixel=rt_samples,
+            max_depth=rt_max_depth,
+        )
+
+        raytrace_middleware_instance = RenderMiddleware(
+            scene_builder=raytrace_scene_builder,
+            tracer=rt_tracer,
+            width=rt_width,
+            height=rt_height,
+            output_path=args.raytrace_output,
+            enable_dashboard=args.raytrace_dashboard,
+        )
+        builder.with_middleware(raytrace_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZTRACE: PHYSICALLY-BASED RAY TRACER                  |\n"
+                f"  |   Resolution: {rt_width}x{rt_height}  Samples/pixel: {rt_samples:<10d}|\n"
+                f"  |   Max depth: {rt_max_depth:<3d}  Russian Roulette enabled        |\n"
+                "  |   Fizz=green metal, Buzz=blue glass, FizzBuzz=gold glow |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzFold — Protein Folding Simulator
     # ----------------------------------------------------------------
     fold_middleware_instance = None
@@ -8579,6 +8653,31 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.synth_dashboard:
         print("\n  FizzSynth not enabled. Use --synth to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzTrace Render & Dashboard (post-execution)
+    # ----------------------------------------------------------------
+    if raytrace_middleware_instance is not None:
+        raytrace_middleware_instance.render_scene()
+        if args.raytrace_output:
+            print(
+                f"\n  FizzTrace PPM exported: {args.raytrace_output}\n"
+                f"  Resolution: {raytrace_middleware_instance._width}x{raytrace_middleware_instance._height}  "
+                f"Render time: {raytrace_middleware_instance.render_time_ms:.1f} ms\n"
+            )
+
+    if args.raytrace_dashboard and raytrace_middleware_instance is not None:
+        print(RayTraceDashboard.render(
+            tracer=raytrace_middleware_instance.tracer,
+            scene_builder=raytrace_middleware_instance.scene_builder,
+            width=raytrace_middleware_instance._width,
+            height=raytrace_middleware_instance._height,
+            render_time_ms=raytrace_middleware_instance.render_time_ms,
+            output_path=args.raytrace_output,
+            dashboard_width=config.raytrace_dashboard_width,
+        ))
+    elif args.raytrace_dashboard:
+        print("\n  FizzTrace not enabled. Use --raytrace to enable.\n")
 
     # FizzFold Dashboard (post-execution)
     if args.fold_dashboard and fold_middleware_instance is not None:
