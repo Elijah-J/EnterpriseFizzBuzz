@@ -91,6 +91,14 @@ export type {
   FLTrainingRound,
   FLAggregationMethod,
   FLModelState,
+  StratumEpoch,
+  Stratum,
+  ArtifactType,
+  Artifact,
+  EvidenceUpdate,
+  BayesianReconstruction,
+  ForensicFinding,
+  ForensicReport,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

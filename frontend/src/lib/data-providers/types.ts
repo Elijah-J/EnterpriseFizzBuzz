@@ -1327,6 +1327,164 @@ export interface FLModelState {
   totalPrivacyBudget: number;
 }
 
+// ---------------------------------------------------------------------------
+// Archaeological Recovery types
+// ---------------------------------------------------------------------------
+
+/**
+ * Geological epoch classification for FizzBuzz archaeological strata.
+ * Each epoch represents a distinct period in the evolution of modular
+ * arithmetic evaluation technology, as established by the International
+ * Council on FizzBuzz Archaeology (ICFA) chronological framework.
+ */
+export type StratumEpoch =
+  | "pre_fizzbuzz"
+  | "early_modulo"
+  | "industrial_fizzbuzz"
+  | "digital_revolution"
+  | "modern_enterprise";
+
+/**
+ * A geological stratum in the FizzBuzz archaeological record.
+ * Strata are ordered by depth — deeper strata correspond to older epochs,
+ * following standard stratigraphic superposition principles.
+ */
+export interface Stratum {
+  /** Unique stratum identifier. */
+  id: string;
+  /** Human-readable stratum designation. */
+  name: string;
+  /** Archaeological epoch classification. */
+  epoch: StratumEpoch;
+  /** Depth below surface in normalized units (0 = surface, 1 = deepest). */
+  depth: number;
+  /** Estimated age of this stratum in years before present. */
+  ageBP: number;
+  /** Number of artifacts recovered from this stratum. */
+  artifactCount: number;
+  /** Dominant sediment composition (for cross-section rendering). */
+  composition: string;
+  /** Fill color for SVG rendering (hex). */
+  color: string;
+  /** Brief geological description of this stratum. */
+  description: string;
+}
+
+/**
+ * Classification of recovered FizzBuzz artifacts based on the
+ * ICFA artifact taxonomy.
+ */
+export type ArtifactType =
+  | "evaluation_record"
+  | "rule_fragment"
+  | "configuration_tablet"
+  | "modulo_tool"
+  | "divisor_inscription";
+
+/**
+ * A recovered artifact from the FizzBuzz archaeological record.
+ * Each artifact represents a fragment of evidence from a historical
+ * FizzBuzz evaluation system, recovered through systematic excavation.
+ */
+export interface Artifact {
+  /** Unique artifact identifier following ICFA cataloging convention. */
+  id: string;
+  /** Display name assigned during cataloging. */
+  name: string;
+  /** ICFA artifact type classification. */
+  type: ArtifactType;
+  /** Stratum from which this artifact was recovered. */
+  stratumId: string;
+  /** Confidence score for the artifact's authenticity (0..1). */
+  confidence: number;
+  /** ISO 8601 timestamp of artifact recovery. */
+  recoveredAt: string;
+  /** Estimated age of the artifact in years before present. */
+  estimatedAgeBP: number;
+  /** Physical description of the artifact as recorded during excavation. */
+  description: string;
+  /** Recovered content or inscription, if legible. */
+  content: string;
+  /** Preservation state assessment. */
+  condition: "pristine" | "good" | "fair" | "poor" | "fragmentary";
+}
+
+/**
+ * A single evidence update in a Bayesian reconstruction chain.
+ * Each update represents the application of new evidence to the
+ * posterior probability of a reconstruction hypothesis.
+ */
+export interface EvidenceUpdate {
+  /** Evidence source identifier. */
+  source: string;
+  /** Description of the evidence applied. */
+  description: string;
+  /** Prior probability before this evidence was applied. */
+  priorProbability: number;
+  /** Likelihood ratio of this evidence. */
+  likelihoodRatio: number;
+  /** Posterior probability after Bayesian update. */
+  posteriorProbability: number;
+}
+
+/**
+ * A Bayesian reconstruction of an artifact's original evaluation context.
+ * The reconstruction combines physical evidence, stratigraphic position,
+ * and cross-artifact correlation to infer the most probable historical
+ * evaluation parameters.
+ */
+export interface BayesianReconstruction {
+  /** Artifact ID this reconstruction pertains to. */
+  artifactId: string;
+  /** Chain of Bayesian evidence updates applied during reconstruction. */
+  evidenceChain: EvidenceUpdate[];
+  /** Final posterior probability of the reconstruction hypothesis. */
+  finalPosterior: number;
+  /** Reconstructed evaluation parameters (key-value pairs). */
+  reconstructedParameters: Record<string, string>;
+  /** Human-readable narrative of the reconstruction conclusion. */
+  conclusion: string;
+}
+
+/**
+ * A single finding in a forensic report, documenting a specific
+ * observation or conclusion drawn from artifact analysis.
+ */
+export interface ForensicFinding {
+  /** Finding classification. */
+  category: "provenance" | "authenticity" | "dating" | "context" | "significance";
+  /** Severity of the finding for the overall assessment. */
+  severity: "critical" | "major" | "minor" | "informational";
+  /** Brief title of the finding. */
+  title: string;
+  /** Detailed description and supporting evidence. */
+  description: string;
+  /** Confidence in this finding (0..1). */
+  confidence: number;
+}
+
+/**
+ * A comprehensive forensic report generated from analysis of one or more
+ * artifacts. Reports follow the ICFA Standard Forensic Report Format (SFRF)
+ * and are suitable for submission to peer-reviewed archaeology journals.
+ */
+export interface ForensicReport {
+  /** Unique report identifier. */
+  id: string;
+  /** ISO 8601 timestamp of report generation. */
+  generatedAt: string;
+  /** Artifact IDs covered by this report. */
+  artifactIds: string[];
+  /** Ordered list of forensic findings. */
+  findings: ForensicFinding[];
+  /** Executive summary of the forensic analysis. */
+  summary: string;
+  /** Overall assessment of the artifact collection's archaeological significance. */
+  significanceRating: "exceptional" | "high" | "moderate" | "low" | "indeterminate";
+  /** Recommended next steps for further investigation. */
+  recommendations: string[];
+}
+
 /** Projected platform metrics after applying what-if parameter overrides. */
 export interface WhatIfOutcome {
   /** Predicted mean evaluation latency in ms. */
