@@ -288,6 +288,11 @@ from enterprise_fizzbuzz.infrastructure.probabilistic import (
     ProbabilisticMiddleware,
     create_probabilistic_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.linter import (
+    AutoFixer,
+    LintDashboard,
+    LintEngine,
+)
 from enterprise_fizzbuzz.infrastructure.reverse_proxy import (
     LoadBalanceAlgorithm,
     ProxyDashboard,
@@ -2462,6 +2467,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
              "and T-Digest quantile estimates",
     )
 
+    # FizzLint Static Analysis
+    parser.add_argument(
+        "--lint",
+        action="store_true",
+        help="Run FizzLint static analysis on the configured rule definitions and display the report",
+    )
+
+    parser.add_argument(
+        "--lint-fix",
+        action="store_true",
+        help="Run FizzLint and automatically apply safe fixes for auto-fixable violations",
+    )
+
+    parser.add_argument(
+        "--lint-dashboard",
+        action="store_true",
+        help="Display the FizzLint ASCII dashboard with violation distribution and rule status grid",
+    )
+
     return parser
 
 
@@ -2500,6 +2524,33 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Configuration
     config = ConfigurationManager(config_path=args.config)
     config.load()
+
+    # ----------------------------------------------------------------
+    # FizzLint Static Analysis (early exit commands)
+    # ----------------------------------------------------------------
+    if args.lint or args.lint_fix or args.lint_dashboard:
+        engine = LintEngine()
+        report = engine.analyze(config.rules)
+
+        if args.lint_fix:
+            fixer = AutoFixer()
+            fixed_rules, applied = fixer.fix(config.rules, report.violations)
+            if applied:
+                print("FizzLint Auto-Fix Applied:")
+                for desc in applied:
+                    print(f"  {desc}")
+                print()
+                # Re-analyze after fixes
+                report = engine.analyze(fixed_rules)
+
+        print(report.render())
+
+        if args.lint_dashboard:
+            print()
+            dashboard = LintDashboard()
+            print(dashboard.render(report, config.rules))
+
+        return 1 if report.has_errors else 0
 
     # ----------------------------------------------------------------
     # Cross-Compiler (early exit commands)
