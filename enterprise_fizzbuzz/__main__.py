@@ -394,6 +394,12 @@ from enterprise_fizzbuzz.infrastructure.archaeology import (
     ArchaeologyEngine,
     ArchaeologyMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.columnar_storage import (
+    ColumnDashboard,
+    ColumnMiddleware,
+    ColumnStore,
+    ParquetExporter,
+)
 from enterprise_fizzbuzz.infrastructure.intent_log import (
     CheckpointManager,
     CrashRecoveryEngine,
@@ -2307,6 +2313,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--grammar-dashboard",
         action="store_true",
         help="Display the FizzGrammar ASCII dashboard with grammar inventory, parse tables, and health index",
+    )
+
+    # FizzColumn — Columnar Storage Engine
+    parser.add_argument(
+        "--columnar",
+        action="store_true",
+        help="Enable FizzColumn: Parquet-style columnar storage with dictionary, RLE, and delta encoding",
+    )
+
+    parser.add_argument(
+        "--columnar-export",
+        type=str,
+        metavar="PATH",
+        default=None,
+        help="Export columnar data to a Parquet-style binary file at the specified path",
+    )
+
+    parser.add_argument(
+        "--columnar-dashboard",
+        action="store_true",
+        help="Display the FizzColumn ASCII dashboard with column inventory, compression ratios, and zone maps",
     )
 
     return parser
@@ -5092,6 +5119,30 @@ def main(argv: Optional[list[str]] = None) -> int:
             print()
 
     # ----------------------------------------------------------------
+    # FizzColumn — Columnar Storage Engine setup
+    # ----------------------------------------------------------------
+    column_store = None
+    column_middleware = None
+
+    if args.columnar or args.columnar_export is not None or args.columnar_dashboard:
+        column_store = ColumnStore(
+            row_group_size=config.columnar_row_group_size,
+            encoding_sample_size=config.columnar_encoding_sample_size,
+            dictionary_cardinality_limit=config.columnar_dictionary_cardinality_limit,
+        )
+        column_middleware = ColumnMiddleware(column_store)
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZCOLUMN COLUMNAR STORAGE ENGINE ENABLED              |\n"
+            "  | Parquet-style encoding | Zone maps | Vectorized batches |\n"
+            "  | Encodings: PLAIN, DICTIONARY, RLE, DELTA                |\n"
+            '  | "Row-oriented storage is a relic of the OLTP era."      |\n'
+            "  | Every modulo result deserves columnar majesty.          |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # Archaeological Recovery System setup
     # ----------------------------------------------------------------
     arch_engine = None
@@ -5664,6 +5715,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add Archaeology middleware (priority 900, near end of chain)
     if arch_middleware is not None:
         builder.with_middleware(arch_middleware)
+
+    # Add Column middleware (priority 910, captures results in columnar format)
+    if column_middleware is not None:
+        builder.with_middleware(column_middleware)
 
     # Add CDC middleware (priority 950, captures state after evaluation)
     if cdc_middleware_instance is not None:
@@ -6867,7 +6922,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             "federated_middleware", "kg_middleware", "sm_middleware",
             "fizzkube_middleware", "kernel_middleware", "p2p_middleware",
             "twin_middleware", "flag_middleware", "qo_middleware",
-            "arch_middleware", "tt_middleware",
+            "arch_middleware", "column_middleware", "tt_middleware",
         ]:
             _l = locals()
             mw_obj = _l.get(mw_var)
@@ -7428,6 +7483,29 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.alloc_dashboard:
         print("\n  FizzAlloc not enabled. Use --alloc to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzColumn — Columnar Storage Export & Dashboard
+    # ----------------------------------------------------------------
+    if column_store is not None:
+        # Flush any remaining data
+        column_store.flush()
+
+        # Export if requested
+        if args.columnar_export:
+            try:
+                bytes_written = ParquetExporter.export(column_store, args.columnar_export)
+                print(f"\n  FizzColumn: Exported {column_store.total_rows} rows to {args.columnar_export} ({bytes_written} bytes)")
+            except Exception as e:
+                print(f"\n  FizzColumn export error: {e}")
+
+    if args.columnar_dashboard and column_store is not None:
+        print(ColumnDashboard.render(
+            store=column_store,
+            width=config.columnar_dashboard_width,
+        ))
+    elif args.columnar_dashboard:
+        print("\n  FizzColumn not enabled. Use --columnar to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzGrammar Dashboard
