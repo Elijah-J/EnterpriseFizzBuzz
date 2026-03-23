@@ -59,6 +59,15 @@ export type {
   GAPopulation,
   GAEvolutionHistory,
   GAConfig,
+  ClusterNode,
+  ClusterNodeRole,
+  ClusterNodeStatus,
+  ClusterEdge,
+  LeaderElection,
+  PaxosMessage,
+  PaxosMessageType,
+  ClusterTopology,
+  PartitionSimulationResult,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

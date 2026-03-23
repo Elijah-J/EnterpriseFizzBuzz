@@ -39,6 +39,9 @@ import type {
   GAConfig,
   GAEvolutionHistory,
   GAPopulation,
+  ClusterTopology,
+  LeaderElection,
+  PartitionSimulationResult,
 } from "./types";
 
 /**
@@ -340,4 +343,28 @@ export interface IDataProvider {
    * recent evolution run. Returns null if no evolution has been executed.
    */
   getCurrentPopulation(): Promise<GAPopulation | null>;
+
+  /**
+   * Retrieve the current cluster topology including all nodes, inter-node
+   * connections, and leadership state. Used by the Consensus page for
+   * topology graph rendering.
+   */
+  getClusterTopology(): Promise<ClusterTopology>;
+
+  /**
+   * Retrieve the history of leader elections in the Paxos cluster.
+   * Returns the most recent elections ordered by term (descending).
+   *
+   * @param limit - Maximum number of elections to return (default: 20)
+   */
+  getElectionHistory(limit?: number): Promise<LeaderElection[]>;
+
+  /**
+   * Simulate a network partition by isolating the specified nodes from
+   * the rest of the cluster. Returns the resulting topology state after
+   * the cluster responds to the partition (potential re-election).
+   *
+   * @param nodeIds - Node identifiers to isolate behind the partition
+   */
+  simulatePartition(nodeIds: string[]): Promise<PartitionSimulationResult>;
 }

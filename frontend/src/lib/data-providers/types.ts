@@ -771,6 +771,111 @@ export interface GameDayScenario {
   currentPhase?: number;
 }
 
+// ---------------------------------------------------------------------------
+// Consensus & Cluster Topology types
+// ---------------------------------------------------------------------------
+
+/** Role of a node within the Paxos consensus cluster. */
+export type ClusterNodeRole = "leader" | "follower" | "candidate" | "observer";
+
+/** Operational status of a cluster node. */
+export type ClusterNodeStatus = "healthy" | "degraded" | "unreachable" | "partitioned";
+
+/** A single node in the distributed FizzBuzz evaluation cluster. */
+export interface ClusterNode {
+  /** Unique node identifier (e.g., "fizz-eval-us-east-1a"). */
+  id: string;
+  /** Current role in the Paxos protocol. */
+  role: ClusterNodeRole;
+  /** Operational status based on heartbeat and health probe results. */
+  status: ClusterNodeStatus;
+  /** Deployment region for geographic topology rendering. */
+  region: string;
+  /** ISO 8601 timestamp of the most recent heartbeat received from this node. */
+  lastHeartbeat: string;
+  /** Highest ballot number this node has participated in. */
+  ballotNumber: number;
+  /** Index of the last committed log entry on this node. */
+  logIndex: number;
+}
+
+/** An edge connecting two nodes in the cluster topology graph. */
+export interface ClusterEdge {
+  /** Source node identifier. */
+  from: string;
+  /** Target node identifier. */
+  to: string;
+  /** Round-trip latency between the two nodes, in milliseconds. */
+  latencyMs: number;
+  /** Whether this link is currently healthy. */
+  healthy: boolean;
+}
+
+/** A completed or in-progress leader election event. */
+export interface LeaderElection {
+  /** Paxos term number for this election. */
+  term: number;
+  /** Node ID of the candidate that initiated the election. */
+  candidateId: string;
+  /** Number of votes received by the candidate. */
+  votes: number;
+  /** Total number of votes possible (cluster size). */
+  totalVoters: number;
+  /** ISO 8601 timestamp when the election was initiated. */
+  startedAt: string;
+  /** ISO 8601 timestamp when the election concluded, if resolved. */
+  resolvedAt?: string;
+  /** Election outcome. */
+  outcome: "elected" | "rejected" | "timed-out" | "in-progress";
+}
+
+/** Paxos protocol message phase. */
+export type PaxosMessageType = "prepare" | "promise" | "accept" | "accepted";
+
+/** A single Paxos protocol message exchanged between cluster nodes. */
+export interface PaxosMessage {
+  /** Message identifier for deduplication. */
+  id: string;
+  /** Phase of the Paxos protocol this message belongs to. */
+  type: PaxosMessageType;
+  /** Sending node identifier. */
+  from: string;
+  /** Receiving node identifier. */
+  to: string;
+  /** Ballot number associated with this message. */
+  ballotNumber: number;
+  /** ISO 8601 timestamp of message transmission. */
+  timestamp: string;
+}
+
+/** Complete cluster topology snapshot including nodes, edges, and leadership state. */
+export interface ClusterTopology {
+  /** All nodes in the cluster. */
+  nodes: ClusterNode[];
+  /** All edges (connections) between nodes. */
+  edges: ClusterEdge[];
+  /** Node ID of the current elected leader. */
+  currentLeader: string;
+  /** Current Paxos term number. */
+  currentTerm: number;
+}
+
+/** Result of a simulated network partition. */
+export interface PartitionSimulationResult {
+  /** Whether a new leader was elected after the partition. */
+  leaderElected: boolean;
+  /** Node ID of the new leader, if elected. */
+  newLeader?: string;
+  /** New term number after the partition, if an election occurred. */
+  newTerm?: number;
+  /** Updated cluster topology reflecting the partition state. */
+  topology: ClusterTopology;
+  /** Paxos messages generated during the re-election, if any. */
+  messages: PaxosMessage[];
+  /** Human-readable explanation of what happened. */
+  summary: string;
+}
+
 /** Aggregate chaos engineering metrics for the control plane summary bar. */
 export interface ChaosMetrics {
   /** Total number of experiments executed since system initialization. */

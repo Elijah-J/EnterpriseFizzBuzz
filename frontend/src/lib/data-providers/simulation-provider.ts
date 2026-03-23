@@ -54,6 +54,15 @@ import type {
   GAChromosome,
   GAGene,
   GAFitnessScore,
+  ClusterNode,
+  ClusterNodeRole,
+  ClusterNodeStatus,
+  ClusterEdge,
+  ClusterTopology,
+  LeaderElection,
+  PaxosMessage,
+  PaxosMessageType,
+  PartitionSimulationResult,
 } from "./types";
 
 /**
@@ -162,6 +171,140 @@ const CLUSTER_NODES = [
   "fizz-eval-ap-south-1a",
   "fizz-eval-eu-central-1b",
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Extended cluster topology for the Consensus & Cluster Topology page
+// ---------------------------------------------------------------------------
+
+/**
+ * Full cluster node definitions with region assignments for the 7-node
+ * Paxos evaluation fleet. The cluster spans three AWS regions to ensure
+ * geographic fault isolation and cross-region quorum capability.
+ */
+interface ClusterNodeDefinition {
+  id: string;
+  region: string;
+}
+
+const CLUSTER_NODE_DEFINITIONS: ClusterNodeDefinition[] = [
+  { id: "fizz-eval-us-east-1a", region: "us-east-1" },
+  { id: "fizz-eval-us-east-1b", region: "us-east-1" },
+  { id: "fizz-eval-us-west-2a", region: "us-west-2" },
+  { id: "fizz-eval-us-west-2b", region: "us-west-2" },
+  { id: "fizz-eval-eu-west-1a", region: "eu-west-1" },
+  { id: "fizz-eval-eu-west-1b", region: "eu-west-1" },
+  { id: "fizz-eval-eu-west-1c", region: "eu-west-1" },
+];
+
+/**
+ * Cross-region latency profiles in milliseconds. Same-region communication
+ * benefits from co-located availability zones, while cross-region links
+ * incur WAN round-trip penalties proportional to geographic distance.
+ */
+const REGION_LATENCY: Record<string, Record<string, { min: number; max: number }>> = {
+  "us-east-1": {
+    "us-east-1": { min: 1, max: 5 },
+    "us-west-2": { min: 60, max: 90 },
+    "eu-west-1": { min: 80, max: 120 },
+  },
+  "us-west-2": {
+    "us-east-1": { min: 60, max: 90 },
+    "us-west-2": { min: 1, max: 5 },
+    "eu-west-1": { min: 100, max: 120 },
+  },
+  "eu-west-1": {
+    "us-east-1": { min: 80, max: 120 },
+    "us-west-2": { min: 100, max: 120 },
+    "eu-west-1": { min: 1, max: 5 },
+  },
+};
+
+/**
+ * Pre-seeded leader election history spanning the last 24 hours.
+ * Election records are generated at initialization time to provide
+ * a consistent audit trail for the Election Timeline visualization.
+ */
+const electionHistory: LeaderElection[] = (() => {
+  const elections: LeaderElection[] = [];
+  const nodeCount = CLUSTER_NODE_DEFINITIONS.length;
+  const now = Date.now();
+  const majorityThreshold = Math.ceil(nodeCount / 2);
+
+  for (let i = 0; i < 14; i++) {
+    const term = 29 + i;
+    const candidateIndex = term % nodeCount;
+    const candidateId = CLUSTER_NODE_DEFINITIONS[candidateIndex].id;
+    const startOffset = (14 - i) * 6_000_000 + Math.floor(Math.random() * 600_000);
+    const startedAt = new Date(now - startOffset).toISOString();
+
+    let outcome: LeaderElection["outcome"];
+    let votes: number;
+    let resolvedAt: string | undefined;
+
+    if (i === 3) {
+      outcome = "timed-out";
+      votes = majorityThreshold - 1;
+      resolvedAt = new Date(now - startOffset + 30_000).toISOString();
+    } else if (i === 8) {
+      outcome = "rejected";
+      votes = 2;
+      resolvedAt = new Date(now - startOffset + 5_000).toISOString();
+    } else if (i === 10) {
+      outcome = "timed-out";
+      votes = majorityThreshold - 1;
+      resolvedAt = new Date(now - startOffset + 28_000).toISOString();
+    } else {
+      outcome = "elected";
+      votes = majorityThreshold + Math.floor(Math.random() * (nodeCount - majorityThreshold + 1));
+      resolvedAt = new Date(now - startOffset + 1_500 + Math.floor(Math.random() * 3_000)).toISOString();
+    }
+
+    elections.push({
+      term,
+      candidateId,
+      votes,
+      totalVoters: nodeCount,
+      startedAt,
+      resolvedAt,
+      outcome,
+    });
+  }
+
+  return elections;
+})();
+
+/**
+ * Rolling buffer of Paxos protocol messages reflecting normal
+ * heartbeat/replication traffic. The buffer maintains 50 recent
+ * messages and is populated at module initialization time.
+ */
+const paxosMessageBuffer: PaxosMessage[] = (() => {
+  const messages: PaxosMessage[] = [];
+  const nodeIds = CLUSTER_NODE_DEFINITIONS.map((n) => n.id);
+  const now = Date.now();
+  const types: PaxosMessageType[] = ["prepare", "promise", "accept", "accepted"];
+
+  for (let i = 0; i < 50; i++) {
+    const fromIdx = Math.floor(Math.random() * nodeIds.length);
+    let toIdx = Math.floor(Math.random() * (nodeIds.length - 1));
+    if (toIdx >= fromIdx) toIdx++;
+
+    // Normal replication traffic follows prepare/promise pairs
+    const typeIdx = i % 4;
+    const msgBallot = 42 + Math.floor(i / 4);
+
+    messages.push({
+      id: `pxm-${generateSessionId().slice(0, 8)}-${i.toString().padStart(4, "0")}`,
+      type: types[typeIdx],
+      from: nodeIds[fromIdx],
+      to: nodeIds[toIdx],
+      ballotNumber: msgBallot,
+      timestamp: new Date(now - (50 - i) * 2_000 + Math.floor(Math.random() * 500)).toISOString(),
+    });
+  }
+
+  return messages;
+})();
 
 // ---------------------------------------------------------------------------
 // Simulation state — maintained across calls to produce coherent time series
@@ -2227,6 +2370,195 @@ export class SimulationProvider implements IDataProvider {
       return null;
     }
     return this._evolutionCache.generations[this._evolutionCache.generations.length - 1];
+  }
+
+  async getClusterTopology(): Promise<ClusterTopology> {
+    const leaderIndex = ballotNumber % CLUSTER_NODE_DEFINITIONS.length;
+    const now = new Date();
+
+    // Randomly degrade 0-1 nodes for realism
+    const degradedIndex = Math.random() > 0.5
+      ? Math.floor(Math.random() * CLUSTER_NODE_DEFINITIONS.length)
+      : -1;
+
+    const nodes: ClusterNode[] = CLUSTER_NODE_DEFINITIONS.map((def, idx) => {
+      const role: ClusterNodeRole = idx === leaderIndex ? "leader" : "follower";
+      const status: ClusterNodeStatus = idx === degradedIndex ? "degraded" : "healthy";
+      const heartbeatOffset = Math.floor(Math.random() * 5_000);
+
+      return {
+        id: def.id,
+        role,
+        status,
+        region: def.region,
+        lastHeartbeat: new Date(now.getTime() - heartbeatOffset).toISOString(),
+        ballotNumber: ballotNumber - Math.floor(Math.random() * 2),
+        logIndex: 8_400 + Math.floor(Math.random() * 200),
+      };
+    });
+
+    // Generate full mesh edges between all nodes
+    const edges: ClusterEdge[] = [];
+    for (let i = 0; i < CLUSTER_NODE_DEFINITIONS.length; i++) {
+      for (let j = i + 1; j < CLUSTER_NODE_DEFINITIONS.length; j++) {
+        const regionA = CLUSTER_NODE_DEFINITIONS[i].region;
+        const regionB = CLUSTER_NODE_DEFINITIONS[j].region;
+        const latencyRange = REGION_LATENCY[regionA][regionB];
+        const latencyMs = latencyRange.min + Math.floor(Math.random() * (latencyRange.max - latencyRange.min + 1));
+
+        edges.push({
+          from: CLUSTER_NODE_DEFINITIONS[i].id,
+          to: CLUSTER_NODE_DEFINITIONS[j].id,
+          latencyMs,
+          healthy: true,
+        });
+      }
+    }
+
+    return {
+      nodes,
+      edges,
+      currentLeader: CLUSTER_NODE_DEFINITIONS[leaderIndex].id,
+      currentTerm: ballotNumber,
+    };
+  }
+
+  async getElectionHistory(limit: number = 20): Promise<LeaderElection[]> {
+    // Return elections in reverse-term order (most recent first)
+    return [...electionHistory]
+      .sort((a, b) => b.term - a.term)
+      .slice(0, limit);
+  }
+
+  async simulatePartition(nodeIds: string[]): Promise<PartitionSimulationResult> {
+    const topology = await this.getClusterTopology();
+    const partitionedSet = new Set(nodeIds);
+
+    // Mark partitioned nodes
+    for (const node of topology.nodes) {
+      if (partitionedSet.has(node.id)) {
+        node.status = "partitioned";
+        node.role = "observer";
+      }
+    }
+
+    // Mark edges involving partitioned nodes as unhealthy
+    for (const edge of topology.edges) {
+      if (partitionedSet.has(edge.from) || partitionedSet.has(edge.to)) {
+        edge.healthy = false;
+      }
+    }
+
+    const healthyNodes = topology.nodes.filter((n) => n.status !== "partitioned");
+    const totalNodes = CLUSTER_NODE_DEFINITIONS.length;
+    const majorityThreshold = Math.ceil(totalNodes / 2);
+    const quorumMaintained = healthyNodes.length >= majorityThreshold;
+
+    const messages: PaxosMessage[] = [];
+    let leaderElected = false;
+    let newLeader: string | undefined;
+    let newTerm: number | undefined;
+
+    // Check if the leader was partitioned
+    const leaderPartitioned = partitionedSet.has(topology.currentLeader);
+
+    if (leaderPartitioned && quorumMaintained) {
+      // Trigger re-election among healthy nodes
+      newTerm = topology.currentTerm + 1;
+      ballotNumber = newTerm;
+
+      const candidateNode = healthyNodes[0];
+      const now = Date.now();
+
+      // Generate Paxos re-election message sequence
+      // Phase 1: Prepare from candidate to all healthy nodes
+      for (let i = 0; i < healthyNodes.length; i++) {
+        if (healthyNodes[i].id !== candidateNode.id) {
+          messages.push({
+            id: `pxm-partition-${generateSessionId().slice(0, 8)}-prep-${i}`,
+            type: "prepare",
+            from: candidateNode.id,
+            to: healthyNodes[i].id,
+            ballotNumber: newTerm,
+            timestamp: new Date(now + i * 50).toISOString(),
+          });
+        }
+      }
+
+      // Phase 2: Promise responses from healthy nodes
+      for (let i = 0; i < healthyNodes.length; i++) {
+        if (healthyNodes[i].id !== candidateNode.id) {
+          messages.push({
+            id: `pxm-partition-${generateSessionId().slice(0, 8)}-prom-${i}`,
+            type: "promise",
+            from: healthyNodes[i].id,
+            to: candidateNode.id,
+            ballotNumber: newTerm,
+            timestamp: new Date(now + 200 + i * 30).toISOString(),
+          });
+        }
+      }
+
+      // Phase 3: Accept from candidate
+      messages.push({
+        id: `pxm-partition-${generateSessionId().slice(0, 8)}-acc`,
+        type: "accept",
+        from: candidateNode.id,
+        to: candidateNode.id,
+        ballotNumber: newTerm,
+        timestamp: new Date(now + 500).toISOString(),
+      });
+
+      // Phase 4: Accepted from all healthy nodes
+      for (let i = 0; i < healthyNodes.length; i++) {
+        messages.push({
+          id: `pxm-partition-${generateSessionId().slice(0, 8)}-accd-${i}`,
+          type: "accepted",
+          from: healthyNodes[i].id,
+          to: candidateNode.id,
+          ballotNumber: newTerm,
+          timestamp: new Date(now + 600 + i * 20).toISOString(),
+        });
+      }
+
+      // Update topology with new leader
+      candidateNode.role = "leader";
+      topology.currentLeader = candidateNode.id;
+      topology.currentTerm = newTerm;
+      newLeader = candidateNode.id;
+      leaderElected = true;
+    }
+
+    let summary: string;
+    if (leaderPartitioned && quorumMaintained) {
+      summary = `Network partition isolated ${nodeIds.length} node(s) including the current leader. ` +
+        `Quorum maintained with ${healthyNodes.length}/${totalNodes} nodes. ` +
+        `Re-election completed: ${newLeader} elected as new leader for term ${newTerm}. ` +
+        `${messages.length} Paxos messages exchanged during failover.`;
+    } else if (leaderPartitioned && !quorumMaintained) {
+      summary = `Network partition isolated ${nodeIds.length} node(s) including the current leader. ` +
+        `Quorum lost: only ${healthyNodes.length}/${totalNodes} healthy nodes remain (need ${majorityThreshold}). ` +
+        `Cluster is unable to elect a new leader until the partition is resolved.`;
+    } else if (!leaderPartitioned && quorumMaintained) {
+      summary = `Network partition isolated ${nodeIds.length} node(s). ` +
+        `Current leader ${topology.currentLeader} remains healthy. ` +
+        `Quorum maintained with ${healthyNodes.length}/${totalNodes} nodes. ` +
+        `No re-election required. Partitioned nodes will rejoin upon partition resolution.`;
+    } else {
+      summary = `Network partition isolated ${nodeIds.length} node(s). ` +
+        `Current leader ${topology.currentLeader} remains healthy but ` +
+        `quorum lost: only ${healthyNodes.length}/${totalNodes} healthy nodes remain (need ${majorityThreshold}). ` +
+        `Write operations suspended until quorum is restored.`;
+    }
+
+    return {
+      leaderElected,
+      newLeader,
+      newTerm,
+      topology,
+      messages,
+      summary,
+    };
   }
 }
 
