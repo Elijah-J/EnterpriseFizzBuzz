@@ -241,6 +241,13 @@ from enterprise_fizzbuzz.infrastructure.data_pipeline import (
     SinkConnectorFactory,
     SourceConnectorFactory,
 )
+from enterprise_fizzbuzz.infrastructure.clock_sync import (
+    AllanDeviationAnalyzer,
+    ClockDashboard,
+    ClockMiddleware,
+    StratumHierarchy,
+    create_clock_sync_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.openapi import (
     ASCIISwaggerUI,
     EndpointRegistry,
@@ -3222,6 +3229,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--spatial-dashboard",
         action="store_true",
         help="Display the FizzGIS spatial database dashboard with R-tree statistics and zone analytics",
+    )
+
+    # FizzClock — NTP/PTP Clock Synchronization
+    parser.add_argument(
+        "--clock-sync",
+        action="store_true",
+        help="Enable NTP/PTP clock synchronization for distributed FizzBuzz timestamps",
+    )
+
+    parser.add_argument(
+        "--clock-drift",
+        type=float,
+        default=None,
+        metavar="PPM",
+        help="Simulated clock drift rate in parts per million (default: 10.0 ppm)",
+    )
+
+    parser.add_argument(
+        "--clock-dashboard",
+        action="store_true",
+        help="Display the FizzClock NTP synchronization ASCII dashboard after execution",
     )
 
     return parser
@@ -7761,6 +7789,37 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzClock — NTP/PTP Clock Synchronization
+    # ----------------------------------------------------------------
+    clock_sync_hierarchy = None
+    clock_sync_analyzer = None
+    clock_sync_middleware = None
+
+    if args.clock_sync or config.clock_sync_enabled:
+        clock_drift = args.clock_drift or config.clock_drift_ppm
+
+        clock_sync_hierarchy, clock_sync_analyzer, clock_sync_middleware = (
+            create_clock_sync_subsystem(
+                drift_ppm=clock_drift,
+                num_secondary_nodes=config.clock_sync_num_nodes,
+                enable_adev=True,
+            )
+        )
+
+        builder.with_middleware(clock_sync_middleware)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCLOCK: NTP CLOCK SYNCHRONIZATION ENABLED            |\n"
+                f"  |   Drift rate: {clock_drift:.1f} ppm                                  |\n"
+                f"  |   Nodes: {config.clock_sync_num_nodes} secondary + 1 primary (stratum 1)        |\n"
+                "  |   PI controller active. Allan deviation tracking on.    |\n"
+                "  |   Sub-microsecond timestamp coherence for FizzBuzz.     |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -10181,6 +10240,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  FizzGIS not enabled. Use --spatial to enable.\n")
     elif args.spatial_dashboard:
         print("\n  FizzGIS not enabled. Use --spatial to enable.\n")
+
+    # FizzClock Dashboard (post-execution)
+    if args.clock_dashboard and clock_sync_middleware is not None:
+        print()
+        print(clock_sync_middleware.render_dashboard())
+    elif args.clock_dashboard:
+        print("\n  FizzClock not enabled. Use --clock-sync to enable.\n")
 
     # FizzCPU Pipeline Dashboard (post-execution)
     if args.cpu_dashboard and pipeline_sim is not None:
