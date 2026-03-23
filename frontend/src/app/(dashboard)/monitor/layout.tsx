@@ -1,37 +1,60 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+
 /**
- * Monitor route group layout.
- *
- * Provides shared context for all monitoring subsystem pages including
- * Metrics, Traces, and Alerts (when implemented). The layout inherits
- * the DataProvider from the parent dashboard layout and adds a
- * monitor-specific navigation header.
+ * Sub-navigation tabs for the Monitor route group. Provides persistent
+ * tab-based navigation across Metrics, Health, SLA, and future monitoring
+ * surfaces without full page reloads.
  */
+const MONITOR_TABS = [
+  { label: "Metrics", href: "/monitor/metrics" },
+  { label: "Health Matrix", href: "/monitor/health" },
+  { label: "SLA Dashboard", href: "/monitor/sla" },
+] as const;
+
 export default function MonitorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 border-b border-panel-700 pb-3">
-        <span className="text-xs text-panel-500 uppercase tracking-wider">
-          Monitor
-        </span>
-        <nav className="flex gap-1">
-          <a
-            href="/monitor/metrics"
-            className="rounded px-2.5 py-1 text-xs font-medium bg-panel-800 text-panel-50 transition-colors"
-          >
-            Metrics
-          </a>
-          <span className="rounded px-2.5 py-1 text-xs text-panel-500 cursor-not-allowed">
-            Traces
-          </span>
-          <span className="rounded px-2.5 py-1 text-xs text-panel-500 cursor-not-allowed">
-            Alerts
-          </span>
-        </nav>
+    <div className="space-y-6">
+      {/* Page header */}
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-panel-50">
+          Infrastructure Monitor
+        </h1>
+        <p className="mt-1 text-sm text-panel-400">
+          Real-time operational visibility into all Enterprise FizzBuzz Platform
+          subsystems, SLA compliance posture, and incident management.
+        </p>
       </div>
+
+      {/* Sub-navigation tabs */}
+      <nav className="flex gap-1 border-b border-panel-700 pb-px">
+        {MONITOR_TABS.map((tab) => {
+          const isActive = pathname === tab.href;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`px-4 py-2 text-sm font-medium transition-colors rounded-t ${
+                isActive
+                  ? "bg-panel-800 text-panel-50 border border-panel-700 border-b-panel-800 -mb-px"
+                  : "text-panel-400 hover:text-panel-200 hover:bg-panel-800/50"
+              }`}
+            >
+              {tab.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Active tab content */}
       {children}
     </div>
   );
