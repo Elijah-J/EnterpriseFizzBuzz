@@ -616,6 +616,19 @@ from enterprise_fizzbuzz.infrastructure.spreadsheet import (
     Spreadsheet,
     evaluate_formula,
 )
+from enterprise_fizzbuzz.infrastructure.smart_contracts import (
+    ContractCompiler,
+    ContractDashboard,
+    ContractDeployer,
+    ContractMiddleware,
+    ExecutionContext,
+    GovernanceVoting,
+    StackMachine,
+    compile_fizzbuzz_contract,
+    Instruction,
+    ContractOpcode,
+    DEFAULT_GAS_LIMIT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -3042,6 +3055,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--sheet-dashboard",
         action="store_true",
         help="Display the FizzSheet ASCII dashboard with cell statistics and dependency graph metrics",
+    )
+
+    # FizzContract — Smart Contract VM
+    parser.add_argument(
+        "--contract",
+        action="store_true",
+        help="Enable FizzContract Smart Contract VM for gas-metered FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--contract-deploy",
+        type=str,
+        default=None,
+        metavar="SOURCE",
+        help="Deploy a FizzSolidity contract from the given source file or inline source",
+    )
+
+    parser.add_argument(
+        "--contract-call",
+        type=str,
+        default=None,
+        metavar="ADDRESS",
+        help="Call a deployed contract by address for FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--contract-dashboard",
+        action="store_true",
+        help="Display the FizzContract ASCII dashboard with deployed contracts, gas usage, and governance",
     )
 
     return parser
@@ -7294,6 +7336,64 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzContract — Smart Contract VM
+    # ----------------------------------------------------------------
+    contract_deployer = None
+    contract_middleware_instance = None
+    contract_governance = None
+
+    contract_active = (
+        args.contract or args.contract_dashboard
+        or args.contract_deploy is not None
+        or args.contract_call is not None
+    )
+
+    if contract_active:
+        contract_deployer = ContractDeployer()
+        contract_governance = GovernanceVoting()
+
+        # Deploy a custom contract if source is provided
+        deployed_address = None
+        if args.contract_deploy is not None:
+            source = args.contract_deploy
+            compiler = ContractCompiler()
+            bytecode = compiler.compile(source)
+            deployed_address = contract_deployer.deploy(
+                bytecode, deployer="0x" + "a" * 40, source=source,
+            )
+        else:
+            # Deploy the canonical FizzBuzz contract
+            bytecode = compile_fizzbuzz_contract()
+            deployed_address = contract_deployer.deploy(
+                bytecode, deployer="0x" + "a" * 40,
+            )
+
+        target_address = args.contract_call or deployed_address
+
+        exec_ctx = ExecutionContext(
+            msg_sender="0x" + "b" * 40,
+            tx_origin="0x" + "b" * 40,
+            block_number=1,
+        )
+        contract_middleware_instance = ContractMiddleware(
+            deployer=contract_deployer,
+            contract_address=target_address,
+            context=exec_ctx,
+        )
+        builder.with_middleware(contract_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCONTRACT: SMART CONTRACT VM ENABLED                 |\n"
+                "  |   Stack depth: 1024 (256-bit words)                    |\n"
+                "  |   Gas metering: EVM-compatible per-opcode costs        |\n"
+                "  |   Governance: 2/3 supermajority on-chain voting        |\n"
+                "  |   Compiler: FizzSolidity single-pass emit              |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzReplica — Database Replication with WAL Shipping
     # ----------------------------------------------------------------
     replication_set = None
@@ -9714,6 +9814,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(SpreadsheetDashboard.render(sheet))
     elif args.sheet_dashboard:
         print("\n  FizzSheet not enabled. Use --sheet to enable.\n")
+
+    # FizzContract Dashboard (post-execution)
+    if args.contract_dashboard and contract_deployer is not None:
+        gas_metrics = (
+            contract_middleware_instance.gas_metrics
+            if contract_middleware_instance is not None
+            else None
+        )
+        print()
+        print(ContractDashboard.render(
+            contract_deployer,
+            contract_governance or GovernanceVoting(),
+            gas_metrics=gas_metrics,
+        ))
+    elif args.contract_dashboard:
+        print("\n  FizzContract not enabled. Use --contract to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
