@@ -116,6 +116,40 @@ export interface ConsensusStatus {
   nodesAcknowledged: number;
 }
 
+// ---------------------------------------------------------------------------
+// Time series metrics types
+// ---------------------------------------------------------------------------
+
+/** A single data point in a metric time series. */
+export interface TimeSeriesDataPoint {
+  /** Unix timestamp in milliseconds. */
+  timestamp: number;
+  /** Observed metric value at this timestamp. */
+  value: number;
+}
+
+/** Time series data for a named metric over a requested duration. */
+export interface TimeSeriesData {
+  /** Canonical metric name (e.g., "fizzbuzz_evaluations_total"). */
+  metricName: string;
+  /** Ordered data points for the requested time window. */
+  dataPoints: TimeSeriesDataPoint[];
+  /** Unit of measurement (e.g., "count", "seconds", "bytes", "percent"). */
+  unit: string;
+}
+
+/** Descriptor for a registered platform metric. */
+export interface MetricDefinition {
+  /** Canonical metric name matching Prometheus naming conventions. */
+  name: string;
+  /** Metric type per OpenMetrics specification. */
+  type: "counter" | "gauge" | "histogram";
+  /** Human-readable description of what this metric measures. */
+  description: string;
+  /** Unit of measurement. */
+  unit: string;
+}
+
 /** FizzBuck financial expenditure summary for FinOps reporting. */
 export interface CostSummary {
   /** Current-period FizzBuck expenditure. */

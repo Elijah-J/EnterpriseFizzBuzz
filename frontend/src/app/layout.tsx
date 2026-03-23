@@ -56,6 +56,30 @@ export default function RootLayout({
               <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
                 Pipeline Monitor
               </li>
+            </ul>
+            <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
+              Monitor
+            </p>
+            <ul className="space-y-1 text-sm text-panel-300">
+              <li>
+                <a
+                  href="/monitor/metrics"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Metrics
+                </a>
+              </li>
+              <li className="rounded px-2 py-1.5 text-panel-500 cursor-not-allowed">
+                Traces
+              </li>
+              <li className="rounded px-2 py-1.5 text-panel-500 cursor-not-allowed">
+                Alerts
+              </li>
+            </ul>
+            <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
+              Platform
+            </p>
+            <ul className="space-y-1 text-sm text-panel-300">
               <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
                 Compliance
               </li>

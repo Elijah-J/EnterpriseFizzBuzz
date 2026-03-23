@@ -9,6 +9,8 @@ import type {
   SLAStatus,
   ConsensusStatus,
   CostSummary,
+  TimeSeriesData,
+  MetricDefinition,
 } from "./types";
 
 /**
@@ -319,4 +321,303 @@ export class SimulationProvider implements IDataProvider {
         Math.round(gaussianRandom(0.0000503, 0.000005) * 10_000_000) / 10_000_000,
     };
   }
+
+  async listMetrics(): Promise<MetricDefinition[]> {
+    return METRIC_DEFINITIONS;
+  }
+
+  async getMetricTimeSeries(
+    metricName: string,
+    duration: number,
+  ): Promise<TimeSeriesData> {
+    const definition = METRIC_DEFINITIONS.find((m) => m.name === metricName);
+    const unit = definition?.unit ?? "unknown";
+    const type = definition?.type ?? "gauge";
+
+    const now = Date.now();
+    // Generate one data point per second, capped at 600 for performance
+    const pointCount = Math.min(duration, 600);
+    const intervalMs = (duration * 1000) / pointCount;
+
+    const config = METRIC_SIMULATION_CONFIG[metricName] ?? {
+      baseline: 50,
+      noise: 5,
+      trend: 0,
+      spikeProbability: 0.02,
+      spikeMultiplier: 3,
+    };
+
+    const dataPoints: { timestamp: number; value: number }[] = [];
+    let cumulativeValue = config.baseline;
+
+    for (let i = 0; i < pointCount; i++) {
+      const timestamp = now - (pointCount - 1 - i) * intervalMs;
+      const progress = i / pointCount;
+
+      // Base value with trend
+      let value = config.baseline + config.trend * progress * pointCount;
+
+      // Add Gaussian noise
+      value += gaussianRandom(0, config.noise) - config.noise;
+
+      // Occasional spikes — these represent real production anomalies
+      if (Math.random() < config.spikeProbability) {
+        value *= config.spikeMultiplier;
+      }
+
+      // Counters are monotonically increasing
+      if (type === "counter") {
+        cumulativeValue += Math.abs(value - config.baseline) + config.baseline * 0.01;
+        value = Math.round(cumulativeValue);
+      } else {
+        // Gauges and histograms can fluctuate but should not go negative
+        value = Math.max(0, value);
+      }
+
+      dataPoints.push({
+        timestamp: Math.round(timestamp),
+        value: Math.round(value * 1000) / 1000,
+      });
+    }
+
+    return {
+      metricName,
+      dataPoints,
+      unit,
+    };
+  }
 }
+
+// ---------------------------------------------------------------------------
+// Metric registry — canonical list of all platform telemetry signals
+// ---------------------------------------------------------------------------
+
+const METRIC_DEFINITIONS: MetricDefinition[] = [
+  {
+    name: "fizzbuzz_evaluations_total",
+    type: "counter",
+    description:
+      "Total number of FizzBuzz evaluations executed across all strategies since system boot.",
+    unit: "count",
+  },
+  {
+    name: "fizzbuzz_evaluation_duration_seconds",
+    type: "histogram",
+    description:
+      "Distribution of end-to-end evaluation latency including rule matching, caching, and serialization overhead.",
+    unit: "seconds",
+  },
+  {
+    name: "cache_hit_ratio",
+    type: "gauge",
+    description:
+      "Fraction of evaluation requests served from the MESI-coherent L1/L2 cache hierarchy without backend recomputation.",
+    unit: "percent",
+  },
+  {
+    name: "cache_entries_total",
+    type: "gauge",
+    description:
+      "Current number of entries resident in the distributed cache across all coherence domains.",
+    unit: "count",
+  },
+  {
+    name: "blockchain_block_height",
+    type: "counter",
+    description:
+      "Current block height of the FizzBuzz immutable evaluation ledger. Monotonically increasing under normal operation.",
+    unit: "count",
+  },
+  {
+    name: "blockchain_mining_duration_ms",
+    type: "histogram",
+    description:
+      "Distribution of proof-of-work mining times for new evaluation record blocks.",
+    unit: "milliseconds",
+  },
+  {
+    name: "ml_inference_confidence",
+    type: "gauge",
+    description:
+      "Mean softmax confidence score from the neural network FizzBuzz classifier across recent inference batches.",
+    unit: "percent",
+  },
+  {
+    name: "circuit_breaker_trips_total",
+    type: "counter",
+    description:
+      "Cumulative count of circuit breaker state transitions to the OPEN state across all service mesh endpoints.",
+    unit: "count",
+  },
+  {
+    name: "paxos_leader_elections_total",
+    type: "counter",
+    description:
+      "Total number of Paxos leader elections triggered by the distributed consensus subsystem.",
+    unit: "count",
+  },
+  {
+    name: "sla_error_budget_remaining",
+    type: "gauge",
+    description:
+      "Remaining error budget as a percentage of the 30-day rolling window. Burns down as SLA violations occur.",
+    unit: "percent",
+  },
+  {
+    name: "http_requests_total",
+    type: "counter",
+    description:
+      "Total HTTP requests received by the FizzBuzz evaluation API across all endpoints and methods.",
+    unit: "count",
+  },
+  {
+    name: "memory_usage_bytes",
+    type: "gauge",
+    description:
+      "Current resident set size of the FizzBuzz evaluation process including all subsystem allocations.",
+    unit: "bytes",
+  },
+  {
+    name: "quantum_qubit_decoherence_rate",
+    type: "gauge",
+    description:
+      "Rate of quantum decoherence events per second in the simulated qubit register used for quantum strategy evaluations.",
+    unit: "events/s",
+  },
+  {
+    name: "compliance_audit_score",
+    type: "gauge",
+    description:
+      "Composite compliance score across SOX, GDPR, and HIPAA audit frameworks. 100 indicates full regulatory compliance.",
+    unit: "percent",
+  },
+  {
+    name: "fizzbucks_spent_total",
+    type: "counter",
+    description:
+      "Cumulative FizzBuck expenditure across all cost centers since the beginning of the current fiscal period.",
+    unit: "FizzBucks",
+  },
+];
+
+/**
+ * Per-metric simulation parameters. Each metric has a characteristic
+ * baseline, noise profile, trend direction, and anomaly probability
+ * calibrated to approximate production telemetry patterns.
+ */
+const METRIC_SIMULATION_CONFIG: Record<
+  string,
+  {
+    baseline: number;
+    noise: number;
+    trend: number;
+    spikeProbability: number;
+    spikeMultiplier: number;
+  }
+> = {
+  fizzbuzz_evaluations_total: {
+    baseline: 342,
+    noise: 28,
+    trend: 0.15,
+    spikeProbability: 0.01,
+    spikeMultiplier: 2.5,
+  },
+  fizzbuzz_evaluation_duration_seconds: {
+    baseline: 0.0012,
+    noise: 0.0003,
+    trend: 0,
+    spikeProbability: 0.03,
+    spikeMultiplier: 4,
+  },
+  cache_hit_ratio: {
+    baseline: 94.3,
+    noise: 1.2,
+    trend: 0.02,
+    spikeProbability: 0.02,
+    spikeMultiplier: 0.7,
+  },
+  cache_entries_total: {
+    baseline: 48_721,
+    noise: 340,
+    trend: 0.8,
+    spikeProbability: 0.005,
+    spikeMultiplier: 1.3,
+  },
+  blockchain_block_height: {
+    baseline: 12,
+    noise: 3,
+    trend: 0.05,
+    spikeProbability: 0.01,
+    spikeMultiplier: 2,
+  },
+  blockchain_mining_duration_ms: {
+    baseline: 847,
+    noise: 190,
+    trend: 0,
+    spikeProbability: 0.04,
+    spikeMultiplier: 3.5,
+  },
+  ml_inference_confidence: {
+    baseline: 97.2,
+    noise: 0.8,
+    trend: 0.01,
+    spikeProbability: 0.02,
+    spikeMultiplier: 0.92,
+  },
+  circuit_breaker_trips_total: {
+    baseline: 3,
+    noise: 1.5,
+    trend: 0,
+    spikeProbability: 0.05,
+    spikeMultiplier: 5,
+  },
+  paxos_leader_elections_total: {
+    baseline: 1,
+    noise: 0.8,
+    trend: 0,
+    spikeProbability: 0.08,
+    spikeMultiplier: 4,
+  },
+  sla_error_budget_remaining: {
+    baseline: 73.4,
+    noise: 0.5,
+    trend: -0.03,
+    spikeProbability: 0.02,
+    spikeMultiplier: 0.85,
+  },
+  http_requests_total: {
+    baseline: 1_247,
+    noise: 180,
+    trend: 0.2,
+    spikeProbability: 0.015,
+    spikeMultiplier: 3,
+  },
+  memory_usage_bytes: {
+    baseline: 524_288_000,
+    noise: 12_000_000,
+    trend: 0.5,
+    spikeProbability: 0.01,
+    spikeMultiplier: 1.4,
+  },
+  quantum_qubit_decoherence_rate: {
+    baseline: 0.042,
+    noise: 0.008,
+    trend: 0,
+    spikeProbability: 0.06,
+    spikeMultiplier: 5,
+  },
+  compliance_audit_score: {
+    baseline: 98.7,
+    noise: 0.3,
+    trend: 0.005,
+    spikeProbability: 0.01,
+    spikeMultiplier: 0.95,
+  },
+  fizzbucks_spent_total: {
+    baseline: 42.7,
+    noise: 3.5,
+    trend: 0.1,
+    spikeProbability: 0.02,
+    spikeMultiplier: 2.5,
+  },
+};
