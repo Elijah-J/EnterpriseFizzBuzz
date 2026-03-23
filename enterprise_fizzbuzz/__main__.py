@@ -296,6 +296,13 @@ from enterprise_fizzbuzz.infrastructure.datalog import (
     QueryParser,
     create_datalog_session,
 )
+from enterprise_fizzbuzz.infrastructure.z_specification import (
+    FizzBuzzSpec,
+    RefinementChecker,
+    SpecDashboard,
+    SpecMiddleware,
+    ZRenderer,
+)
 from enterprise_fizzbuzz.infrastructure.linter import (
     AutoFixer,
     LintDashboard,
@@ -2842,6 +2849,31 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--replicate-dashboard",
         action="store_true",
         help="Display the FizzReplica ASCII dashboard with topology, lag, and failover history",
+    )
+
+    # FizzSpec — Z Notation Formal Specification
+    parser.add_argument(
+        "--zspec",
+        action="store_true",
+        help="Enable FizzSpec: formal Z notation specification with schema calculus and refinement checking",
+    )
+
+    parser.add_argument(
+        "--zspec-check",
+        action="store_true",
+        help="Run refinement checking to verify FizzBuzz implementation against the Z specification",
+    )
+
+    parser.add_argument(
+        "--zspec-render",
+        action="store_true",
+        help="Render Z specification schemas as Unicode box-drawing art",
+    )
+
+    parser.add_argument(
+        "--zspec-dashboard",
+        action="store_true",
+        help="Display the FizzSpec ASCII dashboard with schema inventory and refinement results",
     )
 
     return parser
@@ -6644,6 +6676,27 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzSpec — Z Notation Formal Specification
+    # ----------------------------------------------------------------
+    zspec_instance = None
+    zspec_middleware_instance = None
+    zspec_refinement_results = None
+
+    if args.zspec or args.zspec_check or args.zspec_render or args.zspec_dashboard:
+        zspec_instance = FizzBuzzSpec()
+        zspec_middleware_instance = SpecMiddleware(zspec_instance)
+        builder.with_middleware(zspec_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZSPEC: Z NOTATION FORMAL SPECIFICATION               |\n"
+                "  |   Schema calculus, precondition derivation              |\n"
+                "  |   Every evaluation verified against the Z spec          |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzLog Datalog Query Engine
     # ----------------------------------------------------------------
     datalog_session = None
@@ -8815,6 +8868,64 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.proxy_dashboard:
         print("\n  FizzProxy not enabled. Use --proxy to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzSpec — Z Specification Post-Execution Output
+    # ----------------------------------------------------------------
+    if zspec_instance is not None:
+        if args.zspec_check:
+            def _fizzbuzz_impl(n: int) -> str:
+                d3 = (n % 3 == 0)
+                d5 = (n % 5 == 0)
+                if d3 and d5:
+                    return "FizzBuzz"
+                if d3:
+                    return "Fizz"
+                if d5:
+                    return "Buzz"
+                return str(n)
+
+            checker = RefinementChecker(
+                spec=zspec_instance.state_schema,
+                impl_fn=_fizzbuzz_impl,
+                test_range=range(start, end + 1),
+            )
+            zspec_refinement_results = []
+            for op in zspec_instance.all_operations():
+                result = checker.check_operation_refinement(
+                    spec_operation=op,
+                    postcondition_checker=zspec_instance.verify_classification,
+                )
+                zspec_refinement_results.append(result)
+
+            all_valid = all(r.is_valid for r in zspec_refinement_results)
+            total_checks = sum(r.checks_performed for r in zspec_refinement_results)
+            total_passed = sum(r.checks_passed for r in zspec_refinement_results)
+            status = "PASS" if all_valid else "FAIL"
+            print(f"\n  FizzSpec Refinement: {status}  ({total_passed}/{total_checks} checks)")
+            for r in zspec_refinement_results:
+                marker = "[+]" if r.is_valid else "[X]"
+                print(f"    {marker} {r.spec_name}: {r.checks_passed}/{r.checks_performed}")
+            print()
+
+        if args.zspec_render:
+            print()
+            for schema in zspec_instance.all_schemas():
+                print(ZRenderer.render_schema(schema, width=56))
+                print()
+            for op in zspec_instance.all_operations():
+                print(ZRenderer.render_operation(op, width=56))
+                print()
+
+        if args.zspec_dashboard:
+            print(SpecDashboard.render(
+                spec=zspec_instance,
+                refinement_results=zspec_refinement_results,
+                width=config.zspec_dashboard_width,
+            ))
+
+    elif args.zspec_check or args.zspec_render or args.zspec_dashboard:
+        print("\n  FizzSpec not enabled. Use --zspec to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzLog Datalog Dashboard & Query
