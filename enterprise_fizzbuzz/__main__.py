@@ -480,6 +480,11 @@ from enterprise_fizzbuzz.infrastructure.otel_tracing import (
     TracerProvider as OTelTracerProvider,
     create_otel_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.mapreduce import (
+    MapReduceDashboard,
+    MapReduceJob,
+    MapReduceMiddleware,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2334,6 +2339,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--columnar-dashboard",
         action="store_true",
         help="Display the FizzColumn ASCII dashboard with column inventory, compression ratios, and zone maps",
+    )
+
+    # FizzReduce — MapReduce Framework
+    parser.add_argument(
+        "--mapreduce",
+        action="store_true",
+        help="Enable FizzReduce: distributed MapReduce computation for FizzBuzz classification",
+    )
+
+    parser.add_argument(
+        "--mr-mappers",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of parallel mapper tasks for FizzReduce (default: from config)",
+    )
+
+    parser.add_argument(
+        "--mr-reducers",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of reducer partitions for FizzReduce (default: from config)",
+    )
+
+    parser.add_argument(
+        "--mr-dashboard",
+        action="store_true",
+        help="Display the FizzReduce MapReduce ASCII dashboard after execution",
     )
 
     return parser
@@ -5170,6 +5204,29 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzReduce — MapReduce Framework setup
+    # ----------------------------------------------------------------
+    mr_job = None
+    mr_middleware = None
+
+    if args.mapreduce or args.mr_dashboard:
+        num_mappers = args.mr_mappers if args.mr_mappers is not None else config.mapreduce_num_mappers
+        num_reducers = args.mr_reducers if args.mr_reducers is not None else config.mapreduce_num_reducers
+        spec_threshold = config.mapreduce_speculative_threshold
+
+        mr_middleware = MapReduceMiddleware()
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZREDUCE MAPREDUCE FRAMEWORK ENABLED                  |\n"
+            f"  | Mappers: {num_mappers:<3}  | Reducers: {num_reducers:<3} | Speculative: {spec_threshold:.1f}x |\n"
+            "  | Input splitting | Shuffle-and-sort | Hash partitioning  |\n"
+            '  | "Google published MapReduce in 2004. We perfected it."  |\n'
+            "  | Every modulo deserves distributed computation.          |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # Recommendation Engine setup
     # ----------------------------------------------------------------
     rec_engine = None
@@ -5726,6 +5783,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if billing_middleware_instance is not None:
         builder.with_middleware(billing_middleware_instance)
+
+    # Add MapReduce middleware (priority 920, tracks evaluations)
+    if mr_middleware is not None:
+        builder.with_middleware(mr_middleware)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -7521,6 +7582,41 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.grammar_dashboard:
         print("\n  FizzGrammar not enabled. Use --grammar to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzReduce — MapReduce Job Execution & Dashboard
+    # ----------------------------------------------------------------
+    if args.mapreduce or args.mr_dashboard:
+        if mr_middleware is not None:
+            num_mappers = args.mr_mappers if args.mr_mappers is not None else config.mapreduce_num_mappers
+            num_reducers = args.mr_reducers if args.mr_reducers is not None else config.mapreduce_num_reducers
+            spec_threshold = config.mapreduce_speculative_threshold
+
+            mr_job = MapReduceJob(
+                rules=config.rules,
+                num_mappers=num_mappers,
+                num_reducers=num_reducers,
+                speculative_threshold=spec_threshold,
+            )
+            mr_middleware.job = mr_job
+
+            mr_results = mr_job.execute(start, end)
+
+            print("\n  FizzReduce: MapReduce job completed.")
+            print(f"  Job ID: {mr_job.job_id}")
+            print(f"  Elapsed: {mr_job.elapsed_seconds:.3f}s")
+            print("  Classification distribution:")
+            for key in sorted(mr_results.keys()):
+                print(f"    {key}: {mr_results[key]}")
+            print()
+
+        if args.mr_dashboard and mr_job is not None:
+            print(MapReduceDashboard.render(
+                job=mr_job,
+                width=config.mapreduce_dashboard_width,
+            ))
+        elif args.mr_dashboard:
+            print("\n  FizzReduce not enabled. Use --mapreduce to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
