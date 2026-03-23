@@ -28,6 +28,8 @@ import type {
   AuditLogFilter,
   PaginatedAuditLog,
   AuditLogSortField,
+  Block,
+  BlockchainStats,
 } from "./types";
 
 /**
@@ -239,4 +241,24 @@ export interface IDataProvider {
     sortField?: AuditLogSortField,
     sortDirection?: "asc" | "desc",
   ): Promise<PaginatedAuditLog>;
+
+  /**
+   * Retrieve the most recent blocks from the blockchain ledger.
+   * Returns blocks in reverse chronological order (newest first).
+   *
+   * @param limit - Maximum number of blocks to return (default: 50)
+   */
+  getBlockchain(limit?: number): Promise<Block[]>;
+
+  /**
+   * Retrieve a single block by its SHA-256 hash. Returns null if no block
+   * with the given hash exists in the chain.
+   */
+  getBlock(hash: string): Promise<Block | null>;
+
+  /**
+   * Retrieve aggregate blockchain statistics including chain height,
+   * transaction volume, mining performance, and integrity status.
+   */
+  getBlockchainStats(): Promise<BlockchainStats>;
 }

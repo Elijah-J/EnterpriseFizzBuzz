@@ -550,3 +550,60 @@ export interface PaginatedAuditLog {
 
 /** Sortable fields for audit log table columns. */
 export type AuditLogSortField = "timestamp" | "severity" | "action" | "actor" | "outcome" | "subsystem";
+
+// ---------------------------------------------------------------------------
+// Blockchain Ledger types
+// ---------------------------------------------------------------------------
+
+/** A single FizzBuzz evaluation receipt recorded on-chain. */
+export interface BlockTransaction {
+  /** SHA-256 hash of the transaction payload. */
+  hash: string;
+  /** The input integer that was evaluated. */
+  input: number;
+  /** The computed output string (e.g., "Fizz", "Buzz", "FizzBuzz", or the number). */
+  output: string;
+  /** Semantic classification of the evaluation result. */
+  classification: "fizz" | "buzz" | "fizzbuzz" | "number";
+  /** ISO 8601 timestamp of the evaluation. */
+  timestamp: string;
+}
+
+/**
+ * A single block in the FizzBuzz blockchain, mirroring the Block dataclass
+ * in the backend blockchain.py proof-of-work chain implementation.
+ */
+export interface Block {
+  /** Block height (0-indexed, genesis block is 0). */
+  index: number;
+  /** SHA-256 hash of this block's contents (64 hex chars). */
+  hash: string;
+  /** SHA-256 hash of the previous block (64 hex chars). */
+  previousHash: string;
+  /** ISO 8601 timestamp of when this block was mined. */
+  timestamp: string;
+  /** Proof-of-work nonce discovered during mining. */
+  nonce: number;
+  /** Mining difficulty (number of leading zeros required in hash). */
+  difficulty: number;
+  /** FizzBuzz evaluation transactions included in this block. */
+  transactions: BlockTransaction[];
+  /** Wall-clock time spent mining this block, in milliseconds. */
+  miningDurationMs: number;
+}
+
+/** Aggregate statistics for the blockchain ledger. */
+export interface BlockchainStats {
+  /** Current chain height (total number of blocks including genesis). */
+  height: number;
+  /** Total transactions across all blocks. */
+  totalTransactions: number;
+  /** Mean mining duration across all blocks, in milliseconds. */
+  averageMiningTimeMs: number;
+  /** Current proof-of-work difficulty level. */
+  currentDifficulty: number;
+  /** Estimated hash rate in hashes per second. */
+  hashRate: number;
+  /** Whether the full chain passes integrity validation. */
+  chainValid: boolean;
+}

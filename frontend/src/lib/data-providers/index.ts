@@ -36,6 +36,9 @@ export type {
   AuditLogFilter,
   PaginatedAuditLog,
   AuditLogSortField,
+  BlockTransaction,
+  Block,
+  BlockchainStats,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

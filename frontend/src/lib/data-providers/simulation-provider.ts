@@ -34,6 +34,9 @@ import type {
   AuditLogFilter,
   PaginatedAuditLog,
   AuditLogSortField,
+  Block,
+  BlockTransaction,
+  BlockchainStats,
 } from "./types";
 
 /**
@@ -434,6 +437,9 @@ let ballotNumber = 42;
  */
 export class SimulationProvider implements IDataProvider {
   readonly name = "Local Simulation Engine";
+
+  /** Instance-level cache for the generated blockchain to ensure chain consistency across calls. */
+  private _blockchainCache: Block[] | null = null;
 
   async evaluate(request: EvaluationRequest): Promise<EvaluationSession> {
     const { start, end, strategy } = request;
@@ -1224,6 +1230,119 @@ export class SimulationProvider implements IDataProvider {
     flag.lastToggledBy = "platform-admin";
 
     return { success: true, flag: { ...flag } };
+  }
+
+  // -------------------------------------------------------------------------
+  // Blockchain ledger
+  // -------------------------------------------------------------------------
+
+  /**
+   * Generate the full 50-block proof-of-work chain on first access,
+   * then return the cached chain for all subsequent calls within
+   * this provider instance's lifetime.
+   */
+  private _ensureBlockchain(): Block[] {
+    if (this._blockchainCache) return this._blockchainCache;
+
+    const chain: Block[] = [];
+    const now = Date.now();
+    let txCounter = 1;
+
+    // Genesis block — index 0, no transactions, canonical zero previous hash
+    const genesisHash = "00" + Array.from({ length: 62 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+    chain.push({
+      index: 0,
+      hash: genesisHash,
+      previousHash: "0".repeat(64),
+      timestamp: new Date(now - 49 * 5000).toISOString(),
+      nonce: Math.floor(Math.random() * 4900) + 100,
+      difficulty: 2,
+      transactions: [],
+      miningDurationMs: Math.round(Math.max(5, gaussianRandom(50, 10)) * 10) / 10,
+    });
+
+    // Blocks 1-49: each contains 1-5 FizzBuzz evaluation transactions
+    for (let i = 1; i < 50; i++) {
+      const txCount = Math.floor(Math.random() * 5) + 1;
+      const transactions: BlockTransaction[] = [];
+
+      for (let t = 0; t < txCount; t++) {
+        const input = txCounter++;
+        let output: string;
+        let classification: BlockTransaction["classification"];
+
+        if (input % 15 === 0) {
+          output = "FizzBuzz";
+          classification = "fizzbuzz";
+        } else if (input % 3 === 0) {
+          output = "Fizz";
+          classification = "fizz";
+        } else if (input % 5 === 0) {
+          output = "Buzz";
+          classification = "buzz";
+        } else {
+          output = String(input);
+          classification = "number";
+        }
+
+        const txHash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+
+        transactions.push({
+          hash: txHash,
+          input,
+          output,
+          classification,
+          timestamp: new Date(now - (49 - i) * 5000 + t * 100).toISOString(),
+        });
+      }
+
+      const blockHash = "00" + Array.from({ length: 62 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+      const spacing = 2000 + Math.floor(Math.random() * 6000); // 2-8 seconds between blocks
+      const prevTimestamp = new Date(chain[i - 1].timestamp).getTime();
+      const miningDuration = Math.round(Math.max(5, gaussianRandom(45, 15)) * 10) / 10;
+
+      chain.push({
+        index: i,
+        hash: blockHash,
+        previousHash: chain[i - 1].hash,
+        timestamp: new Date(prevTimestamp + spacing).toISOString(),
+        nonce: Math.floor(Math.random() * 49900) + 100,
+        difficulty: 2,
+        transactions,
+        miningDurationMs: miningDuration,
+      });
+    }
+
+    this._blockchainCache = chain;
+    return chain;
+  }
+
+  async getBlockchain(limit = 50): Promise<Block[]> {
+    const chain = this._ensureBlockchain();
+    return [...chain].reverse().slice(0, limit);
+  }
+
+  async getBlock(hash: string): Promise<Block | null> {
+    const chain = this._ensureBlockchain();
+    return chain.find((b) => b.hash === hash) ?? null;
+  }
+
+  async getBlockchainStats(): Promise<BlockchainStats> {
+    const chain = this._ensureBlockchain();
+    const totalTransactions = chain.reduce((sum, b) => sum + b.transactions.length, 0);
+    const totalMiningTime = chain.reduce((sum, b) => sum + b.miningDurationMs, 0);
+    const averageMiningTimeMs = totalMiningTime / chain.length;
+    const averageNonce = chain.reduce((sum, b) => sum + b.nonce, 0) / chain.length;
+    const hashRate = (averageNonce / averageMiningTimeMs) * 1000;
+
+    return {
+      height: chain.length,
+      totalTransactions,
+      averageMiningTimeMs: Math.round(averageMiningTimeMs * 10) / 10,
+      currentDifficulty: 2,
+      hashRate: Math.round(hashRate * 10) / 10,
+      chainValid: true,
+    };
   }
 }
 

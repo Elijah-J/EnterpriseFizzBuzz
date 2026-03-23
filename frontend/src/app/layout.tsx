@@ -118,6 +118,14 @@ export default function RootLayout({
               </li>
               <li>
                 <Link
+                  href="/blockchain"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Blockchain
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/analytics"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
