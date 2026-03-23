@@ -578,6 +578,12 @@ from enterprise_fizzbuzz.infrastructure.elf_format import (
     HexDumper,
 )
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
+from enterprise_fizzbuzz.infrastructure.process_migration import (
+    MigrationDashboard as ProcessMigrationDashboard,
+    MigrationOrchestrator,
+    MigrationStrategy,
+    create_migration_subsystem,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -2874,6 +2880,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--zspec-dashboard",
         action="store_true",
         help="Display the FizzSpec ASCII dashboard with schema inventory and refinement results",
+    )
+
+    # FizzMigrate — Live Process Migration with Checkpoint/Restore
+    parser.add_argument(
+        "--live-migrate",
+        action="store_true",
+        help="Enable live process migration with checkpoint/restore for the evaluation pipeline",
+    )
+
+    parser.add_argument(
+        "--live-migrate-strategy",
+        choices=["pre-copy", "post-copy", "stop-and-copy"],
+        default="pre-copy",
+        help="Migration strategy: pre-copy (iterative dirty page transfer), "
+             "post-copy (demand-fault), or stop-and-copy (default: pre-copy)",
+    )
+
+    parser.add_argument(
+        "--live-migrate-checkpoint",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help="Path to save/load the migration checkpoint image (JSON with SHA-256 integrity)",
+    )
+
+    parser.add_argument(
+        "--live-migrate-dashboard",
+        action="store_true",
+        help="Display the FizzMigrate ASCII dashboard with transfer progress, dirty pages, and downtime",
     )
 
     return parser
@@ -6951,6 +6986,36 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzMigrate — Live Process Migration with Checkpoint/Restore
+    # ----------------------------------------------------------------
+    migration_orchestrator = None
+    migration_middleware_instance = None
+
+    if args.live_migrate or args.live_migrate_dashboard:
+        migrate_strategy = MigrationStrategy(args.live_migrate_strategy)
+
+        migration_orchestrator, migration_middleware_instance = create_migration_subsystem(
+            strategy=migrate_strategy,
+            checkpoint_file=args.live_migrate_checkpoint,
+            checkpoint_interval=config.get_raw("migration.checkpoint_interval", 10) or 10,
+            enable_dashboard=args.live_migrate_dashboard,
+        )
+
+        if args.live_migrate:
+            builder.with_middleware(migration_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZMIGRATE: LIVE PROCESS MIGRATION ENABLED             |\n"
+                f"  |   Strategy: {migrate_strategy.value.upper():<45s}|\n"
+                "  |   Checkpoint/Restore with SHA-256 integrity.            |\n"
+                "  |   Pre-copy iterative dirty page convergence.            |\n"
+                "  |   Migration time exceeds computation time by design.    |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -9178,6 +9243,27 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.replicate_dashboard:
         print("\n  FizzReplica not enabled. Use --replicate to enable.\n")
+
+    # FizzMigrate Dashboard and Post-Execution Migration (post-execution)
+    if args.live_migrate and migration_orchestrator is not None:
+        migration_image = migration_orchestrator.execute()
+        if migration_middleware_instance is not None:
+            eval_count = migration_middleware_instance.eval_count
+            checkpoints = migration_middleware_instance.checkpoints_taken
+            print(
+                f"\n  FizzMigrate: {eval_count} evaluations, "
+                f"{checkpoints} checkpoints captured"
+            )
+
+    if args.live_migrate_dashboard and migration_orchestrator is not None:
+        if migration_orchestrator.last_metrics is not None:
+            print(ProcessMigrationDashboard.render(
+                migration_orchestrator.last_metrics,
+            ))
+        else:
+            print("\n  FizzMigrate: No migration metrics available.\n")
+    elif args.live_migrate_dashboard:
+        print("\n  FizzMigrate not enabled. Use --live-migrate to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
