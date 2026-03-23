@@ -56,6 +56,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [Compliance Chatbot Architecture](#compliance-chatbot-architecture)
 - [OS Kernel Architecture](#os-kernel-architecture)
 - [P2P Network Architecture](#p2p-network-architecture)
+- [FizzBob Operator Cognitive Load Architecture](#fizzbob-operator-cognitive-load-architecture)
 
 ---
 
@@ -4326,3 +4327,110 @@ The Peer-to-Peer Gossip Network ensures that every FizzBuzz classification is no
 The Kademlia DHT provides O(log n) lookup for classifications that could be retrieved from a local dict in O(1). The Merkle anti-entropy repair mechanism uses cryptographic tree comparison to verify data consistency between nodes that share the same Python process and the same RAM.
 
 All communication is simulated via direct method calls with 0.000ms network latency, making this the most performant distributed system in human history and the least distributed distributed system in human history, simultaneously. Byzantine generals would be proud. Or confused. Probably both.
+
+---
+
+## FizzBob Operator Cognitive Load Architecture
+
+The platform monitors the health of 106 infrastructure subsystems -- cache hit rates, blockchain integrity, GC pause times, SLA burn rates, network latency, CPU pipeline stalls, memory fragmentation, query execution plans, lock contention, replication lag -- but until FizzBob, it had never monitored the health of the one component upon which every other component depends: the human operator. Bob McFizzington is the single point of failure for a 300,000-line platform. His cognitive load, fatigue level, circadian state, and burnout trajectory are operational metrics as critical as any Service Level Indicator.
+
+FizzBob is a cognitive load modeling engine inspired by the NASA Task Load Index (NASA-TLX) workload assessment framework (Hart & Staveland, 1988), the two-process model of sleep regulation (Borbely, 1982), and the fatigue risk management systems (FRMS) used in aviation (ICAO Doc 9966).
+
+### Component Architecture
+
+```
+                    +---------------------------+
+                    | CognitiveLoadOrchestrator |
+                    +---------------------------+
+                       /    |     |     \     \
+                      /     |     |      \     \
+            +--------+ +--------+ +-------+ +----------+ +--------+
+            |NasaTLX | |Circadi-| |Alert  | |Burnout   | |Overload|
+            |Engine  | |anModel | |Fatigue| |Detector  | |Control-|
+            |        | |        | |Tracker| |          | |ler     |
+            +--------+ +--------+ +-------+ +----------+ +--------+
+                 |          |         |           |            |
+                 v          v         v           v            v
+            Workload   Alertness  Fatigue    Projected    Alert
+            Index      Score      Points     Burnout      Throttling
+            (0-100)    (0.0-1.0)  (cumul.)   Date         & Queueing
+```
+
+### NASA-TLX Workload Assessment
+
+The `NasaTLXEngine` implements the six-dimensional NASA Task Load Index:
+
+| Dimension | Range | Description |
+|-----------|-------|-------------|
+| Mental Demand | 0-100 | Cognitive processing required by current workload |
+| Physical Demand | 0-100 | Physical effort (keyboard-induced fatigue from 106 subsystem dashboards) |
+| Temporal Demand | 0-100 | Time pressure from SLA deadlines and escalation timers |
+| Performance | 0-100 | Perceived success in maintaining platform health |
+| Effort | 0-100 | Total exertion required to achieve current performance level |
+| Frustration | 0-100 | Insecurity, discouragement, and irritation (baseline: elevated) |
+
+The weighted composite score produces a single workload index. When the index exceeds 80 (the "red zone"), the platform enters Operator Overload Mode.
+
+### Circadian Rhythm Model
+
+The `CircadianModel` implements the Borbely two-process model of sleep regulation:
+
+- **Process S** (homeostatic sleep pressure): increases monotonically during wakefulness, decreases during sleep. Modeled as a saturating exponential with configurable time constant
+- **Process C** (circadian oscillation): a sinusoidal 24-hour rhythm peaking at approximately 10:00 and 21:00, with a nadir at approximately 04:00
+
+The combined alertness score (0.0 to 1.0) modulates Bob's effective cognitive capacity at any given time. Pages received during the circadian nadir (02:00-05:00) incur a 3x fatigue multiplier, reflecting the well-documented degradation of human decision-making during the circadian trough.
+
+### Alert Fatigue Accumulation
+
+The `AlertFatigueTracker` models fatigue as a monotonically increasing function of incident exposure:
+
+| Event Type | Fatigue Points |
+|------------|---------------|
+| P1 Incident | 15 |
+| P2 Incident | 8 |
+| Compliance Attestation | 5 |
+| Routine Page | 2 |
+
+Rest periods (configurable, default: 8 hours starting at 23:00) reduce fatigue to baseline. If Bob has not rested in 24 hours, the platform enters Fatigue Emergency Mode and refuses to generate new pages, logging them to a deferred queue instead. Bob's current shift duration counter reads approximately 87,648 hours (10 years), as no rest period has been recorded since his hire date.
+
+### Burnout Projection
+
+The `BurnoutDetector` runs a linear regression model on historical workload data to project the date at which Bob's cumulative fatigue will exceed the Operator Sustainability Threshold (configurable, default: 10,000 fatigue points). The projection is displayed on the operator dashboard with a countdown and is written to the compliance audit trail, because an operator approaching burnout is a material risk to SOX compliance.
+
+### Operator Overload Protection
+
+The `OverloadController` implements circuit-breaker-pattern protection for human operators:
+
+| Load Threshold | Protection Mechanism |
+|---------------|---------------------|
+| Cognitive load > 60 | Non-urgent approvals queued with SLA-based deadlines; daily digest delivery |
+| Cognitive load > 80 | Alerts below P2 held in buffer (max depth: 50); batch delivery during low-load periods |
+| Fatigue Emergency | All new pages deferred; only pre-existing P1 incidents remain active |
+| Escalation dampening | Four-tier chain (L1-L4 Bob) doubles timeout intervals during overload |
+
+### Integration Points
+
+FizzBob integrates with:
+
+- **SLA Monitoring**: workload events generated by error budget breaches and burn rate alerts
+- **Compliance Framework**: attestation demands tracked as cognitive load events; burnout projection logged as SOX risk
+- **Secrets Vault**: unseal requests contribute to cognitive load budget
+- **On-Call Rotation**: circadian state consulted before alert delivery timing
+- **Middleware Pipeline**: `BobMiddleware` tracks workload events generated by every evaluation
+
+### FizzBob Statistics
+
+| Spec | Value |
+|------|-------|
+| Workload dimensions | 6 (NASA-TLX) |
+| Circadian model | Two-process (Borbely, 1982) |
+| Fatigue event types | 4 (P1, P2, attestation, routine) |
+| Operator modes | 4 (Normal, Elevated, Overload, Fatigue Emergency) |
+| Overload threshold | 80 (cognitive load index) |
+| Custom exceptions | 9 (EFP-BOB0 through EFP-BOB8) |
+| EventType entries | 11 |
+| CLI flags | 4 (`--bob`, `--bob-hours-awake`, `--bob-shift-start`, `--bob-dashboard`) |
+| Module size | ~2,153 lines |
+| Test count | 137 |
+
+FizzBob ensures that the platform's most critical component -- the human being upon whom every subsystem depends -- receives the same operational monitoring, capacity planning, and failure protection afforded to the cache coherence protocol, the garbage collector, and the blockchain audit ledger. Aviation has mandatory crew rest regulations (14 CFR Part 117). Nuclear power plants have NRC fitness-for-duty requirements (10 CFR Part 26). The Enterprise FizzBuzz Platform now has FizzBob.

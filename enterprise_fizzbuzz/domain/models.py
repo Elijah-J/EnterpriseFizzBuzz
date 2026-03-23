@@ -673,6 +673,19 @@ class EventType(Enum):
     ELF_BINARY_WRITTEN = auto()
     ELF_BINARY_PARSED = auto()
 
+    # FizzBob Operator Cognitive Load events
+    BOB_TLX_ASSESSED = auto()
+    BOB_CIRCADIAN_UPDATED = auto()
+    BOB_ALERT_RECEIVED = auto()
+    BOB_ALERT_ACKNOWLEDGED = auto()
+    BOB_FATIGUE_COMPUTED = auto()
+    BOB_BURNOUT_ASSESSED = auto()
+    BOB_OVERLOAD_ENTERED = auto()
+    BOB_OVERLOAD_EXITED = auto()
+    BOB_STATE_CHANGED = auto()
+    BOB_EVALUATION_OBSERVED = auto()
+    BOB_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

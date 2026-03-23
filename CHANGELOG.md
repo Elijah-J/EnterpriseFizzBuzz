@@ -4,6 +4,19 @@ All notable changes to the Enterprise FizzBuzz Platform are documented in this f
 
 ---
 
+## [Unreleased]
+### Added
+- FizzBob: NASA-TLX cognitive load modeling engine for operator Bob McFizzington, with circadian rhythm modeling (Borbely two-process model), six-dimensional workload assessment, alert fatigue tracking, burnout projection, and operator overload protection
+- NasaTLXEngine, CircadianModel, AlertFatigueTracker, BurnoutDetector, OverloadController, CognitiveLoadOrchestrator, BobMiddleware, and BobDashboard components
+- 9 new exception classes (EFP-BOB0 through EFP-BOB8) for operator modeling failure modes
+- 11 new EventType entries for operator workload event tracking
+- 4 new CLI flags: `--bob`, `--bob-hours-awake`, `--bob-shift-start`, `--bob-dashboard`
+
+### Operations
+- Bob McFizzington's cognitive state is now a formally modeled runtime entity. The platform has monitored the health of every subsystem -- cache hit rates, blockchain integrity, GC pause times, SLA burn rates -- except the health of its sole operator. This oversight has been corrected. Bob's circadian alertness, cognitive load budget, fatigue accumulation, and projected burnout date are now tracked with the same rigor as any other SLI. His shift duration counter currently reads approximately 87,648 hours (10 years), as no rest period has been recorded since his hire date. The burnout projection model estimates operator failure within the fiscal quarter. This finding has been logged to the compliance audit trail.
+
+---
+
 ## [0.19.0] - 2026-03-23
 ### Added
 - FizzPrint: TeX-inspired typesetting engine with Knuth-Plass optimal line breaking for publication-quality FizzBuzz output

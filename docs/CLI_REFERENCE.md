@@ -1283,6 +1283,10 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --p2p                      Enable the Peer-to-Peer Gossip Network: disseminate FizzBuzz results across simulated nodes via SWIM failure detection, Kademlia DHT, and epidemic rumor propagation
 --p2p-nodes N              Number of P2P cluster nodes (default: 7). Each node gets a 160-bit SHA-1 node ID and its own classification store
 --p2p-dashboard            Display the P2P Gossip Network ASCII dashboard with network topology, gossip statistics, DHT routing table, and Merkle anti-entropy sync status
+--bob                      Enable the FizzBob Operator Cognitive Load Modeling Engine: model Bob McFizzington's circadian rhythm, NASA-TLX workload index, alert fatigue, and burnout trajectory as runtime-critical operational metrics
+--bob-hours-awake N        Number of hours Bob has been awake (default: computed from --bob-shift-start). Affects circadian alertness score and fatigue accumulation rate
+--bob-shift-start HH:MM    Bob's shift start time in 24-hour format (default: 06:00). Used by the circadian model to compute current alertness and fatigue state
+--bob-dashboard            Display the FizzBob ASCII dashboard with circadian alertness sparkline, NASA-TLX radar chart, fatigue timeline, burnout countdown, and operator mode status
 ```
 
 ## Environment Variables

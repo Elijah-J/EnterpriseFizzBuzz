@@ -60,6 +60,7 @@ Error codes use the prefix `EFP-` followed by a subsystem identifier and a seque
 | `EFP-RP0x` | Repository / Unit of Work |
 | `EFP-SL0x` | SLA monitoring |
 | `EFP-T00x` | Distributed tracing (removed -- absorbed into FizzOTel `EFP-OT0x`) |
+| `EFP-BOB0` through `EFP-BOB8` | Operator cognitive load (FizzBob) |
 
 Numeric ranges (`EFP-1000` through `EFP-9000`) were assigned to the original subsystems. Later additions use alphabetic prefixes to avoid collisions, a decision that was never formally documented but has been consistently followed.
 
@@ -300,6 +301,22 @@ These exceptions manage schema migrations for in-memory dicts that vanish when t
 
 `MissingBindingError` notes that "the container cannot conjure services from thin air, despite what the Spring documentation implies." `ScopeError` helpfully suggests changing the lifetime to `SINGLETON` or, "if you want it to live forever with more dignity," `ETERNAL`.
 
+### Operator Cognitive Load / FizzBob (`EFP-BOB0` through `EFP-BOB8`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `OperatorModelError` | `FizzBuzzError` | `EFP-BOB0` | Base exception for all operator cognitive load modeling errors |
+| `CircadianModelError` | `OperatorModelError` | `EFP-BOB1` | The circadian rhythm model encountered an invalid state |
+| `CognitiveOverloadError` | `OperatorModelError` | `EFP-BOB2` | The operator's cognitive load index has exceeded the overload threshold |
+| `FatigueEmergencyError` | `OperatorModelError` | `EFP-BOB3` | The operator has entered Fatigue Emergency Mode (24+ hours without rest) |
+| `AlertFatigueThresholdError` | `OperatorModelError` | `EFP-BOB4` | The alert fatigue index has exceeded the configured threshold |
+| `BurnoutThresholdExceededError` | `OperatorModelError` | `EFP-BOB5` | The operator's projected burnout date has passed or is imminent |
+| `WorkloadEventValidationError` | `OperatorModelError` | `EFP-BOB6` | A workload event failed schema validation |
+| `OperatorUnavailableError` | `OperatorModelError` | `EFP-BOB7` | The operator is unavailable (PTO scheduled, though none has ever been requested) |
+| `OverloadControllerError` | `OperatorModelError` | `EFP-BOB8` | The overload controller failed to apply protective measures |
+
+`OperatorModelError` is the base exception for the FizzBob subsystem. `CognitiveOverloadError` is raised when the NASA-TLX composite workload index exceeds 80 and includes `workload_index`, `threshold`, and all six TLX dimension scores in its context. `FatigueEmergencyError` is raised when the operator has been awake for 24+ consecutive hours and includes `hours_awake` and `fatigue_points` in its context. `BurnoutThresholdExceededError` carries `projected_burnout_date` and `current_fatigue_points` and is simultaneously logged to the compliance audit trail as a material SOX risk. `OperatorUnavailableError` is architecturally present for the hypothetical scenario in which Bob schedules PTO; it has never been raised in production.
+
 ### Repository / Unit of Work (`EFP-RP0x`)
 
 | Class | Parent | Code | Description |
@@ -394,6 +411,15 @@ Exception
         │     ├── MissingBindingError        EFP-DI02
         │     ├── DuplicateBindingError      EFP-DI03
         │     └── ScopeError                 EFP-DI04
+        ├── OperatorModelError                EFP-BOB0
+        │     ├── CircadianModelError        EFP-BOB1
+        │     ├── CognitiveOverloadError     EFP-BOB2
+        │     ├── FatigueEmergencyError      EFP-BOB3
+        │     ├── AlertFatigueThresholdError EFP-BOB4
+        │     ├── BurnoutThresholdExceededError EFP-BOB5
+        │     ├── WorkloadEventValidationError EFP-BOB6
+        │     ├── OperatorUnavailableError   EFP-BOB7
+        │     └── OverloadControllerError    EFP-BOB8
         └── RepositoryError                  EFP-RP00
               ├── ResultNotFoundError        EFP-RP01
               ├── UnitOfWorkError            EFP-RP02

@@ -444,6 +444,12 @@ from enterprise_fizzbuzz.infrastructure.microkernel_ipc import (
     IPCKernel,
     IPCMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.fizzbob import (
+    BobDashboard,
+    BobMiddleware,
+    CognitiveLoadOrchestrator,
+    create_bob_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3385,6 +3391,32 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--gc-dashboard",
         action="store_true",
         help="Display the FizzGC garbage collector dashboard after execution",
+    )
+
+    # FizzBob — Operator Cognitive Load Modeling Engine
+    parser.add_argument(
+        "--bob",
+        action="store_true",
+        help="Enable FizzBob: model operator cognitive load using NASA-TLX, circadian rhythms, alert fatigue, and burnout detection",
+    )
+    parser.add_argument(
+        "--bob-hours-awake",
+        type=float,
+        default=None,
+        metavar="H",
+        help="Initial hours-awake for Bob at the start of his shift (default: from config, typically 0.0)",
+    )
+    parser.add_argument(
+        "--bob-shift-start",
+        type=float,
+        default=None,
+        metavar="H",
+        help="Wall-clock hour when Bob's shift begins (default: from config, typically 8.0)",
+    )
+    parser.add_argument(
+        "--bob-dashboard",
+        action="store_true",
+        help="Display the FizzBob cognitive load dashboard after execution",
     )
 
     return parser
@@ -7366,6 +7398,43 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzBob — Operator Cognitive Load Modeling Engine (priority 90)
+    # ----------------------------------------------------------------
+    bob_orchestrator = None
+    bob_middleware_instance = None
+
+    if args.bob or args.bob_dashboard:
+        bob_hours_awake = args.bob_hours_awake if args.bob_hours_awake is not None else config.bob_hours_awake
+        bob_shift_start = args.bob_shift_start if args.bob_shift_start is not None else config.bob_shift_start_hour
+
+        bob_orchestrator, bob_middleware_instance = create_bob_subsystem(
+            hours_awake=bob_hours_awake,
+            shift_start_hour=bob_shift_start,
+            tau_rise=config.bob_tau_rise,
+            c_amplitude=config.bob_c_amplitude,
+            alert_halflife_hours=config.bob_alert_halflife_hours,
+            burnout_threshold=config.bob_burnout_threshold,
+            tlx_activate=config.bob_tlx_activate,
+            auto_assess_interval=config.bob_auto_assess_interval,
+            generate_synthetic_alerts=config.bob_generate_synthetic_alerts,
+            enable_dashboard=args.bob_dashboard,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(bob_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZBOB: OPERATOR COGNITIVE LOAD ENGINE                 |\n"
+                f"  | Operator: Bob | Hours awake: {bob_hours_awake:<24}|\n"
+                f"  | Shift start: {bob_shift_start:05.1f}h | Alert halflife: {config.bob_alert_halflife_hours:.1f}h       |\n"
+                "  | NASA-TLX | Circadian | Alert Fatigue | Burnout (MBI)   |\n"
+                "  | Overload Mode: TLX >= 80 OR alertness < 0.20           |\n"
+                "  | Because systems are only as reliable as their operators.|\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -10570,6 +10639,13 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  FizzPrint: No results to typeset.\n")
     elif args.typeset_dashboard and not typeset_active:
         print("\n  FizzPrint not enabled. Use --typeset to enable.\n")
+
+    # FizzBob Dashboard (post-execution)
+    if args.bob_dashboard and bob_middleware_instance is not None:
+        print()
+        print(bob_middleware_instance.render_dashboard(width=config.bob_dashboard_width))
+    elif args.bob_dashboard and bob_middleware_instance is None:
+        print("\n  FizzBob not enabled. Use --bob to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:
