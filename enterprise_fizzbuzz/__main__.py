@@ -455,6 +455,12 @@ from enterprise_fizzbuzz.infrastructure.capability_security import (
     CapabilityMiddleware,
     Operation,
 )
+from enterprise_fizzbuzz.infrastructure.otel_tracing import (
+    OTelDashboard,
+    OTelMiddleware,
+    TracerProvider as OTelTracerProvider,
+    create_otel_subsystem,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2197,6 +2203,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzCap ASCII dashboard with active capabilities, delegation graph, and guard activity",
     )
 
+    # FizzOTel — OpenTelemetry-Compatible Distributed Tracing
+    parser.add_argument(
+        "--otel",
+        action="store_true",
+        help="Enable FizzOTel distributed tracing: W3C TraceContext, OTLP/Zipkin export, probabilistic sampling",
+    )
+
+    parser.add_argument(
+        "--otel-export",
+        type=str,
+        choices=["otlp", "zipkin", "console"],
+        default=None,
+        help="OTel trace export format: otlp (JSON), zipkin (v2 JSON), console (ASCII waterfall). Default: from config",
+    )
+
+    parser.add_argument(
+        "--otel-dashboard",
+        action="store_true",
+        help="Display the FizzOTel ASCII dashboard with trace stats, sampling decisions, export metrics, and duration histogram",
+    )
+
     return parser
 
 
@@ -2913,6 +2940,24 @@ def main(argv: Optional[list[str]] = None) -> int:
     if tracing_enabled:
         tracing_service.enable()
         tracing_mw = TracingMiddleware()
+
+    # ----------------------------------------------------------------
+    # FizzOTel — OpenTelemetry-Compatible Distributed Tracing Setup
+    # ----------------------------------------------------------------
+    otel_provider = None
+    otel_exporter = None
+    otel_middleware = None
+
+    if args.otel or args.otel_dashboard:
+        otel_export_fmt = args.otel_export or config.otel_export_format
+        otel_provider, otel_exporter, otel_middleware = create_otel_subsystem(
+            sampling_rate=config.otel_sampling_rate,
+            export_format=otel_export_fmt,
+            batch_mode=config.otel_batch_mode,
+            max_queue_size=config.otel_max_queue_size,
+            max_batch_size=config.otel_max_batch_size,
+            console_width=config.otel_dashboard_width,
+        )
 
     # ----------------------------------------------------------------
     # Role-Based Access Control (RBAC) setup
@@ -5224,6 +5269,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     if tracing_mw is not None:
         builder.with_middleware(tracing_mw)
 
+    # Add FizzOTel middleware (priority -10, runs before all others)
+    if otel_middleware is not None:
+        builder.with_middleware(otel_middleware)
+
     # Add authorization middleware if RBAC is active
     if rbac_active and auth_context is not None:
         auth_middleware = AuthorizationMiddleware(
@@ -6958,6 +7007,51 @@ def main(argv: Optional[list[str]] = None) -> int:
             dashboard = CapabilityDashboard(
                 cap_manager,
                 width=config.capability_security_dashboard_width,
+            )
+            print(dashboard.render())
+
+    # ----------------------------------------------------------------
+    # FizzOTel — OpenTelemetry-Compatible Distributed Tracing Output
+    # ----------------------------------------------------------------
+    # When --otel is active, the FizzBuzz evaluation pipeline emits
+    # W3C-compliant distributed traces in OTLP, Zipkin, or ASCII
+    # waterfall format. Because correlating n % 3 == 0 across service
+    # boundaries requires 128-bit trace IDs and nanosecond timestamps.
+    # ----------------------------------------------------------------
+    if otel_provider is not None and otel_exporter is not None:
+        # Flush any remaining spans
+        otel_provider.shutdown()
+
+        from enterprise_fizzbuzz.infrastructure.otel_tracing import (
+            ConsoleExporter as OTelConsoleExporter,
+        )
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FizzOTel Distributed Tracing                            |\n"
+            "  | OpenTelemetry-Compatible W3C TraceContext Propagation   |\n"
+            "  | Because single-node tracing was never enough.           |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        print(f"\n  Traces:    {otel_provider.trace_count}")
+        print(f"  Spans:     {otel_provider.span_count}")
+        print(f"  Sampled:   {otel_provider.sampler.sampled_count}")
+        print(f"  Dropped:   {otel_provider.sampler.dropped_count}")
+        print(f"  Exported:  {otel_exporter.exported_count}")
+        print(f"  Avg dur:   {otel_provider.metrics_bridge.avg_duration_ms:.3f}ms")
+        print()
+
+        # If using console exporter, print the waterfall
+        if isinstance(otel_exporter, OTelConsoleExporter):
+            print(otel_exporter.render())
+            print()
+
+        if args.otel_dashboard:
+            dashboard = OTelDashboard(
+                provider=otel_provider,
+                exporter=otel_exporter,
+                width=config.otel_dashboard_width,
             )
             print(dashboard.render())
 
