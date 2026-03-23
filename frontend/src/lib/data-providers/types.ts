@@ -1070,6 +1070,104 @@ export interface WhatIfScenario {
   projectedOutcome: WhatIfOutcome;
 }
 
+// ---------------------------------------------------------------------------
+// FinOps Billing Center types
+// ---------------------------------------------------------------------------
+
+/** FizzBuck cost attributed to a single infrastructure subsystem. */
+export interface CostAllocation {
+  /** Infrastructure subsystem name (e.g., "Blockchain Mining", "Cache Coherence"). */
+  subsystem: string;
+  /** FizzBuck cost for the current reporting period. */
+  cost: number;
+  /** Percentage of total platform spend attributable to this subsystem (0-100). */
+  percentage: number;
+  /** Budget allocated to this subsystem for the current period. */
+  budgetAllocated: number;
+  /** Budget utilization ratio (cost / budgetAllocated), can exceed 1.0 for overruns. */
+  utilizationRatio: number;
+}
+
+/** Budget health tracking for a named budget category. */
+export interface BudgetStatus {
+  /** Budget category identifier (e.g., "compute", "storage", "mining", "consensus"). */
+  category: string;
+  /** Human-readable category label. */
+  label: string;
+  /** Total FizzBucks allocated for this budget period. */
+  allocated: number;
+  /** FizzBucks spent to date within this period. */
+  spent: number;
+  /** Remaining FizzBucks (allocated - spent). */
+  remaining: number;
+  /** Budget period descriptor (e.g., "2026-Q1", "2026-03"). */
+  period: string;
+  /** Forecast: projected spend at end of period based on current burn rate. */
+  projectedSpend: number;
+  /** Whether this category is on track to exceed its allocation. */
+  overBudget: boolean;
+}
+
+/** FizzBuck-to-USD exchange rate with historical context. */
+export interface FizzBuckExchangeRate {
+  /** Current exchange rate: 1 FB$ = rate USD. */
+  rate: number;
+  /** Rate trend direction over the last 24 hours. */
+  trend: "up" | "down" | "stable";
+  /** Percentage change over the last 24 hours (signed). */
+  change24h: number;
+  /** 24-hour high water mark. */
+  high24h: number;
+  /** 24-hour low water mark. */
+  low24h: number;
+  /** Historical rate data points for sparkline/chart rendering. */
+  history: { timestamp: number; rate: number }[];
+}
+
+/** A single line item on a FizzBuck invoice. */
+export interface InvoiceLine {
+  /** Line item description (e.g., "Blockchain Mining - 847 blocks @ 0.0034 FB$/block"). */
+  description: string;
+  /** Quantity of units consumed. */
+  quantity: number;
+  /** Cost per unit in FizzBucks. */
+  unitCost: number;
+  /** Line total (quantity * unitCost). */
+  total: number;
+  /** Subsystem this line item is attributed to. */
+  subsystem: string;
+}
+
+/** A complete FizzBuck invoice for a billing period. */
+export interface Invoice {
+  /** Unique invoice identifier (e.g., "INV-2026-03-0017"). */
+  id: string;
+  /** Billing period this invoice covers (e.g., "2026-03"). */
+  period: string;
+  /** Itemized line items comprising this invoice. */
+  lines: InvoiceLine[];
+  /** Sum of all line item totals before tax. */
+  subtotal: number;
+  /** FizzBuck Value Added Tax (FBVAT) at the standard 7.5% rate. */
+  tax: number;
+  /** Grand total (subtotal + tax). */
+  total: number;
+  /** ISO 8601 timestamp of invoice generation. */
+  issuedAt: string;
+  /** Invoice status. */
+  status: "draft" | "issued" | "paid" | "overdue";
+}
+
+/** A single data point in the cost trend time series. */
+export interface DailyCostPoint {
+  /** Date string in YYYY-MM-DD format. */
+  date: string;
+  /** Total FizzBuck spend for this day. */
+  totalCost: number;
+  /** Per-subsystem cost breakdown for stacked chart rendering. */
+  bySubsystem: Record<string, number>;
+}
+
 /** Projected platform metrics after applying what-if parameter overrides. */
 export interface WhatIfOutcome {
   /** Predicted mean evaluation latency in ms. */

@@ -174,6 +174,19 @@ export default function RootLayout({
               </li>
             </ul>
             <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
+              Finance
+            </p>
+            <ul className="space-y-1 text-sm text-panel-300">
+              <li>
+                <Link
+                  href="/finops"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  FinOps
+                </Link>
+              </li>
+            </ul>
+            <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
               Research
             </p>
             <ul className="space-y-1 text-sm text-panel-300">
