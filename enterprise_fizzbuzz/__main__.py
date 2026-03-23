@@ -5157,7 +5157,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     grammar_analyzer = None
 
     if args.grammar or args.grammar_analyze or args.grammar_dashboard:
-        from enterprise_fizzbuzz.infrastructure.formal_grammar import (
+        from enterprise_fizzbuzz.infrastructure.fizzlang import (
             GrammarAnalyzer,
             GrammarDashboard,
             ParserGenerator,
@@ -7690,7 +7690,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     # FizzGrammar Dashboard
     # ----------------------------------------------------------------
     if args.grammar_dashboard and grammar_obj is not None:
-        from enterprise_fizzbuzz.infrastructure.formal_grammar import (
+        from enterprise_fizzbuzz.infrastructure.fizzlang import (
             GrammarDashboard,
         )
         print(GrammarDashboard.render(
