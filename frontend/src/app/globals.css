@@ -1,0 +1,80 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+@theme inline {
+  --color-background: var(--surface-primary);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Fizz — divisible by 3 */
+  --color-fizz-50: var(--fizz-50);
+  --color-fizz-100: var(--fizz-100);
+  --color-fizz-200: var(--fizz-200);
+  --color-fizz-300: var(--fizz-300);
+  --color-fizz-400: var(--fizz-400);
+  --color-fizz-500: var(--fizz-500);
+  --color-fizz-600: var(--fizz-600);
+  --color-fizz-700: var(--fizz-700);
+  --color-fizz-800: var(--fizz-800);
+  --color-fizz-900: var(--fizz-900);
+  --color-fizz-950: var(--fizz-950);
+
+  /* Buzz — divisible by 5 */
+  --color-buzz-50: var(--buzz-50);
+  --color-buzz-100: var(--buzz-100);
+  --color-buzz-200: var(--buzz-200);
+  --color-buzz-300: var(--buzz-300);
+  --color-buzz-400: var(--buzz-400);
+  --color-buzz-500: var(--buzz-500);
+  --color-buzz-600: var(--buzz-600);
+  --color-buzz-700: var(--buzz-700);
+  --color-buzz-800: var(--buzz-800);
+  --color-buzz-900: var(--buzz-900);
+  --color-buzz-950: var(--buzz-950);
+
+  /* FizzBuzz — divisible by 15 */
+  --color-fizzbuzz-50: var(--fizzbuzz-50);
+  --color-fizzbuzz-100: var(--fizzbuzz-100);
+  --color-fizzbuzz-200: var(--fizzbuzz-200);
+  --color-fizzbuzz-300: var(--fizzbuzz-300);
+  --color-fizzbuzz-400: var(--fizzbuzz-400);
+  --color-fizzbuzz-500: var(--fizzbuzz-500);
+  --color-fizzbuzz-600: var(--fizzbuzz-600);
+  --color-fizzbuzz-700: var(--fizzbuzz-700);
+  --color-fizzbuzz-800: var(--fizzbuzz-800);
+  --color-fizzbuzz-900: var(--fizzbuzz-900);
+  --color-fizzbuzz-950: var(--fizzbuzz-950);
+  --color-fizzbuzz-gold: var(--fizzbuzz-gold);
+
+  /* Number — plain integers */
+  --color-number-50: var(--number-50);
+  --color-number-100: var(--number-100);
+  --color-number-200: var(--number-200);
+  --color-number-300: var(--number-300);
+  --color-number-400: var(--number-400);
+  --color-number-500: var(--number-500);
+  --color-number-600: var(--number-600);
+  --color-number-700: var(--number-700);
+  --color-number-800: var(--number-800);
+  --color-number-900: var(--number-900);
+  --color-number-950: var(--number-950);
+
+  /* Panel — dashboard surfaces */
+  --color-panel-50: var(--panel-50);
+  --color-panel-100: var(--panel-100);
+  --color-panel-200: var(--panel-200);
+  --color-panel-300: var(--panel-300);
+  --color-panel-400: var(--panel-400);
+  --color-panel-500: var(--panel-500);
+  --color-panel-600: var(--panel-600);
+  --color-panel-700: var(--panel-700);
+  --color-panel-800: var(--panel-800);
+  --color-panel-900: var(--panel-900);
+  --color-panel-950: var(--panel-950);
+}
+
+body {
+  background: var(--surface-primary);
+  color: var(--text-primary);
+}

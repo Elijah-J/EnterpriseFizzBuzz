@@ -1,0 +1,96 @@
+/**
+ * Enterprise FizzBuzz Platform — Design Token Taxonomy
+ *
+ * These tokens form the foundational visual language of the FizzBuzz
+ * Operations Center. Each color family maps directly to a domain concept
+ * in the FizzBuzz evaluation pipeline. Unauthorized modification of these
+ * tokens may result in audit failures and SLA violations.
+ */
+
+:root {
+  /* Fizz Result Tokens — Green spectrum */
+  --fizz-50: #ecfdf5;
+  --fizz-100: #d1fae5;
+  --fizz-200: #a7f3d0;
+  --fizz-300: #6ee7b7;
+  --fizz-400: #34d399;
+  --fizz-500: #10b981;
+  --fizz-600: #059669;
+  --fizz-700: #047857;
+  --fizz-800: #065f46;
+  --fizz-900: #064e3b;
+  --fizz-950: #022c22;
+
+  /* Buzz Result Tokens — Blue spectrum */
+  --buzz-50: #eff6ff;
+  --buzz-100: #dbeafe;
+  --buzz-200: #bfdbfe;
+  --buzz-300: #93c5fd;
+  --buzz-400: #60a5fa;
+  --buzz-500: #3b82f6;
+  --buzz-600: #2563eb;
+  --buzz-700: #1d4ed8;
+  --buzz-800: #1e40af;
+  --buzz-900: #1e3a8a;
+  --buzz-950: #172554;
+
+  /* FizzBuzz Result Tokens — Purple/Gold spectrum */
+  --fizzbuzz-50: #faf5ff;
+  --fizzbuzz-100: #f3e8ff;
+  --fizzbuzz-200: #e9d5ff;
+  --fizzbuzz-300: #d8b4fe;
+  --fizzbuzz-400: #c084fc;
+  --fizzbuzz-500: #a855f7;
+  --fizzbuzz-600: #9333ea;
+  --fizzbuzz-700: #7e22ce;
+  --fizzbuzz-800: #6b21a8;
+  --fizzbuzz-900: #581c87;
+  --fizzbuzz-950: #3b0764;
+  --fizzbuzz-gold: #f59e0b;
+  --fizzbuzz-gold-light: #fbbf24;
+
+  /* Number Result Tokens — Neutral spectrum */
+  --number-50: #fafafa;
+  --number-100: #f4f4f5;
+  --number-200: #e4e4e7;
+  --number-300: #d4d4d8;
+  --number-400: #a1a1aa;
+  --number-500: #71717a;
+  --number-600: #52525b;
+  --number-700: #3f3f46;
+  --number-800: #27272a;
+  --number-900: #18181b;
+  --number-950: #09090b;
+
+  /* Panel Tokens — Dark dashboard surfaces */
+  --panel-50: #f8fafc;
+  --panel-100: #f1f5f9;
+  --panel-200: #e2e8f0;
+  --panel-300: #cbd5e1;
+  --panel-400: #94a3b8;
+  --panel-500: #64748b;
+  --panel-600: #475569;
+  --panel-700: #334155;
+  --panel-800: #1e293b;
+  --panel-900: #0f172a;
+  --panel-950: #020617;
+
+  /* Semantic Tokens */
+  --status-success: var(--fizz-500);
+  --status-warning: var(--fizzbuzz-gold);
+  --status-error: #ef4444;
+  --status-info: var(--buzz-500);
+
+  /* Surface Tokens */
+  --surface-primary: var(--panel-950);
+  --surface-secondary: var(--panel-900);
+  --surface-card: var(--panel-800);
+  --surface-card-hover: var(--panel-700);
+  --surface-border: var(--panel-700);
+
+  /* Typography Tokens */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: var(--panel-950);
+}
