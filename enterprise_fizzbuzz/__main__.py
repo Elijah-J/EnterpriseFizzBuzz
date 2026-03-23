@@ -515,6 +515,13 @@ from enterprise_fizzbuzz.infrastructure.proof_certificates import (
     ProofDashboard,
     ProofMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.virtual_fs import (
+    FizzFS,
+    FizzShell,
+    FSDashboard,
+    FSMiddleware,
+    create_fizzfs,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2574,6 +2581,41 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzProof ASCII dashboard with certificate inventory, verification metrics, and kernel status",
     )
 
+    # FizzFS — In-Memory Virtual File System
+    parser.add_argument(
+        "--fizzfs",
+        action="store_true",
+        help="Enable FizzFS: POSIX-like in-memory virtual file system with mount points for platform state",
+    )
+
+    parser.add_argument(
+        "--fizzfs-shell",
+        action="store_true",
+        help="Launch the FizzShell interactive REPL for navigating the virtual file system",
+    )
+
+    parser.add_argument(
+        "--fizzfs-cat",
+        type=str,
+        metavar="PATH",
+        default=None,
+        help="Read and display the contents of a virtual file (e.g. --fizzfs-cat /dev/fizz)",
+    )
+
+    parser.add_argument(
+        "--fizzfs-ls",
+        type=str,
+        metavar="PATH",
+        default=None,
+        help="List the contents of a virtual directory (e.g. --fizzfs-ls /dev)",
+    )
+
+    parser.add_argument(
+        "--fizzfs-dashboard",
+        action="store_true",
+        help="Display the FizzFS ASCII dashboard with mount table, inode stats, and directory tree",
+    )
+
     return parser
 
 
@@ -2778,6 +2820,46 @@ def main(argv: Optional[list[str]] = None) -> int:
             except Exception as e:
                 print(f"\n  NLQ Error: {e}\n")
                 return 1
+            return 0
+
+    # ----------------------------------------------------------------
+    # FizzFS — Virtual File System (early exit commands)
+    # ----------------------------------------------------------------
+    if args.fizzfs_shell or args.fizzfs_cat or args.fizzfs_ls or args.fizzfs_dashboard:
+        raw_config = config._get_raw_config_copy() if hasattr(config, '_get_raw_config_copy') else config._get_defaults()
+        fizzfs, audit_prov = create_fizzfs(
+            config_tree=raw_config,
+            version=config.app_version,
+        )
+        audit_prov.append("FizzFS initialized (early exit mode)")
+
+        if args.fizzfs_shell:
+            shell = FizzShell(fizzfs)
+            shell.run()
+            return 0
+
+        if args.fizzfs_cat:
+            try:
+                content = fizzfs.read_file(args.fizzfs_cat)
+                print(content, end="")
+            except Exception as e:
+                print(f"\n  FizzFS Error: {e}\n")
+                return 1
+            return 0
+
+        if args.fizzfs_ls:
+            try:
+                entries = fizzfs.readdir(args.fizzfs_ls)
+                for entry in entries:
+                    prefix = "d" if entry.file_type.name == "DIRECTORY" else "-"
+                    print(f"  {prefix} {entry.name}")
+            except Exception as e:
+                print(f"\n  FizzFS Error: {e}\n")
+                return 1
+            return 0
+
+        if args.fizzfs_dashboard:
+            print(FSDashboard.render(fizzfs))
             return 0
 
     # ----------------------------------------------------------------
@@ -6354,6 +6436,32 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzFS — In-Memory Virtual File System (pipeline integration)
+    # ----------------------------------------------------------------
+    fizzfs_instance = None
+    fizzfs_audit = None
+    fizzfs_middleware = None
+    if args.fizzfs:
+        raw_config = config._get_raw_config_copy() if hasattr(config, '_get_raw_config_copy') else config._get_defaults()
+        fizzfs_instance, fizzfs_audit = create_fizzfs(
+            config_tree=raw_config,
+            version=config.app_version,
+        )
+        fizzfs_audit.append("FizzFS initialized (pipeline mode)")
+        fizzfs_middleware = FSMiddleware(fizzfs_instance)
+        builder.with_middleware(fizzfs_middleware)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FizzFS: Virtual File System ENABLED                     |\n"
+                "  | Mount points: /proc /cache /sys /dev /audit             |\n"
+                "  | Evaluation results stored at /eval/<number>             |\n"
+                "  | Because everything is a file. Especially FizzBuzz.      |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -8295,6 +8403,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(DatalogDashboard.render(session=datalog_session, width=60))
     elif args.datalog_dashboard:
         print("\n  FizzLog not enabled. Use --datalog to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzFS Dashboard (post-execution)
+    # ----------------------------------------------------------------
+    if args.fizzfs_dashboard and fizzfs_instance is not None:
+        print(FSDashboard.render(fizzfs_instance))
+    elif args.fizzfs_dashboard:
+        print("\n  FizzFS not enabled. Use --fizzfs to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
