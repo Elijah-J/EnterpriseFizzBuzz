@@ -12116,3 +12116,119 @@ class SmartContractGovernanceError(SmartContractError):
         )
         self.reason = reason
         self.proposal_id = proposal_id
+
+
+# ---------------------------------------------------------------------------
+# FizzDNS Authoritative DNS Server Errors (EFP-DNS0 .. EFP-DNS5)
+# ---------------------------------------------------------------------------
+
+class DNSError(FizzBuzzError):
+    """Base exception for all FizzDNS Authoritative DNS Server errors.
+
+    DNS is the foundational layer of the enterprise FizzBuzz service
+    discovery infrastructure. Errors at this layer indicate failures
+    in zone loading, wire format encoding, query resolution, or
+    negative cache operations that could prevent clients from
+    resolving FizzBuzz classifications via DNS.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-DNS0"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class DNSZoneLoadError(DNSError):
+    """Raised when a DNS zone fails to load or parse.
+
+    Zone loading failures prevent the authoritative DNS server from
+    serving records for the affected domain. Without a properly loaded
+    zone, all queries for that domain will receive SERVFAIL responses,
+    effectively taking the FizzBuzz DNS service offline for that zone.
+    """
+
+    def __init__(self, zone_origin: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to load zone '{zone_origin}': {reason}",
+            error_code="EFP-DNS1",
+            context={"zone_origin": zone_origin, "reason": reason},
+        )
+        self.zone_origin = zone_origin
+        self.reason = reason
+
+
+class DNSWireFormatError(DNSError):
+    """Raised when DNS wire format encoding or decoding fails.
+
+    Wire format errors indicate malformed DNS messages that cannot
+    be parsed according to RFC 1035. This includes truncated headers,
+    invalid compression pointers, and label length violations.
+    """
+
+    def __init__(self, reason: str, offset: int = -1) -> None:
+        super().__init__(
+            f"DNS wire format error at offset {offset}: {reason}" if offset >= 0
+            else f"DNS wire format error: {reason}",
+            error_code="EFP-DNS2",
+            context={"reason": reason, "offset": offset},
+        )
+        self.reason = reason
+        self.offset = offset
+
+
+class DNSQueryResolutionError(DNSError):
+    """Raised when the DNS resolver encounters an internal error.
+
+    Resolution errors are distinct from NXDOMAIN or REFUSED responses,
+    which are normal DNS protocol outcomes. This exception indicates
+    an unexpected failure in the resolution logic itself.
+    """
+
+    def __init__(self, qname: str, qtype: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to resolve {qname} {qtype}: {reason}",
+            error_code="EFP-DNS3",
+            context={"qname": qname, "qtype": qtype, "reason": reason},
+        )
+        self.qname = qname
+        self.qtype = qtype
+        self.reason = reason
+
+
+class DNSNegativeCacheError(DNSError):
+    """Raised when the negative cache encounters a consistency violation.
+
+    The NSEC-style negative cache maintains authenticated denial-of-
+    existence records. If these records become inconsistent with the
+    authoritative zone data, the cache must be invalidated to prevent
+    serving stale negative responses.
+    """
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(
+            f"Negative cache consistency violation: {reason}",
+            error_code="EFP-DNS4",
+            context={"reason": reason},
+        )
+        self.reason = reason
+
+
+class DNSZoneTransferError(DNSError):
+    """Raised when a zone transfer operation fails.
+
+    Zone transfers (AXFR/IXFR) are used to replicate zone data between
+    primary and secondary name servers. Transfer failures can lead to
+    stale zone data on secondary servers, resulting in inconsistent
+    FizzBuzz classification responses across the DNS infrastructure.
+    """
+
+    def __init__(self, zone_origin: str, reason: str) -> None:
+        super().__init__(
+            f"Zone transfer failed for '{zone_origin}': {reason}",
+            error_code="EFP-DNS5",
+            context={"zone_origin": zone_origin, "reason": reason},
+        )
+        self.zone_origin = zone_origin
+        self.reason = reason

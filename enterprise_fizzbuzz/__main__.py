@@ -283,6 +283,15 @@ from enterprise_fizzbuzz.infrastructure.compliance_chatbot import (
 from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     UnifiedAuditDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.dns_server import (
+    DNSDashboard,
+    DNSQueryFormatter,
+    DNSResolver,
+    FizzBuzzZone,
+    NegativeCache,
+    DNSMiddleware as DNSMiddlewareClass,
+    create_dns_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.probabilistic import (
     ProbabilisticDashboard,
     ProbabilisticMiddleware,
@@ -3086,6 +3095,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzContract ASCII dashboard with deployed contracts, gas usage, and governance",
     )
 
+    # FizzDNS Authoritative DNS Server
+    parser.add_argument(
+        "--dns",
+        action="store_true",
+        help="Enable the FizzDNS Authoritative DNS Server for fizzbuzz.local zone",
+    )
+
+    parser.add_argument(
+        "--dns-query",
+        type=str,
+        default=None,
+        metavar="QUERY",
+        help='Execute a DNS query (e.g. --dns-query "15.fizzbuzz.local TXT")',
+    )
+
+    parser.add_argument(
+        "--dns-zone",
+        action="store_true",
+        help="Print the BIND-style zone file for fizzbuzz.local and exit",
+    )
+
+    parser.add_argument(
+        "--dns-dashboard",
+        action="store_true",
+        help="Display the FizzDNS ASCII dashboard with query stats, zone inventory, and cache stats",
+    )
+
     return parser
 
 
@@ -3133,6 +3169,47 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Configuration
     config = ConfigurationManager(config_path=args.config)
     config.load()
+
+    # ----------------------------------------------------------------
+    # FizzDNS Zone File (early exit command)
+    # ----------------------------------------------------------------
+    if args.dns_zone:
+        print(FizzBuzzZone.generate_zone_file(
+            range_start=config.range_start if hasattr(config, 'range_start') else 1,
+            range_end=config.range_end if hasattr(config, 'range_end') else 100,
+        ))
+        return 0
+
+    # ----------------------------------------------------------------
+    # FizzDNS Query (early exit command)
+    # ----------------------------------------------------------------
+    if args.dns_query:
+        parts = args.dns_query.strip().split()
+        qname = parts[0] if parts else "fizzbuzz.local."
+        qtype_str = parts[1] if len(parts) > 1 else "TXT"
+
+        dns_zone, dns_resolver, dns_neg_cache, _ = create_dns_subsystem()
+
+        import time as _dns_time
+        _dns_start = _dns_time.monotonic()
+        from enterprise_fizzbuzz.infrastructure.dns_server import (
+            DNSHeader, DNSMessage, DNSQuestion, DNSType,
+        )
+        _type_map = {"A": 1, "NS": 2, "CNAME": 5, "SOA": 6, "PTR": 12,
+                     "MX": 15, "TXT": 16, "AAAA": 28, "SRV": 33, "ANY": 255}
+        query = DNSMessage()
+        query.header = DNSHeader(id=0xFB15, qr=0, rd=1, qdcount=1)
+        query.questions = [DNSQuestion(
+            qname=qname,
+            qtype=_type_map.get(qtype_str.upper(), 16),
+        )]
+        response = dns_resolver.resolve(query)
+        _dns_elapsed = (_dns_time.monotonic() - _dns_start) * 1_000_000
+
+        print()
+        print(DNSQueryFormatter.format_response(response, query_time_us=_dns_elapsed))
+        print()
+        return 0
 
     # ----------------------------------------------------------------
     # FizzLint Static Analysis (early exit commands)
@@ -7336,6 +7413,21 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # ----------------------------------------------------------------
+    # FizzDNS — Authoritative DNS Server
+    # ----------------------------------------------------------------
+    dns_zone_obj = None
+    dns_resolver_obj = None
+    dns_neg_cache_obj = None
+    dns_middleware_instance = None
+
+    if args.dns or args.dns_dashboard:
+        dns_zone_obj, dns_resolver_obj, dns_neg_cache_obj, dns_middleware_instance = (
+            create_dns_subsystem()
+        )
+        middlewares.append(dns_middleware_instance)
+        logger.info("FizzDNS Authoritative DNS Server enabled for fizzbuzz.local")
+
     # FizzContract — Smart Contract VM
     # ----------------------------------------------------------------
     contract_deployer = None
@@ -9830,6 +9922,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.contract_dashboard:
         print("\n  FizzContract not enabled. Use --contract to enable.\n")
+
+    # FizzDNS Dashboard (post-execution)
+    if args.dns_dashboard and dns_resolver_obj is not None:
+        print()
+        print(DNSDashboard.render(dns_resolver_obj, negative_cache=dns_neg_cache_obj))
+    elif args.dns_dashboard:
+        print("\n  FizzDNS not enabled. Use --dns to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
