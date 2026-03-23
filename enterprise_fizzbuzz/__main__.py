@@ -299,6 +299,14 @@ from enterprise_fizzbuzz.infrastructure.dns_server import (
     DNSMiddleware as DNSMiddlewareClass,
     create_dns_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.typesetter import (
+    FizzBuzzReport,
+    FontMetrics,
+    PageLayout,
+    PostScriptRenderer,
+    TypesetDashboard,
+    TypesetMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.gpu_shader import (
     FizzGLSLCompiler,
     GPUSimulator,
@@ -3255,6 +3263,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--clock-dashboard",
         action="store_true",
         help="Display the FizzClock NTP synchronization ASCII dashboard after execution",
+    )
+
+    # FizzPrint Typesetting Engine
+    parser.add_argument(
+        "--typeset",
+        action="store_true",
+        help="Enable FizzPrint TeX-inspired typesetting engine for publication-quality reports",
+    )
+
+    parser.add_argument(
+        "--typeset-output",
+        type=str,
+        default=None,
+        metavar="FILE",
+        help="Write PostScript typeset output to FILE (requires --typeset)",
+    )
+
+    parser.add_argument(
+        "--typeset-dashboard",
+        action="store_true",
+        help="Display the FizzPrint typesetting statistics dashboard after execution",
     )
 
     # FizzBoot x86 Bootloader Simulation
@@ -7017,6 +7046,39 @@ def main(argv: Optional[list[str]] = None) -> int:
     if auth_context is not None:
         builder.with_auth_context(auth_context)
 
+    # ----------------------------------------------------------------
+    # FizzPrint Typesetting Middleware (priority 960, near end of chain)
+    # ----------------------------------------------------------------
+    typeset_middleware_instance = None
+    typeset_active = args.typeset or args.typeset_output or args.typeset_dashboard
+
+    if typeset_active:
+        ts_layout = PageLayout(
+            page_width=config.typeset_page_width,
+            page_height=config.typeset_page_height,
+        )
+        ts_font = FontMetrics(
+            name=config.typeset_font_name,
+            size=config.typeset_font_size,
+        )
+        typeset_middleware_instance = TypesetMiddleware(
+            output_path=args.typeset_output or config.typeset_output_path,
+            enable_dashboard=args.typeset_dashboard,
+            layout=ts_layout,
+            font=ts_font,
+        )
+        builder.with_middleware(typeset_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZPRINT: TEX-INSPIRED TYPESETTING ENGINE              |\n"
+                "  |   Knuth-Plass optimal line breaking algorithm           |\n"
+                "  |   Box-glue-penalty model, Liang hyphenation             |\n"
+                "  |   Publication-quality FizzBuzz reports                   |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add FizzBoot x86 bootloader middleware (priority -20, runs before everything)
     boot_middleware_instance = None
     boot_active = args.boot or args.boot_verbose or args.boot_dashboard
@@ -10299,6 +10361,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(CPIDashboard.render(pipeline_sim))
     elif args.cpu_dashboard:
         print("\n  FizzCPU not enabled. Use --cpu-pipeline to enable.\n")
+
+    # FizzPrint Dashboard (post-execution)
+    if typeset_active and typeset_middleware_instance is not None:
+        typeset_report = typeset_middleware_instance.finalize()
+        if typeset_report is not None:
+            if args.typeset_output or config.typeset_output_path:
+                output_file = args.typeset_output or config.typeset_output_path
+                print(f"\n  FizzPrint PostScript written to: {output_file}")
+                print(f"  Pages: {len(typeset_report.pages)}, Lines: {typeset_report.total_lines}")
+            if args.typeset_dashboard:
+                print()
+                print(TypesetDashboard.render(typeset_report, width=config.typeset_dashboard_width))
+        elif args.typeset_dashboard:
+            print("\n  FizzPrint: No results to typeset.\n")
+    elif args.typeset_dashboard and not typeset_active:
+        print("\n  FizzPrint not enabled. Use --typeset to enable.\n")
 
     # FizzBoot Dashboard (post-execution)
     if args.boot_dashboard and boot_middleware_instance is not None and boot_middleware_instance.loader is not None:
