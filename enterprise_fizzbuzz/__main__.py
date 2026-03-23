@@ -23,6 +23,7 @@ import os
 import random
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -443,6 +444,10 @@ from enterprise_fizzbuzz.infrastructure.ip_office import (
 from enterprise_fizzbuzz.infrastructure.neural_arch_search import (
     NASDashboard,
     NASEngine,
+)
+from enterprise_fizzbuzz.infrastructure.observability_correlation import (
+    CorrelationDashboard,
+    ObservabilityCorrelationManager,
 )
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
@@ -2129,6 +2134,19 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--nas-dashboard",
         action="store_true",
         help="Display the FizzNAS ASCII dashboard with Pareto front, top architectures, and baseline comparison",
+    )
+
+    # FizzCorr Observability Correlation Engine
+    parser.add_argument(
+        "--correlate",
+        action="store_true",
+        help="Enable FizzCorr Observability Correlation Engine: unify traces, logs, and metrics into a correlated timeline",
+    )
+
+    parser.add_argument(
+        "--correlate-dashboard",
+        action="store_true",
+        help="Display the FizzCorr ASCII dashboard with unified timeline, anomalies, dependency map, and signal volumes",
     )
 
     return parser
@@ -6710,6 +6728,101 @@ def main(argv: Optional[list[str]] = None) -> int:
                 engine=nas_engine,
                 width=config.nas_dashboard_width + 4,
             ))
+
+    # ----------------------------------------------------------------
+    # FizzCorr Observability Correlation Engine
+    # ----------------------------------------------------------------
+    if args.correlate or args.correlate_dashboard:
+        corr_manager = ObservabilityCorrelationManager(
+            temporal_window_seconds=config.observability_correlation_temporal_window_seconds,
+            confidence_threshold=config.observability_correlation_confidence_threshold,
+            causal_patterns=config.observability_correlation_causal_patterns,
+            latency_threshold_ms=config.observability_correlation_anomaly_latency_threshold_ms,
+            error_burst_window_s=config.observability_correlation_anomaly_error_burst_window_s,
+            error_burst_threshold=config.observability_correlation_anomaly_error_burst_threshold,
+            metric_deviation_sigma=config.observability_correlation_anomaly_metric_deviation_sigma,
+            dashboard_width=config.observability_correlation_dashboard_width,
+        )
+
+        # Ingest synthetic observability signals from the evaluation session
+        base_time = time.time()
+        eval_cid = str(uuid.uuid4())
+
+        # Trace: overall evaluation pipeline
+        corr_manager.ingest_trace(
+            span_name="evaluate_range",
+            subsystem="pipeline",
+            start_time=base_time,
+            duration_ms=elapsed_ms if "elapsed_ms" in dir() else 1.0,
+            trace_id=eval_cid,
+            status="OK",
+        )
+
+        # Trace: rule engine evaluation
+        corr_manager.ingest_trace(
+            span_name="rule_engine.evaluate",
+            subsystem="rule_engine",
+            start_time=base_time + 0.001,
+            duration_ms=0.5,
+            trace_id=eval_cid,
+            parent_span="evaluate_range",
+            status="OK",
+        )
+
+        # Log: session start
+        corr_manager.ingest_log(
+            message="FizzBuzz evaluation session started",
+            subsystem="pipeline",
+            level="INFO",
+            timestamp=base_time,
+            correlation_id=eval_cid,
+        )
+
+        # Log: evaluation complete
+        corr_manager.ingest_log(
+            message=f"Evaluated range {config.range_start}-{config.range_end}",
+            subsystem="pipeline",
+            level="INFO",
+            timestamp=base_time + 0.002,
+            correlation_id=eval_cid,
+        )
+
+        # Metric: evaluation count
+        corr_manager.ingest_metric(
+            metric_name="fizzbuzz_evaluations_total",
+            value=float(config.range_end - config.range_start + 1),
+            subsystem="metrics",
+            timestamp=base_time + 0.003,
+            correlation_id=eval_cid,
+        )
+
+        # Metric: pipeline latency
+        corr_manager.ingest_metric(
+            metric_name="fizzbuzz_pipeline_latency_ms",
+            value=1.0,
+            subsystem="metrics",
+            timestamp=base_time + 0.003,
+        )
+
+        corr_manager.finalize()
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FizzCorr Observability Correlation Engine               |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        events = corr_manager.correlation_engine.events
+        correlations = corr_manager.correlation_engine.correlations
+        anomalies = corr_manager.anomaly_detector.anomalies
+        print(f"\n  Ingested {len(events)} signals, discovered {len(correlations)} correlations")
+        print(f"  Detected {len(anomalies)} anomalies")
+        print(f"  Exemplar links: {len(corr_manager.get_exemplar_links())}")
+        print(f"  Dependency edges: {len(corr_manager.dependency_map.edges)}")
+        print()
+
+        if args.correlate_dashboard:
+            print(corr_manager.render_dashboard())
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

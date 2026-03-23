@@ -8983,3 +8983,85 @@ class NASFitnessEvaluationError(NeuralArchitectureSearchError):
         )
         self.genome_str = genome_str
         self.reason = reason
+
+
+# ====================================================================
+# Observability Correlation Engine Exceptions (EFP-OC00 .. EFP-OC03)
+# ====================================================================
+
+class ObservabilityCorrelationError(FizzBuzzError):
+    """Base exception for the FizzCorr Observability Correlation Engine.
+
+    When the system responsible for correlating your traces, logs, and
+    metrics itself fails, you have achieved a level of meta-observability
+    failure that most SRE teams can only hallucinate about during
+    incident retrospectives. The correlation of correlations has
+    become uncorrelatable. Page someone.
+    """
+
+    def __init__(self, message: str, **kwargs: Any) -> None:
+        super().__init__(
+            message,
+            error_code=kwargs.pop("error_code", "EFP-OC00"),
+            context=kwargs.pop("context", {}),
+        )
+
+
+class CorrelationStrategyError(ObservabilityCorrelationError):
+    """Raised when a correlation strategy fails to produce a result.
+
+    The engine attempted to correlate observability signals using a
+    specific strategy (ID-based, temporal, or causal) and the strategy
+    itself experienced a failure. This is the observability equivalent
+    of the fire department catching fire — technically possible,
+    deeply ironic, and requiring immediate escalation.
+    """
+
+    def __init__(self, strategy: str, reason: str) -> None:
+        super().__init__(
+            f"Correlation strategy '{strategy}' failed: {reason}",
+            error_code="EFP-OC01",
+            context={"strategy": strategy, "reason": reason},
+        )
+        self.strategy = strategy
+        self.reason = reason
+
+
+class CorrelationAnomalyDetectionError(ObservabilityCorrelationError):
+    """Raised when the anomaly detector encounters an unprocessable signal.
+
+    The anomaly detector — designed to find anomalies in your FizzBuzz
+    observability data — has itself become anomalous. The irony is not
+    lost on the engineering team. It is, however, lost on the detector,
+    which lacks the self-awareness to appreciate the situation.
+    """
+
+    def __init__(self, detector_type: str, reason: str) -> None:
+        super().__init__(
+            f"Anomaly detector '{detector_type}' failed: {reason}",
+            error_code="EFP-OC02",
+            context={"detector_type": detector_type, "reason": reason},
+        )
+        self.detector_type = detector_type
+        self.reason = reason
+
+
+class SignalIngestionError(ObservabilityCorrelationError):
+    """Raised when a raw observability signal cannot be normalized.
+
+    The ingestion pipeline received a signal (trace, log, or metric)
+    that could not be normalized into the canonical ObservabilityEvent
+    format. This typically means the signal was malformed, missing
+    required fields, or originated from a subsystem that has gone
+    sufficiently rogue to emit data outside the agreed-upon schema.
+    In a FizzBuzz platform, this is a crisis of existential proportions.
+    """
+
+    def __init__(self, signal_type: str, reason: str) -> None:
+        super().__init__(
+            f"Failed to ingest {signal_type} signal: {reason}",
+            error_code="EFP-OC03",
+            context={"signal_type": signal_type, "reason": reason},
+        )
+        self.signal_type = signal_type
+        self.reason = reason
