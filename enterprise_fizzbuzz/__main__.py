@@ -417,6 +417,20 @@ from enterprise_fizzbuzz.infrastructure.cdc import (
     CDCPipeline,
     create_cdc_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.billing import (
+    BillingDashboard,
+    BillingInvoiceGenerator,
+    BillingMiddleware,
+    Contract,
+    ContractStatus,
+    DunningManager,
+    FizzOpsCalculator,
+    RatingEngine,
+    RevenueRecognizer,
+    SubscriptionTier as BillingSubscriptionTier,
+    TIER_DEFINITIONS,
+    UsageMeter,
+)
 from enterprise_fizzbuzz.infrastructure.ip_office import (
     CopyrightRegistry,
     IPDisputeTribunal,
@@ -2055,6 +2069,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="SINKS",
         help="Comma-separated list of CDC sink connectors (log,metrics,message_queue). Default: from config",
+    )
+
+    # FizzBill API Monetization & Subscription Billing
+    parser.add_argument(
+        "--billing",
+        action="store_true",
+        help="Enable FizzBill: API monetization with ASC 606 revenue recognition, subscription tiers, and dunning",
+    )
+
+    parser.add_argument(
+        "--billing-tier",
+        type=str,
+        choices=["free", "developer", "professional", "enterprise"],
+        default=None,
+        help="Subscription tier for the default tenant (default: from config)",
+    )
+
+    parser.add_argument(
+        "--billing-invoice",
+        action="store_true",
+        help="Generate an ASCII subscription & usage invoice after execution",
+    )
+
+    parser.add_argument(
+        "--billing-dashboard",
+        action="store_true",
+        help="Display the FizzBill billing & revenue recognition ASCII dashboard after execution",
     )
 
     return parser
@@ -4874,6 +4915,69 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzBill Billing & Revenue Recognition setup
+    # ----------------------------------------------------------------
+    billing_usage_meter = None
+    billing_contract = None
+    billing_middleware_instance = None
+    billing_rating_engine = None
+    billing_recognizer = None
+    billing_dunning = None
+    billing_fizzops_calc = None
+    billing_obligations = None
+    billing_rated_usage = None
+
+    if args.billing or args.billing_invoice or args.billing_dashboard:
+        # Determine tier
+        tier_name = args.billing_tier or config.billing_default_tier
+        tier_map = {
+            "free": BillingSubscriptionTier.FREE,
+            "developer": BillingSubscriptionTier.DEVELOPER,
+            "professional": BillingSubscriptionTier.PROFESSIONAL,
+            "enterprise": BillingSubscriptionTier.ENTERPRISE,
+        }
+        billing_tier = tier_map.get(tier_name, BillingSubscriptionTier.FREE)
+        billing_tier_def = TIER_DEFINITIONS[billing_tier]
+
+        # Create contract
+        billing_contract = Contract(
+            tenant_id=config.billing_default_tenant_id,
+            tier=billing_tier,
+            monthly_price=billing_tier_def.monthly_price_fb,
+            spending_cap=config.billing_spending_cap,
+        )
+
+        # Create subsystems
+        billing_usage_meter = UsageMeter()
+        billing_fizzops_calc = FizzOpsCalculator()
+        billing_rating_engine = RatingEngine()
+        billing_recognizer = RevenueRecognizer()
+        billing_dunning = DunningManager()
+
+        # Create middleware
+        billing_middleware_instance = BillingMiddleware(
+            usage_meter=billing_usage_meter,
+            contract=billing_contract,
+            fizzops_calculator=billing_fizzops_calc,
+        )
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZBILL — API MONETIZATION & SUBSCRIPTION BILLING      |\n"
+            "  | ASC 606 Revenue Recognition | Dunning | FizzOps Meter   |\n"
+            f"  | Tier: {billing_tier_def.display_name:<51}|\n"
+            f"  | Quota: {(str(billing_tier_def.monthly_fizzops_quota) + ' FizzOps/mo' if billing_tier_def.monthly_fizzops_quota > 0 else 'Unlimited'):<50}|\n"
+            f"  | Price: FB${billing_tier_def.monthly_price_fb:<47.2f}|\n"
+            '  | "Revenue is recognized when obligations are satisfied." |\n'
+            "  +---------------------------------------------------------+"
+        )
+
+    elif args.billing_invoice:
+        print("\n  FizzBill not enabled. Use --billing to enable.\n")
+    elif args.billing_dashboard:
+        print("\n  FizzBill not enabled. Use --billing to enable.\n")
+
+    # ----------------------------------------------------------------
     # FizzBuzz Intellectual Property Office setup
     # ----------------------------------------------------------------
     ip_trademark_registry = None
@@ -5141,6 +5245,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add CDC middleware (priority 950, captures state after evaluation)
     if cdc_middleware_instance is not None:
         builder.with_middleware(cdc_middleware_instance)
+
+    if billing_middleware_instance is not None:
+        builder.with_middleware(billing_middleware_instance)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -6494,6 +6601,46 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Stop CDC relay if running (without dashboard)
     if cdc_pipeline is not None and not args.cdc_dashboard:
         cdc_pipeline.outbox_relay.stop()
+
+    # FizzBill Invoice and Dashboard
+    if (args.billing_invoice or args.billing_dashboard) and billing_contract is not None:
+        # Rate usage
+        billing_rated_usage = billing_rating_engine.rate(
+            tenant_id=billing_contract.tenant_id,
+            tier=billing_contract.tier,
+            total_fizzops=billing_usage_meter.total_fizzops,
+            spending_cap=billing_contract.spending_cap,
+        )
+
+        # Run ASC 606 revenue recognition
+        billing_obligations, _rev_entries = billing_recognizer.full_recognition(
+            contract=billing_contract,
+            overage_amount=billing_rated_usage.overage_charge,
+        )
+
+        if args.billing_invoice:
+            print(BillingInvoiceGenerator.generate(
+                rated_usage=billing_rated_usage,
+                contract=billing_contract,
+                obligations=billing_obligations,
+                width=config.billing_dashboard_width + 4,
+            ))
+
+        if args.billing_dashboard:
+            print(BillingDashboard.render(
+                contract=billing_contract,
+                rated_usage=billing_rated_usage,
+                usage_meter=billing_usage_meter,
+                dunning_manager=billing_dunning,
+                recognizer=billing_recognizer,
+                obligations=billing_obligations,
+                width=config.billing_dashboard_width + 4,
+            ))
+
+    elif args.billing_invoice:
+        print("\n  FizzBill not enabled. Use --billing to enable.\n")
+    elif args.billing_dashboard:
+        print("\n  FizzBill not enabled. Use --billing to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

@@ -1616,6 +1616,21 @@ cdc:
   dashboard:
     width: 60                               # ASCII dashboard width
 
+# FizzBill API Monetization & Subscription Billing configuration
+# Because every FizzBuzz platform eventually needs a billing engine.
+# This module implements ASC 606-compliant revenue recognition,
+# subscription tier management, usage metering in FizzOps (a normalized
+# compute unit), dunning with escalating retries, and ASCII invoice
+# generation. The subscription tiers range from Free (100 FizzOps/month)
+# to Enterprise (unlimited), because even modulo arithmetic has a price.
+billing:
+  enabled: false                          # Master switch — opt-in via --billing
+  default_tier: "free"                    # free | developer | professional | enterprise
+  default_tenant_id: "tenant-default"     # Default tenant identifier
+  spending_cap: null                      # Optional monthly spending cap in FizzBucks (null = none)
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:
