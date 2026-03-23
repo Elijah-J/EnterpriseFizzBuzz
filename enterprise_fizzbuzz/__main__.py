@@ -462,6 +462,12 @@ from enterprise_fizzbuzz.infrastructure.fizzbob import (
     CognitiveLoadOrchestrator,
     create_bob_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.succession import (
+    SuccessionDashboard,
+    SuccessionEngine,
+    SuccessionMiddleware,
+    create_succession_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3429,6 +3435,28 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--bob-dashboard",
         action="store_true",
         help="Display the FizzBob cognitive load dashboard after execution",
+    )
+
+    # FizzSuccession — Operator Succession Planning Framework
+    parser.add_argument(
+        "--succession",
+        action="store_true",
+        help="Enable FizzSuccession: operator succession planning with bus factor analysis, PCRS scoring, skills matrix, knowledge gap detection, and hiring recommendations",
+    )
+    parser.add_argument(
+        "--succession-dashboard",
+        action="store_true",
+        help="Display the FizzSuccession operator succession planning dashboard after execution",
+    )
+    parser.add_argument(
+        "--succession-risk-report",
+        action="store_true",
+        help="Display the FizzSuccession risk report after execution",
+    )
+    parser.add_argument(
+        "--succession-skills-matrix",
+        action="store_true",
+        help="Display the FizzSuccession skills matrix report after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -7563,6 +7591,32 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzSuccession — Operator Succession Planning (priority 95)
+    # ----------------------------------------------------------------
+    succession_engine = None
+    succession_middleware_instance = None
+
+    if args.succession or args.succession_dashboard or args.succession_risk_report or args.succession_skills_matrix:
+        succession_engine, succession_middleware_instance = create_succession_subsystem(
+            operator=config.succession_operator,
+            enable_dashboard=args.succession_dashboard,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(succession_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZSUCCESSION: OPERATOR SUCCESSION PLANNING            |\n"
+                "  | Bus Factor: 1 (CRITICAL) | PCRS: 97.3 (Grade A)       |\n"
+                f"  | Operator: {config.succession_operator:<10} | Modules: 108              |\n"
+                "  | Skills Matrix | Knowledge Gaps | Hiring Pipeline       |\n"
+                "  | Candidates: 0 | Readiness: 0.0% | Positions: 7 open   |\n"
+                "  | Because every platform needs a succession plan.        |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -10788,6 +10842,27 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(bob_middleware_instance.render_dashboard(width=config.bob_dashboard_width))
     elif args.bob_dashboard and bob_middleware_instance is None:
         print("\n  FizzBob not enabled. Use --bob to enable.\n")
+
+    # FizzSuccession Dashboard (post-execution)
+    if args.succession_dashboard and succession_middleware_instance is not None:
+        print()
+        print(succession_middleware_instance.render_dashboard(width=config.succession_dashboard_width))
+    elif args.succession_dashboard and succession_middleware_instance is None:
+        print("\n  FizzSuccession not enabled. Use --succession to enable.\n")
+
+    # FizzSuccession Risk Report (post-execution)
+    if args.succession_risk_report and succession_middleware_instance is not None:
+        print()
+        print(succession_middleware_instance.generate_risk_report())
+    elif args.succession_risk_report and succession_middleware_instance is None:
+        print("\n  FizzSuccession not enabled. Use --succession to enable.\n")
+
+    # FizzSuccession Skills Matrix (post-execution)
+    if args.succession_skills_matrix and succession_middleware_instance is not None:
+        print()
+        print(succession_middleware_instance.generate_skills_matrix_report())
+    elif args.succession_skills_matrix and succession_middleware_instance is None:
+        print("\n  FizzSuccession not enabled. Use --succession to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

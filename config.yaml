@@ -1959,6 +1959,19 @@ synth:
 # noise reduction, and blameless postmortem generation.  MTTA of
 # 0.000s because Bob is the system and the system acknowledges
 # instantly.
+# ── FizzSuccession: Operator Succession Planning Framework ──────────
+# Monitors organizational continuity risk by tracking the bus factor,
+# skills coverage, cross-training depth, and hiring pipeline status.
+# With a single operator (Bob), the bus factor is 1 (CRITICAL risk)
+# and the PCRS is 97.3 (operationally excellent but organizationally
+# fragile).  All 108 infrastructure modules are cataloged as skills
+# requiring succession coverage.
+fizz_succession:
+  enabled: false                          # Master switch — opt-in via --succession
+  operator: Bob                           # The sole operator of the platform
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizz_pager:
   enabled: false                          # Master switch — opt-in via --pager
   default_severity: P3                    # Default incident severity (P1-P5)

@@ -712,6 +712,16 @@ class EventType(Enum):
     PAGER_POSTMORTEM_GENERATED = auto()
     PAGER_DASHBOARD_RENDERED = auto()
 
+    # FizzSuccession: Operator Succession Planning events
+    SUCCESSION_EVALUATION_PROCESSED = auto()
+    SUCCESSION_REPORT_GENERATED = auto()
+    SUCCESSION_BUS_FACTOR_CALCULATED = auto()
+    SUCCESSION_PCRS_CALCULATED = auto()
+    SUCCESSION_GAP_ANALYSIS_COMPLETED = auto()
+    SUCCESSION_HIRING_RECOMMENDATION_CREATED = auto()
+    SUCCESSION_TRANSFER_SESSION_SCHEDULED = auto()
+    SUCCESSION_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

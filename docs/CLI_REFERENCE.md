@@ -1295,6 +1295,10 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --approval-dashboard       Display the FizzApproval ASCII dashboard with request queue, CAB meeting minutes, SOE statistics, policy distribution, and tamper-evident audit trail
 --approval-policy TYPE     Approval policy type: unanimous, majority, any_one, weighted, quorum. All resolve to M=1, N=1 (default: unanimous)
 --approval-change-type TYPE  ITIL change type classification: standard (pre-approved), normal (full CAB review), emergency (fast-track with post-implementation audit). Default: normal
+--succession               Enable the FizzSuccession Operator Succession Planning Framework: bus factor analysis, PCRS scoring, skills matrix, knowledge gap detection, hiring pipeline, and knowledge transfer tracking for organizational continuity planning
+--succession-dashboard     Display the FizzSuccession ASCII dashboard with bus factor risk gauge, PCRS meter, skills matrix summary, knowledge gap heatmap, hiring pipeline status, and succession candidate table (empty)
+--succession-risk-report   Generate a comprehensive succession readiness report with risk assessment, skills inventory, gap analysis, hiring recommendations, and knowledge transfer status
+--succession-skills-matrix Display the full skills matrix with all 108 infrastructure modules mapped to skill categories, proficiency levels, dependency scores (all 1.0), and cross-trained counts (all 0)
 ```
 
 ## Environment Variables
