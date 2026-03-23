@@ -502,6 +502,11 @@ from enterprise_fizzbuzz.infrastructure.mapreduce import (
     MapReduceJob,
     MapReduceMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.ssa_ir import (
+    IRDashboard,
+    IRMiddleware,
+    IRPrinter,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2513,6 +2518,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--datalog-dashboard",
         action="store_true",
         help="Display the FizzLog ASCII dashboard with fact counts, stratification, and evaluation metrics",
+    )
+
+    # FizzIR — LLVM-Inspired SSA Intermediate Representation
+    parser.add_argument(
+        "--ir",
+        action="store_true",
+        help="Enable FizzIR: compile FizzBuzz rules to LLVM-style SSA IR and interpret the result",
+    )
+
+    parser.add_argument(
+        "--ir-optimize",
+        action="store_true",
+        help="Run the 8-pass optimization pipeline on generated IR "
+             "(constant propagation, DCE, CSE, instruction combining, "
+             "CFG simplification, LICM, strength reduction, inlining)",
+    )
+
+    parser.add_argument(
+        "--ir-print",
+        action="store_true",
+        help="Print the LLVM-style textual IR representation to stdout",
+    )
+
+    parser.add_argument(
+        "--ir-dashboard",
+        action="store_true",
+        help="Display the FizzIR ASCII dashboard with block counts, instruction counts, and optimization statistics",
     )
 
     return parser
@@ -5361,6 +5393,34 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzIR — SSA Intermediate Representation setup
+    # ----------------------------------------------------------------
+    ir_middleware_instance = None
+
+    if args.ir or args.ir_optimize or args.ir_print or args.ir_dashboard or config.ir_enabled:
+        ir_rules = [(r.divisor, r.label) for r in config.rules]
+        ir_do_optimize = args.ir_optimize or config.ir_optimize
+        ir_do_print = args.ir_print or config.ir_print
+
+        ir_middleware_instance = IRMiddleware(
+            rules=ir_rules,
+            optimize=ir_do_optimize,
+            print_ir=ir_do_print,
+            dashboard=args.ir_dashboard,
+        )
+
+        if not args.no_banner:
+            print(
+                "\n  +---------------------------------------------------------+\n"
+                "  | FIZZIR: SSA INTERMEDIATE REPRESENTATION ENABLED         |\n"
+                "  | LLVM-style IR | Cytron SSA | 8 optimization passes      |\n"
+                "  | Opcodes: srem, icmp, br, phi, ret, select               |\n"
+                '  | "Every modulo deserves a dominator tree."               |\n'
+                "  | n % 3 has never been this well-optimized.               |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # Archaeological Recovery System setup
     # ----------------------------------------------------------------
     arch_engine = None
@@ -6082,6 +6142,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add Column middleware (priority 910, captures results in columnar format)
     if column_middleware is not None:
         builder.with_middleware(column_middleware)
+
+    # Add IR middleware (priority 915, compiles rules to SSA IR and verifies)
+    if ir_middleware_instance is not None:
+        builder.with_middleware(ir_middleware_instance)
 
     # Add CDC middleware (priority 950, captures state after evaluation)
     if cdc_middleware_instance is not None:
@@ -7953,6 +8017,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.columnar_dashboard:
         print("\n  FizzColumn not enabled. Use --columnar to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzIR Dashboard
+    # ----------------------------------------------------------------
+    if args.ir_dashboard and ir_middleware_instance is not None and ir_middleware_instance.module is not None:
+        print(IRDashboard.render(
+            module=ir_middleware_instance.module,
+            pass_results=ir_middleware_instance.pass_results,
+            pre_opt_instructions=ir_middleware_instance.pre_opt_instructions,
+            pre_opt_blocks=ir_middleware_instance.pre_opt_blocks,
+            width=config.ir_dashboard_width,
+        ))
+    elif args.ir_dashboard:
+        print("\n  FizzIR not enabled. Use --ir to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzGrammar Dashboard
