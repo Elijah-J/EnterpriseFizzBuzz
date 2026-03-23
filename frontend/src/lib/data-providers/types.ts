@@ -1168,6 +1168,101 @@ export interface DailyCostPoint {
   bySubsystem: Record<string, number>;
 }
 
+/** MESI coherence state for a single cache line. */
+export type MESIState = "MODIFIED" | "EXCLUSIVE" | "SHARED" | "INVALID";
+
+/** A single cache line with full metadata. */
+export interface CacheLine {
+  /** Cache key (typically the number being evaluated). */
+  key: string;
+  /** The cached FizzBuzz output value. */
+  value: string;
+  /** Current MESI coherence state. */
+  state: MESIState;
+  /** ISO 8601 timestamp when this entry was created. */
+  createdAt: string;
+  /** ISO 8601 timestamp of most recent access. */
+  lastAccessedAt: string;
+  /** Total number of times this entry has been accessed. */
+  accessCount: number;
+  /** Dignity level in [0.0, 1.0], decreasing with age. */
+  dignityLevel: number;
+  /** Time-to-live in seconds. */
+  ttlSeconds: number;
+}
+
+/** Aggregate cache statistics for the stats summary bar. */
+export interface CacheStats {
+  /** Total cache lookup requests. */
+  totalRequests: number;
+  /** Cache hit rate as a fraction in [0.0, 1.0]. */
+  hitRate: number;
+  /** Cache miss rate as a fraction in [0.0, 1.0]. */
+  missRate: number;
+  /** Total number of evictions since cache initialization. */
+  evictions: number;
+  /** Current number of live cache entries. */
+  entries: number;
+  /** Maximum cache capacity. */
+  capacity: number;
+  /** Distribution of cache lines across MESI states. */
+  stateDistribution: Record<MESIState, number>;
+  /** Total MESI state transitions processed. */
+  totalTransitions: number;
+  /** Active eviction policy name (e.g., "LRU", "LFU", "FIFO", "DramaticRandom"). */
+  evictionPolicy: string;
+}
+
+/** A recorded MESI state transition event. */
+export interface MESITransition {
+  /** Unique identifier for this transition event. */
+  id: string;
+  /** MESI state before the transition. */
+  fromState: MESIState;
+  /** MESI state after the transition. */
+  toState: MESIState;
+  /** What triggered the transition (e.g., "cache_miss", "write", "read_share", "invalidation", "write_back"). */
+  trigger: string;
+  /** ISO 8601 timestamp of the transition. */
+  timestamp: string;
+  /** Cache key involved in this transition. */
+  cacheLineKey: string;
+  /** Sequential transition number. */
+  transitionNumber: number;
+}
+
+/** A memorial record for an evicted cache entry. */
+export interface CacheEulogy {
+  /** Unique identifier for this eulogy. */
+  id: string;
+  /** Cache key of the departed entry. */
+  key: string;
+  /** The FizzBuzz value that was cached. */
+  value: string;
+  /** ISO 8601 timestamp of entry creation. */
+  bornAt: string;
+  /** ISO 8601 timestamp of eviction. */
+  diedAt: string;
+  /** Total accesses during the entry's lifetime. */
+  accessCount: number;
+  /** Dignity level at time of eviction. */
+  finalDignity: number;
+  /** The eviction policy responsible. */
+  causeOfDeath: string;
+  /** The full commemorative eulogy text. */
+  eulogy: string;
+}
+
+/** A single cell in the hit/miss heatmap grid. */
+export interface CacheAccessCell {
+  /** ISO 8601 timestamp of the access. */
+  timestamp: string;
+  /** Cache key accessed. */
+  key: string;
+  /** Whether this access was a hit or miss. */
+  result: "hit" | "miss";
+}
+
 /** Projected platform metrics after applying what-if parameter overrides. */
 export interface WhatIfOutcome {
   /** Predicted mean evaluation latency in ms. */

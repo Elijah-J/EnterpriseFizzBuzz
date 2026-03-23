@@ -80,6 +80,12 @@ export type {
   InvoiceLine,
   Invoice,
   DailyCostPoint,
+  MESIState,
+  CacheLine,
+  CacheStats,
+  MESITransition,
+  CacheEulogy,
+  CacheAccessCell,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

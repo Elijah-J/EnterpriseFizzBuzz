@@ -105,6 +105,14 @@ export default function RootLayout({
               </li>
               <li>
                 <Link
+                  href="/cache"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Cache Coherence
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/monitor/consensus"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >

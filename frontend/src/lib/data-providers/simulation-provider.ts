@@ -74,6 +74,11 @@ import type {
   InvoiceLine,
   Invoice,
   DailyCostPoint,
+  MESIState,
+  CacheLine,
+  CacheStats,
+  MESITransition,
+  CacheEulogy,
 } from "./types";
 
 /**
@@ -3029,6 +3034,207 @@ export class SimulationProvider implements IDataProvider {
     }
 
     return points;
+  }
+
+  // -------------------------------------------------------------------------
+  // MESI Cache Coherence — cache line inventory, stats, transitions, eulogies
+  // -------------------------------------------------------------------------
+
+  async getCacheState(): Promise<CacheLine[]> {
+    const now = Date.now();
+    const lines: CacheLine[] = [];
+
+    // Generate 24 cache lines with a state distribution reflecting a healthy
+    // production MESI cache: SHARED ~45%, EXCLUSIVE ~30%, MODIFIED ~15%, INVALID ~10%
+    const statePool: MESIState[] = [
+      ...Array(11).fill("SHARED" as MESIState),
+      ...Array(7).fill("EXCLUSIVE" as MESIState),
+      ...Array(4).fill("MODIFIED" as MESIState),
+      ...Array(2).fill("INVALID" as MESIState),
+    ];
+
+    // Sample 24 distinct keys from the FizzBuzz evaluation space
+    const keys = [
+      1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 14, 15, 17, 20, 21, 25, 30, 33, 42, 45, 50, 60, 75, 100,
+    ];
+
+    for (let i = 0; i < 24; i++) {
+      const num = keys[i];
+      const isFizz = num % 3 === 0;
+      const isBuzz = num % 5 === 0;
+      const value = isFizz && isBuzz ? "FizzBuzz" : isFizz ? "Fizz" : isBuzz ? "Buzz" : String(num);
+
+      // Power-law distributed access counts — most entries have low access, some have very high
+      const accessCount = Math.max(1, Math.round(Math.pow(Math.random(), 2) * 499) + 1);
+
+      // Dignity decreases with age — entries created longer ago have less dignity
+      const ageMs = Math.random() * 3_600_000; // spread across the last hour
+      const dignityLevel = Math.max(0.05, Math.min(1.0, 1.0 - (ageMs / 3_600_000) * 0.95));
+
+      const createdAt = new Date(now - ageMs).toISOString();
+      const lastAccessMs = Math.random() * Math.min(ageMs, 600_000);
+      const lastAccessedAt = new Date(now - lastAccessMs).toISOString();
+
+      const ttlSeconds = 300 + Math.floor(Math.random() * 3300);
+
+      lines.push({
+        key: `fizzbuzz:${num}`,
+        value,
+        state: statePool[i],
+        createdAt,
+        lastAccessedAt,
+        accessCount,
+        dignityLevel: Math.round(dignityLevel * 100) / 100,
+        ttlSeconds,
+      });
+    }
+
+    return lines;
+  }
+
+  async getCacheStats(): Promise<CacheStats> {
+    const lines = await this.getCacheState();
+    const stateDistribution: Record<MESIState, number> = {
+      MODIFIED: 0,
+      EXCLUSIVE: 0,
+      SHARED: 0,
+      INVALID: 0,
+    };
+    for (const line of lines) {
+      stateDistribution[line.state]++;
+    }
+
+    return {
+      totalRequests: 45_892,
+      hitRate: 0.847,
+      missRate: 0.153,
+      evictions: 1_247,
+      entries: lines.length,
+      capacity: 64,
+      stateDistribution,
+      totalTransitions: 8_391,
+      evictionPolicy: "LRU",
+    };
+  }
+
+  async getMESITransitions(limit: number = 50): Promise<MESITransition[]> {
+    const now = Date.now();
+
+    // Valid MESI protocol transitions with semantically correct triggers
+    const validTransitions: Array<{ from: MESIState; to: MESIState; trigger: string }> = [
+      { from: "INVALID", to: "EXCLUSIVE", trigger: "cache_miss" },
+      { from: "EXCLUSIVE", to: "MODIFIED", trigger: "write" },
+      { from: "EXCLUSIVE", to: "SHARED", trigger: "read_share" },
+      { from: "EXCLUSIVE", to: "INVALID", trigger: "invalidation" },
+      { from: "SHARED", to: "MODIFIED", trigger: "write_upgrade" },
+      { from: "SHARED", to: "INVALID", trigger: "invalidation" },
+      { from: "MODIFIED", to: "EXCLUSIVE", trigger: "write_back" },
+      { from: "MODIFIED", to: "SHARED", trigger: "write_back_share" },
+      { from: "MODIFIED", to: "INVALID", trigger: "invalidation" },
+    ];
+
+    const keys = [
+      "fizzbuzz:3", "fizzbuzz:5", "fizzbuzz:15", "fizzbuzz:30", "fizzbuzz:7",
+      "fizzbuzz:42", "fizzbuzz:100", "fizzbuzz:1", "fizzbuzz:9", "fizzbuzz:20",
+      "fizzbuzz:60", "fizzbuzz:75", "fizzbuzz:45", "fizzbuzz:12", "fizzbuzz:25",
+    ];
+
+    const transitions: MESITransition[] = [];
+    const totalToGenerate = Math.min(limit, 50);
+
+    for (let i = 0; i < totalToGenerate; i++) {
+      const t = validTransitions[Math.floor(Math.random() * validTransitions.length)];
+      // Spread across the last 5 minutes, most recent first
+      const offsetMs = (i / totalToGenerate) * 300_000;
+      const timestamp = new Date(now - offsetMs).toISOString();
+      const key = keys[Math.floor(Math.random() * keys.length)];
+
+      transitions.push({
+        id: generateSessionId(),
+        fromState: t.from,
+        toState: t.to,
+        trigger: t.trigger,
+        timestamp,
+        cacheLineKey: key,
+        transitionNumber: 8_391 - i,
+      });
+    }
+
+    return transitions;
+  }
+
+  async getCacheEulogies(limit: number = 20): Promise<CacheEulogy[]> {
+    const now = Date.now();
+    const causes = ["LRU", "LFU", "TTL Expiry", "DramaticRandom", "Capacity Pressure"];
+
+    const eulogyTemplates = [
+      (key: string, value: string, accesses: number) =>
+        `Here lies ${key}, whose cached value "${value}" served the platform with unwavering dedication across ${accesses} access${accesses !== 1 ? "es" : ""}. Though its time-to-live has expired, its contribution to evaluation latency reduction will not be forgotten.`,
+      (key: string, value: string, accesses: number) =>
+        `${key} entered the cache with purpose and departed with grace. For ${accesses} request${accesses !== 1 ? "s" : ""}, it answered the call, delivering "${value}" without hesitation. The cache is diminished by its absence.`,
+      (key: string, value: string, _accesses: number) =>
+        `In the annals of cache history, few entries have served as faithfully as ${key}. Its value, "${value}", was a beacon of correctness in an uncertain evaluation pipeline. May its memory be preserved in the eviction audit log.`,
+      (key: string, value: string, accesses: number) =>
+        `${key} was evicted today after a distinguished tenure in the L1 cache. With ${accesses} recorded accesses and a cached value of "${value}", it exemplified the highest standards of data residency. The MESI protocol mourns this transition to INVALID.`,
+      (key: string, value: string, _accesses: number) =>
+        `We gather to honor ${key}, whose departure from the cache leaves a void that only a fresh cache miss can fill. Its value "${value}" was computed once and served many. Such is the noble purpose of caching.`,
+      (key: string, _value: string, accesses: number) =>
+        `${key} served ${accesses} requests before the eviction policy determined its time had come. The cache line has been reclaimed, but the latency savings it provided echo through the metrics dashboard.`,
+      (key: string, value: string, _accesses: number) =>
+        `Today the cache bids farewell to ${key}. Its stored value "${value}" will be recomputed by the rule engine should the need arise. The eviction was conducted in accordance with platform governance procedures.`,
+      (key: string, value: string, accesses: number) =>
+        `After ${accesses} faithful accesses, ${key} has been released from cache residency. Its value "${value}" served the evaluation pipeline with distinction. A moment of silence for this cache line is observed by all coherence protocol participants.`,
+      (key: string, _value: string, accesses: number) =>
+        accesses === 0
+          ? `${key} was evicted before a single request could benefit from its presence. Allocated with promise, released without purpose. This is the tragedy of premature eviction under capacity pressure.`
+          : `${key} answered the call ${accesses} times. Each cache hit avoided a full rule engine evaluation cycle. The platform's P99 latency is marginally worse for its departure.`,
+      (key: string, value: string, _accesses: number) =>
+        `The MESI coherence protocol has processed the final state transition for ${key}. From EXCLUSIVE to INVALID, its journey through the cache states was textbook. Its value "${value}" is hereby decommissioned with full honors.`,
+      (key: string, value: string, accesses: number) =>
+        `${key} — cached value "${value}", ${accesses} accesses, dignity exhausted. The eviction ceremony was brief but respectful. Replacement entry loading is already in progress.`,
+      (key: string, value: string, _accesses: number) =>
+        `With the eviction of ${key}, the cache loses a veteran entry. Its value "${value}" was among the most reliable in the inventory. The capacity reclaimed will serve the next generation of FizzBuzz evaluations.`,
+      (key: string, value: string, accesses: number) =>
+        `${key} departs the cache after serving "${value}" across ${accesses} lookups. Its dignity level had declined to critical thresholds, making eviction both necessary and humane. The platform extends its gratitude.`,
+      (key: string, value: string, _accesses: number) =>
+        `In accordance with cache management policy, ${key} has been evicted. Its value "${value}" was correct on every access — a flawless service record. The eviction reflects capacity constraints, not performance.`,
+      (key: string, value: string, accesses: number) =>
+        `${key} is no more. Born into the cache with value "${value}", it served ${accesses} requests before the eviction algorithm selected it for removal. Its cache line has been zeroed with appropriate ceremony.`,
+    ];
+
+    const numbers = [2, 4, 6, 8, 11, 13, 16, 18, 19, 22, 23, 27, 31, 35, 37];
+    const eulogies: CacheEulogy[] = [];
+    const count = Math.min(limit, 15);
+
+    for (let i = 0; i < count; i++) {
+      const num = numbers[i];
+      const isFizz = num % 3 === 0;
+      const isBuzz = num % 5 === 0;
+      const value = isFizz && isBuzz ? "FizzBuzz" : isFizz ? "Fizz" : isBuzz ? "Buzz" : String(num);
+      const key = `fizzbuzz:${num}`;
+      // Vary access counts: some tragic (0), most moderate, some high
+      const accessCount = i === 0 ? 0 : i === 1 ? 1 : Math.floor(Math.pow(Math.random(), 0.5) * 300);
+      const finalDignity = Math.round(Math.random() * 0.4 * 100) / 100;
+      const cause = causes[i % causes.length];
+      const lifetimeMs = 600_000 + Math.random() * 3_000_000;
+      const diedAt = new Date(now - i * 180_000).toISOString();
+      const bornAt = new Date(now - i * 180_000 - lifetimeMs).toISOString();
+      const template = eulogyTemplates[i % eulogyTemplates.length];
+
+      eulogies.push({
+        id: generateSessionId(),
+        key,
+        value,
+        bornAt,
+        diedAt,
+        accessCount,
+        finalDignity,
+        causeOfDeath: cause,
+        eulogy: template(key, value, accessCount),
+      });
+    }
+
+    return eulogies;
   }
 }
 

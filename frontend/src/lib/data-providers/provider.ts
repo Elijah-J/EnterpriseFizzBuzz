@@ -50,6 +50,10 @@ import type {
   FizzBuckExchangeRate,
   Invoice,
   DailyCostPoint,
+  CacheLine,
+  CacheStats,
+  MESITransition,
+  CacheEulogy,
 } from "./types";
 
 /**
@@ -434,4 +438,34 @@ export interface IDataProvider {
    * cost trend line chart for spend pattern analysis and anomaly detection.
    */
   getDailyCostTrend(): Promise<DailyCostPoint[]>;
+
+  /**
+   * Retrieve all current cache lines with their MESI coherence state
+   * and access metadata. Used by the Cache Coherence Visualizer for
+   * the live cache inventory table.
+   */
+  getCacheState(): Promise<CacheLine[]>;
+
+  /**
+   * Retrieve aggregate cache statistics including hit/miss rates,
+   * eviction count, MESI state distribution, and capacity utilization.
+   */
+  getCacheStats(): Promise<CacheStats>;
+
+  /**
+   * Retrieve the most recent MESI state transitions from the coherence
+   * protocol event log. Used by the state machine diagram to highlight
+   * active transitions and by the transition log table.
+   *
+   * @param limit - Maximum number of transitions to return (default: 50)
+   */
+  getMESITransitions(limit?: number): Promise<MESITransition[]>;
+
+  /**
+   * Retrieve the most recent eviction eulogies. Each eulogy commemorates
+   * a cache entry that was evicted from the cache with full ceremony.
+   *
+   * @param limit - Maximum number of eulogies to return (default: 20)
+   */
+  getCacheEulogies(limit?: number): Promise<CacheEulogy[]>;
 }
