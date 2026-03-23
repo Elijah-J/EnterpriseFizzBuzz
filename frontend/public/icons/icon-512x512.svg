@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#0f172a"/>
+  <rect x="16" y="16" width="480" height="480" rx="56" fill="#1e293b" stroke="#334155" stroke-width="3"/>
+  <text x="256" y="280" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="148" fill="#38bdf8">EFB</text>
+  <text x="256" y="370" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="400" font-size="42" fill="#94a3b8">PLATFORM</text>
+</svg>
