@@ -272,7 +272,7 @@ from enterprise_fizzbuzz.infrastructure.genetic_algorithm import (
     EvolutionDashboard,
     GeneticAlgorithmEngine,
 )
-from enterprise_fizzbuzz.infrastructure.nlq import (
+from enterprise_fizzbuzz.infrastructure.compliance_chatbot import (
     NLQDashboard,
     NLQEngine,
 )
