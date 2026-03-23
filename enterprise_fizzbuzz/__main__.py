@@ -2389,6 +2389,19 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzSchema ASCII dashboard with schema inventory, version timeline, and compatibility history",
     )
 
+    # FizzSLI — Service Level Indicator Framework
+    parser.add_argument(
+        "--sli",
+        action="store_true",
+        help="Enable FizzSLI: multi-window burn-rate alerting with error budget attribution and feature gates",
+    )
+
+    parser.add_argument(
+        "--sli-dashboard",
+        action="store_true",
+        help="Display the FizzSLI ASCII dashboard with SLI inventory, burn rates, attribution, and gate status",
+    )
+
     return parser
 
 
@@ -5246,6 +5259,40 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzSLI — Service Level Indicator Framework setup
+    # ----------------------------------------------------------------
+    sli_registry = None
+    sli_middleware_instance = None
+
+    if args.sli or args.sli_dashboard:
+        from enterprise_fizzbuzz.infrastructure.sli_framework import (
+            SLIDashboard,
+            SLIMiddleware,
+            bootstrap_sli_registry,
+        )
+
+        sli_registry = bootstrap_sli_registry(
+            target=config.sli_default_target,
+            window_seconds=config.sli_measurement_window_seconds,
+            short_window=config.sli_burn_rate_short_window,
+            medium_window=config.sli_burn_rate_medium_window,
+            long_window=config.sli_burn_rate_long_window,
+            short_threshold=config.sli_short_threshold,
+            long_threshold=config.sli_long_threshold,
+        )
+        sli_middleware_instance = SLIMiddleware(sli_registry)
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZSLI SERVICE LEVEL INDICATORS ENABLED                |\n"
+            f"  | Target: {config.sli_default_target:.1%}       | Windows: 1h / 6h / 3d      |\n"
+            "  | Multi-window burn-rate alerting | Error budget policy   |\n"
+            '  | "Every modulo deserves a Service Level Objective."      |\n'
+            "  | Reliability is not optional. It is measured.            |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # FizzSchema — Schema Evolution setup
     # ----------------------------------------------------------------
     schema_registry = None
@@ -5878,6 +5925,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add Schema middleware (priority 950, stamps schema version on context)
     if schema_middleware_instance is not None:
         builder.with_middleware(schema_middleware_instance)
+
+    # Add SLI middleware (priority 54, records good/bad events for burn-rate alerting)
+    if sli_middleware_instance is not None:
+        builder.with_middleware(sli_middleware_instance)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -7722,6 +7773,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.schema_dashboard:
         print("\n  FizzSchema not enabled. Use --schema-evolution to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzSLI Dashboard
+    # ----------------------------------------------------------------
+    if args.sli_dashboard and sli_registry is not None:
+        from enterprise_fizzbuzz.infrastructure.sli_framework import SLIDashboard
+        print(SLIDashboard.render(
+            registry=sli_registry,
+            width=config.sli_dashboard_width,
+        ))
+    elif args.sli_dashboard:
+        print("\n  FizzSLI not enabled. Use --sli to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
