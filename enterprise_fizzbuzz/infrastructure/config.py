@@ -1377,6 +1377,15 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "fizzwal": {
+                "enabled": False,
+                "mode": "optimistic",
+                "checkpoint_interval": 100,
+                "crash_recovery_on_startup": False,
+                "dashboard": {
+                    "width": 60,
+                },
+            },
             "observability_correlation": {
                 "enabled": False,
                 "temporal_window_seconds": 2.0,
@@ -5461,6 +5470,40 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Dashboard width for the FizzOTel dashboard."""
         self._ensure_loaded()
         return self._raw_config.get("otel", {}).get("dashboard", {}).get("width", 60)
+
+    # ------------------------------------------------------------------
+    # FizzWAL — Write-Ahead Intent Log properties
+    # ------------------------------------------------------------------
+
+    @property
+    def fizzwal_enabled(self) -> bool:
+        """Whether the FizzWAL Write-Ahead Intent Log subsystem is active."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzwal", {}).get("enabled", False)
+
+    @property
+    def fizzwal_mode(self) -> str:
+        """Execution mode: optimistic, pessimistic, or speculative."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzwal", {}).get("mode", "optimistic")
+
+    @property
+    def fizzwal_checkpoint_interval(self) -> int:
+        """Number of log records between automatic fuzzy checkpoints."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzwal", {}).get("checkpoint_interval", 100)
+
+    @property
+    def fizzwal_crash_recovery_on_startup(self) -> bool:
+        """Whether to run ARIES 3-phase recovery on startup."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzwal", {}).get("crash_recovery_on_startup", False)
+
+    @property
+    def fizzwal_dashboard_width(self) -> int:
+        """Dashboard width for the FizzWAL dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzwal", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

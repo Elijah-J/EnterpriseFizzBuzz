@@ -394,6 +394,14 @@ from enterprise_fizzbuzz.infrastructure.archaeology import (
     ArchaeologyEngine,
     ArchaeologyMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.intent_log import (
+    CheckpointManager,
+    CrashRecoveryEngine,
+    ExecutionMode,
+    IntentDashboard,
+    IntentMiddleware,
+    WriteAheadIntentLog,
+)
 from enterprise_fizzbuzz.infrastructure.recommendations import (
     RecommendationDashboard,
     RecommendationEngine,
@@ -2222,6 +2230,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--otel-dashboard",
         action="store_true",
         help="Display the FizzOTel ASCII dashboard with trace stats, sampling decisions, export metrics, and duration histogram",
+    )
+
+    # FizzWAL — Write-Ahead Intent Log
+    parser.add_argument(
+        "--wal-intent",
+        action="store_true",
+        help="Enable FizzWAL Write-Ahead Intent Log: ARIES-compliant crash recovery for every FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--wal-mode",
+        type=str,
+        choices=["optimistic", "pessimistic", "speculative"],
+        default=None,
+        help="WAL execution mode: optimistic (write-through + rollback), pessimistic (shadow buffer), speculative (post-condition validation)",
+    )
+
+    parser.add_argument(
+        "--wal-dashboard",
+        action="store_true",
+        help="Display the FizzWAL ASCII dashboard with log stats, active transactions, checkpoint history, and recovery report",
     )
 
     return parser
@@ -4829,6 +4858,59 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzWAL — Write-Ahead Intent Log setup
+    # ----------------------------------------------------------------
+    wal_engine = None
+    wal_checkpoint_mgr = None
+    wal_recovery_engine = None
+    wal_middleware = None
+
+    if args.wal_intent or args.wal_dashboard:
+        mode_str = args.wal_mode or config.fizzwal_mode
+        wal_mode_map = {
+            "optimistic": ExecutionMode.OPTIMISTIC,
+            "pessimistic": ExecutionMode.PESSIMISTIC,
+            "speculative": ExecutionMode.SPECULATIVE,
+        }
+        wal_exec_mode = wal_mode_map.get(mode_str, ExecutionMode.OPTIMISTIC)
+
+        wal_engine = WriteAheadIntentLog(mode=wal_exec_mode)
+        wal_checkpoint_mgr = CheckpointManager(
+            wal=wal_engine,
+            interval=config.fizzwal_checkpoint_interval,
+        )
+        wal_recovery_engine = CrashRecoveryEngine(
+            wal=wal_engine,
+            checkpoint_manager=wal_checkpoint_mgr,
+        )
+        wal_middleware = IntentMiddleware(
+            wal=wal_engine,
+            checkpoint_manager=wal_checkpoint_mgr,
+        )
+
+        # Run crash recovery on startup if configured
+        if config.fizzwal_crash_recovery_on_startup:
+            try:
+                recovery_report = wal_recovery_engine.recover()
+                print(
+                    f"  WAL crash recovery: {recovery_report.redo_records_replayed} redo, "
+                    f"{recovery_report.undo_transactions_rolled_back} undo"
+                )
+            except Exception:
+                pass  # Recovery from an empty log is a no-op
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FizzWAL: Write-Ahead Intent Log ENABLED                 |\n"
+            f"  | Mode: {wal_exec_mode.value.upper():<49}|\n"
+            f"  | Checkpoint interval: {config.fizzwal_checkpoint_interval:<34}|\n"
+            "  | ARIES 3-phase crash recovery for FizzBuzz.              |\n"
+            "  | WAL rule: log BEFORE data page write.                   |\n"
+            "  | Stable storage: a Python list.                          |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # Archaeological Recovery System setup
     # ----------------------------------------------------------------
     arch_engine = None
@@ -5381,6 +5463,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             rules=list(config.rules),
         )
         builder.with_middleware(qo_middleware)
+
+    # Add WAL middleware (priority 850, between locks and archaeology)
+    if wal_middleware is not None:
+        builder.with_middleware(wal_middleware)
 
     # Add Lock middleware (priority 800, before archaeology)
     if lock_middleware_instance is not None:
@@ -7111,6 +7197,19 @@ def main(argv: Optional[list[str]] = None) -> int:
             print(jit_manager.render_dashboard(
                 width=config.jit_dashboard_width,
             ))
+
+    # ----------------------------------------------------------------
+    # FizzWAL Dashboard
+    # ----------------------------------------------------------------
+    if args.wal_dashboard and wal_engine is not None:
+        print(IntentDashboard.render(
+            wal=wal_engine,
+            checkpoint_manager=wal_checkpoint_mgr,
+            recovery_engine=wal_recovery_engine,
+            width=config.fizzwal_dashboard_width,
+        ))
+    elif args.wal_dashboard:
+        print("\n  FizzWAL not enabled. Use --wal-intent to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

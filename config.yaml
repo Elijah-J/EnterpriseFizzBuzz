@@ -1738,6 +1738,23 @@ otel:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzWAL — Write-Ahead Intent Log configuration
+# Because every FizzBuzz evaluation deserves the same transactional
+# guarantees as a billion-dollar financial database. The ARIES
+# crash-recovery protocol ensures that no FizzBuzz result is ever
+# lost due to a simulated crash, power failure, or existential
+# crisis in the evaluation pipeline. The WAL rule — "log record
+# must be forced to stable storage BEFORE the data page write" —
+# is enforced with the gravity of a distributed systems textbook,
+# even though "stable storage" is a Python list.
+fizzwal:
+  enabled: false                          # Master switch — opt-in via --wal-intent
+  mode: "optimistic"                      # optimistic | pessimistic | speculative
+  checkpoint_interval: 100                # Log records between automatic fuzzy checkpoints
+  crash_recovery_on_startup: false        # Run ARIES 3-phase recovery on startup
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:
