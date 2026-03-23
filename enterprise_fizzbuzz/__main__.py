@@ -457,7 +457,7 @@ from enterprise_fizzbuzz.infrastructure.ip_office import (
     PatentExaminer,
     TrademarkRegistry,
 )
-from enterprise_fizzbuzz.infrastructure.observability_correlation import (
+from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     CorrelationDashboard,
     ObservabilityCorrelationManager,
 )
