@@ -638,6 +638,16 @@ from enterprise_fizzbuzz.infrastructure.spreadsheet import (
     Spreadsheet,
     evaluate_formula,
 )
+from enterprise_fizzbuzz.infrastructure.spatial_db import (
+    ASCIICartographer,
+    CoordinateMapper,
+    FizzSpatialQL,
+    RTree,
+    SpatialDashboard,
+    SpatialMiddleware,
+    SpatialPredicates,
+    create_spatial_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.smart_contracts import (
     ContractCompiler,
     ContractDashboard,
@@ -3182,6 +3192,36 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--cpu-dashboard",
         action="store_true",
         help="Display the FizzCPU pipeline ASCII dashboard with CPI breakdown, hazard analysis, and prediction stats",
+    )
+
+    # FizzGIS — Spatial Database with R-Tree Indexing
+    parser.add_argument(
+        "--spatial",
+        action="store_true",
+        help="Enable the FizzGIS spatial database: map FizzBuzz results to 2D coordinates with R-tree indexing",
+    )
+
+    parser.add_argument(
+        "--spatial-query",
+        type=str,
+        metavar="QUERY",
+        default=None,
+        help=(
+            "Execute a FizzSpatialQL query against the spatial index "
+            "(e.g. \"SELECT * FROM fizzbuzz WHERE ST_DWithin(geom, POINT(5, 3), 2.0)\")"
+        ),
+    )
+
+    parser.add_argument(
+        "--spatial-map",
+        action="store_true",
+        help="Display an ASCII cartographic rendering of the FizzBuzz spatial feature layer",
+    )
+
+    parser.add_argument(
+        "--spatial-dashboard",
+        action="store_true",
+        help="Display the FizzGIS spatial database dashboard with R-tree statistics and zone analytics",
     )
 
     return parser
@@ -7490,6 +7530,37 @@ def main(argv: Optional[list[str]] = None) -> int:
         middlewares.append(dns_middleware_instance)
         logger.info("FizzDNS Authoritative DNS Server enabled for fizzbuzz.local")
 
+    # FizzGIS — Spatial Database with R-Tree Indexing
+    # ----------------------------------------------------------------
+    spatial_rtree = None
+    spatial_features = None
+    spatial_mapper = None
+    spatial_middleware_instance = None
+
+    spatial_active = (
+        args.spatial or args.spatial_query or args.spatial_map
+        or args.spatial_dashboard
+    )
+
+    if spatial_active:
+        spatial_rtree, spatial_features, spatial_mapper, spatial_middleware_instance = (
+            create_spatial_subsystem()
+        )
+        builder.with_middleware(spatial_middleware_instance)
+        logger.info("FizzGIS spatial database enabled with R-tree indexing")
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZGIS: SPATIAL DATABASE ENABLED                       |\n"
+                "  |   Index: R-tree (Guttman 1984, M=4)                    |\n"
+                "  |   Coordinate system: Archimedean spiral (period=15)    |\n"
+                "  |   Predicates: ST_Within, ST_DWithin, ST_Intersects     |\n"
+                "  |   Query language: FizzSpatialQL                        |\n"
+                "  |   Zones: green(Fizz) blue(Buzz) gold(FizzBuzz)         |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # FizzShader — GPU Compute Simulator
     # ----------------------------------------------------------------
     shader_gpu = None
@@ -10068,6 +10139,48 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(ShaderDashboard.render(shader_gpu))
     elif args.shader_dashboard:
         print("\n  FizzShader not enabled. Use --shader to enable.\n")
+
+    # FizzGIS Spatial outputs (post-execution)
+    if spatial_rtree is not None and spatial_features is not None:
+        if args.spatial_query:
+            try:
+                parser_ql = FizzSpatialQL()
+                parsed = parser_ql.parse(args.spatial_query)
+                results = parser_ql.execute(parsed, spatial_rtree, spatial_features)
+                print(
+                    "\n  +---------------------------------------------------------+"
+                    "\n  | FIZZSPATIALQL QUERY RESULTS                              |"
+                    "\n  +---------------------------------------------------------+"
+                )
+                print(f"  | Query: {args.spatial_query[:49]:<49}|")
+                print(f"  | Matches: {len(results):<47}|")
+                print("  +---------------------------------------------------------+")
+                for i, feat in enumerate(results[:20], 1):
+                    line = (
+                        f"  {i:>3}. N={feat.number:<4} {feat.classification:<10} "
+                        f"({feat.point.x:>8.2f}, {feat.point.y:>8.2f})"
+                    )
+                    print(line[:80])
+                if len(results) > 20:
+                    print(f"  ... and {len(results) - 20} more results")
+                print()
+            except Exception as e:
+                print(f"\n  FizzSpatialQL Error: {e}\n")
+
+        if args.spatial_map:
+            cartographer = ASCIICartographer()
+            print()
+            print(cartographer.render(spatial_features))
+
+        if args.spatial_dashboard:
+            print()
+            print(SpatialDashboard.render(spatial_features, spatial_rtree))
+    elif args.spatial_query:
+        print("\n  FizzGIS not enabled. Use --spatial to enable.\n")
+    elif args.spatial_map:
+        print("\n  FizzGIS not enabled. Use --spatial to enable.\n")
+    elif args.spatial_dashboard:
+        print("\n  FizzGIS not enabled. Use --spatial to enable.\n")
 
     # FizzCPU Pipeline Dashboard (post-execution)
     if args.cpu_dashboard and pipeline_sim is not None:
