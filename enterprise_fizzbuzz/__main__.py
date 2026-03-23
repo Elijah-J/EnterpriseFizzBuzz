@@ -507,6 +507,14 @@ from enterprise_fizzbuzz.infrastructure.ssa_ir import (
     IRMiddleware,
     IRPrinter,
 )
+from enterprise_fizzbuzz.infrastructure.proof_certificates import (
+    CertificateGenerator,
+    CertificateRegistry,
+    LaTeXExporter,
+    ProofChecker,
+    ProofDashboard,
+    ProofMiddleware,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2545,6 +2553,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--ir-dashboard",
         action="store_true",
         help="Display the FizzIR ASCII dashboard with block counts, instruction counts, and optimization statistics",
+    )
+
+    # FizzProof — Proof Certificate Generator
+    parser.add_argument(
+        "--proof-cert",
+        action="store_true",
+        help="Enable FizzProof: generate Calculus of Constructions proof certificates for every FizzBuzz classification",
+    )
+
+    parser.add_argument(
+        "--proof-latex",
+        action="store_true",
+        help="Generate LaTeX documents for proof certificates (bussproofs natural deduction, BibTeX citations)",
+    )
+
+    parser.add_argument(
+        "--proof-dashboard",
+        action="store_true",
+        help="Display the FizzProof ASCII dashboard with certificate inventory, verification metrics, and kernel status",
     )
 
     return parser
@@ -5448,6 +5475,40 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzProof — Proof Certificate Generator setup
+    # ----------------------------------------------------------------
+    proof_checker_instance = None
+    proof_generator_instance = None
+    proof_registry_instance = None
+    proof_exporter_instance = None
+    proof_middleware_instance = None
+
+    if args.proof_cert or args.proof_dashboard or config.proof_cert_enabled:
+        proof_checker_instance = ProofChecker()
+        proof_generator_instance = CertificateGenerator(checker=proof_checker_instance)
+        proof_registry_instance = CertificateRegistry()
+        proof_exporter_instance = LaTeXExporter()
+        enable_latex = args.proof_latex or config.proof_cert_latex
+
+        proof_middleware_instance = ProofMiddleware(
+            generator=proof_generator_instance,
+            registry=proof_registry_instance,
+            exporter=proof_exporter_instance,
+            enable_latex=enable_latex,
+        )
+
+        if not args.no_banner:
+            print(
+                "\n  +---------------------------------------------------------+\n"
+                "  | FIZZPROOF PROOF CERTIFICATE GENERATOR ENABLED           |\n"
+                "  |   Calculus of Constructions trusted kernel active        |\n"
+                "  |   de Bruijn criterion type-checker initialized           |\n"
+                "  |   Every classification receives a formal proof           |\n"
+                + ("  |   LaTeX export with bussproofs enabled                   |\n" if enable_latex else "")
+                + "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzReduce — MapReduce Framework setup
     # ----------------------------------------------------------------
     mr_job = None
@@ -6153,6 +6214,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if billing_middleware_instance is not None:
         builder.with_middleware(billing_middleware_instance)
+
+    # Add Proof Certificate middleware (priority 920, generates CoC proofs)
+    if proof_middleware_instance is not None:
+        builder.with_middleware(proof_middleware_instance)
 
     # Add MapReduce middleware (priority 920, tracks evaluations)
     if mr_middleware is not None:
@@ -8046,6 +8111,25 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.grammar_dashboard:
         print("\n  FizzGrammar not enabled. Use --grammar to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzProof — Proof Certificate Dashboard
+    # ----------------------------------------------------------------
+    if args.proof_dashboard and proof_registry_instance is not None:
+        print(ProofDashboard.render(
+            registry=proof_registry_instance,
+            checker=proof_checker_instance,
+            width=config.proof_cert_dashboard_width,
+        ))
+    elif args.proof_dashboard:
+        print("\n  FizzProof not enabled. Use --proof-cert to enable.\n")
+
+    if args.proof_latex and proof_registry_instance is not None:
+        certs = proof_registry_instance.all_certificates()
+        latex_count = sum(1 for c in certs if c.latex_source)
+        if latex_count > 0:
+            print(f"\n  FizzProof: {latex_count} LaTeX proof certificate(s) generated.")
+            print("  Use --verbose to see LaTeX source in output metadata.\n")
 
     # ----------------------------------------------------------------
     # FizzReduce — MapReduce Job Execution & Dashboard
