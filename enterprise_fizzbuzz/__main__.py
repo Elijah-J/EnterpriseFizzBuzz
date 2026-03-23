@@ -2370,6 +2370,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzReduce MapReduce ASCII dashboard after execution",
     )
 
+    # FizzSchema — Consensus-Based Schema Evolution
+    parser.add_argument(
+        "--schema-evolution",
+        action="store_true",
+        help="Enable FizzSchema: consensus-based schema evolution with Avro/Protobuf-style compatibility",
+    )
+
+    parser.add_argument(
+        "--schema-check",
+        action="store_true",
+        help="Run schema compatibility check on the built-in EvaluationResult lineage and print results",
+    )
+
+    parser.add_argument(
+        "--schema-dashboard",
+        action="store_true",
+        help="Display the FizzSchema ASCII dashboard with schema inventory, version timeline, and compatibility history",
+    )
+
     return parser
 
 
@@ -5227,6 +5246,74 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzSchema — Schema Evolution setup
+    # ----------------------------------------------------------------
+    schema_registry = None
+    schema_middleware_instance = None
+    schema_approver = None
+    schema_planner = None
+
+    if args.schema_evolution or args.schema_check or args.schema_dashboard:
+        from enterprise_fizzbuzz.infrastructure.schema_evolution import (
+            CompatibilityMode as SchemaCompatMode,
+            ConsensusApprover,
+            MigrationPlanner,
+            SchemaDashboard,
+            SchemaMiddleware,
+            bootstrap_registry,
+        )
+
+        mode_str = config.schema_evolution_compatibility_mode
+        try:
+            compat_mode = SchemaCompatMode(mode_str)
+        except ValueError:
+            compat_mode = SchemaCompatMode.BACKWARD
+
+        schema_registry = bootstrap_registry(mode=compat_mode)
+        schema_approver = ConsensusApprover(
+            num_nodes=config.schema_evolution_consensus_nodes,
+            quorum=config.schema_evolution_consensus_quorum,
+        )
+        schema_planner = MigrationPlanner()
+        schema_middleware_instance = SchemaMiddleware(schema_registry)
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZSCHEMA SCHEMA EVOLUTION ENABLED                     |\n"
+            f"  | Compatibility: {compat_mode.value:<10} | Consensus: "
+            f"{config.schema_evolution_consensus_quorum}/{config.schema_evolution_consensus_nodes} quorum   |\n"
+            "  | Avro-style compatibility | Paxos consensus approval    |\n"
+            '  | "Data contracts are sacred. Schema changes are solemn." |\n'
+            "  | Every field deserves governance.                        |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        if args.schema_check:
+            from enterprise_fizzbuzz.infrastructure.schema_evolution import (
+                CompatibilityChecker,
+                build_evaluation_result_lineage,
+            )
+            checker = CompatibilityChecker()
+            lineage = build_evaluation_result_lineage()
+            print("\n  Schema Compatibility Report:")
+            print("  " + "-" * 50)
+            for i in range(len(lineage) - 1):
+                old_s = lineage[i]
+                new_s = lineage[i + 1]
+                result = checker.check(old_s, new_s, compat_mode)
+                status = "COMPATIBLE" if result.compatible else "INCOMPATIBLE"
+                print(f"  v{old_s.version} -> v{new_s.version}: {status}")
+                for w in result.warnings:
+                    print(f"    ~ {w}")
+                for v in result.violations:
+                    print(f"    ! {v}")
+
+                # Migration plan
+                plan = schema_planner.plan(old_s, new_s)
+                print(f"    Migration: {plan.summary}")
+            print("  " + "-" * 50)
+
+    # ----------------------------------------------------------------
     # Recommendation Engine setup
     # ----------------------------------------------------------------
     rec_engine = None
@@ -5787,6 +5874,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add MapReduce middleware (priority 920, tracks evaluations)
     if mr_middleware is not None:
         builder.with_middleware(mr_middleware)
+
+    # Add Schema middleware (priority 950, stamps schema version on context)
+    if schema_middleware_instance is not None:
+        builder.with_middleware(schema_middleware_instance)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -7617,6 +7708,20 @@ def main(argv: Optional[list[str]] = None) -> int:
             ))
         elif args.mr_dashboard:
             print("\n  FizzReduce not enabled. Use --mapreduce to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzSchema Dashboard
+    # ----------------------------------------------------------------
+    if args.schema_dashboard and schema_registry is not None:
+        from enterprise_fizzbuzz.infrastructure.schema_evolution import SchemaDashboard
+        print(SchemaDashboard.render(
+            registry=schema_registry,
+            approver=schema_approver,
+            planner=schema_planner,
+            width=config.schema_evolution_dashboard_width,
+        ))
+    elif args.schema_dashboard:
+        print("\n  FizzSchema not enabled. Use --schema-evolution to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
