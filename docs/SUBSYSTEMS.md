@@ -59,6 +59,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzBob Operator Cognitive Load Architecture](#fizzbob-operator-cognitive-load-architecture)
 - [FizzPager Incident Paging & Escalation Architecture](#fizzpager-incident-paging--escalation-architecture)
 - [FizzSuccession Operator Succession Planning Architecture](#fizzsuccession-operator-succession-planning-architecture)
+- [FizzPerf Operator Performance Review Architecture](#fizzperf-operator-performance-review-architecture)
 
 ---
 
@@ -4806,3 +4807,143 @@ The `SuccessionDashboard` renders an ASCII display with:
 | Module size | ~3,095 lines |
 
 FizzSuccession ensures that the platform's key-person dependency risk is visible, quantifiable, and auditable. It does not reduce the risk -- the risk can only be reduced by hiring additional operators -- but it ensures that every quarterly compliance report includes a Platform Continuity Readiness Score that increases monotonically as the platform grows and Bob's knowledge becomes more irreplaceable.
+
+---
+
+## FizzPerf Operator Performance Review Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/fizzperf.py`
+
+FizzPerf is a comprehensive operator performance review and 360-degree feedback engine that implements the full performance management lifecycle for Bob McFizzington -- OKR-based goal tracking, self-assessment, multi-rater feedback, calibration with forced distribution, and compensation benchmarking. Bob is simultaneously the reviewee, the reviewer, the manager, the peer, the calibration committee, and the HR business partner. The engine follows the OKR framework (Doerr, "Measure What Matters"), 360-degree feedback methodology (Bracken et al., "The Handbook of Multisource Feedback"), and enterprise HRIS performance management patterns (Workday Performance, SAP SuccessFactors).
+
+### OKR Framework
+
+The `OKRFramework` manages 5 objectives with 2 key results each, aligned with organizational strategy and auto-populated from operational metrics:
+
+| Objective | Key Result | Target | Current | Status |
+|-----------|-----------|--------|---------|--------|
+| O1: Maintain 99.99% platform availability | KR1: Zero unplanned downtime events | 0 | 0 | ON_TRACK |
+| O1: Maintain 99.99% platform availability | KR2: Error budget consumption below 50% | < 50% | 23% | ON_TRACK |
+| O2: Achieve SOX/GDPR/HIPAA compliance | KR1: Pass all quarterly SOX attestations | 100% | 100% | COMPLETED |
+| O2: Achieve SOX/GDPR/HIPAA compliance | KR2: Process GDPR erasure requests within 72h | 100% | 100% | COMPLETED |
+| O3: Reduce MTTR for P1 incidents | KR1: MTTR under 30 minutes | < 30m | 12m | COMPLETED |
+| O3: Reduce MTTR for P1 incidents | KR2: Post-incident reviews within 48h | 100% | 95% | ON_TRACK |
+| O4: Complete quarterly DR drills | KR1: 100% drill completion rate | 100% | 100% | COMPLETED |
+| O4: Complete quarterly DR drills | KR2: RTO/RPO within SLA | 100% | 100% | COMPLETED |
+| O5: Improve operator well-being | KR1: Stress level below 80% | < 80% | 94.7% | OFF_TRACK |
+| O5: Improve operator well-being | KR2: Take 5+ PTO days per quarter | 5 days | 0 days | OFF_TRACK |
+
+Aggregate goal completion: 78%. The operational objectives (O1-O4) are at or above target. The well-being objectives (O5) are critically off-track. The goal framework computes completion as `sum(kr_completion) / count(kr)`, treating operational excellence and personal sustainability as equally weighted. The result is a score that looks healthy in aggregate and alarming in the details.
+
+### Self-Assessment Module
+
+The `SelfAssessmentModule` generates Bob's self-assessment with pre-populated competency ratings derived from operational metrics. If Bob's MTTR is in the top 10% of the cohort (a cohort of 1), the system suggests "Significantly Exceeds." Competency ratings span 8 dimensions:
+
+| Dimension | Weight | Self-Rating |
+|-----------|--------|-------------|
+| Technical Skill | 0.20 | SIGNIFICANTLY_EXCEEDS |
+| Communication | 0.10 | MEETS |
+| Leadership | 0.15 | EXCEEDS |
+| Collaboration | 0.10 | MEETS |
+| Reliability | 0.15 | SIGNIFICANTLY_EXCEEDS |
+| Innovation | 0.10 | EXCEEDS |
+| Compliance Rigor | 0.15 | SIGNIFICANTLY_EXCEEDS |
+| Incident Response | 0.05 | SIGNIFICANTLY_EXCEEDS |
+
+The narrative review prompts are tailored to the review period's events: "Describe your role in resolving the compliance paradox," "Reflect on your experience as sole incident commander," and "Discuss your approach to managing 108 infrastructure modules without delegation."
+
+### 360-Degree Feedback Engine
+
+The `FeedbackEngine360` collects multi-rater feedback from four perspectives:
+
+- **Manager review**: Bob evaluates Bob's performance as his own manager. The form is prefixed with "As this employee's manager, rate their performance on..." Bob completes it about himself
+- **Peer review**: Bob has no peers. The engine generates a `NoPeersAvailableEvent` and allows Bob to submit a self-peer review under the Sole Operator Accommodation
+- **Direct report review**: Bob has no direct reports. The engine generates a `NoDirectReportsEvent` and skips this section
+- **Stakeholder review**: The API contact person, compliance auditor, and sole customer are all Bob. Stakeholder feedback is collected from Bob
+
+Feedback is aggregated across all raters (1 self + 1 manager + 1 peer + 1 stakeholder = 4 reviews, all from Bob) and rendered as an ASCII radar chart. The inter-rater reliability coefficient is 1.0, because there is one rater. This is the highest possible inter-rater reliability and the lowest possible informational value.
+
+### Calibration Engine
+
+The `CalibrationEngine` convenes a calibration committee of three members:
+
+1. Bob McFizzington (HR Business Partner)
+2. Bob McFizzington (Engineering Manager)
+3. Bob McFizzington (VP of Operations)
+
+The committee reviews Bob's performance ratings, discusses calibration adjustments, and votes. The vote is unanimous on every rating. The engine then applies forced distribution, which requires that performance ratings follow a predefined curve (10% Significantly Exceeds, 20% Exceeds, 40% Meets, 20% Partially Meets, 10% Does Not Meet). For a population of 1, the distribution assigns Bob to exactly one category. The engine notes that a minimum sample size of 30 is required for statistical validity and that the current population falls 29 employees short of this threshold.
+
+The PIP (Performance Improvement Plan) framework is architecturally prepared to generate improvement plans signed by Bob (manager) and acknowledged by Bob (employee), though no PIP has ever been triggered.
+
+### Compensation Benchmarker
+
+The `CompensationBenchmarker` maps Bob's 14 concurrent roles to market compensation data:
+
+| Role | Market Benchmark |
+|------|-----------------|
+| Senior Principal Staff FizzBuzz Reliability Engineer II | $185,000 |
+| Chief Compliance Officer | $165,000 |
+| Chief Pricing Officer | $155,000 |
+| Security Engineer | $160,000 |
+| Database Administrator | $130,000 |
+| Systems Administrator | $120,000 |
+| Incident Commander | $145,000 |
+| ... (7 additional roles) | ... |
+
+The composite market rate is the sum of all 14 role benchmarks, reflecting that Bob performs all 14 roles simultaneously. The McFizzington Compensation Equity Index is computed as `actual_compensation / composite_market_rate`. The index is classified using four alert levels:
+
+- **ABOVE_MARKET**: index > 1.0
+- **AT_MARKET**: 0.8 <= index <= 1.0
+- **BELOW_MARKET**: 0.5 <= index < 0.8
+- **REQUIRES_IMMEDIATE_ATTENTION**: index < 0.5
+
+The current classification is REQUIRES_IMMEDIATE_ATTENTION. The finding has been submitted to HR for review. HR is Bob.
+
+### Review Cycle Orchestrator
+
+The `ReviewCycleOrchestrator` drives an 8-phase state machine:
+
+```
+GOAL_SETTING -> SELF_ASSESSMENT -> MANAGER_REVIEW -> PEER_REVIEW
+    -> STAKEHOLDER_REVIEW -> CALIBRATION -> FINALIZATION -> COMPLETED
+```
+
+Each phase transition is recorded as an event in the event sourcing journal. The complete review cycle involves Bob transitioning through 8 phases, completing forms from 4 perspectives, convening a 3-person committee (of himself), and producing a final calibrated rating that he approves and acknowledges.
+
+### Performance Middleware
+
+The `PerfMiddleware` integrates into the middleware pipeline at priority 100, after SuccessionMiddleware (95). Performance review logically follows succession planning: you must plan for the operator's replacement before evaluating their performance, because the evaluation may influence the replacement timeline. The middleware injects performance review metadata into each evaluation's processing context, including OKR completion, current rating, compensation alert status, and review cycle phase.
+
+### Performance Dashboard
+
+The `PerfDashboard` renders an ASCII display with:
+
+- OKR progress bars (5 objectives, color-coded by status)
+- 360-degree feedback radar chart (8 competency dimensions)
+- Calibration outcome (committee vote, final rating)
+- McFizzington Compensation Equity Index (with alert classification)
+- Review cycle status (current phase, completion percentage)
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| Objectives | 5 |
+| Key results | 10 |
+| Aggregate OKR completion | 78% |
+| Feedback perspectives | 4 (self, manager, peer, stakeholder) |
+| Unique raters | 1 (Bob McFizzington) |
+| Inter-rater reliability | 1.0 |
+| Calibration committee size | 3 (all Bob) |
+| Forced distribution minimum sample size | 30 |
+| Current population | 1 |
+| Roles benchmarked | 14 |
+| Compensation alert | REQUIRES_IMMEDIATE_ATTENTION |
+| PTO days taken (all time) | 0 |
+| Middleware priority | 100 |
+| Custom exceptions | 10 (EFP-PRF0 through EFP-PRF9) |
+| EventType entries | 13 |
+| CLI flags | 5 (`--perf`, `--perf-dashboard`, `--perf-okr-progress`, `--perf-review-report`, `--perf-compensation`) |
+| Test count | 285 |
+
+FizzPerf ensures that the platform's sole operator receives a formal, documented, multi-perspective performance review -- feedback that he writes, reviews, calibrates, and approves himself, through a process that is technically complete, procedurally sound, and existentially solitary. Every employee deserves a performance review, even if they are the only employee.

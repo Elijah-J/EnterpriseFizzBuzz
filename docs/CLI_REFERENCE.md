@@ -1299,6 +1299,11 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --succession-dashboard     Display the FizzSuccession ASCII dashboard with bus factor risk gauge, PCRS meter, skills matrix summary, knowledge gap heatmap, hiring pipeline status, and succession candidate table (empty)
 --succession-risk-report   Generate a comprehensive succession readiness report with risk assessment, skills inventory, gap analysis, hiring recommendations, and knowledge transfer status
 --succession-skills-matrix Display the full skills matrix with all 108 infrastructure modules mapped to skill categories, proficiency levels, dependency scores (all 1.0), and cross-trained counts (all 0)
+--perf                    Enable the FizzPerf Operator Performance Review Engine: OKR tracking, self-assessment, 360-degree multi-rater feedback, calibration with forced distribution, compensation benchmarking, and the McFizzington Compensation Equity Index
+--perf-dashboard          Display the FizzPerf ASCII dashboard with OKR progress bars, 360-degree radar chart, calibration outcome, compensation equity index, and review cycle status
+--perf-okr-progress       Display Bob McFizzington's OKR progress report with 5 objectives, 10 key results, completion percentages auto-populated from operational metrics, and at-risk goal identification
+--perf-review-report      Generate a comprehensive performance review report including self-assessment, 360-degree feedback aggregation, calibration committee decision, final rating, and development plan
+--perf-compensation       Display the compensation benchmarking report with 14-role composite market rate, McFizzington Compensation Equity Index, and compensation alert classification
 ```
 
 ## Environment Variables

@@ -722,6 +722,21 @@ class EventType(Enum):
     SUCCESSION_TRANSFER_SESSION_SCHEDULED = auto()
     SUCCESSION_DASHBOARD_RENDERED = auto()
 
+    # FizzPerf: Operator Performance Review & 360-Degree Feedback events
+    PERF_EVALUATION_PROCESSED = auto()
+    PERF_REVIEW_CYCLE_STARTED = auto()
+    PERF_REVIEW_CYCLE_COMPLETED = auto()
+    PERF_SELF_ASSESSMENT_COMPLETED = auto()
+    PERF_MANAGER_REVIEW_COMPLETED = auto()
+    PERF_PEER_REVIEW_COMPLETED = auto()
+    PERF_STAKEHOLDER_REVIEW_COMPLETED = auto()
+    PERF_FEEDBACK_AGGREGATED = auto()
+    PERF_CALIBRATION_COMPLETED = auto()
+    PERF_COMPENSATION_BENCHMARKED = auto()
+    PERF_NO_PEERS_AVAILABLE = auto()
+    PERF_NO_DIRECT_REPORTS = auto()
+    PERF_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

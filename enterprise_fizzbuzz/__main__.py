@@ -468,6 +468,12 @@ from enterprise_fizzbuzz.infrastructure.succession import (
     SuccessionMiddleware,
     create_succession_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzperf import (
+    PerfDashboard,
+    PerfEngine,
+    PerfMiddleware,
+    create_perf_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3457,6 +3463,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--succession-skills-matrix",
         action="store_true",
         help="Display the FizzSuccession skills matrix report after execution",
+    )
+
+    # FizzPerf — Operator Performance Review & 360-Degree Feedback Engine
+    parser.add_argument(
+        "--perf",
+        action="store_true",
+        help="Enable FizzPerf: operator performance review with OKR tracking, 360-degree feedback, calibration committee, compensation benchmarking, and McFizzington Equity Index",
+    )
+    parser.add_argument(
+        "--perf-dashboard",
+        action="store_true",
+        help="Display the FizzPerf performance review dashboard after execution",
+    )
+    parser.add_argument(
+        "--perf-okr-progress",
+        action="store_true",
+        help="Display the FizzPerf OKR progress report after execution",
+    )
+    parser.add_argument(
+        "--perf-review-report",
+        action="store_true",
+        help="Display the FizzPerf performance review report after execution",
+    )
+    parser.add_argument(
+        "--perf-compensation",
+        action="store_true",
+        help="Display the FizzPerf compensation benchmark report after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -7617,6 +7650,36 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzPerf — Operator Performance Review (priority 100)
+    # ----------------------------------------------------------------
+    perf_engine = None
+    perf_middleware_instance = None
+
+    if args.perf or args.perf_dashboard or args.perf_okr_progress or args.perf_review_report or args.perf_compensation:
+        perf_engine, perf_middleware_instance = create_perf_subsystem(
+            operator=config.perf_operator,
+            review_period=config.perf_review_period,
+            actual_compensation=config.perf_compensation_actual,
+            completion_target=config.perf_goal_completion_target,
+            equity_alert_threshold=config.perf_equity_alert_threshold,
+            enable_dashboard=args.perf_dashboard,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(perf_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZPERF: OPERATOR PERFORMANCE REVIEW ENGINE            |\n"
+                f"  | Employee: {config.perf_operator:<20}                 |\n"
+                f"  | Period: {config.perf_review_period:<10} | OKR Target: {config.perf_goal_completion_target:.0f}%            |\n"
+                "  | 360-Degree Feedback | Calibration | Compensation       |\n"
+                "  | Inter-Rater Reliability: 1.00 (perfect agreement)      |\n"
+                "  | Because every operator deserves a thorough review.     |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -10863,6 +10926,34 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(succession_middleware_instance.generate_skills_matrix_report())
     elif args.succession_skills_matrix and succession_middleware_instance is None:
         print("\n  FizzSuccession not enabled. Use --succession to enable.\n")
+
+    # FizzPerf Dashboard (post-execution)
+    if args.perf_dashboard and perf_middleware_instance is not None:
+        print()
+        print(perf_middleware_instance.render_dashboard(width=config.perf_dashboard_width))
+    elif args.perf_dashboard and perf_middleware_instance is None:
+        print("\n  FizzPerf not enabled. Use --perf to enable.\n")
+
+    # FizzPerf OKR Progress (post-execution)
+    if args.perf_okr_progress and perf_middleware_instance is not None:
+        print()
+        print(perf_middleware_instance.render_okr_progress())
+    elif args.perf_okr_progress and perf_middleware_instance is None:
+        print("\n  FizzPerf not enabled. Use --perf to enable.\n")
+
+    # FizzPerf Review Report (post-execution)
+    if args.perf_review_report and perf_middleware_instance is not None:
+        print()
+        print(perf_middleware_instance.render_review_report())
+    elif args.perf_review_report and perf_middleware_instance is None:
+        print("\n  FizzPerf not enabled. Use --perf to enable.\n")
+
+    # FizzPerf Compensation Report (post-execution)
+    if args.perf_compensation and perf_middleware_instance is not None:
+        print()
+        print(perf_middleware_instance.render_compensation_report())
+    elif args.perf_compensation and perf_middleware_instance is None:
+        print("\n  FizzPerf not enabled. Use --perf to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:
