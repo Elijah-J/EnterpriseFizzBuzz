@@ -1,6 +1,6 @@
 # EnterpriseFizzBuzz
 
-### 148,000+ Lines of Code and Counting: A Production-Grade, Enterprise-Ready, Clean-Architecture-Layered FizzBuzz Evaluation Engine -- Now With a Peer-to-Peer Gossip Network That Epidemically Disseminates the News That 15 Might Be FizzBuzz
+### 210,000+ Lines of Code and Counting: A Production-Grade, Enterprise-Ready, Clean-Architecture-Layered FizzBuzz Evaluation Engine -- Now With a Dependent Type System Where "15 Is FizzBuzz" Is a Type and the Proof Is a Program
 
 > *Because you can never be too careful when dividing by 3 and 5.*
 
@@ -32,17 +32,17 @@ for i in range(1, 101):
 
 ## This Solution
 
-**148,000+ lines** across **171+ files** with **4,900+ unit tests** and **348 custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**210,000+ lines** across **221+ files** with **7,900+ unit tests** and **460+ custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 ### Quick Stats
 
 | Metric | Value |
 |--------|-------|
-| Lines of Code | 148,000+ |
-| Test Count | 4,900+ |
-| Custom Exceptions | 348 |
-| Subsystems | 45+ |
-| CLI Flags | 128+ |
+| Lines of Code | 210,000+ |
+| Test Count | 7,900+ |
+| Custom Exceptions | 460+ |
+| Subsystems | 55+ |
+| CLI Flags | 277+ |
 | Locales | 7 (English, German, French, Japanese, Klingon, Sindarin, Quenya) |
 | Design Patterns | 100+ |
 | ASCII Dashboards | 30+ |
@@ -69,11 +69,11 @@ python main.py --strategy machine_learning --range 1 20 --debug
 python main.py --circuit-breaker --circuit-status --verbose
 ```
 
-See [CLI Reference](docs/CLI_REFERENCE.md) for all 128+ flags and hundreds of example commands.
+See [CLI Reference](docs/CLI_REFERENCE.md) for all 277+ flags and hundreds of example commands.
 
 ## Documentation
 
-Because a project with 148,000+ lines obviously needs a `docs/` directory with its own table of contents.
+Because a project with 210,000+ lines obviously needs a `docs/` directory with its own table of contents.
 
 | Document | Description |
 |----------|-------------|
@@ -86,7 +86,7 @@ Because a project with 148,000+ lines obviously needs a `docs/` directory with i
 | [Testing](docs/testing.md) | Test coverage map with per-file test counts and methodology |
 | [Configuration Guide](docs/configuration.md) | Complete configuration reference with all YAML sections |
 | [Developer Guide](docs/developer-guide.md) | How to add new subsystems, middleware, and evaluation strategies |
-| [Exceptions Catalog](docs/exceptions.md) | All 348 exception classes with hierarchy and usage |
+| [Exceptions Catalog](docs/exceptions.md) | All 460+ exception classes with hierarchy and usage |
 | [Security Guide](docs/security.md) | RBAC, token engine, vault, and compliance documentation |
 | [Runbook](docs/runbook.md) | Operational procedures for the FizzBuzz platform |
 | [ADR Directory](docs/adr/) | Architectural Decision Records |
