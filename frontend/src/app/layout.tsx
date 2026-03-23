@@ -45,6 +45,14 @@ export default function RootLayout({
               <li className="rounded px-2 py-1.5 bg-panel-800 text-panel-50">
                 Dashboard
               </li>
+              <li>
+                <a
+                  href="/evaluate"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Evaluation Console
+                </a>
+              </li>
               <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
                 Pipeline Monitor
               </li>
