@@ -2402,6 +2402,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzSLI ASCII dashboard with SLI inventory, burn rates, attribution, and gate status",
     )
 
+    # FizzCheck — Formal Model Checking
+    parser.add_argument(
+        "--model-check",
+        action="store_true",
+        help="Enable FizzCheck: TLA+-style temporal logic model checking of all stateful subsystems",
+    )
+
+    parser.add_argument(
+        "--model-check-property",
+        type=str,
+        default=None,
+        metavar="NAME",
+        help="Verify a specific named property only (e.g., 'MESI: reachability of valid state')",
+    )
+
+    parser.add_argument(
+        "--model-check-dashboard",
+        action="store_true",
+        help="Display the FizzCheck ASCII dashboard with verification results, counterexamples, and reduction stats",
+    )
+
     return parser
 
 
@@ -5259,6 +5280,30 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzCheck — Formal Model Checking setup
+    # ----------------------------------------------------------------
+    mc_middleware_instance = None
+
+    if args.model_check or args.model_check_dashboard or args.model_check_property:
+        from enterprise_fizzbuzz.infrastructure.model_checker import (
+            ModelCheckerMiddleware,
+        )
+
+        mc_middleware_instance = ModelCheckerMiddleware(
+            max_states=config.model_check_max_states,
+        )
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FIZZCHECK FORMAL MODEL CHECKING ENABLED                 |\n"
+            "  | TLA+-style temporal logic verification active           |\n"
+            "  | Models: MESI cache | Circuit breaker | Middleware       |\n"
+            '  | "Every state machine deserves formal verification."     |\n'
+            "  | Correctness is not optional. It is proven.              |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # FizzSLI — Service Level Indicator Framework setup
     # ----------------------------------------------------------------
     sli_registry = None
@@ -5929,6 +5974,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Add SLI middleware (priority 54, records good/bad events for burn-rate alerting)
     if sli_middleware_instance is not None:
         builder.with_middleware(sli_middleware_instance)
+
+    # Add Model Checker middleware (priority 56, verifies temporal properties at startup)
+    if mc_middleware_instance is not None:
+        builder.with_middleware(mc_middleware_instance)
 
     # Add Time-Travel middleware (priority -5, captures snapshots after full pipeline)
     if tt_middleware is not None:
@@ -7785,6 +7834,31 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.sli_dashboard:
         print("\n  FizzSLI not enabled. Use --sli to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzCheck Model Checking Dashboard
+    # ----------------------------------------------------------------
+    if args.model_check_dashboard and mc_middleware_instance is not None:
+        from enterprise_fizzbuzz.infrastructure.model_checker import (
+            ModelCheckerDashboard,
+        )
+        # Ensure verification has been run
+        if mc_middleware_instance.results is None:
+            # Force a verification run if no evaluations have triggered the middleware
+            from enterprise_fizzbuzz.infrastructure.model_checker import (
+                ModelChecker,
+                ModelExtractor,
+                AtomicProposition,
+                Eventually,
+            )
+            mc_middleware_instance._results = mc_middleware_instance._run_verification()
+            mc_middleware_instance._checked = True
+        print(ModelCheckerDashboard.render(
+            results=mc_middleware_instance.results,
+            width=config.model_check_dashboard_width,
+        ))
+    elif args.model_check_dashboard:
+        print("\n  FizzCheck not enabled. Use --model-check to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

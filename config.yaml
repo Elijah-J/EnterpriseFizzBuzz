@@ -1860,6 +1860,20 @@ schema_evolution:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzCheck — Formal Model Checking configuration
+# Because deploying a FizzBuzz platform whose stateful subsystems
+# have not been formally verified with TLA+-style temporal logic
+# model checking is the engineering equivalent of driving without
+# a seatbelt through a roundabout. Every MESI cache transition,
+# every circuit breaker state change, and every middleware pipeline
+# stage ordering must satisfy its specification — or a counterexample
+# trace will explain exactly how your modulo arithmetic can fail.
+model_check:
+  enabled: false                          # Master switch — opt-in via --model-check
+  max_states: 100000                      # Maximum states before state space explosion error
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # FizzSLI — Service Level Indicator Framework configuration
 # Because measuring reliability with SLAs alone is a relic of the
 # SRE pre-history. Modern enterprises demand multi-window burn-rate
