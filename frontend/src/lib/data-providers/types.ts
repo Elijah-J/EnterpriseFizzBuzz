@@ -321,6 +321,72 @@ export interface ComplianceFinding {
   assignee?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Analytics & Intelligence types
+// ---------------------------------------------------------------------------
+
+/** Classification count and proportion for a single FizzBuzz output category. */
+export interface ClassificationDistribution {
+  /** The classification category. */
+  classification: "fizz" | "buzz" | "fizzbuzz" | "number";
+  /** Absolute count of integers in this category within the range. */
+  count: number;
+  /** Proportion of total range (0..1). */
+  proportion: number;
+  /** Exact fraction representation (e.g., "4/15") for display. */
+  fraction: string;
+  /** Design token CSS color variable for this classification. */
+  color: string;
+}
+
+/** A single cell in the divisibility heatmap grid. */
+export interface HeatmapCell {
+  /** The integer being tested. */
+  number: number;
+  /** The divisor being tested against. */
+  divisor: number;
+  /** Whether the number is evenly divisible by the divisor. */
+  divisible: boolean;
+  /** The remainder (number % divisor). */
+  remainder: number;
+}
+
+/** Complete heatmap dataset for a range of numbers and divisors. */
+export interface HeatmapData {
+  /** All cells in the heatmap grid, ordered row-major (by number, then by divisor). */
+  cells: HeatmapCell[];
+  /** The numbers (rows) included in the heatmap. */
+  numbers: number[];
+  /** The divisors (columns) tested. */
+  divisors: number[];
+}
+
+/** A single data point in the evaluation volume trend. */
+export interface EvaluationTrendPoint {
+  /** Unix timestamp in milliseconds. */
+  timestamp: number;
+  /** Total number of evaluations in this time bucket. */
+  count: number;
+  /** Evaluations classified as Fizz in this bucket. */
+  fizz: number;
+  /** Evaluations classified as Buzz in this bucket. */
+  buzz: number;
+  /** Evaluations classified as FizzBuzz in this bucket. */
+  fizzbuzz: number;
+  /** Evaluations classified as plain numbers in this bucket. */
+  plain: number;
+}
+
+/** Evaluation volume trend over a time period. */
+export interface EvaluationTrend {
+  /** Ordered data points for the requested period. */
+  dataPoints: EvaluationTrendPoint[];
+  /** Total evaluations across the entire trend period. */
+  totalEvaluations: number;
+  /** The time bucket size in seconds (e.g., 3600 for hourly). */
+  bucketSizeSeconds: number;
+}
+
 /** An entry in the compliance audit log. */
 export interface AuditEntry {
   /** Unique audit entry identifier. */

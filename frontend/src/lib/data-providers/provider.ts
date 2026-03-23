@@ -17,6 +17,9 @@ import type {
   ComplianceFinding,
   AuditEntry,
   FindingSeverity,
+  ClassificationDistribution,
+  HeatmapData,
+  EvaluationTrend,
 } from "./types";
 
 /**
@@ -156,4 +159,33 @@ export interface IDataProvider {
    * @param limit - Maximum number of entries to return (default: 50)
    */
   getAuditLog(limit?: number): Promise<AuditEntry[]>;
+
+  /**
+   * Compute the classification distribution for a given integer range.
+   * Returns exact counts, proportions, and simplified fractions for each
+   * FizzBuzz classification category.
+   *
+   * @param start - Start of range (inclusive)
+   * @param end - End of range (inclusive)
+   */
+  getClassificationDistribution(start: number, end: number): Promise<ClassificationDistribution[]>;
+
+  /**
+   * Generate a divisibility heatmap for a range of numbers against a set
+   * of divisors. Used to visualize modular arithmetic patterns that
+   * underpin the FizzBuzz classification engine.
+   *
+   * @param start - Start of range (inclusive)
+   * @param end - End of range (inclusive)
+   * @param divisors - Divisors to test (default: [2, 3, 4, 5, 6, 7, 8, 9, 10, 15])
+   */
+  getDivisorHeatmap(start: number, end: number, divisors?: number[]): Promise<HeatmapData>;
+
+  /**
+   * Retrieve evaluation volume trend data for the specified period.
+   * Returns time-bucketed evaluation counts with per-classification breakdown.
+   *
+   * @param period - Time period: "1h", "6h", "24h", "7d"
+   */
+  getEvaluationTrend(period: string): Promise<EvaluationTrend>;
 }

@@ -21,6 +21,11 @@ import type {
   ComplianceFinding,
   FindingSeverity,
   AuditEntry,
+  ClassificationDistribution,
+  HeatmapData,
+  HeatmapCell,
+  EvaluationTrend,
+  EvaluationTrendPoint,
 } from "./types";
 
 /**
@@ -33,6 +38,22 @@ function gaussianRandom(mean: number, stddev: number): number {
   const u2 = Math.random();
   const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
   return Math.max(0, mean + z0 * stddev);
+}
+
+/**
+ * Computes the greatest common divisor of two non-negative integers
+ * using the Euclidean algorithm. Used by the analytics subsystem for
+ * exact fraction simplification in classification distribution reports.
+ */
+function gcd(a: number, b: number): number {
+  a = Math.abs(a);
+  b = Math.abs(b);
+  while (b !== 0) {
+    const t = b;
+    b = a % b;
+    a = t;
+  }
+  return a;
 }
 
 /**
@@ -726,6 +747,140 @@ export class SimulationProvider implements IDataProvider {
 
   async getAlerts(): Promise<Alert[]> {
     return generateAlerts();
+  }
+
+  // -------------------------------------------------------------------------
+  // Analytics & Intelligence
+  // -------------------------------------------------------------------------
+
+  async getClassificationDistribution(
+    start: number,
+    end: number,
+  ): Promise<ClassificationDistribution[]> {
+    const counts: Record<string, number> = {
+      fizz: 0,
+      buzz: 0,
+      fizzbuzz: 0,
+      number: 0,
+    };
+
+    for (let n = start; n <= end; n++) {
+      if (n % 15 === 0) {
+        counts.fizzbuzz++;
+      } else if (n % 3 === 0) {
+        counts.fizz++;
+      } else if (n % 5 === 0) {
+        counts.buzz++;
+      } else {
+        counts.number++;
+      }
+    }
+
+    const total = end - start + 1;
+
+    const colorMap: Record<string, string> = {
+      fizz: "var(--fizz-400)",
+      buzz: "var(--buzz-400)",
+      fizzbuzz: "var(--fizzbuzz-400)",
+      number: "var(--number-400)",
+    };
+
+    return (["fizz", "buzz", "fizzbuzz", "number"] as const).map(
+      (classification) => {
+        const count = counts[classification];
+        const proportion = total > 0 ? count / total : 0;
+        const divisor = gcd(count, total);
+        const fraction =
+          total > 0 && divisor > 0
+            ? `${count / divisor}/${total / divisor}`
+            : "0/1";
+
+        return {
+          classification,
+          count,
+          proportion,
+          fraction,
+          color: colorMap[classification],
+        };
+      },
+    );
+  }
+
+  async getDivisorHeatmap(
+    start: number,
+    end: number,
+    divisors: number[] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 15],
+  ): Promise<HeatmapData> {
+    const rangeSize = end - start + 1;
+    let numbers: number[];
+
+    if (rangeSize > 50) {
+      // Sample evenly across the range to produce exactly 50 entries
+      numbers = [];
+      for (let i = 0; i < 50; i++) {
+        numbers.push(start + Math.round((i / 49) * (rangeSize - 1)));
+      }
+    } else {
+      numbers = [];
+      for (let n = start; n <= end; n++) {
+        numbers.push(n);
+      }
+    }
+
+    const cells: HeatmapCell[] = [];
+    for (const num of numbers) {
+      for (const div of divisors) {
+        cells.push({
+          number: num,
+          divisor: div,
+          divisible: num % div === 0,
+          remainder: num % div,
+        });
+      }
+    }
+
+    return { cells, numbers, divisors };
+  }
+
+  async getEvaluationTrend(period: string): Promise<EvaluationTrend> {
+    const periodConfig: Record<string, { buckets: number; bucketSize: number }> = {
+      "1h": { buckets: 12, bucketSize: 300 },
+      "6h": { buckets: 24, bucketSize: 900 },
+      "24h": { buckets: 24, bucketSize: 3600 },
+      "7d": { buckets: 28, bucketSize: 21600 },
+    };
+
+    const config = periodConfig[period] ?? periodConfig["24h"];
+    const now = Date.now();
+    const dataPoints: EvaluationTrendPoint[] = [];
+    let totalEvals = 0;
+
+    for (let i = config.buckets - 1; i >= 0; i--) {
+      const timestamp = now - i * config.bucketSize * 1000;
+      const count = Math.max(1, Math.round(gaussianRandom(150, 40)));
+
+      const fbCount = Math.max(0, Math.round(count * (1 / 15) + gaussianRandom(0, 2)));
+      const fizzCount = Math.max(0, Math.round(count * (4 / 15) + gaussianRandom(0, 3)));
+      const buzzCount = Math.max(0, Math.round(count * (2 / 15) + gaussianRandom(0, 2)));
+      const plain = Math.max(0, count - fbCount - fizzCount - buzzCount);
+
+      dataPoints.push({
+        timestamp,
+        count,
+        fizz: fizzCount,
+        buzz: buzzCount,
+        fizzbuzz: fbCount,
+        plain,
+      });
+
+      totalEvals += count;
+    }
+
+    return {
+      dataPoints,
+      totalEvaluations: totalEvals,
+      bucketSizeSeconds: config.bucketSize,
+    };
   }
 }
 

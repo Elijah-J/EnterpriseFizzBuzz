@@ -115,8 +115,13 @@ export default function RootLayout({
                   Compliance
                 </a>
               </li>
-              <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
-                Analytics
+              <li>
+                <a
+                  href="/analytics"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Analytics
+                </a>
               </li>
               <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
                 Configuration

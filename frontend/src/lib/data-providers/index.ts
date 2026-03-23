@@ -21,6 +21,11 @@ export type {
   ComplianceFinding,
   AuditEntry,
   FindingSeverity,
+  ClassificationDistribution,
+  HeatmapCell,
+  HeatmapData,
+  EvaluationTrendPoint,
+  EvaluationTrend,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";
