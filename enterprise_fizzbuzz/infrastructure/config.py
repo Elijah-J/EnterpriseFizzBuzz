@@ -896,6 +896,14 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "theorem_prover": {
+                "enabled": False,
+                "max_clauses": 5000,
+                "max_steps": 10000,
+                "dashboard": {
+                    "width": 72,
+                },
+            },
             "fbaas": {
                 "enabled": False,
                 "default_tier": "free",
@@ -6251,6 +6259,34 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Width of the ASCII flame graph dashboard."""
         self._ensure_loaded()
         return self._raw_config.get("flame", {}).get("dashboard", {}).get("width", 72)
+
+    # ------------------------------------------------------------------
+    # FizzProve — Automated Theorem Prover configuration properties
+    # ------------------------------------------------------------------
+
+    @property
+    def theorem_prover_enabled(self) -> bool:
+        """Whether the Automated Theorem Prover subsystem is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("theorem_prover", {}).get("enabled", False)
+
+    @property
+    def theorem_prover_max_clauses(self) -> int:
+        """Maximum number of clauses before the resolution engine halts."""
+        self._ensure_loaded()
+        return self._raw_config.get("theorem_prover", {}).get("max_clauses", 5000)
+
+    @property
+    def theorem_prover_max_steps(self) -> int:
+        """Maximum number of resolution steps per proof attempt."""
+        self._ensure_loaded()
+        return self._raw_config.get("theorem_prover", {}).get("max_steps", 10000)
+
+    @property
+    def theorem_prover_dashboard_width(self) -> int:
+        """ASCII dashboard width for the theorem prover dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("theorem_prover", {}).get("dashboard", {}).get("width", 72)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""

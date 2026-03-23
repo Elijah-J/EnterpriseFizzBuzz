@@ -584,6 +584,14 @@ from enterprise_fizzbuzz.infrastructure.process_migration import (
     MigrationStrategy,
     create_migration_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.theorem_prover import (
+    FizzBuzzTheorems,
+    ProverDashboard,
+    ProverMiddleware,
+    TheoremStatus,
+    prove_all_theorems,
+    prove_theorem,
+)
 from enterprise_fizzbuzz.infrastructure.flame_graph import (
     DifferentialFlameGraph,
     FlameGraphDashboard as FlameASCIIDashboard,
@@ -2951,6 +2959,28 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzFlame ASCII dashboard with top frames, subsystem distribution, and ASCII flame visualization",
     )
 
+    # FizzProve — Automated Theorem Prover
+    parser.add_argument(
+        "--prove-theorem",
+        type=str,
+        choices=["completeness", "exclusivity", "periodicity", "primality"],
+        default=None,
+        metavar="THEOREM",
+        help="Prove a specific FizzBuzz theorem via Robinson's resolution (completeness | exclusivity | periodicity | primality)",
+    )
+
+    parser.add_argument(
+        "--prove-all",
+        action="store_true",
+        help="Prove all theorems in the FizzBuzz theorem library using automated resolution refutation",
+    )
+
+    parser.add_argument(
+        "--prover-dashboard",
+        action="store_true",
+        help="Display the FizzProve ASCII dashboard with theorem inventory, proof statistics, and resolution detail",
+    )
+
     return parser
 
 
@@ -3368,6 +3398,95 @@ def main(argv: Optional[list[str]] = None) -> int:
         if args.verify_dashboard:
             print(VerificationDashboard.render(
                 report, width=config.formal_verification_dashboard_width
+            ))
+
+        return 0
+
+    # ----------------------------------------------------------------
+    # FizzProve — Automated Theorem Prover (early exit commands)
+    # ----------------------------------------------------------------
+    if args.prove_theorem or args.prove_all:
+        theorem_map = {
+            "completeness": FizzBuzzTheorems.completeness,
+            "exclusivity": FizzBuzzTheorems.exclusivity,
+            "periodicity": FizzBuzzTheorems.periodicity,
+            "primality": FizzBuzzTheorems.primality_exclusion,
+        }
+
+        if args.prove_theorem:
+            theorem_fn = theorem_map[args.prove_theorem]
+            theorem_spec = theorem_fn()
+            print(
+                "  +---------------------------------------------------------+\n"
+                f"  | FIZZPROVE: {theorem_spec[2].upper():<44}|\n"
+                "  | Constructing resolution refutation proof...             |\n"
+                "  +---------------------------------------------------------+"
+            )
+            print()
+
+            result = prove_theorem(
+                theorem_spec,
+                max_clauses=config.theorem_prover_max_clauses,
+                max_steps=config.theorem_prover_max_steps,
+            )
+
+            status_icon = "\u2713 QED" if result.status == TheoremStatus.PROVED else "\u2717 UNPROVED"
+            print(f"  [{status_icon}] {result.name}: {result.description}")
+            print(f"  Clauses: {result.proof_tree.clause_count} | "
+                  f"Resolutions: {result.proof_tree.resolution_count} | "
+                  f"Time: {result.elapsed_ms:.2f}ms")
+            print()
+
+            # Show proof tree
+            print(ProverDashboard.render_proof(
+                result.proof_tree,
+                width=config.theorem_prover_dashboard_width,
+            ))
+
+            if args.prover_dashboard:
+                print()
+                print(ProverDashboard.render(
+                    [result],
+                    width=config.theorem_prover_dashboard_width,
+                ))
+
+            return 0
+
+        # Prove all theorems
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FIZZPROVE -- AUTOMATED THEOREM PROVER                   |\n"
+            "  | Proving all FizzBuzz theorems via Robinson's resolution  |\n"
+            "  | refutation with set-of-support strategy.                |\n"
+            "  | Because correctness must be earned, not assumed.         |\n"
+            "  +---------------------------------------------------------+"
+        )
+        print()
+        print(f"  Max clauses: {config.theorem_prover_max_clauses}")
+        print(f"  Max steps:   {config.theorem_prover_max_steps}")
+        print()
+
+        results = prove_all_theorems(
+            max_clauses=config.theorem_prover_max_clauses,
+            max_steps=config.theorem_prover_max_steps,
+        )
+
+        for result in results:
+            status_icon = "\u2713 QED" if result.status == TheoremStatus.PROVED else "\u2717 UNPROVED"
+            print(f"  [{status_icon}] {result.name}: {result.description}")
+            print(f"      Clauses: {result.proof_tree.clause_count} | "
+                  f"Resolutions: {result.proof_tree.resolution_count} | "
+                  f"Time: {result.elapsed_ms:.2f}ms")
+        print()
+
+        proved = sum(1 for r in results if r.status == TheoremStatus.PROVED)
+        print(f"  Summary: {proved}/{len(results)} theorems proved.")
+        print()
+
+        if args.prover_dashboard:
+            print(ProverDashboard.render(
+                results,
+                width=config.theorem_prover_dashboard_width,
             ))
 
         return 0
