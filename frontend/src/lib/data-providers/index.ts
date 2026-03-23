@@ -36,6 +36,12 @@ export type {
   AuditLogFilter,
   PaginatedAuditLog,
   AuditLogSortField,
+  QuantumGateType,
+  QuantumGate,
+  QuantumCircuit,
+  ComplexAmplitude,
+  QuantumState,
+  QuantumSimulationResult,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

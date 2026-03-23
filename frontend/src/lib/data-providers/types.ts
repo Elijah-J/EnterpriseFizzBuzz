@@ -550,3 +550,82 @@ export interface PaginatedAuditLog {
 
 /** Sortable fields for audit log table columns. */
 export type AuditLogSortField = "timestamp" | "severity" | "action" | "actor" | "outcome" | "subsystem";
+
+// ---------------------------------------------------------------------------
+// Quantum Circuit Workbench types
+// ---------------------------------------------------------------------------
+
+/** Supported quantum gate types matching the backend QuantumCircuit gate set. */
+export type QuantumGateType = "H" | "X" | "Z" | "S" | "T" | "CNOT" | "CZ" | "SWAP" | "QFT" | "M";
+
+/** A single gate placement within a quantum circuit. */
+export interface QuantumGate {
+  /** Gate type identifier matching the backend gate registry. */
+  type: QuantumGateType;
+  /** Primary target qubit index (0-indexed). */
+  qubit: number;
+  /** Control qubit index for two-qubit gates (CNOT, CZ, SWAP). Absent for single-qubit gates. */
+  controlQubit?: number;
+  /** Sequential position of this gate in the circuit's execution order. */
+  step: number;
+}
+
+/** A named quantum circuit definition consisting of an ordered gate sequence. */
+export interface QuantumCircuit {
+  /** Unique circuit identifier. */
+  id: string;
+  /** Human-readable circuit name (e.g., "Shor-3 Divisibility Oracle"). */
+  name: string;
+  /** Extended description of the circuit's purpose and algorithmic basis. */
+  description: string;
+  /** Number of qubits in the circuit register. */
+  numQubits: number;
+  /** Ordered gate applications comprising the circuit. */
+  gates: QuantumGate[];
+  /** Number of classical measurement bits (typically equals numQubits). */
+  numClassicalBits: number;
+  /** Circuit depth (number of sequential gate steps). */
+  depth: number;
+}
+
+/** A complex amplitude represented as a real/imaginary pair for JSON serialization. */
+export interface ComplexAmplitude {
+  /** Real component of the amplitude. */
+  real: number;
+  /** Imaginary component of the amplitude. */
+  imag: number;
+}
+
+/** The quantum state vector after circuit execution, prior to measurement. */
+export interface QuantumState {
+  /** Complex amplitudes for each computational basis state |0...0> through |1...1>. */
+  amplitudes: ComplexAmplitude[];
+  /** Born-rule measurement probabilities for each basis state, derived from |amplitude|^2. */
+  probabilities: number[];
+  /** Number of qubits in the register. */
+  numQubits: number;
+  /** Basis state labels in ket notation (e.g., ["|00>", "|01>", "|10>", "|11>"]). */
+  basisLabels: string[];
+}
+
+/** Results of executing a quantum circuit simulation over multiple measurement shots. */
+export interface QuantumSimulationResult {
+  /** The circuit that was executed. */
+  circuit: QuantumCircuit;
+  /** Final state vector after circuit execution (before measurement collapse). */
+  finalState: QuantumState;
+  /** Measurement outcome histogram: maps basis state label to observation count. */
+  measurementCounts: Record<string, number>;
+  /** Total number of measurement shots executed. */
+  shotsExecuted: number;
+  /** Ratio of quantum simulation wall-clock time to classical evaluation time.
+   *  Values < 1.0 indicate quantum advantage. Values > 1.0 (the expected case
+   *  for FizzBuzz) indicate classical superiority. */
+  quantumAdvantageRatio: number;
+  /** Wall-clock time for the quantum simulation in milliseconds. */
+  quantumTimeMs: number;
+  /** Wall-clock time for equivalent classical evaluation in milliseconds. */
+  classicalTimeMs: number;
+  /** ISO 8601 timestamp of simulation completion. */
+  simulatedAt: string;
+}
