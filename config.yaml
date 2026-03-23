@@ -1925,6 +1925,23 @@ proof_certificates:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzSynth — Digital Audio Synthesizer
+# Sonifies FizzBuzz evaluation sequences as music using subtractive
+# synthesis. The natural 3-against-5 polyrhythmic structure of the
+# FizzBuzz sequence maps to distinct timbral and melodic parameters:
+# Fizz triggers a square wave at C4, Buzz a sawtooth at E4, and
+# FizzBuzz a detuned dual oscillator at G4. Plain numbers receive
+# triangle waves with pitch proportional to their value. The resulting
+# audio is shaped by ADSR envelopes, biquad filtering, and Schroeder
+# reverb before being written as 16-bit PCM WAV (44100 Hz, mono).
+synth:
+  enabled: false                          # Master switch — opt-in via --synth
+  bpm: 120.0                             # Composition tempo in beats per minute
+  reverb_wet: 0.2                        # Schroeder reverb wet/dry mix (0.0-1.0)
+  filter_cutoff: 8000.0                  # Low-pass filter cutoff frequency in Hz
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

@@ -515,6 +515,11 @@ from enterprise_fizzbuzz.infrastructure.proof_certificates import (
     ProofDashboard,
     ProofMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.audio_synth import (
+    SequenceComposer,
+    SynthDashboard,
+    SynthMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.virtual_fs import (
     FizzFS,
     FizzShell,
@@ -2579,6 +2584,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--proof-dashboard",
         action="store_true",
         help="Display the FizzProof ASCII dashboard with certificate inventory, verification metrics, and kernel status",
+    )
+
+    # FizzSynth — Digital Audio Synthesizer
+    parser.add_argument(
+        "--synth",
+        action="store_true",
+        help="Enable FizzSynth: sonify FizzBuzz sequences as music using subtractive synthesis with ADSR envelopes",
+    )
+
+    parser.add_argument(
+        "--synth-wav",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help="Write the FizzSynth composition to a 16-bit PCM WAV file (44100 Hz, mono)",
+    )
+
+    parser.add_argument(
+        "--synth-dashboard",
+        action="store_true",
+        help="Display the FizzSynth ASCII dashboard with waveform visualization and polyrhythm analysis",
     )
 
     # FizzFS — In-Memory Virtual File System
@@ -6437,6 +6463,40 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzSynth — Digital Audio Synthesizer
+    # ----------------------------------------------------------------
+    synth_composer = None
+    synth_middleware_instance = None
+
+    if args.synth or args.synth_wav or args.synth_dashboard:
+        synth_bpm = config.synth_bpm
+        synth_reverb_wet = config.synth_reverb_wet
+        synth_filter_cutoff = config.synth_filter_cutoff
+
+        synth_composer = SequenceComposer(
+            bpm=synth_bpm,
+            reverb_wet=synth_reverb_wet,
+            filter_cutoff=synth_filter_cutoff,
+        )
+
+        synth_middleware_instance = SynthMiddleware(
+            composer=synth_composer,
+            enable_dashboard=args.synth_dashboard,
+            wav_output_path=args.synth_wav,
+        )
+        builder.with_middleware(synth_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZSYNTH: DIGITAL AUDIO SYNTHESIZER                    |\n"
+                f"  |   Tempo: {synth_bpm:.0f} BPM  Sample rate: 44100 Hz           |\n"
+                "  |   3-against-5 polyrhythmic sonification enabled          |\n"
+                "  |   Fizz=C4 square, Buzz=E4 saw, FizzBuzz=G4 detuned      |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzFS — In-Memory Virtual File System (pipeline integration)
     # ----------------------------------------------------------------
     fizzfs_instance = None
@@ -8411,6 +8471,26 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(FSDashboard.render(fizzfs_instance))
     elif args.fizzfs_dashboard:
         print("\n  FizzFS not enabled. Use --fizzfs to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzSynth Dashboard & WAV Export (post-execution)
+    # ----------------------------------------------------------------
+    if synth_composer is not None and args.synth_wav:
+        frames = synth_composer.render_to_wav(args.synth_wav)
+        duration = synth_composer.total_duration
+        print(
+            f"\n  FizzSynth WAV exported: {args.synth_wav}\n"
+            f"  Frames: {frames}  Duration: {duration:.2f}s  "
+            f"Format: 44100 Hz / 16-bit / mono\n"
+        )
+
+    if args.synth_dashboard and synth_composer is not None:
+        print(SynthDashboard.render(
+            composer=synth_composer,
+            width=config.synth_dashboard_width,
+        ))
+    elif args.synth_dashboard:
+        print("\n  FizzSynth not enabled. Use --synth to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
