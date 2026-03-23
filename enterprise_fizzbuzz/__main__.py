@@ -602,6 +602,13 @@ from enterprise_fizzbuzz.infrastructure.flame_graph import (
     TimelineHeatMap,
     generate_differential_flame_graph,
 )
+from enterprise_fizzbuzz.infrastructure.regex_engine import (
+    FizzBuzzPatterns,
+    RegexBenchmark,
+    RegexCompiler,
+    RegexDashboard,
+    RegexMiddleware,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -2981,6 +2988,34 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzProve ASCII dashboard with theorem inventory, proof statistics, and resolution detail",
     )
 
+    # FizzRegex — Regular Expression Engine
+    parser.add_argument(
+        "--regex",
+        action="store_true",
+        help="Enable the FizzRegex engine for DFA-based classification validation (Thompson NFA + Rabin-Scott DFA)",
+    )
+
+    parser.add_argument(
+        "--regex-match",
+        nargs=2,
+        type=str,
+        metavar=("PATTERN", "INPUT"),
+        default=None,
+        help="Compile PATTERN via Thompson/Rabin-Scott pipeline and test against INPUT (e.g. --regex-match 'a|b' 'a')",
+    )
+
+    parser.add_argument(
+        "--regex-benchmark",
+        action="store_true",
+        help="Run the pathological pattern benchmark: (a?)^n(a)^n — FizzRegex O(n) vs Python re O(2^n)",
+    )
+
+    parser.add_argument(
+        "--regex-dashboard",
+        action="store_true",
+        help="Display the FizzRegex ASCII dashboard with NFA/DFA state counts and minimization statistics",
+    )
+
     return parser
 
 
@@ -3489,6 +3524,59 @@ def main(argv: Optional[list[str]] = None) -> int:
                 width=config.theorem_prover_dashboard_width,
             ))
 
+        return 0
+
+    # ----------------------------------------------------------------
+    # FizzRegex — Early Exit Commands
+    # ----------------------------------------------------------------
+    if args.regex_match is not None:
+        pattern_str, input_str = args.regex_match
+        compiler = RegexCompiler()
+        matcher, stats = compiler.compile(pattern_str)
+        result = matcher.full_match(input_str)
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FIZZREGEX: PATTERN MATCH                                |\n"
+            "  |   Engine: Thompson NFA + Rabin-Scott DFA                |\n"
+            "  |   Matching: O(n) DFA simulation (no backtracking)       |\n"
+            "  +---------------------------------------------------------+"
+        )
+        print()
+        print(f"  Pattern:  {pattern_str!r}")
+        print(f"  Input:    {input_str!r}")
+        print(f"  Match:    {result.matched}")
+        print()
+        print(f"  NFA states:       {stats.nfa_state_count}")
+        print(f"  DFA states:       {stats.dfa_state_count}")
+        print(f"  Minimized states: {stats.minimized_state_count}")
+        print(f"  States eliminated: {stats.states_eliminated}")
+        print(f"  Compile time:     {stats.total_time_us:.1f}us")
+        print()
+        return 0
+
+    if args.regex_benchmark:
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FIZZREGEX: PATHOLOGICAL PATTERN BENCHMARK               |\n"
+            "  |   Pattern: (a?)^n(a)^n matched against a^n             |\n"
+            "  |   Python re: O(2^n) backtracking                        |\n"
+            "  |   FizzRegex: O(n) DFA simulation                        |\n"
+            "  +---------------------------------------------------------+"
+        )
+        print()
+        benchmark = RegexBenchmark()
+        results = benchmark.run()
+        print(f"  {'n':>4}  {'FizzRegex':>12}  {'Python re':>12}  {'Speedup':>10}  {'Agree':>5}")
+        print(f"  {'':->4}  {'':->12}  {'':->12}  {'':->10}  {'':->5}")
+        for br in results:
+            print(
+                f"  {br.input_length:>4}  "
+                f"{br.fizzregex_time_us:>10.1f}us  "
+                f"{br.python_re_time_us:>10.1f}us  "
+                f"{br.speedup_ratio:>9.1f}x  "
+                f"{'Y' if br.results_agree else 'N':>4}"
+            )
+        print()
         return 0
 
     # ----------------------------------------------------------------
@@ -7112,6 +7200,31 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzRegex — Regular Expression Engine
+    # ----------------------------------------------------------------
+    regex_middleware_instance = None
+
+    regex_active = args.regex or args.regex_dashboard
+
+    if regex_active:
+        regex_middleware_instance = RegexMiddleware(
+            event_bus=event_bus,
+            enable_dashboard=args.regex_dashboard,
+        )
+        builder.with_middleware(regex_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZREGEX: REGULAR EXPRESSION ENGINE ENABLED            |\n"
+                "  |   Construction: Thompson NFA (1968)                     |\n"
+                "  |   Compilation: Rabin-Scott subset construction          |\n"
+                "  |   Minimization: Hopcroft partition refinement           |\n"
+                "  |   Matching: O(n) DFA simulation (no backtracking)       |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzReplica — Database Replication with WAL Shipping
     # ----------------------------------------------------------------
     replication_set = None
@@ -9502,6 +9615,25 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  FizzMigrate: No migration metrics available.\n")
     elif args.live_migrate_dashboard:
         print("\n  FizzMigrate not enabled. Use --live-migrate to enable.\n")
+
+    # FizzRegex Dashboard (post-execution)
+    if args.regex_dashboard and regex_middleware_instance is not None:
+        all_stats = regex_middleware_instance.patterns.get_stats()
+        benchmark_results = None
+        print(RegexDashboard.render(
+            all_stats,
+            benchmark_results=benchmark_results,
+            width=config.regex_engine_dashboard_width,
+        ))
+        print(
+            f"\n  Validations: {regex_middleware_instance.match_count} passed, "
+            f"{regex_middleware_instance.fail_count} failed"
+        )
+        print(
+            f"  Total match time: {regex_middleware_instance.total_match_time_us:.1f}us"
+        )
+    elif args.regex_dashboard:
+        print("\n  FizzRegex not enabled. Use --regex to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

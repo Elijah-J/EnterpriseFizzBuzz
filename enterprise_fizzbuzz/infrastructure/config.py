@@ -904,6 +904,12 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 72,
                 },
             },
+            "regex_engine": {
+                "enabled": False,
+                "dashboard": {
+                    "width": 72,
+                },
+            },
             "fbaas": {
                 "enabled": False,
                 "default_tier": "free",
@@ -6287,6 +6293,18 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """ASCII dashboard width for the theorem prover dashboard."""
         self._ensure_loaded()
         return self._raw_config.get("theorem_prover", {}).get("dashboard", {}).get("width", 72)
+
+    @property
+    def regex_engine_enabled(self) -> bool:
+        """Whether the FizzRegex regular expression engine is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("regex_engine", {}).get("enabled", False)
+
+    @property
+    def regex_engine_dashboard_width(self) -> int:
+        """ASCII dashboard width for the regex engine dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("regex_engine", {}).get("dashboard", {}).get("width", 72)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
