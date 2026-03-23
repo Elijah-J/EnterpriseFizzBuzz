@@ -6,6 +6,9 @@ import type {
   SLAStatus,
   ConsensusStatus,
   CostSummary,
+  HealthCheckPoint,
+  SLAHistoryPoint,
+  Incident,
 } from "./types";
 
 /**
@@ -65,4 +68,25 @@ export interface IDataProvider {
    * Used by the Cost widget to display current-period spend and trend.
    */
   getCostSummary(): Promise<CostSummary>;
+
+  /**
+   * Retrieve historical health check data for a specific subsystem.
+   * Returns the most recent ~20 data points for sparkline rendering
+   * on the Health Check Matrix page.
+   */
+  getHealthHistory(subsystem: string): Promise<HealthCheckPoint[]>;
+
+  /**
+   * Retrieve the SLA error budget burn-down time series.
+   * Returns data points showing budget depletion over the current
+   * reporting window, used by the SLA Dashboard burn-down chart.
+   */
+  getSLAHistory(): Promise<SLAHistoryPoint[]>;
+
+  /**
+   * Retrieve recent incidents for the SLA incident timeline.
+   * Returns incidents ordered by start time (most recent first)
+   * with severity classification and resolution status.
+   */
+  getIncidents(): Promise<Incident[]>;
 }

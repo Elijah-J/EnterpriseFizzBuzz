@@ -53,8 +53,13 @@ export default function RootLayout({
                   Evaluation Console
                 </a>
               </li>
-              <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
-                Pipeline Monitor
+              <li>
+                <a
+                  href="/monitor/health"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Infrastructure Monitor
+                </a>
               </li>
               <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
                 Compliance

@@ -102,6 +102,42 @@ export interface SLAStatus {
   onCallEngineer: string;
 }
 
+/** Historical health check data point for sparkline rendering. */
+export interface HealthCheckPoint {
+  /** Unix timestamp in milliseconds. */
+  timestamp: number;
+  /** Operational status at time of check. */
+  status: string;
+  /** Response time recorded during this check, in milliseconds. */
+  responseTimeMs: number;
+}
+
+/** SLA error budget burn-down data point. */
+export interface SLAHistoryPoint {
+  /** Unix timestamp in milliseconds. */
+  timestamp: number;
+  /** Remaining error budget as a percentage (0..100). */
+  budgetRemaining: number;
+}
+
+/** Incident record for the SLA incident timeline. */
+export interface Incident {
+  /** Unique incident identifier. */
+  id: string;
+  /** Severity classification per the platform's incident taxonomy. */
+  severity: "P1" | "P2" | "P3" | "P4";
+  /** Brief incident title for timeline display. */
+  title: string;
+  /** Extended incident description with technical detail. */
+  description: string;
+  /** ISO 8601 timestamp of incident start. */
+  startedAt: string;
+  /** ISO 8601 timestamp of resolution, if resolved. */
+  resolvedAt?: string;
+  /** Total incident duration in milliseconds. */
+  durationMs: number;
+}
+
 /** Paxos consensus state for the distributed evaluation cluster. */
 export interface ConsensusStatus {
   /** Node ID of the current Paxos leader. */
