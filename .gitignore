@@ -6,4 +6,12 @@ __pycache__/
 dist/
 build/
 .env
-.claude/worktrees/
+.claude/
+
+# Orchestration artifacts
+CLAUDE.md
+PLAN.md
+RESEARCH_REPORT.md
+FORMAT_AUDIT_REPORT.md
+PROTOCOL_AMBIGUITIES.md
+roadmaps/
