@@ -53,3 +53,77 @@ export interface EvaluationSession {
   /** ISO 8601 timestamp of evaluation completion. */
   evaluatedAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Dashboard telemetry types
+// ---------------------------------------------------------------------------
+
+/** Health status for an individual infrastructure subsystem. */
+export interface SubsystemHealth {
+  /** Display name of the subsystem (e.g., "MESI Cache Coherence"). */
+  name: string;
+  /** Current operational status. */
+  status: "up" | "degraded" | "down" | "unknown";
+  /** ISO 8601 timestamp of the most recent health check. */
+  lastChecked: string;
+  /** Round-trip response time of the health probe, in milliseconds. */
+  responseTimeMs: number;
+}
+
+/** Aggregate evaluation pipeline metrics for the current reporting window. */
+export interface MetricsSummary {
+  /** Total evaluations executed since system boot. */
+  totalEvaluations: number;
+  /** Current sustained evaluation throughput. */
+  evaluationsPerSecond: number;
+  /** Cache hit ratio (0..1) across all MESI-coherent nodes. */
+  cacheHitRate: number;
+  /** Mean end-to-end evaluation latency, in milliseconds. */
+  averageLatencyMs: number;
+  /** Seconds elapsed since last system cold start. */
+  uptimeSeconds: number;
+  /** Last 60 throughput samples for sparkline rendering. */
+  throughputHistory: number[];
+}
+
+/** Service Level Agreement compliance snapshot. */
+export interface SLAStatus {
+  /** Rolling availability percentage (target: 99.95%). */
+  availabilityPercent: number;
+  /** Remaining error budget as a fraction (0..1). */
+  errorBudgetRemaining: number;
+  /** 99th-percentile evaluation latency, in milliseconds. */
+  latencyP99Ms: number;
+  /** Percentage of evaluations returning mathematically correct results. */
+  correctnessPercent: number;
+  /** Number of currently active incidents. */
+  activeIncidents: number;
+  /** Name of the on-call engineer for the current rotation. */
+  onCallEngineer: string;
+}
+
+/** Paxos consensus state for the distributed evaluation cluster. */
+export interface ConsensusStatus {
+  /** Node ID of the current Paxos leader. */
+  leaderNode: string;
+  /** Current ballot number in the Paxos protocol. */
+  ballotNumber: number;
+  /** Whether consensus has been achieved for the current epoch. */
+  consensusAchieved: boolean;
+  /** Total number of nodes participating in the cluster. */
+  clusterSize: number;
+  /** Number of nodes that have acknowledged the current leader. */
+  nodesAcknowledged: number;
+}
+
+/** FizzBuck financial expenditure summary for FinOps reporting. */
+export interface CostSummary {
+  /** Current-period FizzBuck expenditure. */
+  currentPeriodCost: number;
+  /** Previous-period FizzBuck expenditure for trend comparison. */
+  previousPeriodCost: number;
+  /** Cost trend direction derived from period-over-period comparison. */
+  trend: "up" | "down" | "stable";
+  /** Cost per individual evaluation in FizzBucks. */
+  costPerEvaluation: number;
+}

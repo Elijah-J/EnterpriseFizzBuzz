@@ -2628,6 +2628,8 @@ The batch mode enables integration with data pipelines, CI/CD systems, and Slack
 
 ## Load Testing Architecture
 
+> **Note:** The Load Testing Framework now lives in `chaos.py`, merged with the Chaos Engineering subsystem during the curation audit. Chaos and load testing are two sides of the same coin: one breaks things on purpose, the other breaks things through volume. Together they form a unified resilience testing capability.
+
 The Load Testing Framework stress-tests the FizzBuzz evaluation pipeline under simulated concurrent workloads, measuring throughput, latency distribution, and identifying bottlenecks -- because you cannot call yourself production-ready if you don't know how many FizzBuzz evaluations per second your system can sustain before the overhead collapses under its own architectural ambitions. The framework spawns configurable pools of **virtual users** (VUs) using `concurrent.futures.ThreadPoolExecutor`, where each VU executes a loop of FizzBuzz evaluation requests against the platform.
 
 ```

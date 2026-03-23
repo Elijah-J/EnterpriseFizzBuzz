@@ -34,7 +34,11 @@ from enterprise_fizzbuzz.infrastructure.chaos import (
     FaultSeverity,
     FaultType,
     GameDayRunner,
+    LoadTestDashboard,
     PostMortemGenerator,
+    PerformanceReport,
+    WorkloadProfile,
+    run_load_test,
 )
 from enterprise_fizzbuzz.infrastructure.blockchain import BlockchainObserver, FizzBuzzBlockchain
 from enterprise_fizzbuzz.infrastructure.cross_compiler import (
@@ -275,12 +279,6 @@ from enterprise_fizzbuzz.infrastructure.genetic_algorithm import (
 from enterprise_fizzbuzz.infrastructure.compliance_chatbot import (
     NLQDashboard,
     NLQEngine,
-)
-from enterprise_fizzbuzz.infrastructure.load_testing import (
-    LoadTestDashboard,
-    PerformanceReport,
-    WorkloadProfile,
-    run_load_test,
 )
 from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     UnifiedAuditDashboard,

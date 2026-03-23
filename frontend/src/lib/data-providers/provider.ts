@@ -1,4 +1,12 @@
-import type { EvaluationRequest, EvaluationSession } from "./types";
+import type {
+  EvaluationRequest,
+  EvaluationSession,
+  SubsystemHealth,
+  MetricsSummary,
+  SLAStatus,
+  ConsensusStatus,
+  CostSummary,
+} from "./types";
 
 /**
  * Abstract data provider interface for FizzBuzz evaluation operations.
@@ -19,4 +27,42 @@ export interface IDataProvider {
    * and associated metadata.
    */
   evaluate(request: EvaluationRequest): Promise<EvaluationSession>;
+
+  /**
+   * Retrieve the current health status for all monitored infrastructure
+   * subsystems. Used by the Health Matrix widget for real-time operational
+   * awareness.
+   */
+  getSystemHealth(): Promise<SubsystemHealth[]>;
+
+  /**
+   * Retrieve aggregate evaluation pipeline metrics for the current
+   * reporting window. Powers the throughput sparkline and KPI tiles.
+   */
+  getMetricsSummary(): Promise<MetricsSummary>;
+
+  /**
+   * Retrieve the current SLA compliance snapshot including availability,
+   * error budget, latency percentiles, and incident status.
+   */
+  getSLAStatus(): Promise<SLAStatus>;
+
+  /**
+   * Retrieve recent evaluation sessions for the activity feed.
+   * Returns the most recent sessions ordered by evaluation timestamp.
+   */
+  getRecentEvaluations(): Promise<EvaluationSession[]>;
+
+  /**
+   * Retrieve the current Paxos consensus state for the distributed
+   * evaluation cluster. Used by the Consensus widget to display
+   * leader election status and cluster health.
+   */
+  getConsensusStatus(): Promise<ConsensusStatus>;
+
+  /**
+   * Retrieve FizzBuck expenditure summary for FinOps reporting.
+   * Used by the Cost widget to display current-period spend and trend.
+   */
+  getCostSummary(): Promise<CostSummary>;
 }
