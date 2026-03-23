@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,6 +17,13 @@ export const metadata: Metadata = {
   title: "Enterprise FizzBuzz Operations Center",
   description:
     "Mission-critical monitoring and administration interface for the Enterprise FizzBuzz Platform. Provides real-time observability into FizzBuzz evaluation pipelines, compliance dashboards, and operational analytics.",
+  manifest: "/manifest.json",
+  themeColor: "#0f172a",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "EFB Platform",
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +36,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
+      <head>
+        <meta name="theme-color" content="#0f172a" />
+      </head>
       <body className="min-h-full flex bg-panel-950 text-panel-50">
+        <ServiceWorkerRegistration />
         {/* Sidebar region */}
         <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-panel-700 bg-panel-900">
           <div className="flex h-14 items-center border-b border-panel-700 px-4">

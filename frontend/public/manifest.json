@@ -1,0 +1,24 @@
+{
+  "name": "Enterprise FizzBuzz Operations Center",
+  "short_name": "EFB Platform",
+  "description": "Mission-critical FizzBuzz evaluation, monitoring, and compliance platform",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0f172a",
+  "background_color": "#020617",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
