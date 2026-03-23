@@ -248,6 +248,11 @@ from enterprise_fizzbuzz.infrastructure.clock_sync import (
     StratumHierarchy,
     create_clock_sync_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.video_codec import (
+    CodecDashboard,
+    CodecMiddleware,
+    VideoEncoder,
+)
 from enterprise_fizzbuzz.infrastructure.openapi import (
     ASCIISwaggerUI,
     EndpointRegistry,
@@ -3303,6 +3308,32 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--boot-dashboard",
         action="store_true",
         help="Display the FizzBoot x86 bootloader dashboard after execution",
+    )
+
+    # FizzCodec — H.264-Inspired Video Codec
+    parser.add_argument(
+        "--codec",
+        action="store_true",
+        help="Enable FizzCodec: encode FizzBuzz dashboard frames using H.264-style video compression",
+    )
+    parser.add_argument(
+        "--codec-output",
+        type=str,
+        default=None,
+        metavar="FILE",
+        help="Write the compressed video bitstream to FILE (NAL unit Annex B format)",
+    )
+    parser.add_argument(
+        "--codec-qp",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Quantization parameter (0=near-lossless, 51=maximum compression, default: 26)",
+    )
+    parser.add_argument(
+        "--codec-dashboard",
+        action="store_true",
+        help="Display the FizzCodec video compression dashboard after execution",
     )
 
     return parser
@@ -7443,6 +7474,37 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzCodec — H.264-Inspired Video Codec
+    # ----------------------------------------------------------------
+    codec_middleware_instance = None
+
+    if args.codec or args.codec_output or args.codec_dashboard:
+        codec_qp = args.codec_qp if args.codec_qp is not None else config.codec_qp
+        codec_gop = config.codec_gop_size
+        codec_fw = config.codec_frame_width
+        codec_fh = config.codec_frame_height
+
+        codec_middleware_instance = CodecMiddleware(
+            qp=codec_qp,
+            output_path=args.codec_output,
+            enable_dashboard=args.codec_dashboard,
+            gop_size=codec_gop,
+            frame_width=codec_fw,
+            frame_height=codec_fh,
+        )
+        builder.with_middleware(codec_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCODEC: H.264-INSPIRED VIDEO CODEC                   |\n"
+                f"  |   QP: {codec_qp}  GOP: {codec_gop}  Frame: {codec_fw}x{codec_fh}                |\n"
+                "  |   4x4 integer DCT + Exp-Golomb entropy coding           |\n"
+                "  |   Every evaluation compressed as a video frame.          |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzTrace — Physically-Based Ray Tracer
     # ----------------------------------------------------------------
     raytrace_scene_builder = None
@@ -10377,6 +10439,24 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  FizzPrint: No results to typeset.\n")
     elif args.typeset_dashboard and not typeset_active:
         print("\n  FizzPrint not enabled. Use --typeset to enable.\n")
+
+    # FizzCodec Dashboard (post-execution)
+    if codec_middleware_instance is not None:
+        codec_stats = codec_middleware_instance.finalize()
+        if args.codec_dashboard and codec_stats is not None:
+            print()
+            print(codec_middleware_instance.render_dashboard())
+        elif args.codec_dashboard:
+            print("\n  FizzCodec: No frames encoded.\n")
+        if args.codec_output and codec_stats is not None:
+            print(
+                f"\n  FizzCodec bitstream written to: {args.codec_output}"
+                f"\n  Frames: {codec_stats.total_frames}, "
+                f"Compression: {codec_stats.compression_ratio:.2f}x, "
+                f"PSNR: {codec_stats.average_psnr:.2f} dB"
+            )
+    elif args.codec_dashboard:
+        print("\n  FizzCodec not enabled. Use --codec to enable.\n")
 
     # FizzBoot Dashboard (post-execution)
     if args.boot_dashboard and boot_middleware_instance is not None and boot_middleware_instance.loader is not None:
