@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: 'export',
+  basePath: '/EnterpriseFizzBuzz',
+  assetPrefix: '/EnterpriseFizzBuzz/',
+  env: {
+    NEXT_PUBLIC_BASE_PATH: '/EnterpriseFizzBuzz',
+  },
 };
 
 export default nextConfig;

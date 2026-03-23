@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import "./globals.css";
 
@@ -58,20 +59,20 @@ export default function RootLayout({
                 Dashboard
               </li>
               <li>
-                <a
+                <Link
                   href="/evaluate"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Evaluation Console
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/monitor/health"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Infrastructure Monitor
-                </a>
+                </Link>
               </li>
             </ul>
             <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
@@ -79,28 +80,28 @@ export default function RootLayout({
             </p>
             <ul className="space-y-1 text-sm text-panel-300">
               <li>
-                <a
+                <Link
                   href="/monitor/metrics"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Metrics
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/monitor/traces"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Traces
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/monitor/alerts"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Alerts
-                </a>
+                </Link>
               </li>
             </ul>
             <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
@@ -108,36 +109,36 @@ export default function RootLayout({
             </p>
             <ul className="space-y-1 text-sm text-panel-300">
               <li>
-                <a
+                <Link
                   href="/compliance"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Compliance
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/analytics"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Analytics
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/configuration"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Configuration
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/audit"
                   className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
                 >
                   Audit Log
-                </a>
+                </Link>
               </li>
             </ul>
           </nav>

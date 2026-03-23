@@ -11,8 +11,8 @@
 const CACHE_NAME = 'efb-platform-v1';
 
 const PRECACHE_URLS = [
-  '/',
-  '/evaluate',
+  '/EnterpriseFizzBuzz/',
+  '/EnterpriseFizzBuzz/evaluate',
 ];
 
 self.addEventListener('install', (event) => {
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() =>
-        caches.match(event.request).then((cached) => cached || caches.match('/'))
+        caches.match(event.request).then((cached) => cached || caches.match('/EnterpriseFizzBuzz/'))
       )
     );
     return;
