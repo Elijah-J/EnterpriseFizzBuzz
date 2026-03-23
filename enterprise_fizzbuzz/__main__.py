@@ -2136,6 +2136,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzNAS ASCII dashboard with Pareto front, top architectures, and baseline comparison",
     )
 
+    # FizzJIT — Runtime Code Generation
+    parser.add_argument(
+        "--jit",
+        action="store_true",
+        help="Enable FizzJIT trace-based compiler: SSA IR, four optimization passes, and compiled closures for modulo arithmetic",
+    )
+
+    parser.add_argument(
+        "--jit-threshold",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of range evaluations before JIT compilation triggers (default: from config)",
+    )
+
+    parser.add_argument(
+        "--jit-dashboard",
+        action="store_true",
+        help="Display the FizzJIT ASCII dashboard with trace profiler stats, cache metrics, and optimization report",
+    )
+
     # FizzCorr Observability Correlation Engine
     parser.add_argument(
         "--correlate",
@@ -6823,6 +6844,63 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.correlate_dashboard:
             print(corr_manager.render_dashboard())
+
+    # ----------------------------------------------------------------
+    # FizzJIT — Runtime Code Generation
+    # ----------------------------------------------------------------
+    # When --jit is active, the FizzBuzz evaluation pipeline gains a
+    # trace-based JIT compiler with SSA intermediate representation,
+    # four optimization passes, LRU-cached compiled closures, and
+    # on-stack replacement for seamless interpreter-to-compiled
+    # transitions. This adds approximately 800 lines of compiler
+    # infrastructure to evaluate n % 3 == 0, which is the logical
+    # next step after the bytecode VM proved insufficiently over-
+    # engineered.
+    # ----------------------------------------------------------------
+    if args.jit or args.jit_dashboard:
+        from enterprise_fizzbuzz.infrastructure.jit_compiler import (
+            JITCompilerManager,
+        )
+
+        jit_threshold = args.jit_threshold if args.jit_threshold is not None else config.jit_threshold
+        jit_manager = JITCompilerManager(
+            threshold=jit_threshold,
+            cache_size=config.jit_cache_size,
+            enable_constant_folding=config.jit_enable_constant_folding,
+            enable_dce=config.jit_enable_dce,
+            enable_guard_hoisting=config.jit_enable_guard_hoisting,
+            enable_type_specialization=config.jit_enable_type_specialization,
+        )
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FizzJIT Runtime Code Generation                        |\n"
+            "  | Trace-based JIT with SSA IR and 4 optimization passes  |\n"
+            "  | Because the interpreter was too fast.                   |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        # Run the evaluation multiple times to trigger JIT compilation
+        jit_rules = config.rules
+        for _iteration in range(jit_threshold + 1):
+            jit_results = jit_manager.evaluate_range(
+                config.range_start,
+                config.range_end,
+                jit_rules,
+            )
+
+        print(f"\n  Compiled traces: {jit_manager.compiled_traces}")
+        print(f"  Cache entries: {jit_manager.cache.size}")
+        print(f"  Cache hit rate: {jit_manager.cache.hit_rate:.1f}%")
+        print(f"  Total evaluations: {jit_manager.total_evaluations}")
+        print(f"  OSR successes: {jit_manager.osr.osr_successes}")
+        print(f"  Guard failures: {jit_manager.osr.guard_failures}")
+        print()
+
+        if args.jit_dashboard:
+            print(jit_manager.render_dashboard(
+                width=config.jit_dashboard_width,
+            ))
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

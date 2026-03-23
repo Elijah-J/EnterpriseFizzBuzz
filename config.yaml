@@ -1685,6 +1685,26 @@ observability_correlation:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzJIT — Runtime Code Generation configuration
+# Because evaluating FizzBuzz through an interpreter was simply too fast,
+# the platform now includes a full trace-based JIT compiler with SSA
+# intermediate representation, four optimization passes (constant folding,
+# dead code elimination, guard hoisting, type specialization), on-stack
+# replacement for mid-evaluation transitions from interpreted to compiled
+# code, and an LRU cache of compiled closures keyed by range and rule
+# configuration hash. The compiled code does exactly the same thing as
+# `n % 3 == 0`, but approximately 800 lines of infrastructure faster.
+jit:
+  enabled: false                          # Master switch — opt-in via --jit
+  threshold: 3                            # Number of range evaluations before JIT compilation triggers
+  cache_size: 64                          # Maximum number of compiled traces in the LRU cache
+  enable_constant_folding: true           # Propagate known constants through MOD/CMP/BRANCH chains
+  enable_dce: true                        # Remove SSA instructions with zero use-count and no side effects
+  enable_guard_hoisting: true             # Hoist loop-invariant guards before computation
+  enable_type_specialization: true        # Insert type guards and specialize for int operands
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

@@ -1354,6 +1354,18 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
+            "jit": {
+                "enabled": False,
+                "threshold": 3,
+                "cache_size": 64,
+                "enable_constant_folding": True,
+                "enable_dce": True,
+                "enable_guard_hoisting": True,
+                "enable_type_specialization": True,
+                "dashboard": {
+                    "width": 60,
+                },
+            },
             "observability_correlation": {
                 "enabled": False,
                 "temporal_window_seconds": 2.0,
@@ -5306,6 +5318,58 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         """Dashboard width for the observability correlation dashboard."""
         self._ensure_loaded()
         return self._raw_config.get("observability_correlation", {}).get("dashboard", {}).get("width", 60)
+
+    # ------------------------------------------------------------------
+    # FizzJIT — Runtime Code Generation properties
+    # ------------------------------------------------------------------
+
+    @property
+    def jit_enabled(self) -> bool:
+        """Whether the FizzJIT trace-based compiler is active."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("enabled", False)
+
+    @property
+    def jit_threshold(self) -> int:
+        """Number of range evaluations before JIT compilation triggers."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("threshold", 3)
+
+    @property
+    def jit_cache_size(self) -> int:
+        """Maximum number of compiled traces in the LRU cache."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("cache_size", 64)
+
+    @property
+    def jit_enable_constant_folding(self) -> bool:
+        """Whether constant folding optimization pass is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("enable_constant_folding", True)
+
+    @property
+    def jit_enable_dce(self) -> bool:
+        """Whether dead code elimination optimization pass is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("enable_dce", True)
+
+    @property
+    def jit_enable_guard_hoisting(self) -> bool:
+        """Whether guard hoisting optimization pass is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("enable_guard_hoisting", True)
+
+    @property
+    def jit_enable_type_specialization(self) -> bool:
+        """Whether type specialization optimization pass is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("enable_type_specialization", True)
+
+    @property
+    def jit_dashboard_width(self) -> int:
+        """Dashboard width for the JIT compiler dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("jit", {}).get("dashboard", {}).get("width", 60)
 
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
