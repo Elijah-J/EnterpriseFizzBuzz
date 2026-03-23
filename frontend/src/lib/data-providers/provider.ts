@@ -57,6 +57,10 @@ import type {
   FLClient,
   FLTrainingRound,
   FLModelState,
+  Stratum,
+  Artifact,
+  BayesianReconstruction,
+  ForensicReport,
 } from "./types";
 
 /**
@@ -497,4 +501,43 @@ export interface IDataProvider {
    * Returns null if the privacy budget is exhausted.
    */
   startFLTrainingRound(): Promise<FLTrainingRound | null>;
+
+  // -------------------------------------------------------------------------
+  // Archaeological Recovery Console
+  // -------------------------------------------------------------------------
+
+  /**
+   * Retrieve all archaeological strata from the FizzBuzz geological record.
+   * Returns strata ordered by depth (shallowest first), each containing
+   * metadata about the epoch, composition, and artifact density.
+   */
+  getStrata(): Promise<Stratum[]>;
+
+  /**
+   * Retrieve recovered artifacts from the archaeological record, optionally
+   * filtered by stratum. Returns artifacts ordered by estimated age
+   * (most recent first).
+   *
+   * @param stratumId - If provided, only return artifacts from this stratum
+   */
+  getArtifacts(stratumId?: string): Promise<Artifact[]>;
+
+  /**
+   * Run a Bayesian reconstruction on a recovered artifact to infer its
+   * original evaluation context. The reconstruction applies iterative
+   * evidence updates to converge on the most probable historical parameters.
+   *
+   * @param artifactId - Identifier of the artifact to reconstruct
+   */
+  runBayesianReconstruction(artifactId: string): Promise<BayesianReconstruction>;
+
+  /**
+   * Generate a comprehensive forensic report from a collection of artifacts.
+   * The report follows the ICFA Standard Forensic Report Format and includes
+   * provenance analysis, authenticity assessment, dating confirmation,
+   * and significance evaluation.
+   *
+   * @param artifactIds - Identifiers of artifacts to include in the report
+   */
+  generateForensicReport(artifactIds: string[]): Promise<ForensicReport>;
 }

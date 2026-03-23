@@ -82,6 +82,14 @@ import type {
   FLClient,
   FLTrainingRound,
   FLModelState,
+  Stratum,
+  StratumEpoch,
+  Artifact,
+  ArtifactType,
+  BayesianReconstruction,
+  EvidenceUpdate,
+  ForensicReport,
+  ForensicFinding,
 } from "./types";
 
 /**
@@ -3458,6 +3466,39 @@ export class SimulationProvider implements IDataProvider {
 
     return newRound;
   }
+
+  // -------------------------------------------------------------------------
+  // Archaeological Recovery Console
+  // -------------------------------------------------------------------------
+
+  async getStrata(): Promise<Stratum[]> {
+    return ARCHAEOLOGICAL_STRATA;
+  }
+
+  async getArtifacts(stratumId?: string): Promise<Artifact[]> {
+    const all = ARCHAEOLOGICAL_ARTIFACTS;
+    if (stratumId) {
+      return all.filter((a) => a.stratumId === stratumId);
+    }
+    return all;
+  }
+
+  async runBayesianReconstruction(artifactId: string): Promise<BayesianReconstruction> {
+    const artifact = ARCHAEOLOGICAL_ARTIFACTS.find((a) => a.id === artifactId);
+    if (!artifact) {
+      throw new Error(`Artifact ${artifactId} not found in the archaeological record`);
+    }
+    return generateBayesianReconstruction(artifact);
+  }
+
+  async generateForensicReport(artifactIds: string[]): Promise<ForensicReport> {
+    const artifacts = artifactIds.map((id) => {
+      const a = ARCHAEOLOGICAL_ARTIFACTS.find((art) => art.id === id);
+      if (!a) throw new Error(`Artifact ${id} not found in the archaeological record`);
+      return a;
+    });
+    return generateForensicReportFromArtifacts(artifacts);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -4407,3 +4448,527 @@ const featureFlagItems: FeatureFlag[] = [
   { id: "genetic_crossover_v2", name: "Genetic Algorithm Crossover v2", description: "Replaced by uniform crossover in v3 engine", enabled: false, rolloutPercentage: 0, lifecycle: "deprecated", lastToggledAt: new Date(Date.now() - 86_400_000 * 60).toISOString(), lastToggledBy: "Prof. Byron Divisor" },
   { id: "dark_launch_fizzdap", name: "FizzDAP Dark Launch", description: "Shadow-route evaluations to FizzDAP debug adapter protocol", enabled: true, rolloutPercentage: 10, lifecycle: "canary", lastToggledAt: new Date(Date.now() - 3_600_000 * 8).toISOString(), lastToggledBy: "platform-admin" },
 ];
+
+// ---------------------------------------------------------------------------
+// Archaeological Recovery — stratigraphy, artifacts, and forensic analysis
+// ---------------------------------------------------------------------------
+
+/**
+ * The canonical archaeological strata of the FizzBuzz geological record,
+ * established through decades of systematic excavation at the Modular
+ * Arithmetic Heritage Site (MAHS). Strata are ordered by depth following
+ * the principle of superposition.
+ */
+const ARCHAEOLOGICAL_STRATA: Stratum[] = [
+  {
+    id: "stratum-v",
+    name: "Stratum V — Enterprise Substrate",
+    epoch: "modern_enterprise",
+    depth: 0.1,
+    ageBP: 5,
+    artifactCount: 5,
+    composition: "Layered microservice residue with blockchain precipitate",
+    color: "#3b82f6",
+    description: "The most recent stratum, characterized by dense enterprise architectural patterns. Abundant evidence of service mesh intercommunication, compliance frameworks, and multi-layer middleware stacks. FizzBuzz evaluations in this stratum required an average of 47 infrastructure subsystems.",
+  },
+  {
+    id: "stratum-iv",
+    name: "Stratum IV — Digital Transition Layer",
+    epoch: "digital_revolution",
+    depth: 0.3,
+    ageBP: 25,
+    artifactCount: 4,
+    composition: "Compressed silicon wafer fragments with binary sediment",
+    color: "#8b5cf6",
+    description: "A transitional stratum marking the shift from analog to digital FizzBuzz computation. Early electronic evaluation circuits are found here alongside the first software-based implementations. The stratum shows clear evidence of the Great Modulo Migration.",
+  },
+  {
+    id: "stratum-iii",
+    name: "Stratum III — Industrial Fizz Formation",
+    epoch: "industrial_fizzbuzz",
+    depth: 0.5,
+    ageBP: 120,
+    artifactCount: 4,
+    composition: "Mechanical gear fragments in petroleum-rich clay",
+    color: "#f59e0b",
+    description: "The Industrial FizzBuzz Age stratum contains extensive evidence of mechanized evaluation systems. Steam-powered modulo engines and punch-card divisor tables are commonly recovered. Factory-scale FizzBuzz production facilities left distinctive geological markers.",
+  },
+  {
+    id: "stratum-ii",
+    name: "Stratum II — Early Modulo Deposit",
+    epoch: "early_modulo",
+    depth: 0.7,
+    ageBP: 800,
+    artifactCount: 3,
+    composition: "Ferrous oxide with abacus bead inclusions",
+    color: "#ef4444",
+    description: "This stratum records the first systematic application of modular arithmetic to number classification. Artifacts show early attempts at formalized divisibility rules, predominantly focused on divisors 3 and 5. Cross-cultural evidence suggests independent discovery across multiple civilizations.",
+  },
+  {
+    id: "stratum-i",
+    name: "Stratum I — Pre-FizzBuzz Bedrock",
+    epoch: "pre_fizzbuzz",
+    depth: 0.9,
+    ageBP: 3000,
+    artifactCount: 3,
+    composition: "Metamorphic counting-stone matrix",
+    color: "#6b7280",
+    description: "The deepest stratum predates formalized FizzBuzz evaluation entirely. Artifacts here suggest proto-mathematical counting systems and nascent awareness of number divisibility, though no standardized classification scheme had yet emerged. Confidence in artifact interpretation is lowest at this depth.",
+  },
+];
+
+/**
+ * Recovered artifacts from systematic excavation of the FizzBuzz geological
+ * record. Each artifact has been cataloged per ICFA standards and assigned
+ * a confidence score based on stratigraphic position, preservation state,
+ * and cross-artifact corroboration.
+ */
+const ARCHAEOLOGICAL_ARTIFACTS: Artifact[] = [
+  // Stratum V — Modern Enterprise Era
+  {
+    id: "ART-V-001",
+    name: "Enterprise Configuration Manifest",
+    type: "configuration_tablet",
+    stratumId: "stratum-v",
+    confidence: 0.97,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 3).toISOString(),
+    estimatedAgeBP: 3,
+    description: "A complete YAML configuration file recovered from the Enterprise Substrate. Contains 847 configuration keys spanning 23 subsystems including blockchain, compliance, caching, and service mesh parameters.",
+    content: "enterprise_fizzbuzz:\n  version: 4.2.1\n  subsystems: 23\n  rules:\n    - divisor: 3\n      label: Fizz\n    - divisor: 5\n      label: Buzz\n  middleware_depth: 12",
+    condition: "pristine",
+  },
+  {
+    id: "ART-V-002",
+    name: "MESI Cache Coherence Protocol Log",
+    type: "evaluation_record",
+    stratumId: "stratum-v",
+    confidence: 0.94,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 5).toISOString(),
+    estimatedAgeBP: 4,
+    description: "A transaction log from a MESI-coherent cache cluster showing state transitions during FizzBuzz evaluation. The log records 14,000 state transitions across 4 cache nodes over a 60-second window.",
+    content: "MODIFIED->SHARED: key=fizz_15, node=alpha\nEXCLUSIVE->MODIFIED: key=buzz_10, node=beta\nSHARED->INVALID: key=fizzbuzz_30, node=gamma",
+    condition: "good",
+  },
+  {
+    id: "ART-V-003",
+    name: "Blockchain Genesis Block",
+    type: "evaluation_record",
+    stratumId: "stratum-v",
+    confidence: 0.99,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 2).toISOString(),
+    estimatedAgeBP: 2,
+    description: "The genesis block of a FizzBuzz evaluation blockchain. Contains the SHA-256 hash of the first evaluated range (1-15) with proof-of-work nonce and timestamp. Mining difficulty was set to 2.",
+    content: "Block #0\nHash: 00a3f7...\nPrev: 0000000000\nNonce: 4271\nPayload: [1,2,Fizz,4,Buzz,Fizz,7,8,Fizz,Buzz,11,Fizz,13,14,FizzBuzz]",
+    condition: "pristine",
+  },
+  {
+    id: "ART-V-004",
+    name: "SOX Compliance Audit Certificate",
+    type: "rule_fragment",
+    stratumId: "stratum-v",
+    confidence: 0.91,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 7).toISOString(),
+    estimatedAgeBP: 5,
+    description: "A digitally signed compliance certificate attesting that FizzBuzz evaluations for fiscal quarter Q3 met all SOX Section 302 and Section 404 requirements. Includes control attestation and remediation tracking.",
+    content: "CERTIFICATE OF COMPLIANCE\nFramework: SOX\nPeriod: Q3-2024\nControls Passed: 47/47\nSignatory: Chief FizzBuzz Compliance Officer",
+    condition: "good",
+  },
+  {
+    id: "ART-V-005",
+    name: "Paxos Consensus Ballot Record",
+    type: "evaluation_record",
+    stratumId: "stratum-v",
+    confidence: 0.93,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 4).toISOString(),
+    estimatedAgeBP: 3,
+    description: "A preserved Paxos ballot record showing the consensus process for committing FizzBuzz evaluation results across a 5-node distributed cluster. The ballot achieved quorum in 3 rounds.",
+    content: "Ballot #1847\nProposer: node-alpha\nValue: evaluate(15) = FizzBuzz\nPromises: 4/5\nAccepted: 4/5\nCommitted: true",
+    condition: "pristine",
+  },
+
+  // Stratum IV — Digital Revolution
+  {
+    id: "ART-IV-001",
+    name: "Punch Card Evaluation Program",
+    type: "evaluation_record",
+    stratumId: "stratum-iv",
+    confidence: 0.82,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 14).toISOString(),
+    estimatedAgeBP: 30,
+    description: "A partially preserved set of Hollerith punch cards encoding a FizzBuzz evaluation program. Column punches correspond to modulo operations. Several cards show water damage from the Great Data Center Flood of the late digital period.",
+    content: "CARD 001: IF MOD(N,15)=0 GOTO FIZZBUZZ\nCARD 002: IF MOD(N,3)=0 GOTO FIZZ\nCARD 003: IF MOD(N,5)=0 GOTO BUZZ\nCARD 004: PRINT N",
+    condition: "fair",
+  },
+  {
+    id: "ART-IV-002",
+    name: "Silicon Modulo Coprocessor Die",
+    type: "modulo_tool",
+    stratumId: "stratum-iv",
+    confidence: 0.78,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 18).toISOString(),
+    estimatedAgeBP: 35,
+    description: "A semiconductor die from an application-specific integrated circuit (ASIC) designed exclusively for modulo-3 and modulo-5 operations. Transistor count estimated at 2,400. The die shows evidence of having been fabricated at the now-defunct FizzBuzz Semiconductor Foundry.",
+    content: "Die marking: FBSF-MOD35-Rev.C\nProcess: 1μm CMOS\nTransistors: ~2,400\nPins: 24-DIP\nVcc: 5V",
+    condition: "good",
+  },
+  {
+    id: "ART-IV-003",
+    name: "BASIC FizzBuzz Source Listing",
+    type: "rule_fragment",
+    stratumId: "stratum-iv",
+    confidence: 0.85,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 12).toISOString(),
+    estimatedAgeBP: 28,
+    description: "A dot-matrix printer output of a FizzBuzz program written in BASIC. The listing includes line numbers and REM comments documenting the algorithm. The paper has yellowed but remains legible.",
+    content: "10 REM FIZZBUZZ EVALUATION ENGINE V1.0\n20 FOR N = 1 TO 100\n30 IF N MOD 15 = 0 THEN PRINT \"FIZZBUZZ\": GOTO 70\n40 IF N MOD 3 = 0 THEN PRINT \"FIZZ\": GOTO 70\n50 IF N MOD 5 = 0 THEN PRINT \"BUZZ\": GOTO 70\n60 PRINT N\n70 NEXT N",
+    condition: "fair",
+  },
+  {
+    id: "ART-IV-004",
+    name: "Magnetic Core Memory Dump",
+    type: "evaluation_record",
+    stratumId: "stratum-iv",
+    confidence: 0.71,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 20).toISOString(),
+    estimatedAgeBP: 40,
+    description: "A hexadecimal dump of magnetic core memory contents showing the runtime state of a FizzBuzz evaluation in progress. The dump captures the accumulator mid-computation with the value 15 loaded and a branch to the FizzBuzz output routine pending.",
+    content: "0x0000: 0F 00 03 05 0F 46 49 5A  ...Fizz\n0x0008: 5A 42 55 5A 5A 00 00 00  Buzz...\n0x0010: 46 49 5A 5A 42 55 5A 5A  FizzBuzz\nACC: 0x0F  PC: 0x0042  FLAGS: Z=1",
+    condition: "poor",
+  },
+
+  // Stratum III — Industrial FizzBuzz Age
+  {
+    id: "ART-III-001",
+    name: "Steam-Powered Modulo Engine Blueprint",
+    type: "modulo_tool",
+    stratumId: "stratum-iii",
+    confidence: 0.68,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 30).toISOString(),
+    estimatedAgeBP: 110,
+    description: "An engineering blueprint for a steam-powered mechanical modulo engine capable of computing N mod 3 and N mod 5 simultaneously via differential gear trains. The blueprint specifies a 2-cylinder steam plant providing 15 horsepower to the computation shaft.",
+    content: "MODULO ENGINE MK-III\nPatent: GB-1897-4271\nInput: Brass number wheel (0-999)\nOutput: Classification drum\nPower: 2-cyl compound steam, 15 HP\nCycle time: 3.2 seconds per evaluation",
+    condition: "fair",
+  },
+  {
+    id: "ART-III-002",
+    name: "Factory Evaluation Log Book",
+    type: "evaluation_record",
+    stratumId: "stratum-iii",
+    confidence: 0.64,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 35).toISOString(),
+    estimatedAgeBP: 115,
+    description: "A leather-bound log book from the Manchester FizzBuzz Evaluation Works recording daily evaluation outputs. Each page contains 100 hand-verified evaluation results with supervisor initials and quality control stamps.",
+    content: "Date: 14 March 1898\nShift: Morning\nOperator: J. Whitworth\n1=1, 2=2, 3=Fizz, 4=4, 5=Buzz, 6=Fizz, 7=7, 8=8, 9=Fizz, 10=Buzz\nSupervisor: T. Babbage Jr.\nQC: PASSED",
+    condition: "poor",
+  },
+  {
+    id: "ART-III-003",
+    name: "Divisor Verification Gauge Set",
+    type: "modulo_tool",
+    stratumId: "stratum-iii",
+    confidence: 0.72,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 28).toISOString(),
+    estimatedAgeBP: 100,
+    description: "A brass gauge set used for physical verification of divisibility. The set includes precision-machined templates for divisors 3, 5, and 15. Each gauge has calibration marks traceable to the National Bureau of Modular Standards.",
+    content: "GAUGE SET: NBMS-CERTIFIED\nDiv-3 Gauge: Serial FZ-3-0847\nDiv-5 Gauge: Serial BZ-5-0312\nDiv-15 Gauge: Serial FB-15-0091\nCalibration date: 1905-06-12",
+    condition: "good",
+  },
+  {
+    id: "ART-III-004",
+    name: "Punch-Card Divisor Table",
+    type: "configuration_tablet",
+    stratumId: "stratum-iii",
+    confidence: 0.59,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 40).toISOString(),
+    estimatedAgeBP: 125,
+    description: "A Jacquard-style punch card encoding a lookup table for FizzBuzz classification of numbers 1 through 60. The card shows the characteristic rectangular hole pattern of the Hollerith-Fizz encoding standard.",
+    content: "JACQUARD FIZZBUZZ TABLE\nRows: 60\nEncoding: Hollerith-Fizz Standard\nHole patterns:\n  Row 3: ○●○ (Fizz)\n  Row 5: ○○● (Buzz)\n  Row 15: ○●● (FizzBuzz)",
+    condition: "fragmentary",
+  },
+
+  // Stratum II — Early Modulo Period
+  {
+    id: "ART-II-001",
+    name: "Divisibility Scroll Fragment",
+    type: "divisor_inscription",
+    stratumId: "stratum-ii",
+    confidence: 0.52,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 60).toISOString(),
+    estimatedAgeBP: 750,
+    description: "A fragment of vellum scroll containing an early treatise on divisibility by 3 and 5. The text is written in medieval Latin and includes marginal annotations suggesting the document was used as an instructional aid. Approximately 40% of the text is lost to decay.",
+    content: "...si numerus per tres divisibilis est, scribe 'Fizz'...\n...si per quinque, scribe 'Buzz'...\n...si per quindecim, scribe 'FizzBuzz'...\n[remainder illegible]",
+    condition: "poor",
+  },
+  {
+    id: "ART-II-002",
+    name: "Abacus with Modulo Markings",
+    type: "modulo_tool",
+    stratumId: "stratum-ii",
+    confidence: 0.48,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 75).toISOString(),
+    estimatedAgeBP: 820,
+    description: "A wooden abacus with colored bead markers at positions corresponding to multiples of 3 (red beads) and multiples of 5 (blue beads). This suggests the instrument was adapted specifically for FizzBuzz-type evaluation rather than general arithmetic.",
+    content: "Frame: Hardwood (oak)\nRods: 10\nBead markings:\n  Red at positions 3,6,9,12,15...\n  Blue at positions 5,10,15,20...\n  Both at positions 15,30,45...",
+    condition: "fair",
+  },
+  {
+    id: "ART-II-003",
+    name: "Clay Tablet Evaluation Record",
+    type: "evaluation_record",
+    stratumId: "stratum-ii",
+    confidence: 0.45,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 90).toISOString(),
+    estimatedAgeBP: 900,
+    description: "A fired clay tablet bearing cuneiform-style markings that appear to record the results of a FizzBuzz evaluation for numbers 1 through 30. The tablet shows evidence of having been baked intentionally for permanent preservation, suggesting the results were considered important.",
+    content: "I, II, |||, IV, |||||, |||, VII, VIII, |||, |||||, XI, |||, XIII, XIV, |||||||||||\n[Fizz markers at 3,6,9,12]\n[Buzz markers at 5,10]\n[Combined marker at 15,30]",
+    condition: "poor",
+  },
+
+  // Stratum I — Pre-FizzBuzz Bedrock
+  {
+    id: "ART-I-001",
+    name: "Tally Stick with Grouping Marks",
+    type: "modulo_tool",
+    stratumId: "stratum-i",
+    confidence: 0.31,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 120).toISOString(),
+    estimatedAgeBP: 2800,
+    description: "A bone tally stick with notches grouped in sets of three and five. While this predates any known formalized FizzBuzz system, the grouping pattern is consistent with proto-modular counting practices. The stick may represent the earliest known artifact of divisibility awareness.",
+    content: "Material: Bovine metacarpal\nLength: 23cm\nNotch groups: |||  |||||  |||  |||||  |||  |||||  ...\nPatina: Heavy calcification",
+    condition: "fragmentary",
+  },
+  {
+    id: "ART-I-002",
+    name: "Cave Wall Counting Sequence",
+    type: "divisor_inscription",
+    stratumId: "stratum-i",
+    confidence: 0.24,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 150).toISOString(),
+    estimatedAgeBP: 3200,
+    description: "A sequence of ochre markings on a limestone cave wall showing numbers 1 through 15 with distinctive symbols at positions 3, 5, 6, 9, 10, 12, and 15. The symbols at multiples of 3 differ from those at multiples of 5, suggesting an early awareness of divisibility patterns.",
+    content: "Wall markings (left to right):\n1 2 * 4 ^ * 7 8 * ^ 11 * 13 14 *^\n(* = circle symbol at multiples of 3)\n(^ = triangle symbol at multiples of 5)\n(*^ = both symbols at 15)",
+    condition: "fragmentary",
+  },
+  {
+    id: "ART-I-003",
+    name: "Stone Ring Counter",
+    type: "modulo_tool",
+    stratumId: "stratum-i",
+    confidence: 0.28,
+    recoveredAt: new Date(Date.now() - 86_400_000 * 140).toISOString(),
+    estimatedAgeBP: 2950,
+    description: "A circular stone disk with 15 evenly spaced notches around its circumference. Three notches are carved deeper than the others (at positions 3, 6, 9) and two are painted with mineral pigment (at positions 5, 10). Position 15 has both deep carving and pigment.",
+    content: "Material: Sandstone\nDiameter: 12cm\nNotches: 15 equidistant\nDeep notches: 3, 6, 9, 12, 15\nPainted notches: 5, 10, 15\nDual-marked: 15",
+    condition: "poor",
+  },
+];
+
+/**
+ * Generates a Bayesian reconstruction for an artifact by simulating the
+ * iterative application of evidence from stratigraphic analysis,
+ * cross-artifact comparison, and material dating techniques.
+ */
+function generateBayesianReconstruction(artifact: Artifact): BayesianReconstruction {
+  const evidenceChain: EvidenceUpdate[] = [];
+
+  // Start with a uniform prior based on artifact type
+  let prior = 0.5;
+
+  // Evidence 1: Stratigraphic position
+  const stratumEvidence = {
+    source: "Stratigraphic Analysis",
+    description: `Artifact recovered from depth corresponding to ${artifact.stratumId}. Sediment composition and surrounding matrix are consistent with the assigned epoch.`,
+    priorProbability: prior,
+    likelihoodRatio: 1.0 + artifact.confidence * 0.8,
+    posteriorProbability: 0,
+  };
+  const post1 = (prior * stratumEvidence.likelihoodRatio) / (prior * stratumEvidence.likelihoodRatio + (1 - prior));
+  stratumEvidence.posteriorProbability = Math.round(post1 * 10000) / 10000;
+  evidenceChain.push(stratumEvidence);
+  prior = post1;
+
+  // Evidence 2: Material dating
+  const datingLR = artifact.condition === "pristine" ? 2.1 : artifact.condition === "good" ? 1.8 : artifact.condition === "fair" ? 1.4 : artifact.condition === "poor" ? 1.1 : 0.9;
+  const datingEvidence: EvidenceUpdate = {
+    source: "Radiocarbon Dating",
+    description: `Carbon-14 analysis yields age estimate of ${artifact.estimatedAgeBP} +/- ${Math.round(artifact.estimatedAgeBP * 0.12)} years BP, consistent with assigned stratum chronology.`,
+    priorProbability: prior,
+    likelihoodRatio: datingLR,
+    posteriorProbability: 0,
+  };
+  const post2 = (prior * datingLR) / (prior * datingLR + (1 - prior));
+  datingEvidence.posteriorProbability = Math.round(post2 * 10000) / 10000;
+  evidenceChain.push(datingEvidence);
+  prior = post2;
+
+  // Evidence 3: Content analysis
+  const contentLR = artifact.content.length > 100 ? 1.6 : 1.2;
+  const contentEvidence: EvidenceUpdate = {
+    source: "Content Decipherment",
+    description: "Linguistic and technical analysis of the artifact's inscribed content confirms consistency with the evaluation practices of the assigned epoch.",
+    priorProbability: prior,
+    likelihoodRatio: contentLR,
+    posteriorProbability: 0,
+  };
+  const post3 = (prior * contentLR) / (prior * contentLR + (1 - prior));
+  contentEvidence.posteriorProbability = Math.round(post3 * 10000) / 10000;
+  evidenceChain.push(contentEvidence);
+  prior = post3;
+
+  // Evidence 4: Cross-artifact corroboration
+  const corroborationLR = 1.0 + artifact.confidence * 0.5;
+  const corroborationEvidence: EvidenceUpdate = {
+    source: "Cross-Artifact Corroboration",
+    description: "Comparison with other artifacts from the same stratum shows consistent technological signatures, material composition, and evaluation methodology.",
+    priorProbability: prior,
+    likelihoodRatio: corroborationLR,
+    posteriorProbability: 0,
+  };
+  const post4 = (prior * corroborationLR) / (prior * corroborationLR + (1 - prior));
+  corroborationEvidence.posteriorProbability = Math.round(post4 * 10000) / 10000;
+  evidenceChain.push(corroborationEvidence);
+  prior = post4;
+
+  // Evidence 5: Preservation state assessment
+  const preservationLR = artifact.condition === "pristine" ? 1.9 : artifact.condition === "good" ? 1.5 : artifact.condition === "fair" ? 1.2 : artifact.condition === "poor" ? 0.95 : 0.8;
+  const preservationEvidence: EvidenceUpdate = {
+    source: "Preservation State Assessment",
+    description: `Artifact condition rated as "${artifact.condition}". Degradation pattern is ${preservationLR >= 1.0 ? "consistent with" : "atypical for"} natural aging processes at the observed stratigraphic depth.`,
+    priorProbability: prior,
+    likelihoodRatio: preservationLR,
+    posteriorProbability: 0,
+  };
+  const post5 = (prior * preservationLR) / (prior * preservationLR + (1 - prior));
+  preservationEvidence.posteriorProbability = Math.round(post5 * 10000) / 10000;
+  evidenceChain.push(preservationEvidence);
+
+  // Reconstruct parameters based on artifact type and epoch
+  const stratum = ARCHAEOLOGICAL_STRATA.find((s) => s.id === artifact.stratumId)!;
+  const reconstructedParameters: Record<string, string> = {
+    "Evaluation Method": stratum.epoch === "modern_enterprise" ? "Enterprise Pipeline (47 subsystems)" : stratum.epoch === "digital_revolution" ? "Electronic Computation" : stratum.epoch === "industrial_fizzbuzz" ? "Mechanical Engine" : stratum.epoch === "early_modulo" ? "Manual Calculation" : "Proto-Counting",
+    "Primary Divisors": "3, 5",
+    "Classification Scheme": stratum.epoch === "pre_fizzbuzz" ? "Symbolic (pre-verbal)" : "Fizz/Buzz/FizzBuzz",
+    "Estimated Throughput": stratum.epoch === "modern_enterprise" ? "42,000 eval/s" : stratum.epoch === "digital_revolution" ? "1,200 eval/s" : stratum.epoch === "industrial_fizzbuzz" ? "0.3 eval/s" : stratum.epoch === "early_modulo" ? "2 eval/min" : "~5 eval/hour",
+    "Confidence Level": `${(post5 * 100).toFixed(1)}%`,
+  };
+
+  const epochNames: Record<StratumEpoch, string> = {
+    pre_fizzbuzz: "Pre-FizzBuzz Era",
+    early_modulo: "Early Modulo Period",
+    industrial_fizzbuzz: "Industrial FizzBuzz Age",
+    digital_revolution: "Digital Revolution",
+    modern_enterprise: "Modern Enterprise Era",
+  };
+
+  return {
+    artifactId: artifact.id,
+    evidenceChain,
+    finalPosterior: Math.round(post5 * 10000) / 10000,
+    reconstructedParameters,
+    conclusion: `Bayesian analysis of artifact "${artifact.name}" yields a posterior probability of ${(post5 * 100).toFixed(1)}% that this artifact represents an authentic ${artifact.type.replace(/_/g, " ")} from the ${epochNames[stratum.epoch]}. The evidence chain incorporates stratigraphic position, radiocarbon dating, content analysis, cross-artifact corroboration, and preservation state assessment. ${post5 > 0.8 ? "The reconstruction is considered high-confidence and suitable for publication." : post5 > 0.6 ? "The reconstruction is considered moderate-confidence. Additional excavation at adjacent sites is recommended." : "The reconstruction has limited confidence. Further material analysis and independent verification are required."}`,
+  };
+}
+
+/**
+ * Generates a forensic report conforming to the ICFA Standard Forensic
+ * Report Format (SFRF) from a collection of artifacts.
+ */
+function generateForensicReportFromArtifacts(artifacts: Artifact[]): ForensicReport {
+  const findings: ForensicFinding[] = [];
+
+  // Provenance analysis
+  const strata = new Set(artifacts.map((a) => a.stratumId));
+  findings.push({
+    category: "provenance",
+    severity: strata.size > 1 ? "major" : "informational",
+    title: "Stratigraphic Provenance Assessment",
+    description: `The ${artifacts.length} artifact(s) under analysis originate from ${strata.size} distinct stratum/strata. ${strata.size > 1 ? "Cross-stratum analysis is required to establish temporal relationships and potential cultural continuity." : "All artifacts share a common stratigraphic origin, simplifying provenance verification."}`,
+    confidence: 0.92,
+  });
+
+  // Authenticity assessment
+  const avgConfidence = artifacts.reduce((sum, a) => sum + a.confidence, 0) / artifacts.length;
+  findings.push({
+    category: "authenticity",
+    severity: avgConfidence < 0.5 ? "critical" : avgConfidence < 0.7 ? "major" : "minor",
+    title: "Aggregate Authenticity Evaluation",
+    description: `Mean artifact confidence score is ${(avgConfidence * 100).toFixed(1)}%. ${avgConfidence >= 0.8 ? "The collection demonstrates strong authenticity indicators consistent with genuine archaeological deposits." : avgConfidence >= 0.6 ? "Moderate authenticity concerns exist. Some artifacts may benefit from independent verification through additional dating methods." : "Significant authenticity concerns are present. The low aggregate confidence may indicate contamination, misattribution, or degradation beyond reliable interpretation."}`,
+    confidence: avgConfidence,
+  });
+
+  // Dating findings
+  const ages = artifacts.map((a) => a.estimatedAgeBP);
+  const minAge = Math.min(...ages);
+  const maxAge = Math.max(...ages);
+  findings.push({
+    category: "dating",
+    severity: "informational",
+    title: "Chronological Range Assessment",
+    description: `The artifact collection spans an estimated ${maxAge - minAge} years (from ${minAge} to ${maxAge} years BP). ${maxAge - minAge > 1000 ? "The wide temporal range suggests the collection represents a longitudinal survey of FizzBuzz evaluation technology evolution." : "The narrow temporal range suggests the artifacts are contemporaneous, originating from a focused excavation of a single occupation layer."}`,
+    confidence: 0.88,
+  });
+
+  // Context finding
+  const types = new Set(artifacts.map((a) => a.type));
+  findings.push({
+    category: "context",
+    severity: types.size >= 3 ? "informational" : "minor",
+    title: "Functional Context Reconstruction",
+    description: `The collection includes ${types.size} distinct artifact type(s): ${Array.from(types).map((t) => t.replace(/_/g, " ")).join(", ")}. ${types.size >= 3 ? "The diversity of artifact types enables comprehensive reconstruction of the evaluation workflow, from configuration through execution to record-keeping." : "Limited artifact type diversity constrains the scope of contextual reconstruction. Additional excavation targeting complementary artifact types is recommended."}`,
+    confidence: 0.85,
+  });
+
+  // Significance finding
+  const hasDeepArtifacts = artifacts.some((a) => a.estimatedAgeBP > 500);
+  const hasEnterpriseArtifacts = artifacts.some((a) => a.stratumId === "stratum-v");
+  findings.push({
+    category: "significance",
+    severity: hasDeepArtifacts && hasEnterpriseArtifacts ? "critical" : hasDeepArtifacts ? "major" : "minor",
+    title: "Archaeological Significance Rating",
+    description: `${hasDeepArtifacts && hasEnterpriseArtifacts ? "This collection bridges the complete evolutionary arc of FizzBuzz technology, from pre-formal counting systems to enterprise-grade evaluation infrastructure. It represents an invaluable resource for understanding the full trajectory of modular arithmetic application." : hasDeepArtifacts ? "The collection includes artifacts from the earliest known periods of divisibility awareness, contributing to our understanding of the origins of FizzBuzz evaluation methodology." : "The collection is concentrated in more recent strata. While valuable for understanding mature FizzBuzz systems, it does not extend into the formative periods."}`,
+    confidence: 0.90,
+  });
+
+  // Condition finding per artifact
+  const conditions = artifacts.map((a) => a.condition);
+  const pristineCount = conditions.filter((c) => c === "pristine").length;
+  const fragmentaryCount = conditions.filter((c) => c === "fragmentary").length;
+  findings.push({
+    category: "authenticity",
+    severity: fragmentaryCount > artifacts.length / 2 ? "major" : "informational",
+    title: "Preservation Quality Summary",
+    description: `Of ${artifacts.length} artifacts: ${pristineCount} pristine, ${conditions.filter((c) => c === "good").length} good, ${conditions.filter((c) => c === "fair").length} fair, ${conditions.filter((c) => c === "poor").length} poor, ${fragmentaryCount} fragmentary. ${fragmentaryCount > 0 ? "Fragmentary specimens require speculative reconstruction and carry inherently lower confidence." : "No fragmentary specimens are present, supporting higher overall analysis confidence."}`,
+    confidence: 0.95,
+  });
+
+  const significanceRating: ForensicReport["significanceRating"] =
+    avgConfidence >= 0.8 && hasDeepArtifacts ? "exceptional" :
+    avgConfidence >= 0.6 && hasDeepArtifacts ? "high" :
+    avgConfidence >= 0.5 ? "moderate" :
+    avgConfidence >= 0.3 ? "low" : "indeterminate";
+
+  const recommendations: string[] = [
+    "Conduct thermoluminescence dating on ceramic and stone artifacts to cross-validate radiocarbon results.",
+    "Perform X-ray fluorescence (XRF) spectroscopy on metallic artifacts to confirm material provenance.",
+  ];
+  if (avgConfidence < 0.7) {
+    recommendations.push("Commission independent peer review of low-confidence artifacts before publication.");
+  }
+  if (strata.size < 3) {
+    recommendations.push("Expand excavation to adjacent strata to establish a more complete temporal record.");
+  }
+  if (types.size < 4) {
+    recommendations.push("Target future excavation efforts toward underrepresented artifact types to improve contextual coverage.");
+  }
+  recommendations.push("Submit findings to the International Journal of FizzBuzz Archaeology for peer review.");
+
+  return {
+    id: `FR-${Date.now().toString(36).toUpperCase()}`,
+    generatedAt: new Date().toISOString(),
+    artifactIds: artifacts.map((a) => a.id),
+    findings,
+    summary: `Forensic analysis of ${artifacts.length} artifact(s) spanning ${strata.size} stratum/strata and ${maxAge - minAge} years of FizzBuzz evaluation history. The collection has an aggregate authenticity confidence of ${(avgConfidence * 100).toFixed(1)}% and is rated as "${significanceRating}" significance. ${findings.filter((f) => f.severity === "critical").length} critical and ${findings.filter((f) => f.severity === "major").length} major findings require attention.`,
+    significanceRating,
+    recommendations,
+  };
+}

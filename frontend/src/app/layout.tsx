@@ -222,6 +222,14 @@ export default function RootLayout({
                   Federated Learning
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/archaeology"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Archaeological Recovery
+                </Link>
+              </li>
             </ul>
           </nav>
         </aside>
