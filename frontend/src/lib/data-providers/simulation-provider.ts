@@ -68,6 +68,12 @@ import type {
   TwinProjection,
   TwinProjectionPoint,
   WhatIfOutcome,
+  CostAllocation,
+  BudgetStatus,
+  FizzBuckExchangeRate,
+  InvoiceLine,
+  Invoice,
+  DailyCostPoint,
 } from "./types";
 
 /**
@@ -2733,6 +2739,296 @@ export class SimulationProvider implements IDataProvider {
       failureRateChangePercent: Math.round(((predictedFailureRate - baselineFailureRate) / baselineFailureRate) * 10000) / 100,
       throughputChangePercent: Math.round(((predictedThroughput - baselineThroughput) / baselineThroughput) * 10000) / 100,
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // FinOps Billing Center
+  // -------------------------------------------------------------------------
+
+  async getCostBreakdown(): Promise<CostAllocation[]> {
+    const subsystems: { name: string; basePct: number; budget: number }[] = [
+      { name: "Blockchain Mining", basePct: 32, budget: 25_000 },
+      { name: "Quantum Simulator", basePct: 18, budget: 15_000 },
+      { name: "Cache Coherence (MESI)", basePct: 12, budget: 10_000 },
+      { name: "Paxos Consensus", basePct: 10, budget: 8_500 },
+      { name: "Rule Engine Pipeline", basePct: 8, budget: 7_000 },
+      { name: "Middleware Stack", basePct: 6, budget: 5_500 },
+      { name: "Genetic Algorithm", basePct: 5, budget: 4_500 },
+      { name: "Digital Twin", basePct: 4, budget: 3_800 },
+      { name: "Persistence Layer", basePct: 3, budget: 3_000 },
+      { name: "Service Mesh", basePct: 2, budget: 2_200 },
+    ];
+
+    // Total period spend baseline: ~72,000 FB$
+    const totalBaseline = 72_000;
+
+    // Apply Gaussian jitter to each allocation
+    const raw = subsystems.map((s) => {
+      const jitter = gaussianRandom(1.0, 0.08);
+      const cost = Math.round(totalBaseline * (s.basePct / 100) * jitter * 100) / 100;
+      return { ...s, cost };
+    });
+
+    const totalCost = raw.reduce((sum, r) => sum + r.cost, 0);
+
+    return raw.map((r) => ({
+      subsystem: r.name,
+      cost: r.cost,
+      percentage: Math.round((r.cost / totalCost) * 10000) / 100,
+      budgetAllocated: r.budget,
+      utilizationRatio: Math.round((r.cost / r.budget) * 1000) / 1000,
+    }));
+  }
+
+  async getBudgetStatus(): Promise<BudgetStatus[]> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const period = `${year}-${month}`;
+    const dayOfMonth = now.getDate();
+    const daysInMonth = new Date(year, now.getMonth() + 1, 0).getDate();
+    const monthProgress = dayOfMonth / daysInMonth;
+
+    const categories: { category: string; label: string; allocated: number }[] = [
+      { category: "compute", label: "Compute", allocated: 42_000 },
+      { category: "storage", label: "Storage", allocated: 8_500 },
+      { category: "network", label: "Network", allocated: 6_200 },
+      { category: "mining", label: "Mining", allocated: 25_000 },
+      { category: "consensus", label: "Consensus", allocated: 9_000 },
+      { category: "observability", label: "Observability", allocated: 5_800 },
+    ];
+
+    return categories.map((c) => {
+      // Simulate spend as roughly proportional to month progress with noise
+      const spendRatio = monthProgress * gaussianRandom(1.0, 0.12);
+      const spent = Math.round(c.allocated * spendRatio * 100) / 100;
+      const remaining = Math.round((c.allocated - spent) * 100) / 100;
+      // Linear extrapolation from current burn rate
+      const projectedSpend = monthProgress > 0
+        ? Math.round((spent / monthProgress) * 100) / 100
+        : spent;
+      const overBudget = projectedSpend > c.allocated;
+
+      return {
+        category: c.category,
+        label: c.label,
+        allocated: c.allocated,
+        spent,
+        remaining,
+        period,
+        projectedSpend,
+        overBudget,
+      };
+    });
+  }
+
+  async getExchangeRateHistory(): Promise<FizzBuckExchangeRate> {
+    const baseRate = 0.0042;
+    const pointCount = 288; // 5-minute intervals over 24 hours
+    const now = Date.now();
+    const history: { timestamp: number; rate: number }[] = [];
+
+    let rate = baseRate;
+    for (let i = 0; i < pointCount; i++) {
+      // Brownian motion with mean-reversion toward baseRate
+      const drift = (baseRate - rate) * 0.02;
+      const volatility = 0.00003;
+      const shock = (Math.random() - 0.5) * 2 * volatility;
+      // Occasional micro-spike (1% chance per tick)
+      const spike = Math.random() < 0.01 ? (Math.random() - 0.5) * 0.0004 : 0;
+      rate = Math.max(0.001, rate + drift + shock + spike);
+
+      history.push({
+        timestamp: now - (pointCount - 1 - i) * 5 * 60_000,
+        rate: Math.round(rate * 1_000_000) / 1_000_000,
+      });
+    }
+
+    const currentRate = history[history.length - 1].rate;
+    const rates = history.map((h) => h.rate);
+    const high24h = Math.max(...rates);
+    const low24h = Math.min(...rates);
+    const openRate = history[0].rate;
+    const change24h = Math.round(((currentRate - openRate) / openRate) * 10000) / 100;
+
+    let trend: "up" | "down" | "stable";
+    if (change24h > 0.5) {
+      trend = "up";
+    } else if (change24h < -0.5) {
+      trend = "down";
+    } else {
+      trend = "stable";
+    }
+
+    return {
+      rate: currentRate,
+      trend,
+      change24h,
+      high24h: Math.round(high24h * 1_000_000) / 1_000_000,
+      low24h: Math.round(low24h * 1_000_000) / 1_000_000,
+      history,
+    };
+  }
+
+  async generateInvoice(period: string): Promise<Invoice> {
+    const breakdown = await this.getCostBreakdown();
+
+    // Each subsystem contributes 1-3 line items with unit descriptions
+    const lineItemTemplates: Record<string, { desc: string; unitLabel: string }[]> = {
+      "Blockchain Mining": [
+        { desc: "Block mining operations", unitLabel: "blocks" },
+        { desc: "Proof-of-work hash computation", unitLabel: "GH" },
+        { desc: "Transaction validation", unitLabel: "txns" },
+      ],
+      "Quantum Simulator": [
+        { desc: "Quantum gate operations", unitLabel: "gates" },
+        { desc: "State vector memory allocation", unitLabel: "GB-hrs" },
+      ],
+      "Cache Coherence (MESI)": [
+        { desc: "MESI invalidation broadcasts", unitLabel: "msgs" },
+        { desc: "Cache line allocations", unitLabel: "lines" },
+      ],
+      "Paxos Consensus": [
+        { desc: "Paxos ballot rounds", unitLabel: "ballots" },
+        { desc: "Log replication transfers", unitLabel: "entries" },
+        { desc: "Leader election overhead", unitLabel: "elections" },
+      ],
+      "Rule Engine Pipeline": [
+        { desc: "Rule evaluation cycles", unitLabel: "cycles" },
+        { desc: "Chain-of-responsibility traversals", unitLabel: "traversals" },
+      ],
+      "Middleware Stack": [
+        { desc: "Middleware pipeline invocations", unitLabel: "invocations" },
+        { desc: "Telemetry span exports", unitLabel: "spans" },
+      ],
+      "Genetic Algorithm": [
+        { desc: "Population evolution generations", unitLabel: "generations" },
+        { desc: "Fitness evaluation cycles", unitLabel: "evals" },
+      ],
+      "Digital Twin": [
+        { desc: "Monte Carlo simulation runs", unitLabel: "runs" },
+        { desc: "Twin state synchronization", unitLabel: "syncs" },
+      ],
+      "Persistence Layer": [
+        { desc: "SQLite write operations", unitLabel: "writes" },
+        { desc: "Filesystem I/O operations", unitLabel: "ops" },
+      ],
+      "Service Mesh": [
+        { desc: "Sidecar proxy requests", unitLabel: "requests" },
+        { desc: "Circuit breaker evaluations", unitLabel: "checks" },
+      ],
+    };
+
+    const lines: InvoiceLine[] = [];
+    for (const alloc of breakdown) {
+      const templates = lineItemTemplates[alloc.subsystem] ?? [
+        { desc: `${alloc.subsystem} operations`, unitLabel: "units" },
+      ];
+      // Distribute cost across the line items for this subsystem
+      const itemCount = templates.length;
+      let remainingCost = alloc.cost;
+
+      for (let i = 0; i < itemCount; i++) {
+        const template = templates[i];
+        const isLast = i === itemCount - 1;
+        const share = isLast ? remainingCost : Math.round(alloc.cost * gaussianRandom(1.0 / itemCount, 0.05) * 100) / 100;
+        const actualShare = Math.min(share, remainingCost);
+        remainingCost -= actualShare;
+
+        const quantity = Math.round(gaussianRandom(500, 200)) + 100;
+        const unitCost = quantity > 0 ? Math.round((actualShare / quantity) * 10000) / 10000 : 0;
+        const total = Math.round(quantity * unitCost * 100) / 100;
+
+        lines.push({
+          description: `${template.desc} (${quantity} ${template.unitLabel})`,
+          quantity,
+          unitCost,
+          total,
+          subsystem: alloc.subsystem,
+        });
+      }
+    }
+
+    const subtotal = Math.round(lines.reduce((sum, l) => sum + l.total, 0) * 100) / 100;
+    const tax = Math.round(subtotal * 0.075 * 100) / 100;
+    const total = Math.round((subtotal + tax) * 100) / 100;
+
+    // Sequential invoice ID based on period
+    const seqNumber = String(Math.floor(Math.random() * 90) + 10).padStart(4, "0");
+
+    return {
+      id: `INV-${period}-${seqNumber}`,
+      period,
+      lines,
+      subtotal,
+      tax,
+      total,
+      issuedAt: new Date().toISOString(),
+      status: "issued",
+    };
+  }
+
+  async getDailyCostTrend(): Promise<DailyCostPoint[]> {
+    const points: DailyCostPoint[] = [];
+    const now = new Date();
+
+    // Subsystem proportions consistent with getCostBreakdown()
+    const subsystemWeights: Record<string, number> = {
+      "Blockchain Mining": 0.32,
+      "Quantum Simulator": 0.18,
+      "Cache Coherence (MESI)": 0.12,
+      "Paxos Consensus": 0.10,
+      "Rule Engine Pipeline": 0.08,
+      "Middleware Stack": 0.06,
+      "Genetic Algorithm": 0.05,
+      "Digital Twin": 0.04,
+      "Persistence Layer": 0.03,
+      "Service Mesh": 0.02,
+    };
+
+    for (let d = 29; d >= 0; d--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - d);
+      const dateStr = date.toISOString().slice(0, 10);
+      const dayOfWeek = date.getDay(); // 0=Sun, 6=Sat
+
+      // Base daily spend with day-of-week seasonality
+      let baseCost = 2_400;
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        baseCost *= 0.65; // Weekend reduction — evaluation demand follows business cycles
+      }
+
+      // Gaussian jitter
+      const dailyTotal = Math.round(gaussianRandom(baseCost, baseCost * 0.08) * 100) / 100;
+
+      // Occasional cost spike (blockchain difficulty adjustment or chaos experiment)
+      const spiked = Math.random() < 0.08;
+      const finalTotal = spiked ? Math.round(dailyTotal * gaussianRandom(1.6, 0.2) * 100) / 100 : dailyTotal;
+
+      // Break down by subsystem
+      const bySubsystem: Record<string, number> = {};
+      let distributed = 0;
+      const entries = Object.entries(subsystemWeights);
+      for (let i = 0; i < entries.length; i++) {
+        const [name, weight] = entries[i];
+        const isLast = i === entries.length - 1;
+        if (isLast) {
+          bySubsystem[name] = Math.round((finalTotal - distributed) * 100) / 100;
+        } else {
+          const portion = Math.round(finalTotal * weight * gaussianRandom(1.0, 0.06) * 100) / 100;
+          bySubsystem[name] = portion;
+          distributed += portion;
+        }
+      }
+
+      points.push({
+        date: dateStr,
+        totalCost: finalTotal,
+        bySubsystem,
+      });
+    }
+
+    return points;
   }
 }
 

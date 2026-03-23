@@ -45,6 +45,11 @@ import type {
   TwinState,
   TwinProjection,
   WhatIfOutcome,
+  CostAllocation,
+  BudgetStatus,
+  FizzBuckExchangeRate,
+  Invoice,
+  DailyCostPoint,
 } from "./types";
 
 /**
@@ -393,4 +398,40 @@ export interface IDataProvider {
    * @param overrides - Parameter key-value overrides to apply
    */
   runWhatIfScenario(overrides: Record<string, string | number | boolean>): Promise<WhatIfOutcome>;
+
+  /**
+   * Retrieve the current FizzBuck cost allocation breakdown across all
+   * infrastructure subsystems. Used by the FinOps cost treemap for
+   * spend attribution and chargeback analysis.
+   */
+  getCostBreakdown(): Promise<CostAllocation[]>;
+
+  /**
+   * Retrieve budget status for all budget categories in the current
+   * reporting period. Powers the budget health progress bars and
+   * overrun alerting.
+   */
+  getBudgetStatus(): Promise<BudgetStatus[]>;
+
+  /**
+   * Retrieve the current FizzBuck exchange rate with 24-hour history.
+   * Used by the exchange rate ticker widget for real-time rate display
+   * and trend visualization.
+   */
+  getExchangeRateHistory(): Promise<FizzBuckExchangeRate>;
+
+  /**
+   * Generate a FizzBuck invoice for the specified billing period.
+   * Computes line items from subsystem usage telemetry, applies
+   * FBVAT, and returns the complete invoice document.
+   *
+   * @param period - Billing period in YYYY-MM format (e.g., "2026-03")
+   */
+  generateInvoice(period: string): Promise<Invoice>;
+
+  /**
+   * Retrieve daily cost trend data for the last 30 days. Used by the
+   * cost trend line chart for spend pattern analysis and anomaly detection.
+   */
+  getDailyCostTrend(): Promise<DailyCostPoint[]>;
 }
