@@ -29,7 +29,6 @@ The suite runs in approximately 0.4 seconds, which is roughly 400 times longer t
 | `test_acl.py` | Anti-Corruption Layer | 44 | Unit / Integration |
 | `test_architecture.py` | Architecture compliance | 42 | Static analysis |
 | `test_repository.py` | Persistence backends | 40 | Unit / Integration |
-| `test_tracing.py` | Distributed tracing | 68 | Unit / Integration |
 | `test_container.py` | IoC container | 34 | Unit |
 | `test_contract_coverage.py` | Meta-test coverage | 9 | Meta |
 | `test_no_service_location.py` | Service Locator guard | 1 | Static analysis |
@@ -253,29 +252,6 @@ Covers the caching layer: cache entries, eviction policies (LRU, LFU, FIFO, Dram
 
 **Behavior categories:** Happy path, eviction behavior, state machine transitions (MESI), TTL expiration, configuration, eulogy correctness.
 
-### `test_tracing.py` — 68 tests
-
-Covers the OpenTelemetry-inspired distributed tracing subsystem: trace contexts, spans, span events, the tracing service, span builder, `@traced` decorator, tracing middleware, exporters, and renderers.
-
-**Test classes and behavior categories:**
-
-| Class | Covers |
-|-------|--------|
-| `TestTraceContext` | Context creation, propagation, ID generation |
-| `TestSpan` | Span lifecycle (start, end, add events), parent-child relationships, attribute setting |
-| `TestSpanEvent` | Event attachment to spans |
-| `TestTrace` | Trace assembly from spans, duration calculation |
-| `TestTracingService` | Singleton lifecycle, trace creation, active trace management |
-| `TestSpanBuilder` | Fluent span construction API |
-| `TestTracedDecorator` | `@traced` decorator on sync and async functions |
-| `TestTracingMiddleware` | Pipeline integration, automatic span creation |
-| `TestTraceExporter` | JSON export of trace data |
-| `TestTraceRenderer` | Human-readable trace rendering (waterfall, timeline) |
-| `TestTracingExceptions` | `SpanLifecycleError`, `SpanNotFoundError`, `TraceAlreadyActiveError`, `TraceNotFoundError` |
-| `TestTracingIntegration` | Full pipeline with tracing enabled, disabled tracing no-overhead check |
-
-**Behavior categories:** Happy path, lifecycle errors, decorator behavior, rendering, configuration, performance (no-overhead when disabled).
-
 ### `test_acl.py` — 44 tests
 
 Covers the Anti-Corruption Layer: strategy adapters for all four evaluation strategies, classification logic, ambiguity detection, disagreement tracking, and adapter factory.
@@ -455,7 +431,7 @@ Defines `StrategyContractTests`, a mixin encoding the `StrategyPort` behavioral 
 
 The test suite uses pytest fixtures extensively. Common patterns:
 
-- **`reset_singletons` (autouse):** Present in nearly every test file. Resets the `_SingletonMeta` registry and subsystem-specific singletons (`PluginRegistry`, `CircuitBreakerRegistry`, `MigrationRegistry`, `TracingService`) between tests. This prevents cross-test contamination, which is critical when your FizzBuzz platform has more singletons than a dating app.
+- **`reset_singletons` (autouse):** Present in nearly every test file. Resets the `_SingletonMeta` registry and subsystem-specific singletons (`PluginRegistry`, `CircuitBreakerRegistry`, `MigrationRegistry`) between tests. This prevents cross-test contamination, which is critical when your FizzBuzz platform has more singletons than a dating app.
 
 - **Domain object factories:** Each file provides fixtures for constructing domain objects (`fizz_rule`, `buzz_rule`, `fizz_result`, etc.) with sensible defaults. The `tests/contracts/` files use standalone factory functions (`_make_result`, `_make_rules`, `_make_summary`) rather than pytest fixtures, since contract test mixins cannot use `@pytest.fixture`.
 

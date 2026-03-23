@@ -44,7 +44,7 @@ from enterprise_fizzbuzz.domain.models import (
 from enterprise_fizzbuzz.infrastructure.observers import ConsoleObserver, EventBus, StatisticsObserver
 from enterprise_fizzbuzz.infrastructure.plugins import PluginRegistry
 from enterprise_fizzbuzz.infrastructure.rules_engine import RuleEngineFactory
-from enterprise_fizzbuzz.infrastructure.tracing import traced
+from enterprise_fizzbuzz.infrastructure.otel_tracing import traced
 
 logger = logging.getLogger(__name__)
 

@@ -20,7 +20,6 @@ This document is the authoritative reference for every configuration surface in 
    - [plugins](#plugins)
    - [circuit_breaker](#circuit_breaker)
    - [i18n](#i18n)
-   - [tracing](#tracing)
    - [rbac](#rbac)
    - [event_sourcing](#event_sourcing)
    - [chaos](#chaos)
@@ -195,22 +194,6 @@ Controls the locale-aware translation subsystem. The platform ships with seven l
 | `i18n.log_missing_keys` | bool | `true` | -- | -- |
 
 The `--list-locales` flag displays all available locales and exits. When `strict_mode` is `true`, missing keys raise `TranslationKeyError` instead of returning the key string. The `fallback_chain` is appended after any per-locale `@fallback` directive.
-
-### tracing
-
-OpenTelemetry-style distributed tracing for full pipeline observability.
-
-| Key | Type | Default | Env Var | CLI Flag |
-|---|---|---|---|---|
-| `tracing.enabled` | bool | `false` | `EFP_TRACING_ENABLED` | `--trace` |
-| `tracing.export_format` | string | `"waterfall"` | -- | `--trace` (waterfall) / `--trace-json` (json) |
-| `tracing.waterfall_width` | int | `60` | -- | -- |
-| `tracing.timing_precision` | string | `"us"` | -- | -- |
-
-**Valid export formats:** `waterfall`, `json`.
-**Valid timing precisions:** `us` (microseconds), `ns` (nanoseconds).
-
-The `EFP_TRACING_ENABLED` environment variable accepts `true`, `1`, or `yes` (case-insensitive) to enable tracing.
 
 ### rbac
 
@@ -431,7 +414,6 @@ When `feature_flags.strict_dependencies` is `true` (the default), the flag evalu
 | `wuzz_prime_targeting` | TARGETING | `true` | `targeting_rule: "prime"`, depends on `wuzz_rule_experimental` |
 | `ml_strategy_canary` | PERCENTAGE | `false` | `percentage: 10` |
 | `blockchain_audit` | BOOLEAN | `false` | -- |
-| `tracing_enabled` | BOOLEAN | `false` | -- |
 
 ### Runtime Overrides
 

@@ -5,15 +5,17 @@ Implements a fully compliant OpenTelemetry distributed tracing subsystem
 with W3C TraceContext propagation, OTLP JSON wire format, Zipkin v2 export,
 probabilistic sampling, batch processing, and an ASCII waterfall dashboard.
 
-Because the existing TracingMiddleware was merely a single-node tracing
-solution. In the modern enterprise, FizzBuzz evaluations span multiple
-(imaginary) microservices, and correlating n % 3 == 0 across service
-boundaries requires W3C-standard 128-bit trace IDs, parent-child span
-relationships, and at least three different export formats. The OTLP JSON
-output matches the official OpenTelemetry specification byte-for-byte,
-which means it could theoretically be ingested by Jaeger, Tempo, or any
-other backend — if this were an HTTP server and not a CLI that prints
-"FizzBuzz".
+This module is the single source of truth for all tracing in the Enterprise
+FizzBuzz Platform, having absorbed the original single-node tracing module
+in the Great Tracing Consolidation of 2026. The @traced decorator, which
+instruments middleware and service methods with automatic child span
+creation, now delegates to the FizzOTel TracerProvider instead of the
+legacy TracingService singleton.
+
+The OTLP JSON output matches the official OpenTelemetry specification
+byte-for-byte, which means it could theoretically be ingested by Jaeger,
+Tempo, or any other backend — if this were an HTTP server and not a CLI
+that prints "FizzBuzz".
 
 The ProbabilisticSampler uses deterministic sampling based on the lower
 32 bits of the trace ID, ensuring consistent sampling decisions across
@@ -21,10 +23,13 @@ service boundaries. This is critical for distributed tracing of FizzBuzz
 because if one service samples "Fizz" but another drops "Buzz", the
 resulting trace would be incomplete, and nobody wants a half-traced
 FizzBuzz.
+
+"Finally, a flame graph that explains why printing 'Fizz' took 3 microseconds."
 """
 
 from __future__ import annotations
 
+import functools
 import json
 import os
 import time
@@ -32,7 +37,7 @@ import uuid
 from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, TypeVar, cast
 
 from enterprise_fizzbuzz.domain.exceptions import (
     OTelError,
@@ -42,6 +47,131 @@ from enterprise_fizzbuzz.domain.exceptions import (
 )
 from enterprise_fizzbuzz.domain.interfaces import IMiddleware
 from enterprise_fizzbuzz.domain.models import ProcessingContext
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+# ============================================================
+# Active TracerProvider — module-level singleton for @traced
+# ============================================================
+
+_active_provider: Optional["TracerProvider"] = None
+
+
+def set_active_provider(provider: Optional["TracerProvider"]) -> None:
+    """Set the module-level active TracerProvider for the @traced decorator.
+
+    When a provider is active, every @traced-decorated method creates a
+    child span with nanosecond timing, exception capture, and automatic
+    status propagation. When None, @traced is a zero-overhead no-op.
+
+    Called from __main__.py during subsystem wiring, because global mutable
+    state is the enterprise way.
+    """
+    global _active_provider
+    _active_provider = provider
+
+
+def get_active_provider() -> Optional["TracerProvider"]:
+    """Return the currently active TracerProvider, or None."""
+    return _active_provider
+
+
+# ============================================================
+# @traced Decorator
+# ============================================================
+
+
+def traced(
+    name: Optional[str] = None,
+    attributes: Optional[dict[str, Any]] = None,
+) -> Callable[[F], F]:
+    """Decorator that wraps a method in an OTel tracing span.
+
+    When the active TracerProvider is None, this decorator is a
+    zero-overhead no-op — the wrapped function is called directly
+    without any tracing instrumentation. When active, it automatically:
+
+    - Creates a child span named "ClassName.method_name"
+    - Sets any provided attributes on the span
+    - Captures exceptions as span events with ERROR status
+    - Ends the span with OK status on success
+
+    This decorator was originally defined in the legacy tracing module
+    and delegated to the TracingService singleton. It now delegates to
+    the FizzOTel TracerProvider, which provides W3C-compliant context
+    propagation and multi-format export — a substantial upgrade for a
+    decorator whose primary job is timing modulo operations.
+
+    Args:
+        name: Optional custom span name. Defaults to "Class.method".
+        attributes: Optional attributes to set on every span.
+
+    Returns:
+        A decorator that instruments the target method.
+
+    Usage:
+        class MyMiddleware:
+            @traced()
+            def process(self, ctx, next_handler):
+                return next_handler(ctx)
+    """
+
+    def decorator(func: F) -> F:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            provider = get_active_provider()
+            if provider is None:
+                return func(*args, **kwargs)
+
+            # Derive span name from class + method
+            span_name = name
+            if span_name is None:
+                if args and hasattr(args[0], "__class__"):
+                    span_name = f"{args[0].__class__.__name__}.{func.__name__}"
+                else:
+                    span_name = func.__qualname__
+
+            # Inherit trace_id from the most recent active span if possible
+            parent_span_id: Optional[str] = None
+            trace_id: Optional[str] = None
+            if provider._active_spans:
+                parent = provider._active_spans[-1]
+                trace_id = parent.trace_id
+                parent_span_id = parent.span_id
+
+            span = provider.start_span(
+                span_name,
+                trace_id=trace_id,
+                parent_span_id=parent_span_id,
+                attributes=attributes,
+            )
+            span.start_time_ns = time.time_ns()
+
+            try:
+                result = func(*args, **kwargs)
+                span.set_status(StatusCode.OK)
+                span.end_time_ns = time.time_ns()
+                span._ended = True
+                provider.end_span(span)
+                return result
+            except Exception as e:
+                span.add_event(
+                    "exception",
+                    {
+                        "exception.type": type(e).__name__,
+                        "exception.message": str(e),
+                    },
+                )
+                span.set_status(StatusCode.ERROR, str(e))
+                span.end_time_ns = time.time_ns()
+                span._ended = True
+                provider.end_span(span)
+                raise
+
+        return cast(F, wrapper)
+
+    return decorator
 
 
 # ============================================================

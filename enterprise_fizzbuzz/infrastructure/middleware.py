@@ -14,7 +14,7 @@ from typing import Any, Callable
 
 from enterprise_fizzbuzz.domain.interfaces import IMiddleware
 from enterprise_fizzbuzz.domain.models import ProcessingContext
-from enterprise_fizzbuzz.infrastructure.tracing import traced
+from enterprise_fizzbuzz.infrastructure.otel_tracing import traced
 
 logger = logging.getLogger(__name__)
 

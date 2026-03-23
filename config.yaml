@@ -98,16 +98,6 @@ i18n:
     - "en"
   log_missing_keys: true        # Log warnings when translation keys are not found
 
-# Distributed tracing configuration
-# OpenTelemetry-style span collection for full pipeline observability.
-# Because you can't truly understand FizzBuzz until you've seen
-# a flame graph of it.
-tracing:
-  enabled: false                  # Master switch for the tracing subsystem
-  export_format: "waterfall"      # waterfall | json
-  waterfall_width: 60             # Character width of the timeline bar
-  timing_precision: "us"          # us (microseconds) | ns (nanoseconds)
-
 # Role-Based Access Control (RBAC) configuration
 # Controls who can FizzBuzz what, because unrestricted modulo
 # arithmetic is a security incident waiting to happen.
@@ -1628,24 +1618,6 @@ billing:
   default_tier: "free"                    # free | developer | professional | enterprise
   default_tenant_id: "tenant-default"     # Default tenant identifier
   spending_cap: null                      # Optional monthly spending cap in FizzBucks (null = none)
-  dashboard:
-    width: 60                             # ASCII dashboard width
-
-# FizzNAS Neural Architecture Search configuration
-# Automates the discovery of optimal neural network topologies for
-# integer divisibility classification. Rather than hand-tuning the
-# MLP architecture (Input(2)->Dense(16,sigmoid)->Dense(1,sigmoid)),
-# FizzNAS explores the space of possible layer widths, activation
-# functions, and network depths to find Pareto-optimal architectures
-# that balance accuracy, parameter count, and inference latency.
-# Three search strategies are available: random sampling (baseline),
-# evolutionary search (tournament selection + mutation), and DARTS
-# (differentiable architecture search with continuous relaxation).
-nas:
-  enabled: false                          # Master switch — opt-in via --nas
-  strategy: "evolutionary"                # random | evolutionary | darts
-  budget: 50                              # Total fitness evaluations (architectures trained)
-  seed: 42                                # RNG seed for reproducibility
   dashboard:
     width: 60                             # ASCII dashboard width
 

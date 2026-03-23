@@ -50,7 +50,6 @@ enterprise_fizzbuzz/
     ├── plugins.py                           # PluginRegistry for third-party rule extensions
     ├── rules_engine.py                      # StandardRuleEngine, ChainOfResponsibilityEngine, ParallelAsyncEngine
     ├── sla.py                               # SLO definitions, error budgets, alerting, on-call schedule
-    ├── tracing.py                           # Distributed tracing: spans, traces, waterfall renderer, @traced
     ├── persistence/
     │   ├── __init__.py
     │   ├── in_memory.py                     # InMemoryRepository, InMemoryUnitOfWork
@@ -108,8 +107,7 @@ The number 15 passes through each middleware in priority order. On the way in, e
 |-------|----------|------------|----------------|-----------------|
 | 1 | -10 | `AuthorizationMiddleware` | Constructs `Permission("numbers", "15", "evaluate")` and checks against `AuthContext.effective_permissions` | Adds `auth_user`, `auth_role` to metadata |
 | 2 | -3 | `FlagMiddleware` | Evaluates all flags via `FlagStore.evaluate_all(15)`, stores active/disabled rule labels in `context.metadata` | None |
-| 3 | -2 | `TracingMiddleware` | Creates root trace via `TracingService.start_trace("evaluate_number")` | Ends trace via `TracingService.end_trace()` |
-| 4 | -1 | `CircuitBreakerMiddleware` | Checks circuit state; if OPEN, raises `CircuitOpenError`; if HALF_OPEN, limits probe calls | Records success/failure in `SlidingWindow` |
+| 3 | -1 | `CircuitBreakerMiddleware` | Checks circuit state; if OPEN, raises `CircuitOpenError`; if HALF_OPEN, limits probe calls | Records success/failure in `SlidingWindow` |
 | 5 | 0 | `ValidationMiddleware` | Validates `context.number` is an `int` within `[-2^31, 2^31-1]` and not cancelled | None |
 | 6 | 1 | `TimingMiddleware` | Sets `context.start_time`, captures `perf_counter_ns()` | Sets `context.end_time`, records `processing_time_ns` and `processing_time_ms` in metadata |
 | 7 | 2 | `LoggingMiddleware` | Logs `"Processing number: 15"` at configured level | Logs result output and matched rule count |
@@ -147,7 +145,6 @@ The `MiddlewarePipeline` (defined in `enterprise_fizzbuzz/infrastructure/middlew
 |----------|-----------------|--------|-------------|
 | -10 | `AuthorizationMiddleware` | `infrastructure/auth.py` | RBAC enforcement. Checks user permissions against each number. Builds the 47-field denial response on failure. |
 | -3 | `FlagMiddleware` | `infrastructure/feature_flags.py` | Feature flag evaluation. Runs `FlagStore.evaluate_all()` and stores active/disabled rule labels in context metadata. |
-| -2 | `TracingMiddleware` | `infrastructure/tracing.py` | Distributed tracing. Creates a root trace and span per evaluation. Wraps the entire downstream pipeline. |
 | -1 | `CircuitBreakerMiddleware` | `infrastructure/circuit_breaker.py` | Fault tolerance. Routes evaluation through the `CircuitBreaker` state machine (CLOSED/OPEN/HALF_OPEN). |
 | 0 | `ValidationMiddleware` | `infrastructure/middleware.py` | Input validation. Rejects non-integers and out-of-range numbers. Checks `context.cancelled`. |
 | 1 | `TimingMiddleware` | `infrastructure/middleware.py` | Performance measurement. Records nanosecond-precision timing in context metadata. |
@@ -162,7 +159,7 @@ The `MiddlewarePipeline` (defined in `enterprise_fizzbuzz/infrastructure/middlew
 
 The priority scheme follows a deliberate design:
 
-- **Negative priorities (-10 through -1)**: Security and infrastructure concerns that must execute before any business logic. Authorization first (no point evaluating if the user lacks permission), then feature flags (determine which rules are active), then tracing (observe everything downstream), then circuit breaker (reject early if the system is degraded).
+- **Negative priorities (-10 through -1)**: Security and infrastructure concerns that must execute before any business logic. OTel tracing runs first at -10 to capture everything. Then authorization (no point evaluating if the user lacks permission), then feature flags (determine which rules are active), then circuit breaker (reject early if the system is degraded).
 - **Zero through 5**: Core processing concerns. Validation ensures input sanity. Timing wraps the evaluation for performance data. Logging provides observability. Chaos runs inside the circuit breaker intentionally. Caching short-circuits before the expensive evaluation. Event sourcing captures the raw result.
 - **50 and above**: Post-processing concerns. Translation must run after all middleware have finalized the output string. SLA monitoring measures the completed evaluation latency.
 
@@ -238,7 +235,7 @@ graph TD
 
     Pipeline --> AuthMW["AuthorizationMiddleware"]
     Pipeline --> FlagMW["FlagMiddleware"]
-    Pipeline --> TraceMW["TracingMiddleware"]
+    Pipeline --> OTelMW["OTelMiddleware"]
     Pipeline --> CBMW["CircuitBreakerMiddleware"]
     Pipeline --> ValMW["ValidationMiddleware"]
     Pipeline --> TimeMW["TimingMiddleware"]
@@ -257,7 +254,7 @@ graph TD
     FlagStore --> DepGraph["FlagDependencyGraph"]
     FlagStore --> Rollout["RolloutStrategy"]
 
-    TraceMW --> TracingSvc["TracingService"]
+    OTelMW --> TracerProvider["TracerProvider"]
 
     CBMW --> CircuitBreaker["CircuitBreaker"]
     CircuitBreaker --> SlidingWindow["SlidingWindow"]
@@ -313,7 +310,7 @@ The following table lists every subsystem, its activation mechanism, and whether
 | Event bus | Yes | — | — | Always instantiated. `StatisticsObserver` always subscribed. |
 | Console observer | No | `--verbose` / `-v` | — | Subscribes `ConsoleObserver` with `verbose=True`. |
 | RBAC / Authorization | No | `--user`, `--token`, `--role` | `auth.enabled` | Enables `AuthorizationMiddleware` (priority -10). |
-| Distributed tracing | No | `--trace`, `--trace-json` | — | Enables `TracingMiddleware` (priority -2) and `TracingService`. |
+| Distributed tracing | No | `--trace`, `--trace-json`, `--otel` | `otel.*` | Enables `OTelMiddleware` (priority -10) and `TracerProvider`. `--trace` is an alias for `--otel --otel-export console`. |
 | Circuit breaker | No | `--circuit-breaker` | `circuit_breaker.*` | Enables `CircuitBreakerMiddleware` (priority -1). |
 | Circuit breaker dashboard | No | `--circuit-status` | — | Renders ASCII dashboard after execution. Requires `--circuit-breaker`. |
 | Chaos engineering | No | `--chaos` | `chaos.*` | Enables `ChaosMiddleware` (priority 3) and `ChaosMonkey`. |
@@ -384,12 +381,12 @@ The `MLStrategyAdapter` performs two additional checks beyond classification:
 | Observer / Pub-Sub | `EventBus` + `IObserver` | Thread-safe event publication with error-isolated subscriber notification |
 | Circuit Breaker | `CircuitBreaker` + `CircuitBreakerMiddleware` | Three-state machine with sliding window failure tracking and exponential backoff |
 | Chain of Responsibility | `ChainOfResponsibilityEngine` + `ChainLink` | Linked list of rule handlers for sequential evaluation |
-| Singleton | `TracingService`, `CircuitBreakerRegistry`, `ChaosMonkey` | Thread-safe singletons with reset capability for testing |
+| Singleton | `CircuitBreakerRegistry`, `ChaosMonkey` | Thread-safe singletons with reset capability for testing |
 | Repository + Unit of Work | `AbstractRepository` + `AbstractUnitOfWork` | Transactional persistence with three backend implementations |
 | Factory | `RuleEngineFactory`, `FormatterFactory`, `EvictionPolicyFactory`, `StrategyAdapterFactory` | Centralized object creation with strategy/configuration dispatch |
 | CQRS | `CommandBus` + `EventStore` | Command/query segregation for event-sourced evaluation history |
 | State Machine | `CircuitBreaker`, `FlagLifecycle`, `CacheCoherenceState` | Formal state transitions with validation and event emission |
-| Decorator | `@traced` | Zero-overhead tracing instrumentation when disabled, automatic span lifecycle when enabled |
+| Decorator | `@traced` | Zero-overhead tracing instrumentation when provider is None, automatic span lifecycle via FizzOTel when active |
 | Plugin | `IPlugin` + `PluginRegistry` | Extension point for third-party rule definitions |
 | Dependency Injection Container | `Container` | Registration-based IoC container with lifetime management (coexists with builder) |
 
@@ -447,7 +444,7 @@ The subsystems are wired in a specific order within `main()`, dictated by their 
 4. **Range, format, and strategy resolution** — CLI overrides config values.
 5. **Circuit breaker** — needs the event bus for state change events.
 6. **Internationalization** — `LocaleManager` is loaded and configured.
-7. **Distributed tracing** — `TracingService` singleton is reset and optionally enabled.
+7. **Distributed tracing** — FizzOTel `TracerProvider` is created and the module-level active provider is set for the `@traced` decorator.
 8. **RBAC** — `AuthContext` is resolved from `--token`, `--user`/`--role`, or config default.
 9. **Event sourcing** — `EventSourcingSystem` and its middleware are created.
 10. **Feature flags** — `FlagStore` is populated from config and CLI overrides.
@@ -471,7 +468,4 @@ The following components use explicit locking for thread safety:
 | `StatisticsObserver` | `threading.Lock` | Running counts |
 | `CircuitBreaker` | `threading.Lock` | State machine, metrics, half-open call counter |
 | `SlidingWindow` | `threading.Lock` | Entry buffer |
-| `TracingService` | `threading.Lock` | Active/completed trace registries |
 | `CircuitBreakerRegistry` | `threading.Lock` (instance + class) | Breaker map, singleton instance |
-
-Thread-local storage is used by `TracingService` for current span propagation via `threading.local()`, with a manual span stack for nested span support.

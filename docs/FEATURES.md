@@ -46,9 +46,9 @@ Fault-tolerant evaluation with exponential backoff, sliding windows, and an ASCI
 
 Full locale support across 7 languages (including Klingon and two dialects of Elvish), with a proprietary `.fizztranslation` file format, locale fallback chains, and a pluralization engine. Localization coverage includes the Undying Lands market segment
 
-### Distributed Tracing
+### Distributed Tracing (FizzOTel)
 
-OpenTelemetry-inspired span trees with W3C Trace Context IDs, ASCII waterfall visualization, JSON export, and P95/P99 latency percentiles -- providing full observability into per-layer latency contributions across the middleware pipeline
+OpenTelemetry-compatible distributed tracing with W3C TraceContext propagation, OTLP JSON and Zipkin v2 export, probabilistic sampling, batch span processing, ASCII waterfall visualization, and a metrics bridge with duration histograms -- providing full observability into per-layer latency contributions across the middleware pipeline. The `--trace` flag is a backward-compatible alias for `--otel --otel-export console`
 
 ### Role-Based Access Control (RBAC)
 

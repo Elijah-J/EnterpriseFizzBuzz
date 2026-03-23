@@ -84,7 +84,7 @@ from enterprise_fizzbuzz.infrastructure.sla import (
     SLODefinition,
     SLOType,
 )
-from enterprise_fizzbuzz.infrastructure.tracing import TraceExporter, TraceRenderer, TracingMiddleware, TracingService
+from enterprise_fizzbuzz.infrastructure.otel_tracing import set_active_provider
 from enterprise_fizzbuzz.infrastructure.migrations import (
     MigrationDashboard,
     MigrationRegistry,
@@ -460,10 +460,6 @@ from enterprise_fizzbuzz.infrastructure.ip_office import (
     PatentExaminer,
     TrademarkRegistry,
 )
-from enterprise_fizzbuzz.infrastructure.neural_arch_search import (
-    NASDashboard,
-    NASEngine,
-)
 from enterprise_fizzbuzz.infrastructure.observability_correlation import (
     CorrelationDashboard,
     ObservabilityCorrelationManager,
@@ -641,13 +637,13 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--trace",
         action="store_true",
-        help="Enable distributed tracing with ASCII waterfall output",
+        help="Enable distributed tracing with ASCII waterfall output (alias for --otel --otel-export console)",
     )
 
     parser.add_argument(
         "--trace-json",
         action="store_true",
-        help="Enable distributed tracing with JSON export output",
+        help="Enable distributed tracing with OTLP JSON export output (alias for --otel --otel-export otlp)",
     )
 
     parser.add_argument(
@@ -2143,35 +2139,6 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzBill billing & revenue recognition ASCII dashboard after execution",
     )
 
-    # FizzNAS Neural Architecture Search
-    parser.add_argument(
-        "--nas",
-        action="store_true",
-        help="Enable FizzNAS Neural Architecture Search: automated topology optimization for the ML engine",
-    )
-
-    parser.add_argument(
-        "--nas-strategy",
-        type=str,
-        choices=["random", "evolutionary", "darts"],
-        default=None,
-        help="NAS search strategy (default: from config)",
-    )
-
-    parser.add_argument(
-        "--nas-budget",
-        type=int,
-        default=None,
-        metavar="N",
-        help="Total fitness evaluations (architectures to train) during NAS (default: from config)",
-    )
-
-    parser.add_argument(
-        "--nas-dashboard",
-        action="store_true",
-        help="Display the FizzNAS ASCII dashboard with Pareto front, top architectures, and baseline comparison",
-    )
-
     # FizzJIT — Runtime Code Generation
     parser.add_argument(
         "--jit",
@@ -3131,24 +3098,33 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  i18n is disabled. Enable it in config.yaml.\n")
         return 0
 
-    # Distributed tracing setup
-    tracing_service = TracingService()
-    tracing_service.reset()
+    # ----------------------------------------------------------------
+    # Distributed Tracing Setup (FizzOTel)
+    #
+    # --trace and --trace-json are backward-compatible aliases that
+    # redirect to the FizzOTel subsystem. --trace maps to console
+    # export, --trace-json maps to OTLP JSON export.
+    # ----------------------------------------------------------------
     tracing_enabled = args.trace or args.trace_json
-    tracing_mw = None
-    if tracing_enabled:
-        tracing_service.enable()
-        tracing_mw = TracingMiddleware()
-
-    # ----------------------------------------------------------------
-    # FizzOTel — OpenTelemetry-Compatible Distributed Tracing Setup
-    # ----------------------------------------------------------------
     otel_provider = None
     otel_exporter = None
     otel_middleware = None
 
-    if args.otel or args.otel_dashboard:
-        otel_export_fmt = args.otel_export or config.otel_export_format
+    # Determine if any tracing flag is active
+    otel_requested = args.otel or args.otel_dashboard or tracing_enabled
+
+    if otel_requested:
+        # Resolve export format: explicit --otel-export wins, then
+        # --trace/--trace-json aliases, then config default
+        if args.otel_export:
+            otel_export_fmt = args.otel_export
+        elif args.trace_json:
+            otel_export_fmt = "otlp"
+        elif args.trace:
+            otel_export_fmt = "console"
+        else:
+            otel_export_fmt = config.otel_export_format
+
         otel_provider, otel_exporter, otel_middleware = create_otel_subsystem(
             sampling_rate=config.otel_sampling_rate,
             export_format=otel_export_fmt,
@@ -3157,6 +3133,8 @@ def main(argv: Optional[list[str]] = None) -> int:
             max_batch_size=config.otel_max_batch_size,
             console_width=config.otel_dashboard_width,
         )
+        # Activate the provider for the @traced decorator
+        set_active_provider(otel_provider)
 
     # ----------------------------------------------------------------
     # Role-Based Access Control (RBAC) setup
@@ -3741,7 +3719,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             active_subsystems.append("service_mesh_hop")
         if args.rate_limit:
             active_subsystems.append("rate_limit_check")
-        if args.trace or args.trace_json:
+        if tracing_enabled or args.otel:
             active_subsystems.append("tracing")
         if args.health:
             active_subsystems.append("health_probe")
@@ -4956,7 +4934,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             "cache": args.cache,
             "circuit_breaker": args.circuit_breaker,
             "blockchain": args.blockchain,
-            "tracing": tracing_enabled,
+            "tracing": tracing_enabled or args.otel,
             "sla_monitor": args.sla,
             "compliance": args.compliance,
             "service_mesh": args.service_mesh,
@@ -5815,10 +5793,6 @@ def main(argv: Optional[list[str]] = None) -> int:
     if auth_context is not None:
         builder.with_auth_context(auth_context)
 
-    # Add tracing middleware (priority -2, runs first)
-    if tracing_mw is not None:
-        builder.with_middleware(tracing_mw)
-
     # Add FizzOTel middleware (priority -10, runs before all others)
     if otel_middleware is not None:
         builder.with_middleware(otel_middleware)
@@ -5919,7 +5893,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     if twin_middleware is not None:
         builder.with_middleware(twin_middleware)
 
-    # Add feature flag middleware (priority -3, runs before tracing)
+    # Add feature flag middleware (priority -3, runs before OTel)
     if flag_middleware is not None:
         builder.with_middleware(flag_middleware)
 
@@ -6405,17 +6379,6 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Archaeological excavation output
     if arch_engine is not None and args.excavate is not None:
         print(arch_engine.excavate(args.excavate, width=config.archaeology_dashboard_width))
-
-    # Distributed tracing output
-    if tracing_enabled:
-        completed_traces = tracing_service.get_completed_traces()
-        if args.trace_json:
-            print(TraceExporter.export_json(completed_traces))
-        else:
-            # Waterfall for each trace
-            for trace in completed_traces:
-                print(TraceRenderer.render_waterfall(trace))
-            print(TraceRenderer.render_summary(completed_traces))
 
     # Event Sourcing summary and temporal queries
     if es_system is not None:
@@ -7164,7 +7127,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         # Set middleware names for stack frame generation
         active_middleware_names = []
         for mw_var in [
-            "tracing_mw", "auth_middleware", "es_middleware", "cb_middleware",
+            "auth_middleware", "es_middleware", "cb_middleware",
             "cache_middleware", "chaos_middleware", "sla_middleware",
             "metrics_middleware", "mesh_middleware", "rate_limit_middleware",
             "compliance_middleware", "finops_middleware", "dr_middleware",
@@ -7371,42 +7334,6 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  FizzBill not enabled. Use --billing to enable.\n")
     elif args.billing_dashboard:
         print("\n  FizzBill not enabled. Use --billing to enable.\n")
-
-    # ----------------------------------------------------------------
-    # FizzNAS Neural Architecture Search
-    # ----------------------------------------------------------------
-    if args.nas or args.nas_dashboard:
-        nas_strategy = args.nas_strategy or config.nas_strategy
-        nas_budget = args.nas_budget if args.nas_budget is not None else config.nas_budget
-        nas_seed = config.nas_seed
-
-        nas_engine = NASEngine(
-            strategy=nas_strategy,
-            budget=nas_budget,
-            seed=nas_seed,
-        )
-
-        print(
-            "\n  +---------------------------------------------------------+\n"
-            "  | FizzNAS Neural Architecture Search Engine               |\n"
-            "  +---------------------------------------------------------+"
-        )
-
-        winner = nas_engine.run()
-        print(f"\n  NAS Winner: {winner.genome_string}")
-        print(f"  Accuracy: {winner.accuracy:.1f}%  Params: {winner.parameter_count}  Latency: {winner.latency_us:.1f}us")
-
-        if nas_engine.baseline_result:
-            baseline = nas_engine.baseline_result
-            print(f"\n  Baseline: {baseline.genome_string}")
-            print(f"  Accuracy: {baseline.accuracy:.1f}%  Params: {baseline.parameter_count}  Latency: {baseline.latency_us:.1f}us")
-        print()
-
-        if args.nas_dashboard:
-            print(NASDashboard.render(
-                engine=nas_engine,
-                width=config.nas_dashboard_width + 4,
-            ))
 
     # ----------------------------------------------------------------
     # FizzCorr Observability Correlation Engine

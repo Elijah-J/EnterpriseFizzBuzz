@@ -632,7 +632,7 @@ A: The word "distributed" refers to the distribution of responsibility across ou
 
 But the *architecture* is ready for geographic distribution, and when the day comes that we shard modulo operations across availability zones, we'll already have the observability infrastructure in place.
 
-The waterfall diagram alone justifies the 1,000 lines of tracing code. Also, our VP of Engineering asked for "full-stack observability" and this is technically that.
+The FizzOTel subsystem (`otel_tracing.py`) produces W3C-compliant OTLP JSON that could be ingested by Jaeger, Tempo, or any production tracing backend. Use `--trace` for the ASCII waterfall, `--trace-json` for OTLP JSON, or `--otel --otel-export zipkin` for Zipkin v2 format. Also, our VP of Engineering asked for "full-stack observability" and this is technically that.
 
 **Q: Why is Klingon a supported locale?**
 A: Enterprise software must serve a global user base. Our stakeholders defined "global" broadly. The Klingon Empire represents a significant untapped market segment, and our compliance team confirmed that the Universal Declaration of FizzBuzz Rights requires support for all spacefaring civilizations. Also, the Klingon word for "FizzBuzz" is `ghumwab`, which is objectively better than the English version.

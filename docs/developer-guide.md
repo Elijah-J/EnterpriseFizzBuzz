@@ -267,8 +267,8 @@ The existing middleware priorities are:
 
 | Priority | Middleware              | What it does                                    |
 |----------|-------------------------|-------------------------------------------------|
+| -10      | `OTelMiddleware`        | FizzOTel distributed tracing spans               |
 | -3       | `FlagMiddleware`        | Evaluates feature flags, disables rules          |
-| -2       | `TracingMiddleware`     | Records distributed tracing spans                |
 | -1       | `AuthorizationMiddleware` | Checks RBAC permissions                        |
 | 0        | `ValidationMiddleware`  | Validates input range, type checks               |
 | 1        | `TimingMiddleware`      | Records nanosecond-precision timing              |
@@ -704,7 +704,7 @@ tests/
   __init__.py
   test_fizzbuzz.py         # Core service, rules, pipeline integration
   test_circuit_breaker.py  # Circuit breaker subsystem
-  test_tracing.py          # Distributed tracing
+  test_otel_tracing.py     # FizzOTel distributed tracing
   test_auth.py             # RBAC, tokens, permissions
   test_i18n.py             # Internationalization, locale parser
   test_event_sourcing.py   # Event sourcing / CQRS

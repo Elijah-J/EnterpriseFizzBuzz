@@ -171,7 +171,7 @@ class TestPackageStructure:
     def test_infrastructure_contains_expected_modules(self) -> None:
         expected = {
             "config.py", "container.py", "formatters.py", "observers.py",
-            "plugins.py", "rules_engine.py", "tracing.py", "middleware.py",
+            "plugins.py", "rules_engine.py", "otel_tracing.py", "middleware.py",
             "auth.py", "blockchain.py", "cache.py", "chaos.py",
             "circuit_breaker.py", "event_sourcing.py", "feature_flags.py",
             "ml_engine.py", "sla.py", "migrations.py", "i18n.py",
@@ -199,8 +199,6 @@ class TestBackwardCompatibleStubs:
         ("plugins", "PluginRegistry"),
         ("rules_engine", "ConcreteRule"),
         ("rules_engine", "RuleEngineFactory"),
-        ("tracing", "traced"),
-        ("tracing", "TracingService"),
         ("middleware", "MiddlewarePipeline"),
         ("middleware", "TranslationMiddleware"),
         ("auth", "AuthorizationMiddleware"),

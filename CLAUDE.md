@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Run all tests (~1,142 tests, ~0.4s)
+# Run all tests (~6,500 tests, ~2.5min)
 python -m pytest tests/
 
 # Run a single test file
@@ -30,13 +30,13 @@ No linting tools are configured.
 
 Clean Architecture with three layers. The **Dependency Rule** is enforced by AST-based tests in `test_architecture.py`: dependencies point inward only (infrastructure → application → domain).
 
-- **Domain** (`domain/`): Models, enums, exceptions (151+ custom exception classes), and abstract interfaces (`IRule`, `IRuleEngine`, `IMiddleware`, `IFormatter`, `IEventBus`). Zero outward dependencies.
+- **Domain** (`domain/`): Models, enums, exceptions (300+ custom exception classes), and abstract interfaces (`IRule`, `IRuleEngine`, `IMiddleware`, `IFormatter`, `IEventBus`). Zero outward dependencies.
 - **Application** (`application/`): `FizzBuzzServiceBuilder` (fluent builder), rule factories (Standard/Configurable/Caching), and hexagonal ports (`StrategyPort`, `AbstractUnitOfWork`, `AbstractRepository`).
-- **Infrastructure** (`infrastructure/`): All implementations — rule engines, formatters, middleware pipeline, observers, DI container, cache (MESI coherence), service mesh, blockchain, auth (RBAC + HMAC tokens), i18n, event sourcing/CQRS, chaos engineering, feature flags, SLA monitoring, metrics, webhooks, hot-reload (Raft consensus), rate limiting, compliance (SOX/GDPR/HIPAA), and three persistence backends (in-memory, SQLite, filesystem).
+- **Infrastructure** (`infrastructure/`): All implementations — rule engines, formatters, middleware pipeline, observers, DI container, cache (MESI coherence), service mesh, blockchain, auth (RBAC + HMAC tokens), i18n, event sourcing/CQRS, chaos engineering, feature flags, SLA monitoring, metrics, webhooks, hot-reload (Raft consensus), rate limiting, compliance (SOX/GDPR/HIPAA), three persistence backends (in-memory, SQLite, filesystem), bytecode VM, query optimizer, digital twin, archaeological recovery, ML engine, genetic algorithm, graph database, NLQ interface, secrets vault, OS kernel, cross-compiler, FizzLang DSL, Paxos consensus, quantum simulator, federated learning, and more.
 
 ### Wiring
 
-`__main__.py` is the composition root — it parses 63+ CLI flags, builds `ConfigurationManager` (singleton), and manually wires all subsystems via `FizzBuzzServiceBuilder`. A separate IoC container (`container.py`) exists with auto-wiring and Kahn's cycle detection but isn't used by the main entry point.
+`__main__.py` is the composition root — it parses 80+ CLI flags, builds `ConfigurationManager` (singleton), and manually wires all subsystems via `FizzBuzzServiceBuilder`. A separate IoC container (`container.py`) exists with auto-wiring and Kahn's cycle detection but isn't used by the main entry point.
 
 ### Configuration precedence (highest wins)
 
@@ -59,6 +59,8 @@ Root-level `.py` files are re-export stubs (e.g., `cache.py` re-exports from `en
 
 - **Line endings**: All CLI output uses the platform-native line endings (CRLF on Windows, LF on Unix). When piping output through Unix tools on Windows (e.g., WSL `cat -A`), expect `^M` artifacts. This is standard Python `print()` behavior and not a bug.
 
-## Project nature
+## Tone
 
 This is a production-grade enterprise platform. Every subsystem is technically faithful — the MESI cache coherence matches the real protocol, the neural network trains from scratch, the blockchain actually mines blocks. Maintain this standard: implementations must be genuinely correct and follow established patterns in the codebase.
+
+**Deadpan. No exceptions.** All code, comments, docstrings, and documentation must take themselves 100% seriously. Never acknowledge the joke. Never wink at the reader. No "satirical", "over-engineered", "absurd", "pointless", "the joke", "of course", or "because why not". Justify every subsystem sincerely. The comedy comes from the contrast between engineering rigor and problem triviality — that contrast only works if the implementation never flinches. Think mockumentary: the characters don't know they're in a comedy.

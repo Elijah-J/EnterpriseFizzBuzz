@@ -1081,8 +1081,6 @@ class ExceptionToHTTPMapper:
         # 404 Not Found
         "ConfigurationFileNotFoundError": 404,
         "PluginNotFoundError": 404,
-        "SpanNotFoundError": 404,
-        "TraceNotFoundError": 404,
         "FlagNotFoundError": 404,
         "OnCallNotFoundError": 404,
         "MigrationNotFoundError": 404,
@@ -1129,7 +1127,6 @@ class ExceptionToHTTPMapper:
         "EventVersionConflictError": 422,
         "FlagLifecycleError": 422,
         "ExperimentStateError": 422,
-        "SpanLifecycleError": 422,
 
         # 423 Locked
         "VaultSealedError": 423,

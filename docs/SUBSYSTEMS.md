@@ -1026,72 +1026,72 @@ The container is **ADDITIVE**. It does not replace the existing `FizzBuzzService
 | Lines of code | ~608 (for an abstraction over `EventBus()`) |
 | Java enterprise architects who feel at home | All of them |
 
-## Distributed Tracing Architecture
+## Distributed Tracing Architecture (FizzOTel)
 
-The distributed tracing subsystem provides full OpenTelemetry-inspired observability for the FizzBuzz evaluation pipeline -- implemented from scratch in pure Python, because importing `opentelemetry-sdk` would have been far too simple for a single-process application that prints numbers.
+The distributed tracing subsystem -- FizzOTel -- provides full OpenTelemetry-compatible observability for the FizzBuzz evaluation pipeline, implemented from scratch in pure Python with W3C TraceContext propagation, OTLP JSON wire format, Zipkin v2 export, probabilistic sampling, and batch processing. Because correlating `n % 3 == 0` across (imaginary) service boundaries requires 128-bit trace IDs and nanosecond timestamps.
 
-Every number evaluation generates a complete trace with hierarchical spans, W3C-compatible trace/span IDs, nanosecond timestamps, and ASCII waterfall visualizations. Finally, a flame graph that explains why printing "Fizz" took 3 microseconds.
+Every number evaluation generates a complete trace with hierarchical spans, W3C traceparent headers, and multi-format export. The `--trace` flag is a backward-compatible alias for `--otel --otel-export console`, and `--trace-json` is an alias for `--otel --otel-export otlp`. Finally, a flame graph that explains why printing "Fizz" took 3 microseconds.
 
 ```
-                        TRACE (32-hex trace_id)
-                        ========================
+                        TRACE (W3C traceparent)
+                        00-{32hex_trace_id}-{16hex_span_id}-{flags}
                         |
      +------------------+------------------+
      |                                     |
-  ROOT SPAN                           [metadata]
-  "evaluate_number"                   number: 15
-  span_id: a1b2c3d4                   output: FizzBuzz
+  ROOT SPAN                           [attributes]
+  "fizzbuzz.evaluate(15)"             fizzbuzz.number: 15
+  spanId: a1b2c3d4e5f6g7h8            fizzbuzz.output: FizzBuzz
      |
-     +--- CHILD SPAN: "TracingMiddleware.process"
+     +--- CHILD SPAN: "ValidationMiddleware.process" (@traced)
+     |
+     +--- CHILD SPAN: "TimingMiddleware.process" (@traced)
      |         |
-     |         +--- CHILD SPAN: "ValidationMiddleware.process"
-     |         |
-     |         +--- CHILD SPAN: "TimingMiddleware.process"
-     |         |         |
-     |         |         +--- CHILD SPAN: "rule_evaluation"
-     |         |
-     |         +--- CHILD SPAN: "LoggingMiddleware.process"
+     |         +--- CHILD SPAN: "rule_evaluation"
+     |
+     +--- CHILD SPAN: "LoggingMiddleware.process" (@traced)
      |
      +--- [end: status=OK, duration=42.7us]
 ```
 
-**Waterfall format** -- the `--trace` flag renders each trace as an ASCII box-drawing waterfall with proportional timeline bars:
+**Console export** -- the `--trace` flag renders a waterfall timeline:
 
 ```
-  +====================================================================+
-  |              DISTRIBUTED TRACE WATERFALL                           |
-  |  Trace ID: a1b2c3d4e5f6...  Number: 15 -> FizzBuzz               |
-  +====================================================================+
-  |  SPAN                              TIMELINE                       |
-  |  evaluate_number                   [████████████████████████████]  |
-  |  ├─ ValidationMiddleware.process   [██··························]  |
-  |  ├─ TimingMiddleware.process       [··████████████████··········]  |
-  |  │  └─ rule_evaluation             [····██████████··············]  |
-  |  └─ LoggingMiddleware.process      [························████]  |
-  +====================================================================+
+  ============================================================
+    TRACE WATERFALL  (total: 0.043ms)
+  ============================================================
+    fizzbuzz.evaluate(15)     |######################|     43us OK
+      ValidationMiddleware    |##.....................|      5us OK
+      TimingMiddleware        |..########.............|     18us OK
+        rule_evaluation       |....####...............|      8us OK
+      LoggingMiddleware       |..................#####|      7us OK
+  ============================================================
 ```
 
-**Key components:**
-- **TracingService** - Singleton lifecycle manager with thread-local span propagation
-- **Span / TraceContext** - W3C-compatible span tree with 128-bit trace IDs and 64-bit span IDs
-- **SpanBuilder** - Fluent builder with context manager support for automatic span lifecycle
-- **TracingMiddleware** - Priority -2 middleware that wraps the entire pipeline in a root trace
-- **@traced decorator** - Zero-overhead instrumentation (no-op when tracing is disabled)
-- **TraceRenderer** - ASCII waterfall and statistical summary visualizations
-- **TraceExporter** - JSON export for integration with observability platforms that will never receive this data
+**Key components (all in `otel_tracing.py`):**
+- **TracerProvider** - Central manager for creating/collecting spans with sampling and metrics bridge
+- **Span / TraceContext** - W3C TraceContext (traceparent) with 128-bit trace IDs and 64-bit span IDs
+- **OTelMiddleware** - Priority -10 middleware that wraps the entire pipeline in a root span
+- **@traced decorator** - Zero-overhead instrumentation (no-op when provider is None)
+- **ProbabilisticSampler** - Deterministic sampling based on lower 32 bits of trace_id
+- **OTLPJsonExporter** - OTLP JSON wire format, byte-compatible with OpenTelemetry Collector
+- **ZipkinExporter** - Zipkin v2 JSON format with microsecond timestamps
+- **ConsoleExporter** - ASCII waterfall visualization for terminal output
+- **MetricsBridge** - Span-derived counters and duration histograms
+- **OTelDashboard** - ASCII telemetry dashboard for monitoring the monitoring
 
 | Spec | Value |
 |------|-------|
 | Trace ID length | 32 hex chars (128-bit, W3C compatible) |
 | Span ID length | 16 hex chars (64-bit, W3C compatible) |
-| Context propagation | Thread-local span stack |
-| Middleware priority | -2 (before circuit breaker at -1) |
+| Context propagation | W3C traceparent headers + module-level active provider |
+| Middleware priority | -10 (before all other middleware) |
 | Span statuses | 3 (UNSET, OK, ERROR) |
-| Export formats | ASCII waterfall, JSON |
-| Statistics | P95, P99 latency percentiles |
-| Overhead when disabled | Zero (decorator short-circuits) |
-| Thread safety | Full (threading.local + locks) |
-| Custom exceptions | 5 (TracingError, SpanNotFoundError, TraceNotFoundError, TraceAlreadyActiveError, SpanLifecycleError) |
+| Span kinds | 5 (INTERNAL, SERVER, CLIENT, PRODUCER, CONSUMER) |
+| Export formats | OTLP JSON, Zipkin v2, Console (ASCII waterfall) |
+| Sampling | Probabilistic (deterministic on trace_id lower bits) |
+| Batch processing | SimpleSpanProcessor (immediate) or BatchSpanProcessor (queued) |
+| Overhead when disabled | Zero (decorator short-circuits when provider is None) |
+| Custom exceptions | 4 (OTelError, OTelSpanError, OTelSamplingError, OTelExportError) |
 
 ## Internationalization Architecture
 

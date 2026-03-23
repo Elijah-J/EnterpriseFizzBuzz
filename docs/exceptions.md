@@ -59,7 +59,7 @@ Error codes use the prefix `EFP-` followed by a subsystem identifier and a seque
 | `EFP-MG0x` | Database migrations |
 | `EFP-RP0x` | Repository / Unit of Work |
 | `EFP-SL0x` | SLA monitoring |
-| `EFP-T00x` | Distributed tracing |
+| `EFP-T00x` | Distributed tracing (removed -- absorbed into FizzOTel `EFP-OT0x`) |
 
 Numeric ranges (`EFP-1000` through `EFP-9000`) were assigned to the original subsystems. Later additions use alphabetic prefixes to avoid collisions, a decision that was never formally documented but has been consistently followed.
 
@@ -194,17 +194,9 @@ Raised when someone has modified a FizzBuzz result, which, as the docstring note
 
 These aliases exist at module scope (line 342-345) to support both naming conventions used across the codebase. They are simple assignments, not subclasses.
 
-### Distributed Tracing (`EFP-T00x`)
+### Distributed Tracing (`EFP-T00x`) -- REMOVED
 
-| Class | Parent | Code | Description |
-|-------|--------|------|-------------|
-| `TracingError` | `FizzBuzzError` | `EFP-T000` | Base exception for all distributed tracing errors |
-| `SpanNotFoundError` | `TracingError` | `EFP-T001` | A referenced span cannot be located in the trace |
-| `TraceNotFoundError` | `TracingError` | `EFP-T002` | A referenced trace cannot be located |
-| `TraceAlreadyActiveError` | `TracingError` | `EFP-T003` | A new trace was started while one is already active |
-| `SpanLifecycleError` | `TracingError` | `EFP-T004` | A span operation violated the span lifecycle contract |
-
-`SpanNotFoundError` suggests the span "may have been garbage collected by an overzealous span reaper." `SpanLifecycleError` carries `span_name` and `operation` as instance attributes.
+The legacy tracing exception hierarchy (`TracingError`, `SpanNotFoundError`, `TraceNotFoundError`, `TraceAlreadyActiveError`, `SpanLifecycleError`) was removed when the original `tracing.py` module was absorbed into `otel_tracing.py` (FizzOTel). The FizzOTel subsystem uses its own exception hierarchy under `EFP-OT0x` (`OTelError`, `OTelSpanError`, `OTelSamplingError`, `OTelExportError`).
 
 ### Event Sourcing / CQRS (`EFP-ES0x`)
 
@@ -349,11 +341,6 @@ Exception
         │     ├── FizzTranslationParseError  EFP-I003
         │     ├── PluralizationError         EFP-I004
         │     └── LocaleChainExhaustedError  EFP-I005
-        ├── TracingError                     EFP-T000
-        │     ├── SpanNotFoundError          EFP-T001
-        │     ├── TraceNotFoundError         EFP-T002
-        │     ├── TraceAlreadyActiveError    EFP-T003
-        │     └── SpanLifecycleError         EFP-T004
         ├── AuthenticationError              EFP-A000
         │     └── TokenValidationError       EFP-A003
         ├── InsufficientFizzPrivilegesError  EFP-A001

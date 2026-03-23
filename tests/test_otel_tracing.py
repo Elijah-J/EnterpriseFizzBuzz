@@ -51,6 +51,9 @@ from enterprise_fizzbuzz.infrastructure.otel_tracing import (
     _attrs_to_otlp,
     create_exporter,
     create_otel_subsystem,
+    get_active_provider,
+    set_active_provider,
+    traced,
 )
 from enterprise_fizzbuzz.domain.exceptions import (
     OTelError,
@@ -867,3 +870,186 @@ class TestSpanEvent:
     def test_event_with_attributes(self):
         event = SpanEvent(name="annotated", attributes={"key": "val"})
         assert event.attributes["key"] == "val"
+
+
+# ============================================================
+# @traced Decorator Tests
+# ============================================================
+
+
+class TestTracedDecorator:
+    """Tests for the @traced decorator ported from the legacy tracing module.
+
+    The @traced decorator is the bridge between the middleware/service
+    layer and the FizzOTel tracing subsystem. When a TracerProvider is
+    active, it creates child spans with automatic lifecycle management.
+    When no provider is set, it is a zero-overhead no-op — the function
+    is called directly without any tracing instrumentation.
+    """
+
+    def setup_method(self):
+        """Reset the active provider before each test."""
+        set_active_provider(None)
+
+    def teardown_method(self):
+        """Clean up the active provider after each test."""
+        set_active_provider(None)
+
+    def test_traced_noop_when_no_provider(self):
+        """When no active provider is set, @traced is a transparent pass-through."""
+        call_count = 0
+
+        @traced()
+        def my_function(x):
+            nonlocal call_count
+            call_count += 1
+            return x * 2
+
+        result = my_function(21)
+        assert result == 42
+        assert call_count == 1
+        assert get_active_provider() is None
+
+    def test_traced_creates_span_when_provider_active(self):
+        """When a provider is active, @traced creates and ends a span."""
+        exporter = OTLPJsonExporter()
+        processor = SimpleSpanProcessor(exporter)
+        provider = TracerProvider(processor=processor)
+        set_active_provider(provider)
+
+        @traced()
+        def compute(x):
+            return x + 1
+
+        result = compute(14)
+        assert result == 15
+
+        # The decorator should have created and ended a span
+        assert provider.span_count >= 1
+        spans = provider.get_all_spans()
+        # Find the span created by the decorator
+        compute_spans = [s for s in spans if "compute" in s.name]
+        assert len(compute_spans) == 1
+        assert compute_spans[0].status_code == StatusCode.OK
+        assert compute_spans[0].is_ended
+
+    def test_traced_with_custom_name(self):
+        """@traced(name='custom') uses the specified span name."""
+        provider = TracerProvider()
+        set_active_provider(provider)
+
+        @traced(name="fizzbuzz.custom_operation")
+        def do_work():
+            return "done"
+
+        do_work()
+        spans = provider.get_all_spans()
+        custom_spans = [s for s in spans if s.name == "fizzbuzz.custom_operation"]
+        assert len(custom_spans) == 1
+
+    def test_traced_with_attributes(self):
+        """@traced(attributes={...}) sets attributes on the span."""
+        provider = TracerProvider()
+        set_active_provider(provider)
+
+        @traced(attributes={"component": "test", "version": 2})
+        def annotated():
+            return True
+
+        annotated()
+        spans = provider.get_all_spans()
+        assert len(spans) >= 1
+        span = spans[-1]
+        assert span.attributes.get("component") == "test"
+        assert span.attributes.get("version") == 2
+
+    def test_traced_captures_exception(self):
+        """@traced records an exception event and sets ERROR status."""
+        provider = TracerProvider()
+        set_active_provider(provider)
+
+        @traced()
+        def explode():
+            raise ValueError("FizzBuzz overload")
+
+        with pytest.raises(ValueError, match="FizzBuzz overload"):
+            explode()
+
+        spans = provider.get_all_spans()
+        error_spans = [s for s in spans if s.status_code == StatusCode.ERROR]
+        assert len(error_spans) == 1
+        # Verify exception event was recorded
+        exception_events = [
+            e for e in error_spans[0].events if e.name == "exception"
+        ]
+        assert len(exception_events) >= 1
+        assert exception_events[0].attributes["exception.type"] == "ValueError"
+        assert "FizzBuzz overload" in exception_events[0].attributes["exception.message"]
+
+    def test_traced_derives_name_from_class_method(self):
+        """@traced derives span name from ClassName.method_name for methods."""
+        provider = TracerProvider()
+        set_active_provider(provider)
+
+        class FizzMiddleware:
+            @traced()
+            def process(self, number):
+                return number % 3 == 0
+
+        mw = FizzMiddleware()
+        mw.process(15)
+
+        spans = provider.get_all_spans()
+        method_spans = [s for s in spans if "FizzMiddleware.process" in s.name]
+        assert len(method_spans) == 1
+
+    def test_traced_derives_name_from_qualname_for_functions(self):
+        """@traced falls back to qualname for bare functions."""
+        provider = TracerProvider()
+        set_active_provider(provider)
+
+        @traced()
+        def standalone_function():
+            return 42
+
+        standalone_function()
+
+        spans = provider.get_all_spans()
+        func_spans = [s for s in spans if "standalone_function" in s.name]
+        assert len(func_spans) == 1
+
+    def test_traced_preserves_function_metadata(self):
+        """@traced preserves the wrapped function's __name__ and __doc__."""
+
+        @traced()
+        def documented_function():
+            """This function has documentation."""
+            pass
+
+        assert documented_function.__name__ == "documented_function"
+        assert "documentation" in documented_function.__doc__
+
+    def test_traced_parent_child_span_relationship(self):
+        """When nested @traced calls occur, child spans reference the parent."""
+        provider = TracerProvider()
+        set_active_provider(provider)
+
+        @traced(name="inner")
+        def inner():
+            return "done"
+
+        @traced(name="outer")
+        def outer():
+            return inner()
+
+        outer()
+
+        spans = provider.get_all_spans()
+        outer_spans = [s for s in spans if s.name == "outer"]
+        inner_spans = [s for s in spans if s.name == "inner"]
+        assert len(outer_spans) == 1
+        assert len(inner_spans) == 1
+        # Inner span should reference outer span as parent
+        assert inner_spans[0].parent_span_id == outer_spans[0].span_id
+        # Both should share the same trace_id
+        assert inner_spans[0].trace_id == outer_spans[0].trace_id

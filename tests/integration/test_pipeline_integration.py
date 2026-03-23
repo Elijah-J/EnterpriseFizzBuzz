@@ -72,13 +72,6 @@ def reset_singletons():
     FizzBuzz result leaks metadata.
     """
     _SingletonMeta.reset()
-    # Reset the TracingService singleton so tracing middleware
-    # starts fresh each test
-    try:
-        from enterprise_fizzbuzz.infrastructure.tracing import TracingService
-        TracingService.reset_singleton()
-    except Exception:
-        pass
     # Reset the CircuitBreakerRegistry singleton
     try:
         from enterprise_fizzbuzz.infrastructure.circuit_breaker import (

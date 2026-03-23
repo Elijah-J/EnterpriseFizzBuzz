@@ -1023,8 +1023,8 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --event-sourcing      Enable Event Sourcing with CQRS for append-only audit logging
 --replay              Replay all events from the event store to rebuild projections
 --temporal-query SEQ  Reconstruct FizzBuzz state at a specific event sequence number
---trace               Enable distributed tracing with ASCII waterfall output
---trace-json          Export trace data as JSON (for integration with nothing)
+--trace               Enable distributed tracing with ASCII waterfall output (alias for --otel --otel-export console)
+--trace-json          Enable distributed tracing with OTLP JSON export (alias for --otel --otel-export otlp)
 --user USERNAME       Authenticate as the specified user (trust-mode, no token required)
 --role ROLE           Assign RBAC role: ANONYMOUS, FIZZ_READER, BUZZ_ADMIN, NUMBER_AUDITOR, FIZZBUZZ_SUPERUSER
 --token TOKEN         Authenticate using an Enterprise FizzBuzz Platform HMAC-SHA256 token
@@ -1296,7 +1296,6 @@ EFP_OUTPUT_FORMAT=json
 EFP_EVALUATION_STRATEGY=parallel_async
 EFP_LOG_LEVEL=DEBUG
 EFP_CIRCUIT_BREAKER_ENABLED=true
-EFP_TRACING_ENABLED=true
 EFP_LOCALE=tlh
 EFP_RBAC_SECRET=my-very-secret-fizzbuzz-signing-key
 EFP_EVENT_SOURCING_ENABLED=true

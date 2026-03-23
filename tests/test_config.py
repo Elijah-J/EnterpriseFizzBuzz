@@ -137,11 +137,6 @@ i18n:
   enabled: false
   locale: "de"
   strict_mode: true
-tracing:
-  enabled: true
-  export_format: "json"
-  waterfall_width: 80
-  timing_precision: "ns"
 cache:
   enabled: true
   max_size: 512
@@ -209,13 +204,6 @@ class TestDefaultValues:
         assert defaults_config.circuit_breaker_timeout_ms == 30000
         assert defaults_config.circuit_breaker_backoff_multiplier == 2.0
         assert defaults_config.circuit_breaker_ml_confidence_threshold == 0.7
-
-    def test_default_tracing(self, defaults_config):
-        """Tracing off by default. The flame graph of 15 % 3 can wait."""
-        assert defaults_config.tracing_enabled is False
-        assert defaults_config.tracing_waterfall_width == 60
-        assert defaults_config.tracing_timing_precision == "us"
-        assert defaults_config.tracing_export_format == "waterfall"
 
     def test_default_i18n(self, defaults_config):
         """i18n on, English locale. Klingon requires opt-in."""
@@ -320,15 +308,6 @@ class TestYamlLoading:
         assert cfg.i18n_locale == "de"
         assert cfg.i18n_strict_mode is True
 
-    def test_yaml_overrides_tracing(self, minimal_yaml):
-        """Tracing from YAML: enabled, JSON export, 80-wide waterfall."""
-        cfg = ConfigurationManager(config_path=str(minimal_yaml))
-        cfg.load()
-        assert cfg.tracing_enabled is True
-        assert cfg.tracing_export_format == "json"
-        assert cfg.tracing_waterfall_width == 80
-        assert cfg.tracing_timing_precision == "ns"
-
     def test_yaml_overrides_cache(self, minimal_yaml):
         """Cache from YAML: enabled, FIFO, smaller capacity."""
         cfg = ConfigurationManager(config_path=str(minimal_yaml))
@@ -398,22 +377,6 @@ class TestEnvironmentVariableOverrides:
         cfg = _make_defaults_config()
         assert cfg.i18n_locale == "tlh"
 
-    def test_env_overrides_tracing_enabled(self, env_cleanup):
-        """EFP_TRACING_ENABLED accepts 'true', 'yes', and '1' as truthy values."""
-        for truthy in ("true", "yes", "1"):
-            _SingletonMeta.reset()
-            _set_env(env_cleanup, "EFP_TRACING_ENABLED", truthy)
-            cfg = _make_defaults_config()
-            assert cfg.tracing_enabled is True, f"Failed for truthy value: {truthy}"
-
-    def test_env_tracing_false_values(self, env_cleanup):
-        """EFP_TRACING_ENABLED with 'false', 'no', '0' should disable tracing."""
-        for falsy in ("false", "no", "0"):
-            _SingletonMeta.reset()
-            _set_env(env_cleanup, "EFP_TRACING_ENABLED", falsy)
-            cfg = _make_defaults_config()
-            assert cfg.tracing_enabled is False, f"Failed for falsy value: {falsy}"
-
     def test_env_overrides_yaml_values(self, minimal_yaml, env_cleanup):
         """Environment variables take precedence over YAML values.
 
@@ -447,13 +410,6 @@ class TestTypeCoercion:
         assert isinstance(cfg.range_start, int)
         assert cfg.range_end == 999
         assert isinstance(cfg.range_end, int)
-
-    def test_bool_coercion(self, env_cleanup):
-        """String env vars for boolean fields should be cast to bool."""
-        _set_env(env_cleanup, "EFP_TRACING_ENABLED", "true")
-        cfg = _make_defaults_config()
-        assert cfg.tracing_enabled is True
-        assert isinstance(cfg.tracing_enabled, bool)
 
     def test_invalid_int_coercion_raises(self, env_cleanup):
         """Non-numeric string for an int field should raise ConfigurationValidationError.

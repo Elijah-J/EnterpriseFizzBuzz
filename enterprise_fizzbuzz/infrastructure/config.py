@@ -158,12 +158,6 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                 "access_denied_contact_email": "fizzbuzz-security@enterprise.example.com",
                 "next_training_session": "2026-04-01T09:00:00Z",
             },
-            "tracing": {
-                "enabled": False,
-                "export_format": "waterfall",
-                "waterfall_width": 60,
-                "timing_precision": "us",
-            },
             "event_sourcing": {
                 "enabled": False,
                 "snapshot_interval": 10,
@@ -227,11 +221,6 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                         "type": "BOOLEAN",
                         "enabled": False,
                         "description": "Toggle blockchain audit ledger at runtime",
-                    },
-                    "tracing_enabled": {
-                        "type": "BOOLEAN",
-                        "enabled": False,
-                        "description": "Toggle distributed tracing at runtime",
                     },
                 },
             },
@@ -1345,15 +1334,6 @@ class ConfigurationManager(metaclass=_SingletonMeta):
                     "width": 60,
                 },
             },
-            "nas": {
-                "enabled": False,
-                "strategy": "evolutionary",
-                "budget": 50,
-                "seed": 42,
-                "dashboard": {
-                    "width": 60,
-                },
-            },
             "jit": {
                 "enabled": False,
                 "threshold": 3,
@@ -1466,7 +1446,6 @@ class ConfigurationManager(metaclass=_SingletonMeta):
             "EFP_LOG_LEVEL": ("logging", "level", str),
             "EFP_STRATEGY": ("engine", "strategy", str),
             "EFP_LOCALE": ("i18n", "locale", str),
-            "EFP_TRACING_ENABLED": ("tracing", "enabled", lambda v: v.lower() in ("true", "1", "yes")),
         }
 
         for env_var, (section, key, cast) in env_mappings.items():
@@ -1649,30 +1628,6 @@ class ConfigurationManager(metaclass=_SingletonMeta):
     def circuit_breaker_call_timeout_ms(self) -> int:
         self._ensure_loaded()
         return self._raw_config.get("circuit_breaker", {}).get("call_timeout_ms", 5000)
-
-    @property
-    def tracing_enabled(self) -> bool:
-        """Whether the distributed tracing subsystem is enabled."""
-        self._ensure_loaded()
-        return self._raw_config.get("tracing", {}).get("enabled", False)
-
-    @property
-    def tracing_export_format(self) -> str:
-        """Export format for traces: 'waterfall' or 'json'."""
-        self._ensure_loaded()
-        return self._raw_config.get("tracing", {}).get("export_format", "waterfall")
-
-    @property
-    def tracing_waterfall_width(self) -> int:
-        """Character width of the waterfall timeline bar."""
-        self._ensure_loaded()
-        return self._raw_config.get("tracing", {}).get("waterfall_width", 60)
-
-    @property
-    def tracing_timing_precision(self) -> str:
-        """Timing precision: 'us' (microseconds) or 'ns' (nanoseconds)."""
-        self._ensure_loaded()
-        return self._raw_config.get("tracing", {}).get("timing_precision", "us")
 
     @property
     def i18n_enabled(self) -> bool:
@@ -5273,39 +5228,6 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         self._ensure_loaded()
         return self._raw_config.get("billing", {}).get("dashboard", {}).get("width", 60)
 
-    # ------------------------------------------------------------------
-    # FizzNAS Neural Architecture Search properties
-    # ------------------------------------------------------------------
-
-    @property
-    def nas_enabled(self) -> bool:
-        """Whether FizzNAS Neural Architecture Search is enabled."""
-        self._ensure_loaded()
-        return self._raw_config.get("nas", {}).get("enabled", False)
-
-    @property
-    def nas_strategy(self) -> str:
-        """NAS search strategy: random, evolutionary, or darts."""
-        self._ensure_loaded()
-        return self._raw_config.get("nas", {}).get("strategy", "evolutionary")
-
-    @property
-    def nas_budget(self) -> int:
-        """Total number of fitness evaluations (architectures to train)."""
-        self._ensure_loaded()
-        return self._raw_config.get("nas", {}).get("budget", 50)
-
-    @property
-    def nas_seed(self) -> int:
-        """RNG seed for NAS reproducibility."""
-        self._ensure_loaded()
-        return self._raw_config.get("nas", {}).get("seed", 42)
-
-    @property
-    def nas_dashboard_width(self) -> int:
-        """Dashboard width for the NAS dashboard."""
-        self._ensure_loaded()
-        return self._raw_config.get("nas", {}).get("dashboard", {}).get("width", 60)
 
     # ------------------------------------------------------------------
     # FizzCorr Observability Correlation Engine properties

@@ -32,9 +32,8 @@ Over 100 design patterns, faithfully implemented and applied with a straight fac
 | Fallback Chain | `i18n.py` | Locale resolution via linked-list traversal with cycle detection, because one language is never enough |
 | Pluralization Engine | `i18n.py` | CLDR-inspired plural rule evaluator supporting five grammatical traditions, ensuring grammatically correct output across all plural forms |
 | Internationalization | `i18n.py`, `locales/` | Seven-language locale support with fallback chains, because "Fizz" is not globally understood (nor in the Undying Lands) |
-| Distributed Tracing | `tracing.py` | OpenTelemetry-inspired span trees, because you need a flame graph to debug `n % 3` |
-| Context Propagation | `tracing.py` | Thread-local span stacks for automatic parent-child relationships across the middleware pipeline |
-| Fluent Builder (Spans) | `tracing.py` | `SpanBuilder` with chainable `.with_attribute()` and context manager support, because `Span()` was too direct |
+| Distributed Tracing (FizzOTel) | `otel_tracing.py` | OpenTelemetry-compatible tracing with W3C TraceContext, OTLP/Zipkin export, probabilistic sampling |
+| Context Propagation | `otel_tracing.py` | W3C traceparent headers and module-level active provider for the `@traced` decorator |
 | Role-Based Access Control | `auth.py` | NIST-grade RBAC with five-tier role hierarchy, because `n % 3` is a privilege, not a right |
 | Token Engine | `auth.py` | HMAC-SHA256 signed tokens in a format that is legally distinct from JWT |
 | Permission Parser | `auth.py` | Resource:range:action permission strings, because `if user == "admin"` lacked enterprise gravitas |

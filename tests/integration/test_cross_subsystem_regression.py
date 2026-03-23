@@ -89,11 +89,6 @@ def reset_singletons():
     """
     _SingletonMeta.reset()
     try:
-        from enterprise_fizzbuzz.infrastructure.tracing import TracingService
-        TracingService.reset_singleton()
-    except Exception:
-        pass
-    try:
         from enterprise_fizzbuzz.infrastructure.circuit_breaker import (
             CircuitBreakerRegistry,
         )
