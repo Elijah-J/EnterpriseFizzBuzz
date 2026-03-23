@@ -548,6 +548,11 @@ from enterprise_fizzbuzz.infrastructure.virtual_fs import (
     FSMiddleware,
     create_fizzfs,
 )
+from enterprise_fizzbuzz.infrastructure.fizz_vcs import (
+    FizzGitRepository,
+    VCSDashboard,
+    VCSMiddleware,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2740,6 +2745,37 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--raytrace-dashboard",
         action="store_true",
         help="Display the FizzTrace ASCII dashboard with ray statistics, material distribution, and render metrics",
+    )
+
+    # FizzGit — Content-Addressable Version Control System
+    parser.add_argument(
+        "--vcs",
+        action="store_true",
+        help="Enable FizzGit content-addressable version control for evaluation state",
+    )
+
+    parser.add_argument(
+        "--vcs-log",
+        action="store_true",
+        help="Display the FizzGit commit log after execution",
+    )
+
+    parser.add_argument(
+        "--vcs-diff",
+        action="store_true",
+        help="Display the FizzGit diff of the last commit",
+    )
+
+    parser.add_argument(
+        "--vcs-bisect",
+        action="store_true",
+        help="Run a FizzGit bisect demonstration to locate a simulated regression",
+    )
+
+    parser.add_argument(
+        "--vcs-dashboard",
+        action="store_true",
+        help="Display the FizzGit ASCII dashboard with commit graph, branch list, and diff stats",
     )
 
     return parser
@@ -6684,6 +6720,38 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzGit — Content-Addressable Version Control System
+    # ----------------------------------------------------------------
+    vcs_repo = None
+    vcs_middleware_instance = None
+
+    vcs_active = (
+        args.vcs or args.vcs_log or args.vcs_diff
+        or args.vcs_bisect or args.vcs_dashboard
+    )
+
+    if vcs_active:
+        vcs_repo = FizzGitRepository(author=config.vcs_author)
+        vcs_repo.init()
+
+        vcs_middleware_instance = VCSMiddleware(
+            repo=vcs_repo,
+            auto_commit=config.vcs_auto_commit,
+            enable_dashboard=args.vcs_dashboard,
+        )
+        builder.with_middleware(vcs_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZGIT: CONTENT-ADDRESSABLE VCS ENABLED                |\n"
+                "  |   Object Store: SHA-256 content-addressed               |\n"
+                "  |   Branch: main  |  Auto-commit: ON                      |\n"
+                "  |   Every evaluation is an immutable commit.              |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -8770,6 +8838,54 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.fizznet_dashboard:
         print("\n  FizzNet not enabled. Use --fizznet to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzGit Post-Execution Output
+    # ----------------------------------------------------------------
+    if vcs_repo is not None:
+        if args.vcs_log:
+            print("\n  FizzGit Commit Log:")
+            print(VCSDashboard.render_log(vcs_repo))
+            print()
+
+        if args.vcs_diff:
+            head_commit = vcs_repo.ref_store.get_head_commit()
+            if head_commit is not None:
+                diffs = vcs_repo.diff(head_commit)
+                print("\n  FizzGit Diff (HEAD vs parent):")
+                print(VCSDashboard.render_diff(diffs))
+                print()
+            else:
+                print("\n  FizzGit: No commits to diff.\n")
+
+        if args.vcs_bisect:
+            commits = vcs_repo.log(max_count=100)
+            if len(commits) >= 3:
+                good = commits[-1].hash
+                bad = commits[0].hash
+                print(f"\n  FizzGit Bisect: searching {len(commits)} commits...")
+                mid = vcs_repo.bisect_start(good, bad)
+                steps = 0
+                while mid is not None:
+                    idx = next(
+                        (i for i, c in enumerate(commits) if c.hash == mid),
+                        len(commits) // 2,
+                    )
+                    if idx > len(commits) // 2:
+                        mid = vcs_repo.bisect_bad()
+                    else:
+                        mid = vcs_repo.bisect_good()
+                    steps += 1
+                result = vcs_repo.bisect_engine.result
+                if result and result.first_bad_commit:
+                    print(f"  Bisect complete in {result.steps_taken} steps.")
+                    print(f"  First bad commit: {result.first_bad_commit[:12]}")
+                vcs_repo.bisect_reset()
+            else:
+                print("\n  FizzGit Bisect: Need at least 3 commits for bisect.\n")
+
+        if args.vcs_dashboard:
+            print(VCSDashboard.render(vcs_repo, width=config.vcs_dashboard_width))
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
