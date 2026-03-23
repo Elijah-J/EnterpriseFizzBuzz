@@ -2271,6 +2271,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzCRDT ASCII dashboard with per-CRDT state, vector clocks, convergence stats, and merge history",
     )
 
+    # FizzAlloc — Custom Memory Allocator
+    parser.add_argument(
+        "--alloc",
+        action="store_true",
+        help="Enable FizzAlloc: slab allocation with free-list, arena bump allocation, and tri-generational garbage collection",
+    )
+
+    parser.add_argument(
+        "--alloc-gc",
+        action="store_true",
+        help="Enable the tri-generational mark-sweep-compact garbage collector for automatic memory reclamation",
+    )
+
+    parser.add_argument(
+        "--alloc-dashboard",
+        action="store_true",
+        help="Display the FizzAlloc ASCII dashboard with slab inventory, arena status, GC stats, pressure, and fragmentation",
+    )
+
     # FizzGrammar -- Formal Grammar & Parser Generator
     parser.add_argument(
         "--grammar",
@@ -4971,6 +4990,75 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzAlloc — Custom Memory Allocator setup
+    # ----------------------------------------------------------------
+    alloc_slab = None
+    alloc_arena = None
+    alloc_gc = None
+    alloc_pressure = None
+    alloc_frag = None
+    alloc_middleware = None
+
+    if args.alloc or args.alloc_dashboard:
+        from enterprise_fizzbuzz.infrastructure.memory_allocator import (
+            AllocatorDashboard,
+            AllocatorMiddleware,
+            ArenaAllocator,
+            FragmentationAnalyzer,
+            GarbageCollector,
+            MemoryPressureMonitor,
+            SlabAllocator,
+        )
+
+        alloc_slab = SlabAllocator(
+            slab_configs=config.alloc_slab_sizes,
+        )
+        alloc_arena = ArenaAllocator(
+            tier_sizes=config.alloc_arena_tiers,
+        )
+
+        gc_active = args.alloc_gc or config.alloc_gc_enabled
+        if gc_active:
+            alloc_gc = GarbageCollector(
+                slab_allocator=alloc_slab,
+                young_threshold=config.alloc_gc_young_threshold,
+                tenured_threshold=config.alloc_gc_tenured_threshold,
+            )
+
+        thresholds = config.alloc_pressure_thresholds
+        alloc_pressure = MemoryPressureMonitor(
+            slab_allocator=alloc_slab,
+            arena_allocator=alloc_arena,
+            elevated_threshold=thresholds.get("elevated", 0.60),
+            high_threshold=thresholds.get("high", 0.80),
+            critical_threshold=thresholds.get("critical", 0.95),
+        )
+
+        alloc_frag = FragmentationAnalyzer(
+            slab_allocator=alloc_slab,
+            arena_allocator=alloc_arena,
+        )
+
+        alloc_middleware = AllocatorMiddleware(
+            slab_allocator=alloc_slab,
+            arena_allocator=alloc_arena,
+            gc=alloc_gc,
+            pressure_monitor=alloc_pressure,
+            gc_enabled=gc_active,
+        )
+
+        gc_label = "ENABLED" if gc_active else "DISABLED"
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FizzAlloc: Custom Memory Allocator ENABLED              |\n"
+            f"  | Slab types: {', '.join(alloc_slab.slab_types):<43}|\n"
+            f"  | Arena tiers: {', '.join(str(s) + 'B' for s in alloc_arena.tier_sizes):<42}|\n"
+            f"  | Garbage collector: {gc_label:<36}|\n"
+            "  | Allocation strategy: slab + arena bump pointer.         |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+    # ----------------------------------------------------------------
     # FizzGrammar -- Formal Grammar & Parser Generator setup
     # ----------------------------------------------------------------
     grammar_obj = None
@@ -5556,6 +5644,10 @@ def main(argv: Optional[list[str]] = None) -> int:
             rules=list(config.rules),
         )
         builder.with_middleware(qo_middleware)
+
+    # Add Allocator middleware (priority 50, runs early for memory setup)
+    if alloc_middleware is not None:
+        builder.with_middleware(alloc_middleware)
 
     # Add CRDT middleware (priority 870, between WAL and archaeology)
     if crdt_middleware is not None:
@@ -7318,6 +7410,24 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.crdt_dashboard:
         print("\n  FizzCRDT not enabled. Use --crdt to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzAlloc Dashboard
+    # ----------------------------------------------------------------
+    if args.alloc_dashboard and alloc_slab is not None:
+        from enterprise_fizzbuzz.infrastructure.memory_allocator import (
+            AllocatorDashboard,
+        )
+        print(AllocatorDashboard.render(
+            slab_allocator=alloc_slab,
+            arena_allocator=alloc_arena,
+            gc=alloc_gc,
+            pressure_monitor=alloc_pressure,
+            frag_analyzer=alloc_frag,
+            width=config.alloc_dashboard_width,
+        ))
+    elif args.alloc_dashboard:
+        print("\n  FizzAlloc not enabled. Use --alloc to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzGrammar Dashboard
