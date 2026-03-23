@@ -42,6 +42,12 @@ import type {
   QuantumState,
   QuantumSimulationResult,
   ComplexAmplitude,
+  ChaosExperiment,
+  FaultType,
+  FaultIntensity,
+  ExperimentResult,
+  GameDayScenario,
+  ChaosMetrics,
 } from "./types";
 
 /**
@@ -1655,7 +1661,249 @@ export class SimulationProvider implements IDataProvider {
     }
     return buildQuantumState(circuitId);
   }
+
+  // -------------------------------------------------------------------------
+  // Chaos Engineering Control Plane
+  // -------------------------------------------------------------------------
+
+  async getChaosExperiments(): Promise<ChaosExperiment[]> {
+    return CHAOS_EXPERIMENTS.map((e) => ({ ...e })).sort((a, b) => {
+      const subCmp = a.targetSubsystem.localeCompare(b.targetSubsystem);
+      if (subCmp !== 0) return subCmp;
+      return a.faultType.localeCompare(b.faultType);
+    });
+  }
+
+  async runChaosExperiment(experimentId: string): Promise<ChaosExperiment> {
+    const experiment = CHAOS_EXPERIMENTS.find((e) => e.id === experimentId);
+    if (!experiment) {
+      throw new Error(`Chaos experiment "${experimentId}" not found in the experiment catalog.`);
+    }
+
+    const result = generateExperimentResult(experiment.intensity, experiment.faultType);
+
+    const updated: ChaosExperiment = {
+      ...experiment,
+      status: "running",
+      lastRunAt: new Date().toISOString(),
+      results: result,
+    };
+
+    return updated;
+  }
+
+  async getGameDayScenarios(): Promise<GameDayScenario[]> {
+    return GAME_DAY_SCENARIOS.map((s) => ({ ...s }));
+  }
+
+  async getChaosMetrics(): Promise<ChaosMetrics> {
+    const experimentsRun = 47 + Math.floor(Math.random() * 110);
+    const meanTimeToRecovery = Math.round(gaussianRandom(3200, 600));
+    const resilienceScore = 72 + Math.floor(Math.random() * 25);
+    const faultsInjected = experimentsRun * (3 + Math.floor(Math.random() * 6));
+    const activeExperiments = Math.random() > 0.7 ? Math.floor(Math.random() * 3) + 1 : 0;
+
+    const now = Date.now();
+    const mttrHistory: { timestamp: number; mttrMs: number }[] = [];
+    for (let i = 11; i >= 0; i--) {
+      mttrHistory.push({
+        timestamp: now - i * 2 * 3_600_000, // 2-hour intervals over 24h
+        mttrMs: Math.round(gaussianRandom(3200, 800)),
+      });
+    }
+
+    return {
+      experimentsRun,
+      meanTimeToRecovery,
+      resilienceScore,
+      faultsInjected,
+      activeExperiments,
+      lastExperimentAt: new Date(now - Math.floor(Math.random() * 3_600_000)).toISOString(),
+      mttrHistory,
+    };
+  }
 }
+
+// ---------------------------------------------------------------------------
+// Chaos Engineering — experiment catalog and result generation
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates a realistic ExperimentResult based on the fault intensity
+ * and fault type parameters. Recovery times, error rates, and corruption
+ * counts are scaled proportionally to simulate the expected impact of
+ * higher-severity fault injections on the evaluation pipeline.
+ */
+function generateExperimentResult(intensity: FaultIntensity, faultType: FaultType): ExperimentResult {
+  const intensityFactor = intensity / 5;
+
+  // Recovery time scales with intensity — more severe faults require longer recovery
+  const baseRecoveryMs = gaussianRandom(2000 + intensityFactor * 6000, 800);
+  const recoveryTimeMs = Math.round(Math.max(500, baseRecoveryMs));
+
+  // Corruption count depends on fault type and intensity
+  const corruptionBase = faultType === "cache_corruption" ? 30 : faultType === "error_injection" ? 20 : 10;
+  const corruptedResults = Math.floor(Math.random() * corruptionBase * intensityFactor);
+
+  // Circuit breakers are designed to trip at high intensity
+  const circuitBreakerTripped = intensity >= 4;
+
+  // Peak error rate reflects the severity of the injected fault
+  const peakErrorRate = Math.round((0.05 + intensityFactor * 0.75) * 100) / 100;
+
+  // Evaluations affected is proportional to experiment duration and intensity
+  const evaluationsAffected = Math.floor(50 + Math.random() * 200 * intensityFactor);
+
+  return {
+    evaluationsAffected,
+    corruptedResults,
+    recoveryTimeMs,
+    circuitBreakerTripped,
+    peakErrorRate: Math.min(peakErrorRate, 0.80),
+    completedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Pre-built chaos experiment catalog. Each experiment targets a specific
+ * infrastructure subsystem with a defined fault injection strategy.
+ * Experiments are calibrated to exercise the platform's resilience
+ * mechanisms at varying severity levels.
+ */
+const CHAOS_EXPERIMENTS: ChaosExperiment[] = [
+  {
+    id: "chaos-exp-001",
+    name: "Cache Coherence Disruption",
+    description: "Injects corrupted cache line states into the MESI coherence protocol to validate that the cache subsystem detects and recovers from state inconsistencies without propagating stale data to downstream consumers.",
+    faultType: "cache_corruption",
+    targetSubsystem: "MESI Cache",
+    intensity: 3 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 30,
+  },
+  {
+    id: "chaos-exp-002",
+    name: "Rule Engine Latency Spike",
+    description: "Introduces artificial latency into the Standard Rule Engine's evaluation path to verify that timeout handling, circuit breakers, and fallback strategies activate within SLA-mandated thresholds.",
+    faultType: "latency_injection",
+    targetSubsystem: "Standard Rule Engine",
+    intensity: 4 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 45,
+  },
+  {
+    id: "chaos-exp-003",
+    name: "Blockchain Commit Failure",
+    description: "Simulates proof-of-work mining failures and block rejection scenarios to ensure the blockchain ledger maintains chain integrity and automatically retries failed commit operations.",
+    faultType: "error_injection",
+    targetSubsystem: "Blockchain Ledger",
+    intensity: 2 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 20,
+  },
+  {
+    id: "chaos-exp-004",
+    name: "ML Confidence Degradation",
+    description: "Corrupts neural network weight matrices to simulate model drift and validate that the ML evaluation engine's confidence thresholds trigger automatic fallback to deterministic rule-based evaluation.",
+    faultType: "error_injection",
+    targetSubsystem: "ML Evaluation Engine",
+    intensity: 3 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 60,
+  },
+  {
+    id: "chaos-exp-005",
+    name: "Service Mesh Partition",
+    description: "Creates a network partition between service mesh nodes to test split-brain detection, quorum-based decision making, and partition healing procedures under the platform's distributed topology.",
+    faultType: "network_partition",
+    targetSubsystem: "Service Mesh",
+    intensity: 4 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 40,
+  },
+  {
+    id: "chaos-exp-006",
+    name: "Circuit Breaker Cascade",
+    description: "Triggers a cascade of circuit breaker trips across the middleware pipeline to validate that the platform's bulkhead isolation prevents total system failure during correlated fault events.",
+    faultType: "circuit_breaker_trip",
+    targetSubsystem: "Middleware Pipeline",
+    intensity: 5 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 25,
+  },
+  {
+    id: "chaos-exp-007",
+    name: "Event Bus Backpressure",
+    description: "Exhausts the event sourcing bus's internal buffer capacity to verify that backpressure propagation correctly throttles upstream producers without dropping committed events.",
+    faultType: "resource_exhaustion",
+    targetSubsystem: "Event Sourcing Bus",
+    intensity: 3 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 35,
+  },
+  {
+    id: "chaos-exp-008",
+    name: "Paxos Leader Election Storm",
+    description: "Induces repeated leader failures in the Paxos consensus cluster to stress-test the leader election protocol's convergence guarantees under sustained network instability.",
+    faultType: "network_partition",
+    targetSubsystem: "Consensus Cluster",
+    intensity: 4 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 50,
+  },
+  {
+    id: "chaos-exp-009",
+    name: "DI Container Cycle Injection",
+    description: "Introduces circular dependency declarations into the IoC container's dependency graph to validate that Kahn's topological sort cycle detection terminates gracefully with actionable diagnostics.",
+    faultType: "error_injection",
+    targetSubsystem: "IoC Container",
+    intensity: 2 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 15,
+  },
+  {
+    id: "chaos-exp-010",
+    name: "Rate Limiter Exhaustion",
+    description: "Floods the rate limiting subsystem with requests exceeding configured thresholds to confirm that token bucket depletion triggers correct 429 responses and that bucket refill operates on schedule.",
+    faultType: "resource_exhaustion",
+    targetSubsystem: "Rate Limiting",
+    intensity: 3 as FaultIntensity,
+    status: "pending",
+    estimatedDurationSec: 30,
+  },
+];
+
+/**
+ * Pre-built Game Day scenarios. Each scenario orchestrates a sequence of
+ * chaos experiments to validate cross-cutting resilience properties that
+ * only emerge under multi-fault conditions.
+ */
+const GAME_DAY_SCENARIOS: GameDayScenario[] = [
+  {
+    id: "gameday-001",
+    name: "Modulo Meltdown",
+    description: "Tests the cache, rule engine, and circuit breaker resilience chain by sequentially disrupting cache coherence, injecting rule engine latency, and triggering a circuit breaker cascade. Validates that the platform maintains evaluation correctness under compounding infrastructure failures.",
+    experiments: ["chaos-exp-001", "chaos-exp-002", "chaos-exp-006"],
+    status: "scheduled",
+    totalPhases: 3,
+  },
+  {
+    id: "gameday-002",
+    name: "Distributed Systems Stress Test",
+    description: "Validates network partition recovery and consensus re-election under event backpressure by partitioning the service mesh, inducing Paxos leader election storms, and exhausting the event bus. Confirms that distributed subsystems converge to a consistent state after multi-vector network disruption.",
+    experiments: ["chaos-exp-005", "chaos-exp-008", "chaos-exp-007"],
+    status: "scheduled",
+    totalPhases: 3,
+  },
+  {
+    id: "gameday-003",
+    name: "Full Stack Chaos",
+    description: "End-to-end resilience validation across all platform tiers. Exercises blockchain commit failures, ML model degradation, dependency injection faults, rate limiter exhaustion, and circuit breaker cascades in sequence to confirm that the platform recovers from simultaneous failures spanning every architectural layer.",
+    experiments: ["chaos-exp-003", "chaos-exp-004", "chaos-exp-009", "chaos-exp-010", "chaos-exp-006"],
+    status: "scheduled",
+    totalPhases: 5,
+  },
+];
 
 // ---------------------------------------------------------------------------
 // Metric registry — canonical list of all platform telemetry signals

@@ -686,3 +686,105 @@ export interface QuantumSimulationResult {
   /** ISO 8601 timestamp of simulation completion. */
   simulatedAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Chaos Engineering types
+// ---------------------------------------------------------------------------
+
+/** Fault injection category matching the backend FaultType enum. */
+export type FaultType =
+  | "latency_injection"
+  | "error_injection"
+  | "resource_exhaustion"
+  | "network_partition"
+  | "cache_corruption"
+  | "circuit_breaker_trip";
+
+/** Execution status of a chaos experiment. */
+export type ExperimentStatus = "pending" | "running" | "completed" | "failed" | "aborted";
+
+/** Severity intensity level for fault injection (1-5). */
+export type FaultIntensity = 1 | 2 | 3 | 4 | 5;
+
+/** Result data captured after an experiment completes. */
+export interface ExperimentResult {
+  /** Number of evaluations affected by the injected fault. */
+  evaluationsAffected: number;
+  /** Number of evaluations that produced incorrect results. */
+  corruptedResults: number;
+  /** Time from fault injection to full recovery, in milliseconds. */
+  recoveryTimeMs: number;
+  /** Whether the circuit breaker triggered during the experiment. */
+  circuitBreakerTripped: boolean;
+  /** Peak error rate observed during the experiment window (0..1). */
+  peakErrorRate: number;
+  /** ISO 8601 timestamp of experiment completion. */
+  completedAt: string;
+}
+
+/** A single chaos experiment targeting a specific subsystem with a defined fault type. */
+export interface ChaosExperiment {
+  /** Unique experiment identifier. */
+  id: string;
+  /** Human-readable experiment name. */
+  name: string;
+  /** Description of what this experiment tests and why. */
+  description: string;
+  /** Category of fault to inject. */
+  faultType: FaultType;
+  /** Infrastructure subsystem targeted by this experiment. */
+  targetSubsystem: string;
+  /** Fault severity intensity (1 = gentle breeze, 5 = apocalypse). */
+  intensity: FaultIntensity;
+  /** Current execution status. */
+  status: ExperimentStatus;
+  /** Estimated duration of the experiment in seconds. */
+  estimatedDurationSec: number;
+  /** Result data, populated after experiment completes. */
+  results?: ExperimentResult;
+  /** ISO 8601 timestamp of last execution, if ever run. */
+  lastRunAt?: string;
+}
+
+/** Status of a Game Day scenario. */
+export type GameDayStatus = "scheduled" | "in-progress" | "completed" | "failed";
+
+/** A multi-phase Game Day scenario grouping related experiments. */
+export interface GameDayScenario {
+  /** Unique scenario identifier. */
+  id: string;
+  /** Scenario name (e.g., "Modulo Meltdown"). */
+  name: string;
+  /** Description of what this Game Day validates. */
+  description: string;
+  /** Ordered list of experiment IDs executed during this scenario. */
+  experiments: string[];
+  /** Current scenario status. */
+  status: GameDayStatus;
+  /** ISO 8601 timestamp when the scenario was started, if applicable. */
+  startedAt?: string;
+  /** ISO 8601 timestamp when the scenario completed, if applicable. */
+  completedAt?: string;
+  /** Number of phases in the scenario. */
+  totalPhases: number;
+  /** Index of the currently executing phase (0-based), if in progress. */
+  currentPhase?: number;
+}
+
+/** Aggregate chaos engineering metrics for the control plane summary bar. */
+export interface ChaosMetrics {
+  /** Total number of experiments executed since system initialization. */
+  experimentsRun: number;
+  /** Mean time to recovery across all completed experiments, in milliseconds. */
+  meanTimeToRecovery: number;
+  /** Overall platform resilience score (0-100) derived from experiment outcomes. */
+  resilienceScore: number;
+  /** Total number of faults successfully injected. */
+  faultsInjected: number;
+  /** Number of experiments currently in running state. */
+  activeExperiments: number;
+  /** Timestamp of the most recent experiment execution. */
+  lastExperimentAt?: string;
+  /** Historical MTTR data points for trend chart rendering. */
+  mttrHistory: { timestamp: number; mttrMs: number }[];
+}

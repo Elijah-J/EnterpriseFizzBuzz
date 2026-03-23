@@ -33,6 +33,9 @@ import type {
   QuantumCircuit,
   QuantumSimulationResult,
   QuantumState,
+  ChaosExperiment,
+  GameDayScenario,
+  ChaosMetrics,
 } from "./types";
 
 /**
@@ -289,4 +292,28 @@ export interface IDataProvider {
    * @param circuitId - Identifier of the circuit to inspect
    */
   getQuantumState(circuitId: string): Promise<QuantumState>;
+
+  /**
+   * Retrieve the catalog of available chaos experiments.
+   * Returns all experiments ordered by target subsystem, then by fault type.
+   */
+  getChaosExperiments(): Promise<ChaosExperiment[]>;
+
+  /**
+   * Execute a chaos experiment by its identifier. Returns the updated
+   * experiment with status transitioned to "running". Poll via
+   * getChaosExperiments() to observe completion.
+   */
+  runChaosExperiment(experimentId: string): Promise<ChaosExperiment>;
+
+  /**
+   * Retrieve all Game Day scenarios with current status and phase progress.
+   */
+  getGameDayScenarios(): Promise<GameDayScenario[]>;
+
+  /**
+   * Retrieve aggregate chaos engineering metrics for the control plane
+   * summary bar and MTTR trend chart.
+   */
+  getChaosMetrics(): Promise<ChaosMetrics>;
 }
