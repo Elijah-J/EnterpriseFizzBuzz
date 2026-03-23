@@ -393,7 +393,7 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
     # KnowledgeGraphMiddleware: requires TripleStore + OWLClassHierarchy(store)
     if name == "KnowledgeGraphMiddleware":
         try:
-            from enterprise_fizzbuzz.infrastructure.knowledge_graph import (
+            from enterprise_fizzbuzz.infrastructure.graph_db import (
                 OWLClassHierarchy,
                 TripleStore,
             )

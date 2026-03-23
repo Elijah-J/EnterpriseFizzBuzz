@@ -327,7 +327,7 @@ from enterprise_fizzbuzz.infrastructure.federated_learning import (
     DifferentialPrivacyManager,
     NonIIDSimulator,
 )
-from enterprise_fizzbuzz.infrastructure.knowledge_graph import (
+from enterprise_fizzbuzz.infrastructure.graph_db import (
     FizzSPARQLParser,
     FizzSPARQLExecutor,
     InferenceEngine,
