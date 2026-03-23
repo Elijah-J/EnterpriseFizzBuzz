@@ -439,6 +439,11 @@ from enterprise_fizzbuzz.infrastructure.os_kernel import (
     KernelDashboard,
     KernelMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.microkernel_ipc import (
+    IPCDashboard,
+    IPCKernel,
+    IPCMiddleware,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -2020,6 +2025,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--kernel-dashboard",
         action="store_true",
         help="Display the FizzBuzz OS Kernel ASCII dashboard after execution",
+    )
+
+    # FizzIPC Microkernel Inter-Process Communication
+    parser.add_argument(
+        "--ipc",
+        action="store_true",
+        help="Enable FizzIPC: Mach-inspired port-based message passing between FizzBuzz subsystem tasks",
+    )
+
+    parser.add_argument(
+        "--ipc-tasks",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of IPC subsystem tasks to create (default: from config, typically 4)",
+    )
+
+    parser.add_argument(
+        "--ipc-dashboard",
+        action="store_true",
+        help="Display the FizzIPC Microkernel IPC ASCII dashboard after execution",
     )
 
     # Peer-to-Peer Gossip Network
@@ -6112,6 +6138,42 @@ def main(argv: Optional[list[str]] = None) -> int:
         print("\n  P2P network not enabled. Use --p2p to enable.\n")
 
     # ----------------------------------------------------------------
+    # FizzIPC Microkernel Inter-Process Communication setup
+    # ----------------------------------------------------------------
+    ipc_kernel = None
+    ipc_middleware = None
+
+    if args.ipc or args.ipc_dashboard:
+        ipc_num_tasks = args.ipc_tasks or config.ipc_num_tasks
+        ipc_port_capacity = config.ipc_port_capacity
+
+        ipc_kernel = IPCKernel(
+            default_port_capacity=ipc_port_capacity,
+            enable_deadlock_detection=config.ipc_enable_deadlock_detection,
+            enable_priority_inheritance=config.ipc_enable_priority_inheritance,
+        )
+
+        ipc_middleware = IPCMiddleware(
+            kernel=ipc_kernel,
+            num_tasks=ipc_num_tasks,
+            event_bus=event_bus,
+        )
+
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FizzIPC MICROKERNEL IPC: Port-Based Messaging ENABLED   |\n"
+            f"  | Tasks: {ipc_num_tasks:<49}|\n"
+            f"  | Port capacity: {ipc_port_capacity:<41}|\n"
+            "  | Model: Mach-inspired port rights (SEND/RECEIVE/ONCE)    |\n"
+            "  | Features: priority inheritance, deadlock detection (SCC) |\n"
+            "  | Overhead: ~0.001ms per evaluation (it's the same process)|\n"
+            "  | Every evaluation will be routed through IPC ports.       |\n"
+            "  +---------------------------------------------------------+"
+        )
+    elif args.ipc_dashboard:
+        print("\n  FizzIPC not enabled. Use --ipc to enable.\n")
+
+    # ----------------------------------------------------------------
     # FizzBuzz Operating System Kernel setup
     # ----------------------------------------------------------------
     fizzbuzz_kernel = None
@@ -7248,6 +7310,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     if kernel_middleware is not None:
         builder.with_middleware(kernel_middleware)
+
+    if ipc_middleware is not None:
+        builder.with_middleware(ipc_middleware)
 
     if p2p_middleware is not None:
         builder.with_middleware(p2p_middleware)
@@ -9125,6 +9190,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     elif args.kernel_dashboard:
         print("\n  Kernel not enabled. Use --kernel to enable.\n")
 
+    # FizzIPC Microkernel IPC Dashboard
+    if args.ipc_dashboard and ipc_kernel is not None:
+        print(IPCDashboard.render(
+            ipc_kernel,
+            width=config.ipc_dashboard_width,
+        ))
+    elif args.ipc_dashboard:
+        print("\n  FizzIPC not enabled. Use --ipc to enable.\n")
+
     # P2P Gossip Network Dashboard
     if args.p2p_dashboard and p2p_network is not None:
         print(P2PDashboard.render(
@@ -9224,7 +9298,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             "pipeline_middleware", "gateway_middleware", "graph_middleware",
             "fbaas_middleware", "paxos_middleware", "quantum_middleware",
             "federated_middleware", "kg_middleware", "sm_middleware",
-            "fizzkube_middleware", "kernel_middleware", "p2p_middleware",
+            "fizzkube_middleware", "kernel_middleware", "ipc_middleware", "p2p_middleware",
             "twin_middleware", "flag_middleware", "qo_middleware",
             "arch_middleware", "column_middleware", "tt_middleware",
         ]:
