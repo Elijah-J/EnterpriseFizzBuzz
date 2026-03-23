@@ -11,6 +11,9 @@ import type {
   CostSummary,
   TimeSeriesData,
   MetricDefinition,
+  Trace,
+  TraceSpan,
+  Alert,
 } from "./types";
 
 /**
@@ -386,6 +389,35 @@ export class SimulationProvider implements IDataProvider {
       unit,
     };
   }
+
+  // -------------------------------------------------------------------------
+  // Distributed tracing
+  // -------------------------------------------------------------------------
+
+  async getTraces(limit = 25): Promise<Trace[]> {
+    const traces: Trace[] = [];
+    const count = Math.min(limit, 30);
+
+    for (let i = 0; i < count; i++) {
+      traces.push(generateTrace(Date.now() - i * Math.floor(gaussianRandom(2_000, 800))));
+    }
+
+    return traces;
+  }
+
+  async getTrace(traceId: string): Promise<Trace | null> {
+    // In simulation mode, generate a deterministic trace seeded by the ID
+    const traces = await this.getTraces(30);
+    return traces.find((t) => t.traceId === traceId) ?? generateTrace(Date.now());
+  }
+
+  // -------------------------------------------------------------------------
+  // Alert management
+  // -------------------------------------------------------------------------
+
+  async getAlerts(): Promise<Alert[]> {
+    return generateAlerts();
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -621,3 +653,273 @@ const METRIC_SIMULATION_CONFIG: Record<
     spikeMultiplier: 2.5,
   },
 };
+
+// ---------------------------------------------------------------------------
+// Trace generation — models the FizzBuzz evaluation pipeline
+// ---------------------------------------------------------------------------
+
+/**
+ * Pipeline stage descriptors for trace span generation. Each stage represents
+ * a real subsystem in the Enterprise FizzBuzz evaluation pipeline, with
+ * timing parameters calibrated from production profiling data.
+ */
+const PIPELINE_STAGES: Array<{
+  operation: string;
+  service: string;
+  meanMs: number;
+  stddevMs: number;
+  /** Probability this stage produces an error span. */
+  errorRate: number;
+  /** If true, a cache hit may short-circuit remaining stages. */
+  cacheGate?: boolean;
+  attributes: Record<string, string>;
+}> = [
+  {
+    operation: "ValidationMiddleware",
+    service: "middleware-pipeline",
+    meanMs: 0.1,
+    stddevMs: 0.03,
+    errorRate: 0.02,
+    attributes: {
+      "middleware.type": "validation",
+      "validation.schema": "FizzBuzzEvaluationRequest/v3",
+      "validation.strict_mode": "true",
+    },
+  },
+  {
+    operation: "CacheCheck",
+    service: "mesi-cache",
+    meanMs: 0.2,
+    stddevMs: 0.05,
+    errorRate: 0.01,
+    cacheGate: true,
+    attributes: {
+      "cache.protocol": "MESI",
+      "cache.coherence_domain": "us-east-1",
+      "cache.tier": "L1",
+    },
+  },
+  {
+    operation: "RuleEngine.evaluate",
+    service: "rule-engine",
+    meanMs: 0.5,
+    stddevMs: 0.12,
+    errorRate: 0.03,
+    attributes: {
+      "engine.strategy": "chain_of_responsibility",
+      "engine.rule_count": "7",
+      "engine.parallel": "false",
+    },
+  },
+  {
+    operation: "BlockchainCommit",
+    service: "blockchain-ledger",
+    meanMs: 5.0,
+    stddevMs: 1.8,
+    errorRate: 0.05,
+    attributes: {
+      "blockchain.consensus": "proof_of_work",
+      "blockchain.difficulty": "4",
+      "blockchain.pending_txns": String(Math.floor(Math.random() * 12) + 1),
+    },
+  },
+  {
+    operation: "ComplianceCheck",
+    service: "compliance-engine",
+    meanMs: 0.3,
+    stddevMs: 0.08,
+    errorRate: 0.01,
+    attributes: {
+      "compliance.frameworks": "SOX,GDPR,HIPAA",
+      "compliance.audit_level": "full",
+      "compliance.region": "us-east-1",
+    },
+  },
+  {
+    operation: "FormatterPipeline",
+    service: "formatter",
+    meanMs: 0.1,
+    stddevMs: 0.02,
+    errorRate: 0.005,
+    attributes: {
+      "formatter.output_format": "plain",
+      "formatter.locale": "en-US",
+      "formatter.encoding": "UTF-8",
+    },
+  },
+];
+
+function generateTrace(baseTimestamp: number): Trace {
+  const traceId = generateSessionId().replace(/-/g, "");
+  const rootSpanId = generateSessionId().split("-")[0];
+  const spans: TraceSpan[] = [];
+  let hasError = false;
+  let cursor = 0;
+
+  // Determine if this is a cache hit (skip stages after CacheCheck)
+  const isCacheHit = Math.random() < 0.35;
+
+  // Root span — "evaluate"
+  const rootStart = 0;
+
+  for (let i = 0; i < PIPELINE_STAGES.length; i++) {
+    const stage = PIPELINE_STAGES[i];
+    const spanId = generateSessionId().split("-")[0] + i.toString(16);
+    const duration = Math.max(0.01, gaussianRandom(stage.meanMs, stage.stddevMs));
+    const startTime = cursor;
+    cursor += duration + gaussianRandom(0.02, 0.005);
+
+    const isError = Math.random() < stage.errorRate;
+    if (isError) hasError = true;
+
+    const attributes = { ...stage.attributes };
+    if (stage.cacheGate && isCacheHit) {
+      attributes["cache.result"] = "HIT";
+      attributes["cache.ttl_remaining_ms"] = String(Math.floor(Math.random() * 30000));
+    } else if (stage.cacheGate) {
+      attributes["cache.result"] = "MISS";
+    }
+
+    spans.push({
+      spanId,
+      traceId,
+      parentSpanId: rootSpanId,
+      operationName: stage.operation,
+      serviceName: stage.service,
+      startTimeMs: Math.round(startTime * 1000) / 1000,
+      durationMs: Math.round(duration * 1000) / 1000,
+      status: isError ? "error" : "ok",
+      attributes,
+    });
+
+    // Cache hit: stop processing after CacheCheck
+    if (stage.cacheGate && isCacheHit) break;
+  }
+
+  const totalDuration = cursor;
+
+  // Insert root span at the beginning
+  spans.unshift({
+    spanId: rootSpanId,
+    traceId,
+    operationName: "evaluate",
+    serviceName: "fizzbuzz-platform",
+    startTimeMs: 0,
+    durationMs: Math.round(totalDuration * 1000) / 1000,
+    status: hasError ? "error" : "ok",
+    attributes: {
+      "fizzbuzz.input": String(Math.floor(Math.random() * 1000) + 1),
+      "fizzbuzz.strategy": "chain_of_responsibility",
+      "fizzbuzz.cache_hit": String(isCacheHit),
+    },
+  });
+
+  return {
+    traceId,
+    rootSpan: rootSpanId,
+    spans,
+    totalDurationMs: Math.round(totalDuration * 1000) / 1000,
+    timestamp: new Date(baseTimestamp).toISOString(),
+    hasError,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Alert generation
+// ---------------------------------------------------------------------------
+
+const ALERT_TEMPLATES: Array<{
+  severity: Alert["severity"];
+  subsystem: string;
+  title: string;
+  description: string;
+}> = [
+  {
+    severity: "critical",
+    subsystem: "Blockchain Ledger",
+    title: "Block mining latency exceeds SLA threshold",
+    description:
+      "Proof-of-work mining duration has exceeded the 10-second SLA threshold for 3 consecutive blocks. Current average: 14.2s. Evaluation commits are queueing. Immediate investigation required.",
+  },
+  {
+    severity: "critical",
+    subsystem: "MESI Cache Coherence",
+    title: "Cache coherence violation detected",
+    description:
+      "Node fizz-eval-eu-west-1c reported a Modified state for cache line 0x3F while fizz-eval-us-east-1a holds Exclusive. MESI protocol invariant violated. Data integrity at risk.",
+  },
+  {
+    severity: "warning",
+    subsystem: "Neural Network Inference",
+    title: "ML confidence score below acceptable threshold",
+    description:
+      "The FizzBuzz neural network classifier softmax confidence has dropped to 87.3%, below the 90% operational threshold. Model retraining may be required.",
+  },
+  {
+    severity: "warning",
+    subsystem: "Circuit Breaker Mesh",
+    title: "Circuit breaker OPEN for blockchain-ledger endpoint",
+    description:
+      "The circuit breaker for the blockchain-ledger service has tripped to OPEN state after 5 consecutive timeouts. Requests are being short-circuited with fallback responses.",
+  },
+  {
+    severity: "warning",
+    subsystem: "Rate Limiter",
+    title: "Rate limit approaching for evaluation API",
+    description:
+      "Current request rate (1,847 req/s) is at 92% of the configured rate limit ceiling (2,000 req/s). Consider scaling horizontally or adjusting the limit.",
+  },
+  {
+    severity: "info",
+    subsystem: "Raft Consensus Module",
+    title: "Leader election completed successfully",
+    description:
+      "Raft leader election for term 43 completed in 127ms. New leader: fizz-eval-us-west-2b. All 5 nodes acknowledged. No evaluation interruption observed.",
+  },
+  {
+    severity: "info",
+    subsystem: "Feature Flag Evaluator",
+    title: "Feature flag 'quantum-strategy-v2' enabled in production",
+    description:
+      "The quantum-strategy-v2 feature flag has been activated for 100% of traffic. Previous rollout: 25%. Monitor evaluation correctness metrics closely.",
+  },
+  {
+    severity: "info",
+    subsystem: "FizzPM Package Registry",
+    title: "Dependency audit completed — 0 critical vulnerabilities",
+    description:
+      "Scheduled dependency audit scanned 847 packages across 12 dependency trees. No critical or high-severity vulnerabilities detected. 2 moderate advisories noted.",
+  },
+  {
+    severity: "warning",
+    subsystem: "SOX Compliance Engine",
+    title: "Audit log rotation approaching retention limit",
+    description:
+      "SOX audit log partition fizzbuzz-audit-2026-Q1 is at 89% capacity. Automated rotation will trigger at 95%. Ensure archival pipeline is operational.",
+  },
+  {
+    severity: "critical",
+    subsystem: "SLA Monitor",
+    title: "Error budget burn rate exceeds safe threshold",
+    description:
+      "Current error budget burn rate of 4.2x exceeds the 1.0x safe threshold. At this rate, the monthly error budget will be exhausted in 2.3 days. Incident response protocol recommended.",
+  },
+];
+
+function generateAlerts(): Alert[] {
+  // Select 5-10 alerts from the template pool
+  const count = Math.floor(Math.random() * 6) + 5;
+  const shuffled = [...ALERT_TEMPLATES].sort(() => Math.random() - 0.5);
+  const selected = shuffled.slice(0, count);
+
+  return selected.map((template, i) => ({
+    id: `alert-${generateSessionId().split("-")[0]}`,
+    severity: template.severity,
+    subsystem: template.subsystem,
+    title: template.title,
+    description: template.description,
+    firedAt: new Date(Date.now() - i * Math.floor(gaussianRandom(300_000, 120_000))).toISOString(),
+    acknowledged: Math.random() < 0.2,
+    silenced: Math.random() < 0.1,
+  }));
+}

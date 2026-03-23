@@ -24,12 +24,18 @@ export default function MonitorLayout({
           >
             Metrics
           </a>
-          <span className="rounded px-2.5 py-1 text-xs text-panel-500 cursor-not-allowed">
+          <a
+            href="/monitor/traces"
+            className="rounded px-2.5 py-1 text-xs font-medium bg-panel-800 text-panel-50 transition-colors"
+          >
             Traces
-          </span>
-          <span className="rounded px-2.5 py-1 text-xs text-panel-500 cursor-not-allowed">
+          </a>
+          <a
+            href="/monitor/alerts"
+            className="rounded px-2.5 py-1 text-xs font-medium bg-panel-800 text-panel-50 transition-colors"
+          >
             Alerts
-          </span>
+          </a>
         </nav>
       </div>
       {children}

@@ -81,11 +81,21 @@ export default function RootLayout({
                   Metrics
                 </a>
               </li>
-              <li className="rounded px-2 py-1.5 text-panel-500 cursor-not-allowed">
-                Traces
+              <li>
+                <a
+                  href="/monitor/traces"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Traces
+                </a>
               </li>
-              <li className="rounded px-2 py-1.5 text-panel-500 cursor-not-allowed">
-                Alerts
+              <li>
+                <a
+                  href="/monitor/alerts"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Alerts
+                </a>
               </li>
             </ul>
             <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
