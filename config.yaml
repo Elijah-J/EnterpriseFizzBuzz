@@ -1705,6 +1705,20 @@ jit:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzCap — Capability-Based Security Model
+# Because ambient authority is so last decade. Every operation on the
+# FizzBuzz evaluation pipeline now requires an explicit, cryptographically
+# signed, attenuatable, and revocable capability token. The confused
+# deputy problem — that age-old nemesis of access control — is eliminated
+# by checking the REQUEST's capability, not the CALLER's ambient privileges.
+capability_security:
+  enabled: false                          # Master switch — opt-in via --capabilities
+  mode: "native"                          # native | bridge | audit-only
+  secret_key: "fizzcap-enterprise-hmac-key-2026"  # HMAC-SHA256 signing key
+  default_resource: "fizzbuzz:evaluation" # Default resource for middleware guard
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:

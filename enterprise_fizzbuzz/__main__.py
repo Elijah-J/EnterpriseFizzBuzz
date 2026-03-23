@@ -449,6 +449,12 @@ from enterprise_fizzbuzz.infrastructure.observability_correlation import (
     CorrelationDashboard,
     ObservabilityCorrelationManager,
 )
+from enterprise_fizzbuzz.infrastructure.capability_security import (
+    CapabilityDashboard,
+    CapabilityManager,
+    CapabilityMiddleware,
+    Operation,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2168,6 +2174,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--correlate-dashboard",
         action="store_true",
         help="Display the FizzCorr ASCII dashboard with unified timeline, anomalies, dependency map, and signal volumes",
+    )
+
+    # FizzCap Capability-Based Security
+    parser.add_argument(
+        "--capabilities",
+        action="store_true",
+        help="Enable FizzCap capability-based security: unforgeable object capabilities with HMAC-SHA256 signatures",
+    )
+
+    parser.add_argument(
+        "--cap-mode",
+        type=str,
+        choices=["native", "bridge", "audit-only"],
+        default=None,
+        help="Capability enforcement mode: native (strict), bridge (auto-issue for legacy), audit-only (log but allow)",
+    )
+
+    parser.add_argument(
+        "--cap-dashboard",
+        action="store_true",
+        help="Display the FizzCap ASCII dashboard with active capabilities, delegation graph, and guard activity",
     )
 
     return parser
@@ -6844,6 +6871,95 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.correlate_dashboard:
             print(corr_manager.render_dashboard())
+
+    # ----------------------------------------------------------------
+    # FizzCap — Capability-Based Security
+    # ----------------------------------------------------------------
+    # When --capabilities is active, every FizzBuzz operation requires
+    # an explicit, cryptographically signed capability token. The system
+    # enforces unforgeable object capabilities with HMAC-SHA256
+    # signatures, monotonic attenuation (authority can only decrease),
+    # cascade revocation through the delegation DAG, and confused
+    # deputy prevention. This ensures that evaluating n % 3 == 0
+    # is protected by the same security principles as seL4.
+    # ----------------------------------------------------------------
+    if args.capabilities or args.cap_dashboard:
+        cap_mode = args.cap_mode or config.capability_security_mode
+        cap_manager = CapabilityManager(
+            secret_key=config.capability_security_secret_key,
+            mode=cap_mode,
+        )
+
+        # Create a root capability for the evaluation session
+        root_cap = cap_manager.create_root_capability(
+            resource=config.capability_security_default_resource,
+            operations=frozenset({
+                Operation.READ,
+                Operation.WRITE,
+                Operation.EXECUTE,
+                Operation.DELEGATE,
+            }),
+            holder="session:root",
+            constraints={"session_id": str(uuid.uuid4())},
+        )
+
+        # Delegate an attenuated capability for the rule engine
+        engine_cap = cap_manager.delegate(
+            parent=root_cap,
+            new_operations=frozenset({Operation.READ, Operation.EXECUTE}),
+            new_holder="subsystem:rule_engine",
+            additional_constraints={"scope": "evaluation"},
+        )
+
+        # Delegate a further-attenuated capability for the formatter
+        formatter_cap = cap_manager.delegate(
+            parent=engine_cap,
+            new_operations=frozenset({Operation.READ}),
+            new_holder="subsystem:formatter",
+            additional_constraints={"scope": "evaluation", "output_only": "true"},
+        )
+
+        # Verify access through the confused deputy guard
+        cap_manager.check_access(
+            root_cap,
+            config.capability_security_default_resource,
+            Operation.EXECUTE,
+        )
+        cap_manager.check_access(
+            engine_cap,
+            config.capability_security_default_resource,
+            Operation.EXECUTE,
+        )
+        cap_manager.check_access(
+            formatter_cap,
+            config.capability_security_default_resource,
+            Operation.READ,
+        )
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FizzCap Capability-Based Security Model                 |\n"
+            "  | Unforgeable object capabilities with HMAC-SHA256        |\n"
+            "  | Because ambient authority was never good enough.        |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        active = cap_manager.mint.active_capabilities
+        print(f"\n  Mode: {cap_mode}")
+        print(f"  Total minted: {cap_manager.mint.total_minted}")
+        print(f"  Active capabilities: {len(active)}")
+        print(f"  Delegation graph nodes: {cap_manager.graph.node_count}")
+        print(f"  Delegation graph edges: {cap_manager.graph.edge_count}")
+        print(f"  Guard accepts: {cap_manager.guard.accept_count}")
+        print(f"  Guard rejects: {cap_manager.guard.reject_count}")
+        print()
+
+        if args.cap_dashboard:
+            dashboard = CapabilityDashboard(
+                cap_manager,
+                width=config.capability_security_dashboard_width,
+            )
+            print(dashboard.render())
 
     # ----------------------------------------------------------------
     # FizzJIT — Runtime Code Generation

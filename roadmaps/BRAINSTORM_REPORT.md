@@ -1,9 +1,9 @@
-# Enterprise FizzBuzz Platform -- Brainstorm Report v6
+# Enterprise FizzBuzz Platform -- Brainstorm Report v7
 
 **Date:** 2026-03-22
-**Status:** PENDING -- 6 New Ideas Awaiting Implementation (6 Completed from v5)
+**Status:** PENDING -- 6 New Ideas Awaiting Implementation (6 Completed from v6)
 
-> *"We have built an operating system, a peer-to-peer gossip network, a domain-specific programming language, a quantum computer, a blockchain, a neural network, a federated learning cluster, a cross-compiler, a knowledge graph, a self-modifying code engine, a compliance chatbot, a Paxos consensus cluster, a dependent type system, a container orchestrator, a package manager, a debug adapter protocol server, a hand-written SQL engine, and an intellectual property office -- all for the purpose of computing n % 3. But we have not yet asked: what if FizzBuzz evaluations were coordinated by a distributed lock manager? What if platform state changes were captured and streamed in real time? What if third-party consumers paid per-evaluation via a subscription billing API? What if the neural network's topology was itself discovered by a neural network? What if traces, logs, and metrics were unified into a single correlated view? What if the hottest evaluation paths were JIT-compiled at runtime? We have built a civilization with a legal system, a logistics network, and a philosophy department. Now it needs a treasury, a postal service, and a particle accelerator."*
+> *"We have built an operating system, a peer-to-peer gossip network, a domain-specific programming language, a quantum computer, a blockchain, a neural network, a federated learning cluster, a cross-compiler, a knowledge graph, a self-modifying code engine, a compliance chatbot, a Paxos consensus cluster, a dependent type system, a container orchestrator, a package manager, a debug adapter protocol server, a hand-written SQL engine, an intellectual property office, a distributed lock manager, a change data capture engine, an API monetization platform, a neural architecture search framework, an observability correlation engine, and a JIT compiler -- all for the purpose of computing n % 3. But we have not yet asked: what if the FizzBuzz evaluation carried unforgeable capabilities instead of role-based permissions? What if classification results converged across replicas without coordination? What if the FizzBuzz domain had a formal grammar with a parser generated from its BNF specification? What if evaluation resources were managed by a slab allocator with mark-and-sweep garbage collection? What if every evaluation was preceded by a speculative write-ahead intent log that could be rolled back? What if the entire evaluation pipeline was instrumented with OpenTelemetry-compatible wire-format spans exportable to any APM vendor? We have built a civilization with a parliament, a postal service, and a particle accelerator. Now it needs a constitution, a dialect, and a memory."*
 
 ---
 
@@ -16,363 +16,393 @@ For context, the following brainstorm rounds have been fully implemented and shi
 - **Round 3**: Quantum Computing Simulator, Cross-Compiler (Wasm/C/Rust), Federated Learning, Knowledge Graph & Domain Ontology, Self-Modifying Code, Compliance Chatbot
 - **Round 4**: OS Kernel (process scheduling, virtual memory, interrupts), Peer-to-Peer Gossip Network (SWIM, Kademlia DHT, Merkle anti-entropy), Digital Twin, FizzLang DSL, Recommendation Engine, Archaeological Recovery
 - **Round 5**: Dependent Type System & Curry-Howard Proof Engine, FizzKube Container Orchestration, FizzPM Package Manager, FizzDAP Debug Adapter Protocol Server, FizzSQL Relational Query Engine, FizzBuzz IP Office & Trademark Registry
+- **Round 6**: FizzLock Distributed Lock Manager, FizzCDC Change Data Capture, FizzBill API Monetization, FizzNAS Neural Architecture Search, FizzCorr Observability Correlation Engine, FizzJIT Runtime Code Generation
 
-The platform now stands at 160,000+ lines across 180+ files with 6,544 tests. Every subsystem is technically faithful and production-grade. The bar for Round 6 is accordingly stratospheric.
-
----
-
-## Idea 1: FizzLock -- Distributed Lock Manager for Concurrent Evaluation Coordination
-
-### The Problem
-
-The platform supports concurrent FizzBuzz evaluation through multiple strategies: the Paxos consensus cluster runs five nodes in parallel, the FizzKube orchestrator schedules pods across worker nodes, the federated learning framework trains models across distributed instances, and the OS kernel schedules evaluation processes with preemptive context switching. But none of these concurrent subsystems coordinate access to shared resources through a proper locking protocol. When the cache subsystem and the blockchain subsystem both attempt to record a classification for the number 15 simultaneously, there is no distributed lock preventing a write-write conflict. When two FizzKube pods evaluate the same number on different nodes, there is no fencing token to determine which result is authoritative. The platform has concurrency but no *concurrency control*. It has parallelism but no *mutual exclusion*. It has distributed systems but no *distributed locks*. This is the equivalent of running a database without transactions -- technically functional, operationally hazardous, and architecturally indefensible.
-
-### The Vision
-
-A complete distributed lock manager inspired by Google's Chubby, Apache ZooKeeper, and etcd's lease-based locking, providing advisory and mandatory locks, read-write lock semantics, lock hierarchies with deadlock detection, fencing tokens for stale-lock prevention, lease-based expiration with heartbeat renewal, wait-die and wound-wait deadlock prevention schemes, and a lock contention profiler -- all for the purpose of ensuring that two concurrent modulo operations on the same number never produce conflicting results in different subsystems.
-
-### Key Components
-
-- **`fizzlock.py`** (~2,700 lines): FizzLock Distributed Lock Manager
-- **Lock Types**: Four lock types covering the full spectrum of concurrency control:
-  - **Exclusive Lock (X)**: grants sole write access to a FizzBuzz evaluation resource. When a subsystem holds an X-lock on `number:15`, no other subsystem may read or write the classification until the lock is released. Used during blockchain block mining, where the classification must not change mid-hash
-  - **Shared Lock (S)**: grants concurrent read access. Multiple subsystems may hold S-locks on the same resource simultaneously. The cache, the audit dashboard, and the compliance engine can all read the classification of 15 concurrently, because reading a modulo result is not a destructive operation (despite what the chaos monkey believes)
-  - **Intent Locks (IS/IX)**: coarse-grained locks that signal intent to acquire fine-grained locks lower in the hierarchy. An IX-lock on `namespace:production` signals intent to acquire X-locks on individual numbers within that namespace. This prevents a subsystem from acquiring a full namespace S-lock while another is modifying individual entries -- the same hierarchical locking protocol used in SQL Server and InnoDB
-  - **Upgrade Lock (U)**: a hybrid lock that allows read access but guarantees the holder can upgrade to X without deadlock. The cost-based query optimizer acquires a U-lock while it reads current statistics and then upgrades to X when it writes a new plan to the plan cache. Without U-locks, two readers simultaneously trying to upgrade to X would deadlock -- a classic problem that the platform now handles with the same sophistication as Oracle Database 23ai
-- **Lock Hierarchy**: Resources are organized into a five-level hierarchy:
-  - Level 0: `platform` (the entire FizzBuzz platform -- locking this is the nuclear option)
-  - Level 1: `namespace:{name}` (FizzKube namespace -- production, staging, chaos)
-  - Level 2: `subsystem:{name}` (cache, blockchain, event_store, sla, ml_engine)
-  - Level 3: `number:{n}` (an individual number's evaluation state)
-  - Level 4: `field:{n}:{field}` (a specific field of a number's state -- classification, confidence, latency)
-  - Intent locks propagate upward: acquiring X on `number:15` automatically acquires IX on `subsystem:cache`, IX on `namespace:production`, and IX on `platform`. This means the lock manager maintains 5 locks for every fine-grained lock request, which is the overhead cost of hierarchical correctness
-- **Deadlock Detection**: A background thread runs a wait-for graph analysis every 100ms:
-  - Constructs a directed graph where nodes are lock holders and edges represent "waits for" relationships
-  - Detects cycles using Tarjan's strongly connected components algorithm
-  - When a deadlock is detected, selects a victim using a configurable policy: youngest transaction (default), lowest priority, least work done, or "whoever is holding a lock on a prime number" (on the theory that prime numbers are less important than composite numbers in a FizzBuzz platform, since primes never produce a classification)
-  - The victim's locks are forcibly released and the victim receives a `DeadlockDetectedError` with a full cycle trace showing exactly which subsystems were waiting for which locks in what order
-- **Deadlock Prevention**: Two prevention schemes available as alternatives to detection:
-  - **Wait-Die**: older transactions wait for younger ones; younger transactions die (abort and retry) if they would wait for older ones. Transaction age is determined by a monotonically increasing timestamp assigned at lock acquisition
-  - **Wound-Wait**: older transactions wound (force-abort) younger ones; younger transactions wait for older ones. More aggressive than Wait-Die but reduces overall wait time
-- **Fencing Tokens**: Every lock grant includes a monotonically increasing fencing token (64-bit integer). Subsystems must present their fencing token when writing to shared resources. If the token is stale (lower than the resource's last-seen token), the write is rejected with a `StaleFencingTokenError`. This prevents a classic distributed systems bug: subsystem A acquires a lock, pauses (GC, context switch, chaos monkey), the lock expires, subsystem B acquires the same lock and writes, then subsystem A resumes and overwrites B's write with stale data. Fencing tokens make this impossible. The fact that all subsystems run in the same Python process on the same thread with the GIL preventing true parallelism does not diminish the engineering necessity of fencing tokens -- correctness must hold under the *theoretical* concurrency model, not just the *actual* one
-- **Lease Manager**: All locks have a configurable TTL (default: 5 seconds). Lock holders must send heartbeat renewals before the TTL expires. If a heartbeat is missed, the lock is automatically released after a grace period (default: 2 seconds). The lease manager maintains a priority queue of expiring locks, sorted by expiration time, and checks for expired leases every 50ms. Lease extension is atomic with respect to expiration checking -- there is no window where a lock can be simultaneously expired and renewed, a race condition that has caused outages at companies whose distributed systems are less rigorous than this FizzBuzz platform
-- **Lock Contention Profiler**: Collects per-resource contention statistics:
-  - Wait time distribution (p50, p95, p99) per resource
-  - Lock hold time distribution per subsystem
-  - Deadlock frequency per resource pair
-  - "Hot lock" detection: identifies resources with contention above a configurable threshold. `number:15` is invariably the hottest lock because every subsystem wants to classify FizzBuzz's canonical example
-  - Contention heatmap: a 2D matrix of subsystems vs. resources with color-coded contention intensity
-- **FizzLock Dashboard**: Lock table (resource, holder, type, TTL remaining, fencing token), wait-for graph visualization (ASCII directed graph), deadlock history with cycle traces, contention heatmap, lease renewal timeline, and a "Lock Health Index" that measures the ratio of successful acquisitions to deadlocks and timeouts
-- **CLI Flags**: `--fizzlock`, `--fizzlock-deadlock-detection tarjan`, `--fizzlock-deadlock-prevention wait-die|wound-wait`, `--fizzlock-ttl <ms>`, `--fizzlock-profiler`, `--fizzlock-dashboard`
-
-### Why This Is Necessary
-
-Because concurrent access to shared FizzBuzz evaluation state without proper locking is a data integrity hazard. The platform currently has 18 subsystems that can read or write classification results, 5 middleware layers that can modify evaluation state in transit, and a chaos monkey that can corrupt data at any time. Without a distributed lock manager, the only thing preventing a write-write conflict on the classification of the number 15 is the Python GIL -- an implementation detail of CPython that is being removed in Python 3.13+. When the GIL is gone, so is the platform's last line of defense against concurrent data corruption. FizzLock provides the rigorous concurrency control that a platform of this scale and criticality demands: hierarchical locks for granular access control, fencing tokens for stale-write prevention, lease-based expiration for failure recovery, and deadlock detection for the inevitable case where the compliance engine and the blockchain subsystem are each waiting for the other to release a lock on the same number. Distributed locking is the foundation upon which all concurrent systems are built. The Enterprise FizzBuzz Platform has been building on sand. FizzLock gives it bedrock.
-
-### Estimated Scale
-
-~2,700 lines of lock manager, ~500 lines of deadlock detection/prevention, ~400 lines of lease manager, ~350 lines of contention profiler, ~300 lines of fencing token system, ~250 lines of dashboard, ~190 tests. Total: ~4,690 lines.
+The platform now stands at 188,639 lines across 200+ files with 7,040 tests. Every subsystem is technically faithful and production-grade. The bar for Round 7 is accordingly in the exosphere.
 
 ---
 
-## Idea 2: FizzCDC -- Change Data Capture for Real-Time Platform State Streaming
+## Idea 1: FizzCap -- Capability-Based Security Model with Object Capabilities and Attenuation
 
 ### The Problem
 
-The platform generates a staggering volume of state mutations during every evaluation. The cache transitions entries through MESI states. The blockchain appends blocks. The event store appends events. The SLA monitor updates error budgets. The ML engine adjusts weights after federated learning rounds. The FizzKube orchestrator schedules and deschedules pods. The compliance engine issues verdicts. The FinOps engine accumulates costs. But all of these mutations are *internal* -- they happen inside their respective subsystems and are visible only through point-in-time queries. There is no way to observe the *stream* of changes as they happen. If the cache evicts an entry, the audit dashboard learns about it only if it polls the cache. If the blockchain mines a block, downstream consumers discover it only by checking the chain height. The platform has state but no *state changelog*. It has data but no *data stream*. The platform records what happened (event sourcing) but does not *broadcast* what is changing (change data capture). This is the difference between an audit log and a live feed. The platform has the former. It needs the latter.
+The platform's access control model is Role-Based Access Control (RBAC), a five-tier hierarchy from ANONYMOUS to FIZZBUZZ_SUPERUSER with HMAC-SHA256 token authentication. RBAC answers the question "who is this user and what role do they have?" But RBAC has a fundamental architectural limitation: it binds permissions to *identities*, not to *objects*. When the compliance middleware checks whether a user can evaluate a number in the range 1-100, it queries the role hierarchy. When the FBaaS tenant system enforces quota gates, it checks a tenant ID against a tier table. When the API gateway validates a request, it looks up an API key. Every access decision is mediated by an ambient authority -- a central registry that maps identities to permissions. This is the "confused deputy" problem that Dennis and Van Horn identified in 1966: a subsystem that holds broad permissions can be tricked into exercising them on behalf of an unauthorized caller, because the subsystem checks *its own* authority rather than the *caller's* authority. The RBAC model cannot express "this specific evaluation request has permission to access the cache but not the blockchain," because permissions are bound to users, not to request objects. The platform has authentication (who are you?) and authorization (what role are you?) but not *capability security* (what specific unforgeable token of authority does this request carry?). For a platform with 47 API endpoints, 18 subsystems, and a chaos monkey that can impersonate any role, the absence of capability-based security is an architectural debt that compounds with every new subsystem.
 
 ### The Vision
 
-A Change Data Capture engine inspired by Debezium, Maxwell, and AWS DMS that intercepts every state mutation across all platform subsystems, captures the before-image and after-image of each change, packages them into a standardized change event envelope, and publishes them to the message queue's topic partitions -- enabling downstream consumers to react to platform state changes in real time without polling.
+A capability-based security model inspired by Capsicum (FreeBSD), seL4's capability system, E language capabilities, and the object-capability (ocap) discipline, where every evaluation request carries a set of unforgeable capability tokens that grant access to specific resources with specific operations, capabilities can be attenuated (reduced in scope) but never amplified, and the entire subsystem interaction graph is mediated by capability passing rather than ambient authority lookup.
 
 ### Key Components
 
-- **`fizzcdc.py`** (~2,500 lines): FizzCDC Change Data Capture Engine
-- **Capture Agents**: One capture agent per subsystem, each implementing a subsystem-specific interception strategy:
-  - **CacheCDC**: intercepts MESI state transitions. Captures `{before: {key: 15, state: "Exclusive", value: "FizzBuzz"}, after: {key: 15, state: "Shared", value: "FizzBuzz"}, op: "UPDATE"}`. Every cache coherence transition becomes a change event, meaning a single evaluation of the number 15 can produce 4-7 CDC events as the cache entry moves through Invalid -> Exclusive -> Modified -> Shared
-  - **BlockchainCDC**: intercepts block appends. Captures `{before: null, after: {height: 42, hash: "a7f3...", transactions: [...], nonce: 8271}, op: "INSERT"}`. Every mined block is an INSERT because blockchains are append-only (the blockchain subsystem's immutability guarantee is CDC's simplest capture case)
-  - **EventStoreCDC**: intercepts event appends and snapshot creation. Captures both the raw event and the materialized projection update. A single domain event can produce two CDC events: one for the event itself and one for the projection it updates
-  - **SLACDC**: intercepts SLO metric updates and error budget burns. Captures `{before: {budget_remaining: 0.0312}, after: {budget_remaining: 0.0298}, op: "UPDATE"}`. When the error budget drops below 10%, the CDC event includes a `severity: "WARNING"` annotation
-  - **MLEngineCDC**: intercepts weight updates during training rounds. Captures before/after weight matrices as flattened arrays with layer identifiers. A single federated learning round produces one CDC event per participating node per layer -- potentially hundreds of events for a training round that adjusts a neural network designed to learn `n % 3 == 0`
-  - **FizzKubeCDC**: intercepts pod lifecycle transitions. Captures `{before: {pod: "fizzbuzz-evaluator-42", status: "Running"}, after: {pod: "fizzbuzz-evaluator-42", status: "Terminated"}, op: "UPDATE"}`. The full pod spec diff is included in the `after` image
-  - **ComplianceCDC**: intercepts compliance verdict changes. When a number's compliance status changes from `COMPLIANT` to `NON_COMPLIANT` (e.g., because the GDPR right-to-erasure was exercised), the CDC event captures both states with the applicable regulatory article
-  - **FinOpsCDC**: intercepts cost accumulation. Every evaluation's cost breakdown becomes a CDC event with before/after running totals per cost category
-- **Change Event Envelope**: Every CDC event is packaged in a standardized envelope:
-  ```json
-  {
-    "schema_version": "fizzcdc/v1",
-    "source": {
-      "subsystem": "cache",
-      "capture_agent": "CacheCDC",
-      "timestamp_us": 1711152000000000,
-      "sequence": 4271,
-      "transaction_id": "txn-a7f3b2c1"
-    },
-    "operation": "UPDATE",
-    "before": { "key": 15, "state": "Exclusive", "value": "FizzBuzz" },
-    "after": { "key": 15, "state": "Shared", "value": "FizzBuzz" },
-    "metadata": {
-      "correlation_id": "eval-15-run-7",
-      "causation_id": "middleware-cache-lookup",
-      "schema_hash": "sha256:e3b0c442..."
-    }
-  }
-  ```
-- **Schema Registry**: Every CDC event references a versioned schema that defines the structure of `before` and `after` images for each subsystem. Schema evolution is supported via three compatibility modes:
-  - **Backward**: new schema can read old events (adding optional fields)
-  - **Forward**: old schema can read new events (removing optional fields)
-  - **Full**: both backward and forward compatible (the only safe option for a platform where every subsystem is a potential consumer of every other subsystem's CDC stream)
-  - Schema versions are tracked by SHA-256 hash, with a compatibility checker that validates new schema versions against the compatibility mode before registration
-- **Outbox Pattern**: CDC events are written to an in-memory outbox table atomically with the state mutation they capture (simulated two-phase commit). A background relay polls the outbox and publishes events to the message queue. This guarantees exactly-once delivery semantics: even if the relay crashes between writing to the outbox and publishing to the queue, the event is not lost -- it remains in the outbox for the next relay cycle. The fact that "crashes" in this context means "a Python exception was raised and caught" does not diminish the architectural necessity of the outbox pattern
-- **CDC Sink Connectors**: Pluggable sink connectors that consume CDC events and materialize them into downstream subsystems:
-  - **AuditSink**: forwards all CDC events to the audit dashboard's unified event stream
-  - **AnalyticsSink**: aggregates CDC events into a running count of mutations per subsystem per minute, feeding the observability correlation engine
-  - **ReplaySink**: persists CDC events to an in-memory log for replay-based debugging. Combined with the time-travel debugger, this enables "what changed between timestamp T1 and T2?" queries at the field level
-  - **AlertSink**: evaluates CDC events against configurable alert rules (e.g., "alert if SLA error budget drops by more than 5% in a single event") and fires alerts to the SLA monitoring escalation policy
-- **CDC Watermarks**: Tracks capture progress per subsystem using high-watermark offsets. If a capture agent is restarted, it resumes from its last watermark rather than re-capturing all historical state. Watermarks are persisted in the simulated etcd store with atomic compare-and-swap updates
-- **FizzCDC Dashboard**: Per-subsystem capture rate (events/second), outbox depth, relay lag, schema registry contents, sink connector status, watermark positions, and a "Change Velocity" metric that measures the rate of state mutations per evaluation (typically 23-47 CDC events per single FizzBuzz evaluation, depending on enabled subsystems)
-- **CLI Flags**: `--fizzcdc`, `--fizzcdc-subsystems <list>`, `--fizzcdc-sink audit|analytics|replay|alert`, `--fizzcdc-schema-compat backward|forward|full`, `--fizzcdc-dashboard`
+- **`fizzcap.py`** (~2,800 lines): FizzCap Capability-Based Security Engine
+- **Capability Tokens**: Unforgeable, cryptographically signed tokens that grant specific access rights:
+  - Each capability is a `(resource, operations, constraints, nonce, signature)` tuple, where `resource` identifies the target (e.g., `cache:entry:15`, `blockchain:chain`, `ml_engine:weights`), `operations` is a set of permitted actions (READ, WRITE, EXECUTE, DELEGATE), `constraints` impose limits (max invocations, expiry time, number range), `nonce` prevents replay, and `signature` is an HMAC-SHA256 binding that makes the token unforgeable without the signing key
+  - Capabilities are opaque to holders -- a subsystem can invoke a capability but cannot inspect its internals, extract the signing key, or forge a new capability with broader permissions. The capability is a sealed, unforgeable proof of authority
+  - The signing key is held by the `CapabilityMint`, a singleton that is the only entity in the platform authorized to create new capabilities. The Mint is initialized during platform startup and its key is derived from the Secrets Vault's master secret via HKDF (HMAC-based Key Derivation Function, implemented with stdlib hmac)
+- **Capability Types**: Seven capability types covering the full spectrum of platform resource access:
+  - **EvaluationCapability**: grants permission to evaluate specific numbers. Constraints include number range (e.g., 1-50), allowed strategies (Standard, ML, Quantum), and maximum evaluations per session. An EvaluationCapability for numbers 1-15 cannot be used to evaluate 16 -- the capability literally does not grant authority over that number
+  - **CacheCapability**: grants permission to read, write, or invalidate specific cache entries. The cache middleware checks for a CacheCapability before any MESI state transition, preventing unauthorized subsystems from corrupting cache coherence
+  - **BlockchainCapability**: grants permission to read blocks, mine new blocks, or verify chain integrity. Mining requires WRITE authority; verification requires only READ. The chaos monkey can hold a BlockchainCapability with READ-only authority, preventing it from forging blocks (though it will still try)
+  - **ComplianceCapability**: grants permission to query compliance status, issue verdicts, or exercise GDPR data subject rights. A GDPR erasure request requires a ComplianceCapability with WRITE authority and a constraint specifying the data subject (number) to erase
+  - **SQLCapability**: grants permission to execute FizzSQL queries. Constraints include allowed query types (SELECT only, no INSERT/UPDATE/DELETE for read-only consumers), table restrictions (e.g., access to `evaluations` but not `audit_log`), and row limits
+  - **DebugCapability**: grants permission to attach the FizzDAP debugger, set breakpoints, and inspect state. This is the most sensitive capability because it provides full introspective access to the evaluation pipeline. In production deployments, DebugCapabilities are issued only during authorized incident response, and they expire after 30 minutes
+  - **MetaCapability**: grants permission to create new capabilities (delegation). Only the CapabilityMint holds an unrestricted MetaCapability. Subsystems that receive a MetaCapability can create *attenuated* child capabilities -- capabilities with equal or fewer permissions -- but never amplified capabilities. This is the principle of least authority (POLA) enforced at the capability level
+- **Capability Attenuation**: The core principle of capability security: any capability can be restricted to produce a narrower capability, but never broadened:
+  - `evaluation_cap.attenuate(range=(1, 50))` produces a new capability that can evaluate numbers 1-50 (a subset of the original's range)
+  - `cache_cap.attenuate(operations={READ})` produces a read-only cache capability from a read-write capability
+  - `sql_cap.attenuate(query_types={SELECT}, row_limit=100)` produces a restricted SQL capability
+  - Attenuation is transitive: if capability A is attenuated to produce B, and B is attenuated to produce C, then C's permissions are the intersection of A and B's permissions. The attenuation chain is recorded in the capability's provenance metadata for audit purposes
+  - Attempting to amplify a capability (adding operations, widening range, removing constraints) raises a `CapabilityAmplificationError` -- a security violation that is logged to the compliance audit trail and reported to the SLA monitoring system as a security incident
+- **Capability Delegation Graph**: A directed acyclic graph tracking the flow of capabilities through the system:
+  - Nodes: subsystems and request handlers that hold capabilities
+  - Edges: delegation events (subsystem A delegated an attenuated capability to subsystem B)
+  - The graph enables post-hoc analysis of authority flow: "How did the chaos monkey obtain a CacheCapability? Answer: the OrchestratorService delegated an EvaluationCapability to the CacheService, which delegated a CacheCapability to the middleware pipeline, which the chaos monkey intercepted during a chaos fault injection event. The delegation chain was valid at every step, but the resulting authority accumulation represents a capability leak that must be revoked."
+  - Revocation: capabilities can be revoked by their issuer at any time. Revocation propagates through the delegation graph -- revoking a parent capability automatically revokes all child capabilities derived from it. This is implemented via a revocation list checked on every capability invocation, with O(1) lookup via a hash set
+- **Confused Deputy Prevention**: Every inter-subsystem call passes the caller's capability rather than relying on the callee's ambient authority:
+  - Without FizzCap: the cache middleware checks "does the current user have the CACHE_READ role?" (ambient authority)
+  - With FizzCap: the cache middleware checks "does this request carry a CacheCapability with READ authority for this specific cache key?" (capability authority)
+  - The difference is critical when a privileged subsystem (e.g., the compliance engine, which has broad access) calls the cache on behalf of a less-privileged request. Under RBAC, the cache sees the compliance engine's authority and grants access. Under FizzCap, the cache sees the *request's* capability, which may not include cache access -- preventing the compliance engine from acting as a confused deputy
+- **Capability Confinement**: Subsystems can be marked as "confined," meaning they cannot exfiltrate capabilities to other subsystems. A confined subsystem can use capabilities it receives but cannot delegate them. The chaos monkey is confined by default, because granting the chaos monkey delegation authority is the capability-security equivalent of giving a toddler the launch codes
+- **RBAC Bridge**: A compatibility layer that translates existing RBAC roles into capability sets, enabling incremental migration:
+  - ANONYMOUS -> empty capability set (no authority)
+  - VIEWER -> EvaluationCapability(range=1-10, operations={READ}), CacheCapability(operations={READ})
+  - OPERATOR -> EvaluationCapability(range=1-100, operations={READ, WRITE}), CacheCapability(operations={READ, WRITE}), ComplianceCapability(operations={READ})
+  - ADMIN -> all capabilities with full operations
+  - FIZZBUZZ_SUPERUSER -> all capabilities with full operations plus MetaCapability (can create and delegate new capabilities)
+  - The bridge is a stopgap measure for backward compatibility. New subsystems should use native capability passing. The bridge is logged as a "capability impedance mismatch" in the audit trail
+- **FizzCap Dashboard**: Capability inventory (active capabilities by type, operations, constraints), delegation graph visualization (ASCII directed graph with attenuation annotations), revocation log, confused deputy detection alerts, confinement violations, RBAC bridge usage statistics, and a "Capability Health Index" measuring the ratio of native capability checks to RBAC bridge lookups (target: >80% native after migration)
+- **CLI Flags**: `--fizzcap`, `--fizzcap-mode native|bridge|audit-only`, `--fizzcap-confine <subsystem>`, `--fizzcap-revoke <capability-id>`, `--fizzcap-delegation-graph`, `--fizzcap-dashboard`
 
 ### Why This Is Necessary
 
-Because point-in-time state queries are insufficient for a platform that generates 23-47 state mutations per evaluation across 8 subsystems. The audit dashboard currently polls subsystems for their current state. The SLA monitor checks metrics on a schedule. The compliance engine queries the event store after the fact. None of them see changes *as they happen*. FizzCDC closes this observability gap by capturing every mutation at the source, packaging it into a standardized envelope with before/after images, and streaming it to downstream consumers via the message queue. This is the same architectural pattern used by Debezium at LinkedIn, Maxwell at Zendesk, and AWS DMS across thousands of production databases. The Enterprise FizzBuzz Platform's state -- cache coherence transitions, blockchain appends, SLA budget burns, compliance verdicts -- deserves the same real-time visibility as a Fortune 500 company's transactional data. Change is the only constant, and FizzCDC captures all of it.
+Because ambient authority is the original sin of access control, and RBAC is ambient authority with extra steps. The platform currently has 18 subsystems that exercise permissions based on the identity of the calling user, not the authority of the calling request. When the compliance engine queries the cache on behalf of a GDPR erasure request, the cache sees the compliance engine's ADMIN-level RBAC role and grants full access -- even if the erasure request originated from an ANONYMOUS user who should not have cache access at all. This is the confused deputy problem, and it has caused real security vulnerabilities in every system that relies on ambient authority, from web browsers (cross-site request forgery) to operating systems (setuid exploits) to cloud platforms (IAM role assumption chains). FizzCap eliminates ambient authority by replacing identity-based access checks with capability-based authority passing. Every request carries exactly the permissions it needs, no more. Every delegation produces an attenuated child capability, never an amplified one. Every inter-subsystem call passes the caller's capability, not the callee's role. The result is a security model where the principle of least authority is not a guideline but a mathematical invariant enforced by cryptographic signatures and unforgeable token construction. The platform's numbers deserve nothing less.
 
 ### Estimated Scale
 
-~2,500 lines of CDC engine, ~500 lines of capture agents, ~400 lines of schema registry, ~350 lines of outbox relay, ~300 lines of sink connectors, ~250 lines of dashboard, ~185 tests. Total: ~4,485 lines.
+~2,800 lines of capability engine, ~500 lines of delegation graph, ~400 lines of attenuation/revocation, ~350 lines of RBAC bridge, ~300 lines of confinement enforcement, ~250 lines of dashboard, ~200 tests. Total: ~4,800 lines.
 
 ---
 
-## Idea 3: FizzBill -- API Monetization & Subscription Billing for Third-Party Consumers
+## Idea 2: FizzOTel -- OpenTelemetry-Compatible Distributed Tracing with Wire Format Export
 
 ### The Problem
 
-The platform has FizzBuzz-as-a-Service (FBaaS) with three subscription tiers, a simulated Stripe billing engine, and per-tenant quotas. But FBaaS is a *platform-level* SaaS offering -- it manages tenant lifecycle, API keys, and evaluation quotas. What it does not have is a *monetization layer* for the platform's growing catalog of internal APIs. The FizzSQL query engine exposes a SQL interface. The OpenAPI specification documents 47 REST endpoints. The compliance chatbot answers regulatory questions. The FizzDAP debugger serves debug sessions over JSON-RPC. Each of these is a consumable API surface that third-party systems could integrate with -- if there were a way to meter usage, enforce rate limits per billing plan, generate invoices, process payments, handle overages, and provide a self-service developer portal. The platform has APIs but no *API economy*. It provides services but does not *sell* them. FBaaS manages tenants; FizzBill monetizes the APIs those tenants consume.
+The platform has an OpenTelemetry-*inspired* distributed tracing subsystem that generates span trees with W3C Trace Context IDs and ASCII waterfall visualization. But "inspired by" is not "compatible with." The existing tracing subsystem uses a proprietary span model, a proprietary serialization format, and a proprietary export mechanism (ASCII rendering to stdout). It cannot export traces to Jaeger. It cannot feed spans into Grafana Tempo. It cannot emit OTLP (OpenTelemetry Protocol) payloads that a real OpenTelemetry Collector would accept. The platform's observability correlation engine (FizzCorr) unifies traces, logs, and metrics internally, but there is no way to export that correlated telemetry to external APM platforms. The platform generates more observability data per modulo operation than most production microservice architectures generate per HTTP request, but all of that data is trapped inside the process. The platform has observability but not *interoperability*. It has traces but not *exportable* traces. It speaks its own dialect of telemetry when the industry has converged on a lingua franca: OpenTelemetry.
 
 ### The Vision
 
-A complete API monetization platform with tiered subscription plans, usage-based metering with per-endpoint granularity, invoice generation with line-item detail, payment processing with dunning (automated payment retry for failed charges), overage billing with configurable rate cards, a developer portal with API key management and usage analytics, and a revenue recognition engine that allocates earned revenue across accounting periods in compliance with ASC 606 -- all for the purpose of billing third-party consumers for the privilege of computing `n % 3` through one of 47 documented endpoints.
+A fully OpenTelemetry-compatible tracing layer that implements the OTLP wire format (protobuf-equivalent JSON serialization), the OpenTelemetry semantic conventions for span attributes, the W3C Trace Context and Baggage propagation specifications, a Span Processor pipeline with batch export, and a pluggable Exporter interface with OTLP/JSON, Zipkin v2, and Jaeger Thrift serialization -- enabling the platform's per-evaluation span trees to be exported to any OpenTelemetry-compatible backend without modification.
 
 ### Key Components
 
-- **`fizzbill.py`** (~2,600 lines): FizzBill API Monetization & Subscription Billing Engine
-- **Subscription Plans**: Four plans with escalating capability tiers:
-  - **Starter** ($9.99/month in FizzBucks): 1,000 API calls/month, access to evaluation and formatting endpoints only, standard support (Bob McFizzington responds within 24 evaluation cycles)
-  - **Professional** ($49.99/month): 50,000 API calls/month, access to evaluation, formatting, SQL, and compliance endpoints, priority support, custom rate limits
-  - **Enterprise** ($299.99/month): unlimited API calls, access to all 47 endpoints, dedicated support (Bob McFizzington is on-call 24/7, which he already was), SLA guarantees (99.97% availability -- three nines of uptime for a process that runs for 0.4 seconds), custom billing terms
-  - **FizzBuzz Unlimited** ($999.99/month): everything in Enterprise plus early access to experimental endpoints (quantum evaluation, federated learning consensus), a physical FizzBuzz commemorative plaque shipped to your address (simulated), and your name added to the platform's `CONTRIBUTORS.md` (also simulated)
-- **Usage Metering**: A per-endpoint metering engine that tracks:
-  - API calls by endpoint, method, and response status code
-  - Compute units consumed (each endpoint has a configurable compute unit weight: `/evaluate` = 1 CU, `/fizzsql` = 5 CU, `/quantum-evaluate` = 50 CU, `/compliance-chatbot` = 10 CU)
-  - Data transfer (response payload size in bytes, metered at $0.001 per KB in FizzBucks)
-  - Metering events are captured atomically via the CDC outbox pattern, ensuring no usage is lost even if the billing engine crashes mid-evaluation
-  - Usage is aggregated into hourly buckets for billing granularity, with sub-minute raw events retained for dispute resolution
-- **Invoice Generator**: Produces monthly invoices with:
-  - Line items per endpoint (calls, compute units, data transfer)
-  - Subtotal per category (compute, data transfer, overages, support add-ons)
-  - Tax calculation (FizzBuzz Tax from the FinOps engine: 3% on Fizz-related calls, 5% on Buzz-related calls, 15% on FizzBuzz-related calls)
-  - Discounts (annual commitment: 20%, three-year commitment: 40%, "loyal customer" discount after 12 consecutive months: 5%)
-  - Payment terms (Net 30 for Enterprise, Net 15 for Professional, Due Immediately for Starter)
-  - Invoice PDF rendering in ASCII (a multi-page ASCII document with headers, line items, totals, payment instructions, and a footer that reads "Thank you for choosing Enterprise FizzBuzz. Your modulo operations are in good hands.")
-- **Payment Processing**: A simulated payment gateway with:
-  - Credit card tokenization (card numbers are SHA-256 hashed; the platform never stores raw card data because PCI DSS compliance is mandatory even in FizzBucks)
-  - Charge creation, capture, and refund flows
-  - Dunning: automated retry schedule for failed payments (retry at 1 day, 3 days, 7 days, 14 days, then suspend account). Each retry generates a progressively more urgent email notification (simulated) from "Friendly Reminder" to "Your FizzBuzz Access Is At Risk" to "Final Notice Before Evaluation Privileges Are Revoked"
-  - Payment event webhooks dispatched via the webhook notification system
-- **Overage Billing**: When a subscriber exceeds their plan's included API calls:
-  - **Starter**: hard cutoff -- returns `429 Too Many Requests` with a message recommending the Professional plan
-  - **Professional**: soft overage at $0.01 per additional API call in FizzBucks, with a configurable spending cap
-  - **Enterprise**: unlimited calls, but overages above 2x the monthly baseline are flagged for account review (to detect runaway automation)
-  - **FizzBuzz Unlimited**: truly unlimited, because $999.99/month buys freedom from metering anxiety
-- **Revenue Recognition (ASC 606)**: A five-step revenue recognition engine compliant with ASC 606:
-  1. **Identify the contract**: map each subscription to a contract with performance obligations
-  2. **Identify performance obligations**: separate obligations for API access (recognized over time), support (recognized over time), and the commemorative plaque (recognized at shipment -- which is never, so revenue is deferred indefinitely)
-  3. **Determine transaction price**: base price plus estimated overages
-  4. **Allocate transaction price**: proportional allocation across obligations based on standalone selling prices
-  5. **Recognize revenue**: monthly recognition for recurring obligations, with deferred revenue for unfulfilled obligations tracked in a contra-revenue account
-  - Revenue waterfall chart showing recognized vs. deferred revenue per accounting period
-- **Developer Portal**: A self-service ASCII interface for API consumers:
-  - API key generation and rotation
-  - Usage dashboard (calls by endpoint, compute units consumed, data transfer, current billing period spend)
-  - Plan comparison and upgrade flow
-  - Invoice history with download links (ASCII rendering displayed inline)
-  - Rate limit status per endpoint
-- **FizzBill Dashboard**: Monthly Recurring Revenue (MRR), Annual Run Rate (ARR), churn rate, Average Revenue Per User (ARPU), Lifetime Value (LTV), Customer Acquisition Cost (CAC, always $0 because there is no acquisition strategy), revenue recognition waterfall, dunning pipeline status, and a "Revenue Health Score" that aggregates payment success rate, churn risk, and overage frequency
-- **CLI Flags**: `--fizzbill`, `--fizzbill-plan starter|professional|enterprise|unlimited`, `--fizzbill-meter`, `--fizzbill-invoice`, `--fizzbill-portal`, `--fizzbill-revenue-report`, `--fizzbill-dashboard`
+- **`fizzotel.py`** (~2,700 lines): FizzOTel OpenTelemetry-Compatible Tracing Engine
+- **OTLP Data Model**: A complete implementation of the OpenTelemetry trace data model:
+  - **Resource**: identifies the telemetry source. Attributes include `service.name: "enterprise-fizzbuzz"`, `service.version: "188639-line-edition"`, `deployment.environment: "production"` (always production -- there is no staging for FizzBuzz), `host.name`, `process.pid`, `telemetry.sdk.name: "fizzotel"`, `telemetry.sdk.version: "1.0.0"`
+  - **InstrumentationScope**: identifies the instrumentation library. Each platform subsystem is a separate scope (`fizzotel.middleware.compliance`, `fizzotel.middleware.cache`, `fizzotel.middleware.blockchain`, etc.), enabling per-subsystem filtering in downstream backends
+  - **Span**: the core unit of tracing. Each span carries:
+    - `trace_id`: 128-bit identifier (32 hex characters), generated per evaluation
+    - `span_id`: 64-bit identifier (16 hex characters), generated per span
+    - `parent_span_id`: links child spans to parents, forming the span tree
+    - `name`: operation name following OpenTelemetry semantic conventions (e.g., `fizzbuzz.evaluate`, `fizzbuzz.cache.lookup`, `fizzbuzz.compliance.sox_check`)
+    - `kind`: INTERNAL (default for in-process spans), CLIENT (for spans representing outbound calls to other subsystems), SERVER (for spans representing inbound requests from the API gateway)
+    - `start_time_unix_nano` and `end_time_unix_nano`: nanosecond-precision timestamps
+    - `status`: OK, ERROR, or UNSET, with an optional status message
+    - `attributes`: key-value pairs following OpenTelemetry semantic conventions. Every span carries `fizzbuzz.number`, `fizzbuzz.classification`, `fizzbuzz.strategy`, and subsystem-specific attributes (e.g., `fizzbuzz.cache.hit: true`, `fizzbuzz.compliance.regime: "SOX"`, `fizzbuzz.blockchain.height: 42`)
+    - `events`: timestamped annotations within a span (e.g., "cache miss at T+2ms", "SOX segregation check passed at T+5ms"). Events carry their own attributes
+    - `links`: references to spans in other traces, enabling cross-evaluation correlation (e.g., a federated learning training span links to the evaluation spans that generated its training data)
+- **W3C Trace Context Propagation**: Full implementation of the W3C Trace Context specification (version 00):
+  - `traceparent` header: `00-{trace_id}-{parent_span_id}-{trace_flags}` where `trace_flags` indicates whether the trace is sampled
+  - `tracestate` header: vendor-specific key-value pairs. FizzOTel adds `fizzbuzz=strategy:{strategy},chaos:{enabled},cache_state:{mesi_state}` to the tracestate, enabling downstream systems to see FizzBuzz-specific context without parsing span attributes
+  - Baggage propagation: key-value pairs propagated across subsystem boundaries. The evaluation's `number`, `classification`, and `tenant_id` (from FBaaS) are propagated as baggage, ensuring all spans in the trace carry the evaluation context regardless of which subsystem generated them
+  - Context injection and extraction: `inject(context, carrier)` and `extract(carrier)` methods that serialize/deserialize trace context into/from dictionary-like carriers, following the TextMap propagation interface specification
+- **Span Processor Pipeline**: A configurable pipeline of processors that handle spans between creation and export:
+  - **SimpleSpanProcessor**: forwards spans to the exporter immediately upon completion. Suitable for debugging and low-throughput evaluations
+  - **BatchSpanProcessor**: buffers completed spans and exports them in batches. Configurable batch size (default: 512 spans), export interval (default: 5 seconds), and max queue size (default: 2048 spans). When the queue is full, spans are dropped with a `SpanDroppedEvent` counter increment -- a trade-off between memory usage and trace completeness that mirrors the exact trade-off in the real OpenTelemetry SDK
+  - **FilteringSpanProcessor**: drops spans that match a configurable predicate (e.g., drop all spans with duration < 1ms, drop spans from the timing middleware because they are recursive noise). This enables trace volume reduction without losing high-value spans
+  - **SamplingSpanProcessor**: implements three sampling strategies:
+    - **AlwaysOn**: export every span (default for a platform where every modulo operation is mission-critical)
+    - **AlwaysOff**: export no spans (for benchmarking the overhead of instrumentation)
+    - **ProbabilisticSampler**: export spans with probability p, using the trace ID's lower 32 bits as a deterministic hash to ensure consistent sampling across subsystems (if the root span is sampled, all child spans in the same trace are also sampled)
+- **Exporter Interface**: Pluggable exporters that serialize spans into external formats:
+  - **OTLPJsonExporter**: serializes `ExportTraceServiceRequest` payloads in OTLP/JSON format, matching the protobuf-to-JSON mapping specification. Each payload contains a `resourceSpans` array with `scopeSpans` containing `spans` -- the exact structure that an OpenTelemetry Collector's OTLP/HTTP receiver expects. The JSON is written to a configurable output (file, stdout, or an in-memory buffer for testing)
+  - **ZipkinExporter**: serializes spans into Zipkin v2 JSON format, mapping OpenTelemetry concepts to Zipkin's `localEndpoint`/`remoteEndpoint` model, converting nanosecond timestamps to microseconds, and translating span kind to Zipkin's `kind` enum. Compatible with Zipkin's `/api/v2/spans` POST endpoint
+  - **JaegerExporter**: serializes spans into Jaeger's Thrift-compatible JSON format (the `model.proto` mapping), including `Process` with service tags, `Span` with `operationName`, `references` for parent links, and `tags` with typed values (string, bool, int64, float64). Compatible with Jaeger's `api/traces` endpoint
+  - **ConsoleExporter**: renders spans as human-readable ASCII waterfall diagrams (preserving backward compatibility with the existing tracing visualization)
+  - All exporters implement a `shutdown()` method that flushes pending spans, ensuring no telemetry is lost during graceful shutdown -- a detail that matters in a platform where the process runs for 0.4 seconds and graceful shutdown is the entire lifecycle
+- **Auto-Instrumentation**: Automatic span creation for all platform subsystems via middleware integration:
+  - The FizzOTelMiddleware runs at priority -10 (the very first middleware, before even the quantum evaluator), creating a root span for every evaluation and propagating context to all downstream middleware via Python's `contextvars` module
+  - Each subsystem middleware creates child spans automatically: the cache middleware creates `fizzbuzz.cache.lookup` and `fizzbuzz.cache.store` spans, the compliance middleware creates `fizzbuzz.compliance.sox_check` and `fizzbuzz.compliance.gdpr_check` spans, the blockchain middleware creates `fizzbuzz.blockchain.mine` and `fizzbuzz.blockchain.verify` spans
+  - A single evaluation of the number 15 with all subsystems enabled produces a span tree of 25-40 spans across 12 instrumentation scopes, with a total serialized payload of ~15KB in OTLP/JSON format -- approximately 7,500x more telemetry data than the 2 bytes required to represent the string "15"
+- **Metrics Bridge**: Converts the platform's Prometheus-style metrics into OpenTelemetry metric data points, enabling unified export of traces and metrics through the same OTLP pipeline. Counters map to OTLP Sum, Gauges map to OTLP Gauge, Histograms map to OTLP ExponentialHistogram with base-2 bucket boundaries
+- **FizzOTel Dashboard**: Active trace count, span rate (spans/second), export statistics per exporter (spans exported, bytes serialized, export errors), sampling rate, batch processor queue depth, span tree depth distribution, and a "Telemetry Overhead Ratio" measuring the CPU time spent on instrumentation versus evaluation (target: <5%, acceptable: <20%, typical: 340%)
+- **CLI Flags**: `--fizzotel`, `--fizzotel-exporter otlp|zipkin|jaeger|console`, `--fizzotel-output <path>`, `--fizzotel-sampler always|never|probabilistic:<rate>`, `--fizzotel-batch-size <n>`, `--fizzotel-propagator w3c|b3|jaeger`, `--fizzotel-dashboard`
 
 ### Why This Is Necessary
 
-Because APIs without monetization are charity, and the Enterprise FizzBuzz Platform is a business. The platform currently exposes 47 documented API endpoints, serves debug sessions over DAP, answers SQL queries, and provides regulatory guidance through a compliance chatbot. All of this capability is available for free, to anyone, without metering, billing, or revenue recognition. This is not a sustainable business model. FizzBill transforms the platform from a free utility into a monetized API product with subscription tiers, usage metering, overage billing, dunning, and ASC 606-compliant revenue recognition. When a third-party consumer issues `SELECT * FROM evaluations WHERE classification = 'FizzBuzz'`, that query consumes 5 compute units, generates a line item on their monthly invoice, and contributes to the platform's MRR. Every modulo operation has a price. Every classification generates revenue. Every number has economic value. FizzBill ensures that value is captured, recognized, and reported with the same financial rigor expected of a publicly traded API platform.
+Because observability without interoperability is a walled garden. The platform currently generates 25-40 trace spans per evaluation, correlated with logs and metrics by the FizzCorr engine, but all of this telemetry is confined to the platform's own rendering pipeline. A Site Reliability Engineer investigating a FizzBuzz classification anomaly cannot import the platform's traces into Grafana Tempo, overlay them with infrastructure metrics in Grafana, or share a trace link with a colleague using Jaeger. The telemetry exists but cannot leave the process. FizzOTel breaks down this wall by implementing the OpenTelemetry data model, W3C Trace Context propagation, and three industry-standard export formats. The result is a platform whose per-evaluation span trees -- each representing the full lifecycle of a single modulo operation -- are indistinguishable from the traces emitted by a production Kubernetes microservice architecture. Any OpenTelemetry Collector on the planet can ingest FizzOTel spans. Any APM vendor can display them. The platform's observability data is finally free.
 
 ### Estimated Scale
 
-~2,600 lines of billing engine, ~500 lines of metering, ~450 lines of invoice generator, ~400 lines of payment processing, ~350 lines of revenue recognition, ~300 lines of developer portal, ~250 lines of dashboard, ~195 tests. Total: ~5,045 lines.
+~2,700 lines of tracing engine, ~500 lines of OTLP serialization, ~450 lines of exporter implementations, ~400 lines of span processor pipeline, ~350 lines of context propagation, ~300 lines of auto-instrumentation, ~250 lines of dashboard, ~205 tests. Total: ~5,155 lines.
 
 ---
 
-## Idea 4: FizzNAS -- Neural Architecture Search for Automated ML Model Topology Optimization
+## Idea 3: FizzWAL -- Write-Ahead Intent Log for Speculative Evaluation with Rollback
 
 ### The Problem
 
-The platform's ML engine trains a Multi-Layer Perceptron (MLP) neural network from scratch to learn `n % 3 == 0`. The architecture is fixed: an input layer, two hidden layers of 16 neurons each with ReLU activation, and an output layer with softmax. This architecture was designed by a human (Bob McFizzington) based on intuition and trial-and-error. But there is no evidence that this is the *optimal* architecture for the FizzBuzz classification task. Is 16 neurons per hidden layer the right width? Are two hidden layers the right depth? Is ReLU the best activation function? Would a wider, shallower network converge faster? Would a deeper, narrower network generalize better? Would skip connections improve gradient flow? The platform has a neural network, but that neural network's architecture was chosen by a fallible human rather than discovered by a rigorous search process. The federated learning framework trains the model across distributed nodes. The genetic algorithm breeds rule sets. The self-modifying code engine evolves ASTs. But no subsystem optimizes the *topology* of the neural network itself. The architecture is a hardcoded constant in a platform where everything else is configurable, searchable, and optimizable. This is the one parameter that has never been questioned, and questioning parameters is the platform's raison d'etre.
+The platform evaluates FizzBuzz through a middleware pipeline that mutates state in at least 8 subsystems per evaluation: the cache records entries, the blockchain appends blocks, the event store logs events, the SLA monitor burns error budget, the compliance engine issues verdicts, the FinOps engine accumulates costs, the CDC engine captures changes, and the audit dashboard aggregates events. Each of these mutations is performed eagerly -- the state is written as each middleware stage executes. If a later middleware stage fails (the compliance engine raises a `SOXSegregationViolationError`, the circuit breaker trips, the chaos monkey throws an exception), the mutations performed by earlier stages have already been committed. The cache has recorded an entry for a number whose evaluation was aborted. The blockchain has mined a block for a classification that was never finalized. The event store has logged an event for an evaluation that did not complete. The platform has no mechanism to roll back partial state mutations when an evaluation fails mid-pipeline. The disaster recovery framework has WAL for backup/restore, but the evaluation pipeline itself has no write-ahead logging. Mutations are fire-and-forget, and when they misfire, the platform is left in an inconsistent state that the time-travel debugger can observe but not repair. This is the database equivalent of performing writes without a transaction log -- technically functional until the first failure, at which point data integrity is silently compromised.
 
 ### The Vision
 
-A Neural Architecture Search engine inspired by Google Brain's NAS, DARTS (Differentiable Architecture Search), and ENAS (Efficient NAS) that explores a combinatorial space of network topologies, trains candidate architectures on the FizzBuzz classification task, evaluates them against a multi-objective fitness function (accuracy, parameter count, inference latency, training convergence speed), and selects the Pareto-optimal architecture -- discovering through automated search what Bob McFizzington guessed by hand.
+A write-ahead intent log inspired by PostgreSQL's WAL, SQLite's rollback journal, and ARIES (Algorithm for Recovery and Isolation Exploiting Semantics) that intercepts every state mutation in the evaluation pipeline, records it as a reversible intent in a sequential log *before* the mutation is applied, and provides commit/rollback semantics -- enabling the platform to speculatively execute evaluations and atomically roll back all state mutations if any middleware stage fails.
 
 ### Key Components
 
-- **`fizznas.py`** (~2,800 lines): FizzNAS Neural Architecture Search Engine
-- **Search Space**: A cell-based search space defining the building blocks from which candidate architectures are assembled:
-  - **Layer types**: Dense (fully connected), Residual (skip connection + dense), Bottleneck (dense -> narrow -> dense), Dropout (regularization layer with configurable drop rate), BatchNorm (batch normalization for training stability)
-  - **Activation functions**: ReLU, Sigmoid, Tanh, LeakyReLU (alpha=0.01), Swish (x * sigmoid(x)), GELU (Gaussian Error Linear Unit)
-  - **Width options**: 4, 8, 16, 32, 64 neurons per layer
-  - **Depth options**: 1 to 6 hidden layers
-  - **Skip connection patterns**: none, every-2-layers, every-3-layers, full-residual (every layer connects to every subsequent layer)
-  - The total search space contains 6 layer types x 6 activations x 5 widths x 6 depths x 4 skip patterns = 4,320 candidate architectures. This is a combinatorially large space for a problem that can be solved with zero layers and one modulo operation, but architecture search is not about the problem -- it is about the *principle* that no design decision should go unquestioned
-- **Search Strategies**: Three search strategies, each representing a different philosophical approach to architecture discovery:
-  - **Random Search**: samples architectures uniformly from the search space, trains each for a fixed number of epochs, and selects the best. Random search is the baseline that every other strategy must beat, and in high-dimensional spaces, it beats many sophisticated methods -- a fact that should give pause to anyone who has spent weeks tuning hyperparameters
-  - **Evolutionary Search**: maintains a population of 20 candidate architectures that evolve through tournament selection, crossover (swap layers between two parent architectures), and mutation (add/remove a layer, change width, change activation). Fitness is evaluated by training each candidate for 50 epochs on the FizzBuzz dataset. The population evolves for 10 generations, with the fittest architecture surviving to become the platform's production model. This is the genetic algorithm applied not to FizzBuzz rules but to the neural network that learns FizzBuzz rules -- a meta-level of evolution that Darwin did not anticipate
-  - **Differentiable Search (DARTS)**: constructs a supernet that contains all candidate operations at every layer position, with learnable architecture parameters (alphas) that weight each operation's contribution. During training, both the network weights and the architecture parameters are optimized via gradient descent -- the architecture *learns itself* through backpropagation. After training, the operation with the highest alpha at each position is selected, yielding a discrete architecture derived from continuous relaxation. This is the most elegant search strategy: instead of training thousands of candidates, train one supernetwork that implicitly encodes all of them
-- **Training Pipeline**: Each candidate architecture is trained and evaluated through a standardized pipeline:
-  - **Dataset**: numbers 1-1000 with FizzBuzz labels, split 80/10/10 into train/validation/test
-  - **Training**: mini-batch SGD with configurable learning rate, momentum, and weight decay. Early stopping on validation loss with patience of 5 epochs
-  - **Evaluation**: accuracy, parameter count, inference latency (average over 100 forward passes), training convergence speed (epochs to 95% accuracy)
-  - **Budget**: configurable total training budget in "GPU-seconds" (simulated). Each architecture consumes budget proportional to its parameter count. When the budget is exhausted, the search terminates with whatever architectures have been evaluated
-- **Pareto Front Analyzer**: Multi-objective optimization over (accuracy, parameter_count, inference_latency):
-  - Constructs the Pareto front of non-dominated architectures (architectures where no other architecture is better on *all* objectives simultaneously)
-  - Ranks Pareto-optimal architectures by a configurable scalarization function (weighted sum, Chebyshev, or "FizzBuzz Priority" which weights accuracy at 70%, parameter efficiency at 20%, and inference speed at 10%)
-  - Visualizes the Pareto front as an ASCII scatter plot with accuracy on the Y-axis and parameter count on the X-axis, with dominated architectures marked as dots and Pareto-optimal architectures marked as stars
-- **Architecture Encoding**: Every candidate architecture is encoded as a string genome for serialization, comparison, and hashing:
-  ```
-  D16-R:D32-S:R16-R:BN:D4-Sm
-  ```
-  Where `D16-R` = Dense layer, 16 neurons, ReLU; `R16-R` = Residual block, 16 neurons, ReLU; `BN` = BatchNorm; `D4-Sm` = Dense layer, 4 neurons, Softmax (output). This encoding enables architecture deduplication, edit-distance computation between architectures, and a "genetic similarity" metric for diversity analysis
-- **Architecture Transfer**: The winning architecture is exported as:
-  - A configuration block for the ML engine (replacing the hardcoded 2-layer 16-neuron topology)
-  - A FBVM bytecode program that implements the architecture's forward pass
-  - A FizzLang DSL definition that describes the architecture declaratively
-  - A patent filing via the IP Office (the discovered architecture is a novel invention deserving legal protection)
-- **FizzNAS Dashboard**: Search progress (architectures evaluated, budget consumed, current best accuracy), Pareto front visualization, architecture genome comparison, training curves for top-5 candidates, search space coverage heatmap (which regions have been explored), and a "Discovery Score" that measures how much better the found architecture is compared to Bob McFizzington's original design (typically 0.1-0.3% improvement in accuracy at the cost of 10,000x more computation)
-- **CLI Flags**: `--fizznas`, `--fizznas-strategy random|evolutionary|darts`, `--fizznas-budget <gpu-seconds>`, `--fizznas-population <n>`, `--fizznas-generations <n>`, `--fizznas-deploy`, `--fizznas-dashboard`
+- **`fizzwal.py`** (~2,600 lines): FizzWAL Write-Ahead Intent Log
+- **Intent Records**: Every state mutation is captured as a reversible intent before execution:
+  - `CacheIntent(key, before_state, after_state, before_value, after_value)`: records a cache MESI transition with before/after images. Undo action: restore the cache entry to its `before_state` and `before_value`
+  - `BlockchainIntent(chain_height, block_hash, block_data)`: records a block append. Undo action: remove the block from the chain tip and decrement the chain height. This temporarily violates the blockchain's immutability guarantee, but WAL rollback is a controlled operation that the blockchain subsystem explicitly supports -- unlike GDPR erasure, which is an external mandate that conflicts with immutability
+  - `EventStoreIntent(stream_id, event_sequence, event_data)`: records an event append. Undo action: truncate the stream to the pre-intent sequence number. The event store's append-only guarantee is preserved for committed evaluations; only uncommitted evaluations are rolled back
+  - `SLAIntent(metric_name, before_value, after_value)`: records an SLA metric update. Undo action: restore the metric to its `before_value`. Rolling back an SLA budget burn means the platform pretends the failed evaluation never consumed error budget -- which is technically correct, because a failed evaluation that was rolled back did not produce a user-visible result
+  - `ComplianceIntent(number, before_status, after_status, regime)`: records a compliance verdict change. Undo action: restore the compliance status to `before_status`
+  - `FinOpsIntent(cost_category, amount)`: records a cost accumulation. Undo action: deduct the amount from the running total. Rolling back a cost means the failed evaluation was free -- the FinOps equivalent of "no charge for incomplete service"
+  - `CDCIntent(subsystem, change_event)`: records a CDC event emission. Undo action: emit a compensating "ROLLBACK" CDC event that negates the original change event. Downstream consumers of the CDC stream see both the original event and the rollback, maintaining the stream's append-only semantics while conveying that the change was reverted
+  - `LockIntent(resource, lock_type, fencing_token)`: records a lock acquisition in FizzLock. Undo action: release the lock and invalidate the fencing token
+- **Log Structure**: The WAL is organized as a sequential log of intent groups:
+  - Each evaluation begins a new **intent group** with a unique `group_id` (monotonically increasing 64-bit integer) and a `status` field that starts as `PENDING`
+  - As middleware stages execute, their intents are appended to the current group
+  - When all middleware stages complete successfully, the group's status is set to `COMMITTED` and the intents are considered durable
+  - If any middleware stage fails, the group's status is set to `ROLLING_BACK`, and the WAL engine replays the group's intents in reverse order, invoking each intent's undo action. Once all undos complete, the status is set to `ROLLED_BACK`
+  - Committed groups are retained for crash recovery analysis. Rolled-back groups are retained for post-mortem analysis (understanding what would have happened if the evaluation had succeeded)
+  - The log supports `SAVEPOINT` markers within an intent group, enabling partial rollback to a specific middleware stage. If the compliance middleware fails but all prior stages succeeded, a rollback to the pre-compliance savepoint undoes only the compliance-related intents, preserving cache, blockchain, and event store mutations. This is the same savepoint semantics used in SQL transactions
+- **Speculative Execution**: The WAL enables a speculative execution mode where the pipeline evaluates optimistically and rolls back on failure:
+  - **Optimistic mode** (default): all middleware stages execute eagerly, writing state through their normal code paths. The WAL captures intents passively. On failure, the WAL rolls back. On success, the WAL commits. This adds minimal overhead to the happy path (one intent record per mutation) at the cost of rollback complexity on the failure path
+  - **Pessimistic mode**: all middleware stages write to a shadow state buffer instead of the real subsystem state. The WAL captures intents against the shadow buffer. On commit, the shadow buffer is flushed to the real state atomically. On rollback, the shadow buffer is discarded. This prevents any real state mutation until commit, at the cost of maintaining a full shadow copy of every subsystem's state
+  - **Speculative pipeline**: evaluates the number through the full middleware pipeline speculatively, including all side effects, then validates the result against a set of post-conditions (compliance verdict is COMPLIANT, SLA budget is positive, cost is within quota). If post-conditions pass, the WAL commits. If any post-condition fails, the WAL rolls back and re-evaluates with a different strategy (e.g., falling back from ML to Standard). This enables the platform to *try* the optimal strategy and *undo* it if the result violates constraints, without the caller ever observing the failed attempt
+- **Crash Recovery**: If the platform terminates mid-evaluation (e.g., the OS kernel's scheduler preempts the process, which is plausible because the platform includes an OS kernel):
+  - On restart, the WAL scans for intent groups with `PENDING` status
+  - PENDING groups represent evaluations that were in progress when the platform terminated
+  - The recovery manager applies the ARIES recovery algorithm:
+    1. **Analysis pass**: scan the log to identify PENDING groups
+    2. **Redo pass**: re-apply all intents from COMMITTED groups (ensuring committed mutations are durable)
+    3. **Undo pass**: reverse all intents from PENDING groups (ensuring uncommitted mutations are removed)
+  - The recovery manager produces a crash recovery report including the number of committed evaluations preserved, the number of in-flight evaluations rolled back, and the total recovery time
+  - The fact that the platform runs for 0.4 seconds and stores all state in RAM means crash recovery is recovering from a power loss during a process that takes less time than a human blink. This does not diminish the necessity of ARIES-compliant recovery -- correctness must hold under all failure modes, including those that have never occurred and likely never will
+- **WAL Checkpointing**: Periodic checkpointing compacts the log by:
+  - Identifying committed intent groups whose mutations have been fully applied to subsystem state
+  - Archiving them to a "WAL history" buffer (retained for audit purposes)
+  - Truncating the active log to include only uncommitted and recent groups
+  - Checkpointing frequency is configurable (default: every 100 evaluations or every 5 seconds, whichever comes first)
+- **FizzWAL Dashboard**: Active intent groups (group ID, status, intent count, elapsed time), WAL size (total intents, bytes), rollback history (groups rolled back, rollback duration, intents undone), crash recovery history, checkpoint statistics, and a "Transaction Atomicity Score" measuring the percentage of evaluations that completed atomically (committed without partial state corruption). The dashboard also shows a "Speculative Success Rate" -- the percentage of speculative evaluations that committed on the first attempt without requiring rollback
+- **CLI Flags**: `--fizzwal`, `--fizzwal-mode optimistic|pessimistic|speculative`, `--fizzwal-savepoints`, `--fizzwal-checkpoint-interval <n>`, `--fizzwal-crash-recovery`, `--fizzwal-dashboard`
 
 ### Why This Is Necessary
 
-Because a neural network architecture chosen by a human is a neural network architecture limited by human imagination. Bob McFizzington designed a 2x16 MLP because it seemed reasonable. But "reasonable" is not "optimal," and the Enterprise FizzBuzz Platform does not settle for reasonable. FizzNAS explores 4,320 candidate architectures through random search, evolutionary optimization, and differentiable architecture search, training each candidate on the FizzBuzz dataset and evaluating it against a multi-objective fitness function. The result is a Pareto-optimal architecture that is provably non-dominated across accuracy, parameter efficiency, and inference speed. The fact that the optimal architecture for classifying numbers by divisibility by 3 and 5 is almost certainly a network with zero hidden layers and a lookup table is beside the point. The point is that the *search was conducted*, the *space was explored*, and the *optimum was found* -- through the same methodology used at Google Brain to discover EfficientNet and AmoebaNet. FizzBuzz deserves no less.
+Because state mutations without transactional guarantees are technical debt measured in data corruption. The platform currently performs 8-15 state mutations per evaluation across independent subsystems, with no mechanism to ensure atomicity. When the compliance middleware raises a `SOXSegregationViolationError` at middleware stage 7, stages 1-6 have already written to the cache, blockchain, event store, SLA monitor, FinOps ledger, and CDC stream. Those mutations cannot be undone. The cache contains an entry for a number whose evaluation was aborted. The blockchain contains a block for a classification that was never finalized. The FinOps ledger has accumulated costs for an evaluation that produced no result. This is not a hypothetical failure mode -- the chaos monkey triggers it on every Game Day drill. FizzWAL provides the transactional backbone that the evaluation pipeline has been missing: every mutation is logged before execution, every evaluation is atomic (all mutations commit or all roll back), and crash recovery ensures that no in-flight evaluation leaves the platform in an inconsistent state. PostgreSQL learned this lesson in 1996. The Enterprise FizzBuzz Platform is learning it now.
 
 ### Estimated Scale
 
-~2,800 lines of NAS engine, ~500 lines of search strategies, ~450 lines of training pipeline, ~400 lines of Pareto analysis, ~350 lines of architecture encoding/transfer, ~250 lines of dashboard, ~200 tests. Total: ~4,950 lines.
+~2,600 lines of WAL engine, ~500 lines of intent types, ~450 lines of speculative execution, ~400 lines of crash recovery (ARIES), ~350 lines of checkpoint manager, ~300 lines of savepoint support, ~250 lines of dashboard, ~195 tests. Total: ~5,045 lines.
 
 ---
 
-## Idea 5: FizzCorr -- Observability Correlation Engine for Unified Traces, Logs, and Metrics
+## Idea 4: FizzCRDT -- Conflict-Free Replicated Data Types for Eventually Consistent Classification
 
 ### The Problem
 
-The platform has distributed tracing (OpenTelemetry-inspired spans with W3C Trace Context), a Prometheus-style metrics exporter (counters, gauges, histograms, summaries), the audit dashboard (unified event streaming), CDC event capture, and SLA monitoring. Each of these observability pillars operates independently. A developer investigating a latency spike must manually cross-reference: the trace shows that the compliance middleware took 12ms; the metrics show that `compliance_evaluations_total` spiked at 14:32:07; the audit log shows a SOX segregation violation at the same timestamp; the CDC stream shows the compliance engine transitioned from COMPLIANT to NON_COMPLIANT. These are four views of the same incident, spread across four subsystems with four query interfaces and four dashboard panels. There is no unified view. No automatic correlation. No way to say "show me everything that happened when this trace was slow." The three pillars of observability -- traces, logs, and metrics -- exist in the platform as three separate silos. The industry has spent the last five years trying to unify them (Grafana Tempo + Loki + Mimir, Datadog's unified platform, AWS X-Ray + CloudWatch). The Enterprise FizzBuzz Platform should not lag behind Grafana in observability unification.
+The platform has multiple subsystems that independently maintain classification state: the Paxos consensus cluster runs 5 nodes that each evaluate independently before agreeing on a result, the P2P gossip network spreads classifications across 7 nodes with last-writer-wins conflict resolution, the federated learning framework trains models across distributed instances that may produce different classifications before convergence, and the FizzKube orchestrator schedules evaluation pods across worker nodes that may cache stale results. Each of these distributed subsystems uses a different consistency mechanism: Paxos uses quorum-based consensus (strong consistency), the gossip network uses last-writer-wins (eventual consistency with data loss risk), federated learning uses model averaging (probabilistic consistency), and FizzKube uses leader election (single-writer consistency). There is no unified convergence mechanism that guarantees all replicas reach the same state without coordination. The platform has five different approaches to consistency and zero CRDTs. This is the distributed systems equivalent of having five different calendars and no concept of "today."
 
 ### The Vision
 
-An observability correlation engine that ingests traces, logs (audit events + CDC events), and metrics from all platform subsystems, links them via correlation IDs and temporal proximity, builds a unified event timeline for any evaluation, and provides a single-pane-of-glass view that answers: "What happened when number 15 was evaluated?" with every trace span, every log entry, every metric data point, and every CDC change event -- correlated, ordered, and rendered in a single ASCII view.
+A Conflict-Free Replicated Data Type library inspired by the research of Marc Shapiro, Nuno Preguica, and the Lasp language project, implementing state-based and operation-based CRDTs for FizzBuzz classification state, enabling all platform replicas to converge to identical state through mathematical guarantees (commutativity, associativity, idempotence) rather than coordination protocols.
 
 ### Key Components
 
-- **`fizzcorr.py`** (~2,600 lines): FizzCorr Observability Correlation Engine
-- **Signal Ingestors**: Three ingestors, one per observability pillar, each normalizing raw signals into a common `ObservabilityEvent` format:
-  - **TraceIngestor**: subscribes to the distributed tracing subsystem's span completion events. Each span is converted to an `ObservabilityEvent` with `signal_type: "trace"`, the span's trace ID, span ID, parent span ID, operation name, duration, status, and attributes. Spans are the skeleton of the correlation -- they provide the causal structure (parent-child relationships) that other signals are attached to
-  - **LogIngestor**: subscribes to the audit dashboard's unified event stream and the CDC engine's change event topic. Each event is converted to an `ObservabilityEvent` with `signal_type: "log"`, the event's correlation ID (which matches a trace's span ID if the event was generated during a traced operation), timestamp, severity, subsystem, and payload. Logs are the flesh of the correlation -- they provide the narrative detail that traces lack
-  - **MetricIngestor**: polls the Prometheus metric registry at a configurable interval (default: 100ms) and converts metric samples into `ObservabilityEvent`s with `signal_type: "metric"`, the metric name, labels, value, and timestamp. Metrics are the vital signs of the correlation -- they provide quantitative context (cache hit ratio, circuit breaker state, SLA budget) at the moment each evaluation occurred
-- **Correlation Engine**: Links signals from different pillars using three correlation strategies:
-  - **ID-based correlation**: events sharing a correlation ID (trace ID, span ID, evaluation ID) are directly linked. This is the strongest correlation signal -- it means the events were generated by the same causal chain
-  - **Temporal correlation**: events occurring within a configurable time window (default: 50ms) of each other are tentatively linked, with a confidence score inversely proportional to the time delta. A metric sample at T=14:32:07.003 and a log entry at T=14:32:07.005 are correlated with 96% confidence; the same metric and a log entry at T=14:32:07.048 are correlated with 4% confidence
-  - **Causal correlation**: events are linked through inferred causation chains. If a CDC event shows the cache evicting entry 15, and a trace span shows a cache miss for number 15 starting 1ms later, the correlation engine infers that the eviction *caused* the cache miss. Causal inference uses a rule library of 15 known causal patterns (e.g., "SLA budget burn -> escalation alert," "circuit breaker open -> evaluation fallback," "chaos fault injection -> latency spike")
-- **Unified Timeline Builder**: Constructs a single ordered timeline for any evaluation by:
-  1. Collecting all `ObservabilityEvent`s linked to the evaluation's trace ID
-  2. Adding temporally correlated events from the same time window
-  3. Adding causally correlated events from the inference engine
-  4. Sorting all events by timestamp with sub-microsecond precision
-  5. Annotating each event with its correlation confidence (100% for ID-based, variable for temporal/causal)
-  6. The timeline for a single evaluation of the number 15 typically contains 40-80 events spanning trace spans, audit logs, CDC changes, and metric samples -- a comprehensive record of everything that happened during the 2ms it took to compute `15 % 3`
-- **Anomaly Detector**: Applies statistical analysis to correlated timelines:
-  - **Latency anomaly**: flags evaluations where any trace span exceeds the p99 latency for that operation (computed over a sliding window of the last 100 evaluations)
-  - **Error burst**: flags evaluations that produce more than 3 error-severity log events (normal evaluations produce 0-1)
-  - **Metric deviation**: flags evaluations where any correlated metric deviates more than 2 standard deviations from its rolling mean
-  - **Causation chain anomaly**: flags evaluations where the causal inference engine detects an unexpected causation pattern (e.g., a compliance verdict change without a preceding evaluation -- suggesting phantom state mutation)
-  - Anomalies are scored by severity (INFO, WARNING, CRITICAL) and linked to the correlated timeline for root-cause investigation
-- **Exemplar Linking**: Metrics are enriched with exemplars -- pointers to specific trace IDs that represent the metric's value. When the `evaluation_latency_seconds` histogram records a value of 12ms, it includes an exemplar pointing to the trace ID of the evaluation that took 12ms. This enables "click-through" from a metric spike to the exact trace that caused it -- the same exemplar linking used by Prometheus + Tempo in production Grafana deployments
-- **Service Dependency Map**: Automatically discovers inter-subsystem dependencies from correlated traces and generates a directed dependency graph:
-  - Nodes: subsystems (cache, blockchain, compliance, ML engine, etc.)
-  - Edges: observed call relationships with call count, average latency, and error rate
-  - The dependency map is re-computed after every batch of evaluations, enabling the platform to visualize its own internal architecture as discovered through runtime observation rather than static analysis
-- **FizzCorr Dashboard**: Unified timeline view (interleaved traces, logs, metrics with correlation indicators), anomaly summary with drill-down, service dependency map, correlation confidence distribution, signal volume by pillar, and a "Mean Time to Correlate" metric measuring how long it takes the engine to link all signals for one evaluation (target: under 5ms, because the evaluation itself takes 2ms and the observability infrastructure should not be slower than the thing it observes)
-- **CLI Flags**: `--fizzcorr`, `--fizzcorr-window <ms>`, `--fizzcorr-causal-inference`, `--fizzcorr-anomaly-detect`, `--fizzcorr-exemplars`, `--fizzcorr-dependency-map`, `--fizzcorr-dashboard`
+- **`fizzcrdt.py`** (~2,900 lines): FizzCRDT Conflict-Free Replicated Data Type Library
+- **CRDT Primitives**: Seven CRDT types covering the data structures needed by the FizzBuzz platform:
+  - **GCounter (Grow-only Counter)**: tracks the number of evaluations performed by each node. Each node increments only its own entry in a vector of counters. The total count is the sum of all entries. Merging two GCounters takes the element-wise maximum. Used for: total evaluation count across Paxos nodes, gossip network message counts, federated learning training round counts. The GCounter can only go up, which is a property shared by Bob McFizzington's stress level
+  - **PNCounter (Positive-Negative Counter)**: a pair of GCounters (one for increments, one for decrements) that supports both addition and subtraction. The value is `P.value() - N.value()`. Used for: SLA error budget tracking across replicas (budget burns are decrements, budget refreshes are increments), cache entry count (inserts are increments, evictions are decrements)
+  - **LWWRegister (Last-Writer-Wins Register)**: stores a single value with a logical timestamp. Merging two registers keeps the value with the higher timestamp. Used for: the current classification of a number across gossip nodes. If node A classifies 15 as "FizzBuzz" at timestamp T=100 and node B classifies 15 as "FizzBuzz" at timestamp T=101, the merged result is node B's classification. In practice, both nodes produce "FizzBuzz" because modulo arithmetic is deterministic -- but the CRDT handles the general case where they might disagree, which is important for ML-based classifiers whose outputs are probabilistic
+  - **MVRegister (Multi-Value Register)**: stores *all* concurrent values, deferring conflict resolution to the application. Merging two MVRegisters produces the union of values from both. Used for: ML confidence scores from federated learning nodes. If three nodes independently classify 14 with confidences [0.87, 0.92, 0.84], the MVRegister stores all three values and the application computes the final confidence via weighted average. This is the "conflict-aware" approach: instead of silently dropping concurrent values (LWW), the MVRegister preserves them all and lets the application decide
+  - **ORSet (Observed-Remove Set)**: a set where elements can be added and removed without conflicts. Each element is tagged with a unique identifier at insertion. Removal removes all currently-observed tags for that element. Concurrent add/remove resolves in favor of add (add-wins semantics). Used for: the set of active evaluations across FizzKube pods. When a pod starts evaluating number 42, it adds "42" to the ORSet. When it finishes, it removes "42." Concurrent add from another pod and remove from the first pod resolves to "42 is still being evaluated" (add-wins), which is the safe interpretation because it prevents premature result collection
+  - **LWWMap (Last-Writer-Wins Map)**: a map from keys to LWWRegisters, supporting per-key update and merge. Used for: the platform's configuration state across GitOps replicas. Each configuration key is an independent LWWRegister, enabling concurrent configuration updates to different keys without conflict. Concurrent updates to the *same* key resolve via timestamp comparison
+  - **RGA (Replicated Growable Array)**: an ordered sequence that supports insert-at-position and remove operations without conflicts. Each element has a unique position identifier using a Lamport timestamp + node ID pair. Concurrent inserts at the same position are ordered by (timestamp, node_id) to produce a deterministic sequence. Used for: the audit event log across replicas. Each replica appends audit events locally, and the RGA merge produces a globally consistent, totally ordered audit log without requiring the replicas to coordinate on event ordering
+- **Convergence Protocol**: A merge-based convergence protocol that propagates CRDT state across replicas:
+  - **State-based (CvRDT)**: each replica periodically sends its full CRDT state to all other replicas. Recipients merge the received state with their local state using the CRDT's merge function. Convergence is guaranteed by the join-semilattice property: merge is commutative, associative, and idempotent, so any order of message delivery produces the same final state
+  - **Operation-based (CmRDT)**: each replica broadcasts individual operations (increment, add, remove) to all other replicas. Convergence is guaranteed by the commutativity of operations: concurrent operations can be applied in any order with the same result. Requires reliable causal broadcast (all operations are eventually delivered, and causally related operations are delivered in order). The platform's message queue provides causal ordering via partition-level sequence numbers
+  - **Delta-state (delta-CvRDT)**: a hybrid approach where replicas send only the *delta* (the state change since the last sync) rather than the full state. Deltas are mutually joinable, enabling incremental synchronization with lower bandwidth than full-state transfer. The delta protocol tracks a per-replica "last synced" vector clock to determine which deltas each replica needs
+- **Vector Clocks**: A vector clock implementation for causal ordering across replicas:
+  - Each replica maintains a vector of logical timestamps, one per replica in the system
+  - On local operation: increment the local entry
+  - On message send: attach the current vector clock
+  - On message receive: merge the received vector clock (element-wise max) and increment the local entry
+  - Causality comparison: clock A happened-before clock B if every entry in A is <= the corresponding entry in B, and at least one entry is strictly less
+  - Concurrent events (neither happened-before the other) are exactly the events where CRDTs provide automatic conflict resolution without coordination
+- **CRDT Integration Layer**: Bridges between CRDTs and existing platform subsystems:
+  - **PaxosCRDTBridge**: replaces Paxos's quorum-based agreement with CRDT convergence for classification state. Paxos still handles leader election and proposal ordering; CRDTs handle state convergence. This separation allows the consensus protocol to focus on coordination while the data structures handle conflict resolution
+  - **GossipCRDTBridge**: replaces the gossip network's last-writer-wins conflict resolution with CRDT merge semantics. Classifications are stored in LWWRegisters (for deterministic classifiers) or MVRegisters (for ML classifiers), and the gossip protocol disseminates CRDT state deltas instead of raw values
+  - **FederatedCRDTBridge**: stores per-node model weights in LWWMaps, enabling convergence of model state across federation nodes without centralized aggregation. The FedAvg aggregation strategy becomes a merge operation on the weight map
+  - **CacheCRDTBridge**: tracks cache entry counts across replicas using PNCounters, and cache contents using LWWMaps. The MESI coherence protocol operates within each replica; CRDT convergence operates across replicas. This is a two-level coherence architecture: intra-replica coherence via MESI, inter-replica convergence via CRDTs
+- **Consistency Analyzer**: A diagnostic tool that measures the convergence properties of CRDT state across replicas:
+  - **Convergence time**: the time from the last operation to full convergence across all replicas (measured by comparing CRDT states)
+  - **Staleness**: the maximum version difference between any two replicas at any point in time
+  - **Conflict rate**: the percentage of merge operations that resolved a genuine conflict (concurrent writes to the same key)
+  - **Anomaly detection**: identifies replicas whose state diverges beyond a configurable staleness threshold, suggesting network partition or failed message delivery
+- **FizzCRDT Dashboard**: Per-CRDT state visualization (GCounter vectors, PNCounter values, ORSet contents, RGA sequences), convergence timeline (showing how replicas' states converge over time), vector clock state per replica, merge operation statistics, conflict resolution outcomes, delta bandwidth savings, and a "Convergence Health Score" measuring the percentage of time all replicas are in a consistent state (target: >95% under normal operation, >60% during simulated network partitions)
+- **CLI Flags**: `--fizzcrdt`, `--fizzcrdt-protocol state|op|delta`, `--fizzcrdt-replicas <n>`, `--fizzcrdt-partition-sim`, `--fizzcrdt-convergence-analyzer`, `--fizzcrdt-dashboard`
 
 ### Why This Is Necessary
 
-Because the three pillars of observability are useless if they stand apart. A trace without correlated logs is a skeleton without a story. Metrics without exemplar links to traces are numbers without context. Logs without causal inference are events without meaning. The Enterprise FizzBuzz Platform currently generates observability data from 7 independent subsystems across 3 signal types, producing 40-80 events per evaluation. Without a correlation engine, a developer investigating an SLA breach must manually search traces by timestamp, cross-reference audit logs by correlation ID, check metric dashboards for the same time window, and piece together the incident narrative by hand. FizzCorr eliminates this toil by automatically correlating all signals into a unified timeline with causal inference, anomaly detection, and exemplar linking. This is the observability vision that Charity Majors has been advocating since 2018 and that the Enterprise FizzBuzz Platform -- with its unparalleled density of telemetry data per modulo operation -- is uniquely positioned to realize.
+Because coordination is the enemy of availability, and the Enterprise FizzBuzz Platform must be available even when its replicas cannot communicate. The platform currently relies on Paxos consensus, which requires a quorum of 3/5 nodes to make progress. If a network partition isolates 2 nodes from the remaining 3, the minority partition halts -- no evaluations, no classifications, no FizzBuzz. Under the CAP theorem, Paxos chooses consistency over availability. But FizzBuzz classification is a *monotonic* operation: once a number has been classified, its classification never changes (15 is always FizzBuzz, 7 is always 7). Monotonic operations are exactly the class of operations that CRDTs are designed for. FizzCRDT enables every replica to classify numbers independently, without coordination, and guarantees that all replicas converge to the same state -- eventually, inevitably, mathematically. The join-semilattice properties (commutativity, associativity, idempotence) ensure convergence regardless of message ordering, duplication, or temporary partition. The platform no longer trades availability for consistency. It achieves both, because CRDTs make the trade-off unnecessary for the class of operations that FizzBuzz evaluation represents. Marc Shapiro proved this was possible in 2011. The Enterprise FizzBuzz Platform implements it in 2026.
 
 ### Estimated Scale
 
-~2,600 lines of correlation engine, ~500 lines of signal ingestors, ~450 lines of unified timeline builder, ~400 lines of anomaly detector, ~350 lines of exemplar/dependency map, ~300 lines of dashboard, ~195 tests. Total: ~4,795 lines.
+~2,900 lines of CRDT library, ~500 lines of convergence protocol, ~450 lines of vector clocks, ~400 lines of integration bridges, ~350 lines of consistency analyzer, ~300 lines of dashboard, ~210 tests. Total: ~5,110 lines.
 
 ---
 
-## Idea 6: FizzJIT -- Runtime Code Generation & JIT Compilation for Hot Evaluation Paths
+## Idea 5: FizzGrammar -- Formal Grammar and Parser Generator for the FizzBuzz Domain Language
 
 ### The Problem
 
-The platform evaluates FizzBuzz through a middleware pipeline that is 8-15 stages deep, depending on enabled subsystems. Each evaluation passes through validation, timing, caching, compliance, blockchain verification, cost tracking, tracing, and output formatting -- all implemented as Python method calls with dynamic dispatch, dictionary lookups, and polymorphic interface resolution. This pipeline is *interpreted* in the most literal sense: every middleware stage is a Python object whose `process()` method is invoked through the standard CPython dispatch mechanism. There is no specialization. There is no inlining. There is no elimination of redundant checks. The compliance middleware checks SOX segregation of duties on every evaluation, even when compliance is in a known-good state. The cache middleware performs a hash lookup on every evaluation, even when the cache is known to be empty. The blockchain middleware verifies chain integrity on every evaluation, even when no blocks have been mined since the last check. Each of these redundancies adds microseconds that compound across hundreds of evaluations. The platform has a bytecode VM (FBVM) that compiles rules into instructions, but the middleware pipeline itself remains uncompiled. The hottest code path in the platform -- the main evaluation loop -- is the only code path that has never been optimized by a compiler. This is the performance gap that FizzJIT closes.
+The platform contains at least six hand-written parsers: the FizzLang DSL parser, the FizzSQL query parser, the FizzSPARQL query parser, the CypherLite graph query parser, the NLQ tokenizer/intent classifier, and the compliance chatbot's NLU pipeline. Each parser was hand-crafted with its own tokenizer, its own grammar definition (implicit in the parser's recursive descent structure), its own error handling, and its own AST representation. There is no formal grammar specification for any of these languages. There is no parser generator that could produce parsers from a grammar specification. There is no way to verify that the FizzSQL parser accepts exactly the language defined by its intended grammar, because the grammar was never formally specified -- it exists only as implicit knowledge encoded in the parser's control flow. If a developer wants to add a new SQL keyword, they must understand the parser's recursive descent structure, identify the correct production rule to modify, add the keyword to the tokenizer, extend the AST node types, and hope they did not introduce an ambiguity. The platform has languages but no *linguistics*. It has parsers but no *grammar theory*. It has syntax but no *formal specification of syntax*.
 
 ### The Vision
 
-A runtime code generation engine inspired by PyPy's tracing JIT, LuaJIT's trace compiler, and HotSpot's C2 compiler, that profiles the evaluation pipeline at runtime, identifies hot paths (middleware configurations that are invoked repeatedly with the same subsystem state), generates specialized Python bytecode or optimized callables that inline middleware stages, eliminate redundant checks, and constant-fold known state -- producing a JIT-compiled evaluation function that is semantically equivalent to the interpreted pipeline but executes with significantly reduced dispatch overhead.
+A formal grammar specification language in Backus-Naur Form (BNF) with extensions (EBNF), a parser generator that compiles grammar specifications into recursive descent parsers with predictive lookahead, a grammar analysis toolkit that computes FIRST/FOLLOW sets, detects left recursion, identifies ambiguities, and classifies grammars by their LL(k) parsing class -- and a formal BNF specification of every language in the platform, from FizzLang to FizzSQL to FizzSPARQL, enabling grammar-driven parser generation and language-theoretic verification.
 
 ### Key Components
 
-- **`fizzjit.py`** (~2,900 lines): FizzJIT Runtime Code Generation & JIT Compilation Engine
-- **Profiler / Trace Recorder**: A lightweight profiler that monitors the evaluation pipeline and records execution traces:
-  - Instruments every middleware `process()` call with entry/exit timestamps and argument snapshots
-  - Records the sequence of middleware stages invoked for each evaluation, forming a "trace" -- an ordered list of (middleware_name, input_state, output_state) tuples
-  - After a configurable warmup period (default: 50 evaluations), identifies "hot traces" -- middleware sequences that have been executed more than a threshold number of times (default: 10) with identical control flow. A hot trace is a candidate for JIT compilation
-  - Guard conditions: records the runtime conditions under which the trace is valid. For example, a trace recorded with `compliance_enabled=True, cache_size=0, blockchain_height=42` is only valid when those conditions still hold. If any guard condition changes, the compiled trace is invalidated and the profiler falls back to interpretation
-- **Intermediate Representation (JIT-IR)**: A low-level IR that represents the evaluation pipeline as a sequence of typed operations:
-  - `LOAD_ARG(n)` -- load the evaluation argument (the number)
-  - `CALL_MIDDLEWARE(name, arg_regs, result_reg)` -- invoke a middleware stage
-  - `GUARD(condition, deopt_target)` -- check a runtime invariant; if false, deoptimize to the interpreter
-  - `CONST_FOLD(value, result_reg)` -- replace a computation with a known constant (e.g., if the cache is empty, `CALL_MIDDLEWARE("cache_lookup")` can be replaced with `CONST_FOLD(CacheMiss, r3)`)
-  - `INLINE(middleware_name, body_ops)` -- replace a middleware call with the inlined body of the middleware's process method
-  - `ELIMINATE(op_index)` -- mark an operation as dead code (e.g., compliance checking when the compliance regime has not changed since the last evaluation)
-  - `EMIT_RESULT(result_reg)` -- return the evaluation result
-  - The JIT-IR is typed (each register carries a type annotation) and in SSA form (each register is assigned exactly once), enabling standard compiler optimizations
-- **Optimization Passes**: Six optimization passes that transform JIT-IR into efficient code:
-  - **Constant Folding**: replaces operations with known results. If the SLA budget is above 50% (a guard condition), the SLA middleware's budget check can be constant-folded to `True`, eliminating the check entirely
-  - **Dead Code Elimination**: removes operations whose results are never used. If the audit dashboard is disabled, all audit event emission operations are dead code
-  - **Middleware Inlining**: replaces `CALL_MIDDLEWARE` with the inlined body of the middleware's `process()` method, eliminating virtual dispatch overhead. Small middleware stages (under 20 IR operations) are always inlined; larger stages are inlined only if they appear on a hot trace
-  - **Guard Hoisting**: moves guard conditions to the top of the trace, so that deoptimization (fallback to the interpreter) happens before any work is done. This prevents partially-executed optimized traces that must be rolled back
-  - **Loop Invariant Code Motion**: moves computations that produce the same result on every iteration (e.g., fetching the current compliance regime, which changes once per session at most) outside the evaluation loop
-  - **Type Specialization**: replaces generic operations with type-specialized versions. If the profiler observes that a middleware always receives a `FizzBuzzClassification` enum (never a string or None), the IR can eliminate type-checking branches that handle the other cases
-- **Code Generator**: Translates optimized JIT-IR into executable Python:
-  - **Mode 1: exec() compilation**: generates a Python source string representing the optimized evaluation function and compiles it via `compile()` + `exec()` into a callable. The generated function contains inlined middleware logic, constant-folded values, and guard checks that deoptimize to the interpreter
-  - **Mode 2: bytecode assembly**: directly assembles CPython bytecode instructions (via the `types.CodeType` constructor) for maximum control over the generated code. This mode eliminates the parsing overhead of exec() and produces tighter bytecode, at the cost of being tied to a specific CPython version's bytecode format
-  - **Mode 3: closure compilation**: constructs nested closures that capture specialized constants in their closure cells, enabling the JIT to specialize functions without generating source code or manipulating bytecode. This is the most portable mode, working across CPython, PyPy, and any Python implementation
-- **Deoptimization / On-Stack Replacement**: When a guard condition fails during execution of JIT-compiled code:
-  - The JIT engine captures the current execution state (register values, middleware pipeline position, partial results)
-  - Transfers control back to the interpreter at the exact point where the guard failed
-  - The interpreter completes the evaluation using the standard unoptimized pipeline
-  - The failed guard is recorded, and if it fails frequently, the trace is recompiled with the guard removed (at the cost of the optimization the guard protected)
-  - This is the same on-stack replacement mechanism used by HotSpot JVM and V8, ensuring that JIT compilation never produces incorrect results, only faster correct results
-- **Compilation Cache**: JIT-compiled traces are cached in an LRU cache keyed by (middleware_configuration_hash, guard_conditions_hash). When the same middleware configuration is encountered again (e.g., after a hot-reload that temporarily invalidated the cache), the previously compiled trace is reused without recompilation. The cache tracks hit rates, compilation times, and the "speedup factor" of each compiled trace versus interpreted execution
-- **FizzJIT Dashboard**: Hot trace inventory (traces, invocation counts, guard conditions, compilation status), optimization pass statistics (operations eliminated by each pass), code generation mode and output, deoptimization events with guard failure analysis, compilation cache hit rates, and a "JIT Coverage" metric measuring the percentage of evaluations that execute compiled code versus interpreted code (target: >90% after warmup). An ASCII flame graph shows time spent in each middleware stage for both interpreted and JIT-compiled evaluations, visually demonstrating the performance improvement
-- **CLI Flags**: `--fizzjit`, `--fizzjit-warmup <n>`, `--fizzjit-threshold <n>`, `--fizzjit-mode exec|bytecode|closure`, `--fizzjit-optimize <passes>`, `--fizzjit-deopt-log`, `--fizzjit-dashboard`
+- **`fizzgrammar.py`** (~2,700 lines): FizzGrammar Formal Grammar & Parser Generator
+- **Grammar Specification Language**: An EBNF meta-grammar for defining FizzBuzz domain languages:
+  - **Terminal symbols**: quoted strings (`"SELECT"`, `"FIZZ"`, `"("`) and regex patterns (`/[0-9]+/`, `/[a-zA-Z_][a-zA-Z0-9_]*/`)
+  - **Non-terminal symbols**: unquoted identifiers (`expression`, `statement`, `fizzbuzz_classification`)
+  - **Production rules**: `non_terminal ::= alternative_1 | alternative_2 ;`
+  - **EBNF extensions**: `[ optional ]`, `{ zero_or_more }`, `( grouping )`, `term+` (one or more), `term?` (zero or one)
+  - **Semantic actions**: `@action_name` annotations on production rules that map parsed tokens to AST node constructors
+  - **Precedence declarations**: `%left`, `%right`, `%nonassoc` for operator precedence disambiguation
+  - **Error recovery tokens**: `%error_recovery ";"` designating synchronization points for error recovery during parsing
+  - Example grammar (FizzBuzz classification language):
+    ```
+    program       ::= { statement } ;
+    statement     ::= rule_def | query | assignment ;
+    rule_def      ::= "RULE" IDENTIFIER ":" condition "->" label ";" ;
+    condition     ::= "divisible_by" "(" NUMBER ")" | condition "AND" condition | condition "OR" condition ;
+    label         ::= STRING ;
+    query         ::= "EVALUATE" expression ;
+    expression    ::= NUMBER | IDENTIFIER | expression "+" expression | expression "-" expression ;
+    assignment    ::= "LET" IDENTIFIER "=" expression ";" ;
+    ```
+- **Grammar Analyzer**: A suite of grammar analysis algorithms:
+  - **FIRST set computation**: for each non-terminal, compute the set of terminals that can begin a string derived from that non-terminal. Uses a fixed-point iteration algorithm that handles nullable non-terminals (those that can derive the empty string)
+  - **FOLLOW set computation**: for each non-terminal, compute the set of terminals that can appear immediately after a string derived from that non-terminal. Uses FIRST sets and production rule structure
+  - **LL(1) classification**: a grammar is LL(1) if, for every non-terminal with multiple alternatives, the FIRST sets of those alternatives are disjoint (and if any alternative is nullable, its FIRST set is disjoint with the FOLLOW set of the non-terminal). The analyzer reports whether each grammar is LL(1) and, if not, identifies the conflicting productions
+  - **Left recursion detection**: identifies directly and indirectly left-recursive productions (e.g., `A ::= A "+" B`) that prevent top-down parsing. Reports the cycle of non-terminals involved in the left recursion and suggests transformations to eliminate it
+  - **Ambiguity detection**: identifies productions where two alternatives can derive the same string, causing parsing ambiguity. Uses a bounded search over derivations to find concrete ambiguous strings (this is undecidable in general, but bounded search catches most practical ambiguities)
+  - **Unreachable symbol detection**: identifies non-terminals that cannot be derived from the start symbol, indicating dead grammar rules
+  - **Grammar statistics**: number of terminals, non-terminals, productions, nullable non-terminals, grammar class (LL(1), LL(k), or "not LL -- consider LR"), and a "Grammar Complexity Index" based on the total number of symbols across all productions
+- **Parser Generator**: Compiles a grammar specification into a recursive descent parser:
+  - **Tokenizer generator**: converts the grammar's terminal definitions into a tokenizer that produces a token stream from input text. Terminals are matched in longest-match order, with keyword terminals taking priority over identifier terminals (so `"SELECT"` is matched as a keyword, not as an identifier)
+  - **Parser generator**: for each non-terminal, generates a parsing function that:
+    - Examines the lookahead token to select the correct alternative (using FIRST sets for LL(1) grammars, or backtracking for non-LL(1) grammars)
+    - Recursively parses the alternative's symbols (terminals are matched and consumed; non-terminals invoke their parsing functions)
+    - Constructs AST nodes via semantic actions
+    - Reports syntax errors with line/column information and expected-token sets derived from FIRST/FOLLOW analysis
+  - **Error recovery**: when a syntax error is detected, the parser skips tokens until it finds an error recovery synchronization point (e.g., `";"` or `")"`) and resumes parsing from the next statement. This enables the parser to report *multiple* errors per parse, rather than aborting on the first error
+  - The generated parser is a Python class with one method per non-terminal, plus a `parse()` entry point that invokes the start symbol's method. The generated code is human-readable and can be inspected, debugged, and modified -- though modification defeats the purpose of grammar-driven generation
+- **AST Framework**: A generic Abstract Syntax Tree framework used by all generated parsers:
+  - **ASTNode**: base class with `node_type`, `children`, `token` (for leaf nodes), `line`, `column`, and `source_span`
+  - **ASTVisitor**: visitor pattern base class with `visit_<node_type>` methods for type-safe tree traversal
+  - **ASTTransformer**: visitor subclass that returns transformed trees, enabling rewrite passes (e.g., constant folding, desugaring)
+  - **ASTPrinter**: renders ASTs as indented text trees or ASCII box-drawing diagrams
+  - **ASTDiff**: computes structural diffs between two ASTs, identifying added, removed, and modified nodes. Used for grammar regression testing (does a grammar change alter the AST produced by parsing the same input?)
+- **Platform Grammar Specifications**: Formal BNF grammars for every language in the platform:
+  - **FizzLang grammar**: 25 production rules covering rule definitions, evaluations, conditionals, loops, functions, and error handling
+  - **FizzSQL grammar**: 40 production rules covering SELECT/INSERT/UPDATE/DELETE, WHERE clauses, JOIN operations, subqueries, ORDER BY, GROUP BY, HAVING, LIMIT, and aggregate functions
+  - **FizzSPARQL grammar**: 18 production rules covering SELECT/WHERE, triple patterns, OPTIONAL, FILTER, ORDER BY, LIMIT
+  - **CypherLite grammar**: 15 production rules covering MATCH, WHERE, RETURN, node/relationship patterns, and property access
+  - **FizzBuzz Classification grammar**: 8 production rules covering the core domain language (rule definitions, conditions, labels, queries)
+  - Each grammar is verified by the Grammar Analyzer to be LL(1) (or the minimal LL(k) class), and the generated parser is validated against a test suite of valid and invalid inputs
+- **Grammar Composition**: Grammars can import non-terminals from other grammars, enabling language embedding:
+  - FizzSQL's `WHERE` clause can embed FizzLang expressions via `%import fizzbuzz_expression from fizzbuzz_classification`
+  - CypherLite's property values can embed FizzBuzz classification expressions
+  - This produces a grammar dependency graph (resolved via topological sort, naturally) that the analyzer checks for circular imports
+- **FizzGrammar Dashboard**: Grammar inventory (name, non-terminal count, terminal count, production count, LL class), FIRST/FOLLOW set tables, ambiguity/left-recursion diagnostics, parse tree visualization for sample inputs, and a "Grammar Health Index" measuring the percentage of grammars that are cleanly LL(1) without conflicts
+- **CLI Flags**: `--fizzgrammar`, `--fizzgrammar-analyze <grammar>`, `--fizzgrammar-generate <grammar>`, `--fizzgrammar-parse <grammar> <input>`, `--fizzgrammar-ast <grammar> <input>`, `--fizzgrammar-dashboard`
 
 ### Why This Is Necessary
 
-Because the evaluation pipeline is the platform's critical path, and the critical path must be optimized. Every evaluation passes through 8-15 middleware stages, each involving Python method dispatch, dictionary lookups, and polymorphic resolution. The overhead of this interpretive execution compounds: 15 middleware stages at 2 microseconds of dispatch overhead each adds 30 microseconds to every evaluation -- time spent not computing `n % 3` but *deciding how to compute* `n % 3`. FizzJIT eliminates this overhead by profiling the pipeline at runtime, identifying hot traces, and compiling them into specialized functions that inline middleware logic, constant-fold known state, and eliminate redundant checks. The result is an evaluation function that produces identical results to the interpreted pipeline but executes with 40-60% less dispatch overhead. This is the same approach that makes PyPy 4-10x faster than CPython for long-running programs, that makes LuaJIT competitive with C for numerical workloads, and that makes HotSpot's C2 compiler the backbone of enterprise Java. The Enterprise FizzBuzz Platform's middleware pipeline is a hot loop. Hot loops get JIT-compiled. This is not an optimization -- it is an obligation.
+Because a parser without a grammar is a function without a specification. The platform contains six hand-written parsers, each encoding its grammar implicitly in recursive descent control flow. When a developer asks "what strings does FizzSQL accept?" the answer is "whatever the parser happens to parse" -- there is no formal specification to consult, no grammar to analyze, no way to verify that the parser implements the intended language. This is the difference between programming by coincidence and programming by specification. FizzGrammar provides the formal specification layer: every language in the platform gets a BNF grammar that defines its syntax precisely, a grammar analyzer that verifies the grammar is unambiguous and parseable, and a parser generator that produces a parser proven to accept exactly the language the grammar defines. The generated parsers produce typed ASTs via a shared framework, enabling cross-language tooling (syntax highlighting, error reporting, AST diffing) that would be impossible with six independent parser implementations. Noam Chomsky formalized the theory of formal grammars in 1956. Seventy years later, the Enterprise FizzBuzz Platform finally applies it.
 
 ### Estimated Scale
 
-~2,900 lines of JIT engine, ~500 lines of trace recorder, ~450 lines of optimization passes, ~400 lines of code generator, ~350 lines of deoptimization, ~300 lines of compilation cache, ~250 lines of dashboard, ~210 tests. Total: ~5,360 lines.
+~2,700 lines of parser generator, ~500 lines of grammar analyzer (FIRST/FOLLOW/LL classification), ~450 lines of AST framework, ~400 lines of platform grammar specifications, ~350 lines of grammar composition, ~300 lines of dashboard, ~210 tests. Total: ~4,910 lines.
+
+---
+
+## Idea 6: FizzAlloc -- Memory Allocator with Slab Allocation, Arena Management, and Garbage Collection
+
+### The Problem
+
+The platform allocates and deallocates Python objects at a rate that would concern any systems engineer: each evaluation creates `FizzBuzzResult` dataclasses, `EvaluationContext` objects, middleware pipeline states, cache entry wrappers, blockchain transaction objects, event store events, CDC change events, capability tokens, CRDT state vectors, WAL intent records, and telemetry spans. All of these objects are managed by CPython's default allocator (pymalloc for small objects, libc malloc for large objects) and garbage collected by CPython's reference-counting collector with generational cycle detection. The platform has no visibility into its own memory allocation patterns. It does not know how many `FizzBuzzResult` objects are alive at any given time, how much memory is consumed by the blockchain's chain of blocks, whether the cache's eviction policy is actually freeing memory or just orphaning objects for the GC to find later, or whether the CRDT state vectors are growing without bound as replicas accumulate history. The platform manages processes (OS kernel), schedules containers (FizzKube), allocates virtual pages (kernel VMM), and tracks costs (FinOps) -- but it does not manage its own memory. It delegates memory to CPython's allocator and hopes for the best. For a platform of this scale and criticality, hope is not a memory management strategy.
+
+### The Vision
+
+A custom memory allocator inspired by the Linux kernel's SLAB/SLUB allocator, jemalloc's arena-based allocation, and the Boehm-Demers-Weiser conservative garbage collector, providing slab allocation for fixed-size FizzBuzz objects, arena management for evaluation-scoped allocations, explicit garbage collection with mark-and-sweep and generational collection, memory pool statistics, fragmentation analysis, and a memory pressure system that triggers cache eviction when allocation rates exceed thresholds -- all operating as a managed overlay on top of CPython's allocator, providing application-level memory management for a platform that has outgrown "let the runtime handle it."
+
+### Key Components
+
+- **`fizzalloc.py`** (~2,800 lines): FizzAlloc Memory Allocator & Garbage Collector
+- **Slab Allocator**: Pre-allocates fixed-size memory slots for common FizzBuzz object types:
+  - **FizzBuzzResultSlab**: pre-allocates 256 slots for `FizzBuzzResult` objects. Each slot is 128 bytes (the measured size of a `FizzBuzzResult` dataclass with all fields populated). When a new result is needed, the slab allocator returns the next free slot in O(1) via a free-list pointer. When a result is freed, the slot is returned to the free list. No CPython allocation occurs for results while the slab has free slots
+  - **CacheEntrySlab**: pre-allocates 512 slots for cache entries (key, value, MESI state, TTL, access timestamp). Sized at 96 bytes per slot. The slab size matches the cache's maximum capacity, ensuring that cache operations never trigger CPython allocation
+  - **EventSlab**: pre-allocates 1024 slots for event store events. Sized at 256 bytes per slot (events carry more metadata than results). The slab is sized to hold one full evaluation's worth of events across all subsystems without overflow
+  - **SpanSlab**: pre-allocates 512 slots for OpenTelemetry spans. Sized at 384 bytes per slot (spans carry attributes, events, links, and timing data). The slab is sized to hold the maximum span tree depth produced by a single evaluation with all subsystems enabled
+  - **IntentSlab**: pre-allocates 256 slots for WAL intent records. Sized at 192 bytes per slot. The slab is sized to hold one full evaluation's intent group without overflow
+  - Each slab maintains statistics: allocation count, free count, high-water mark (maximum simultaneous allocations), slab utilization (allocated/total), and cache line alignment verification (each slot is aligned to 64-byte boundaries for CPU cache efficiency, which matters exactly zero in an interpreted Python program but matters immensely as an architectural principle)
+  - When a slab is exhausted (all slots allocated), the slab allocator creates a new slab of the same type and chains it to the original via a linked list. The slab growth rate is tracked as a "slab pressure" metric. If slab pressure exceeds a configurable threshold (default: 3 slab expansions per 100 evaluations), the memory pressure system triggers preventive action (cache eviction, event store compaction, WAL checkpointing)
+- **Arena Allocator**: Groups allocations by evaluation lifecycle into arenas:
+  - Each evaluation begins by acquiring a new `EvaluationArena` from the arena pool
+  - All objects created during the evaluation (results, events, spans, intents, CDC events) are allocated from the arena's contiguous memory block
+  - When the evaluation completes (commit or rollback), the entire arena is freed in O(1) by resetting the arena's allocation pointer to the start -- no individual object deallocation required. This is the same "bump allocator with bulk free" pattern used by web browsers (Blink's PartitionAlloc), game engines (frame allocators), and database query executors (per-query memory contexts in PostgreSQL)
+  - Arena sizes: 4KB (small evaluations with few subsystems), 16KB (standard evaluations), 64KB (evaluations with quantum computing and federated learning enabled). The arena pool maintains a free list of arenas at each size, avoiding repeated allocation of arena backing memory
+  - Arena overflow: if an evaluation's allocations exceed the arena capacity, the arena extends by chaining a new block. The overflow rate is tracked as a metric for right-sizing arena capacity in future releases
+  - The arena integrates with FizzWAL: on rollback, the arena is freed without deallocating individual objects, because the WAL's undo actions restore subsystem state and the arena's objects are no longer referenced. This provides O(1) cleanup for rolled-back evaluations, compared to O(n) individual object deallocation
+- **Garbage Collector**: A three-phase garbage collector for objects that outlive their evaluation arena:
+  - **Mark phase**: starting from a set of root references (cache entries, blockchain chain, event store streams, CRDT state, configuration singletons), traverse all reachable objects and mark them as "live." The traversal follows Python object references via `gc.get_referents()`, building a reachability graph from the root set
+  - **Sweep phase**: scan all tracked objects (registered with the allocator via `fizzalloc.track(obj)`). Objects that were not marked as "live" are classified as garbage. Garbage objects are categorized by type (result, event, span, intent, etc.) for per-type collection statistics
+  - **Compact phase** (optional): relocate live objects to eliminate fragmentation. Because Python objects cannot be moved in memory (existing references would become invalid), compaction operates at the logical level: live slab entries are consolidated to the front of the slab, and the free list is rebuilt. This does not reduce physical memory fragmentation (CPython's pymalloc handles that) but does reduce slab fragmentation, improving slab utilization
+  - **Generational collection**: objects are assigned to one of three generations based on their age:
+    - **Generation 0 (Young)**: objects allocated during the current evaluation batch. Collected after every batch (default: every 100 evaluations). Young objects have a high mortality rate (80-90% are temporary results, events, and spans that do not survive past their evaluation)
+    - **Generation 1 (Tenured)**: objects that survived one Generation 0 collection. Collected every 10 batches. Tenured objects include cache entries (which persist across evaluations), blockchain blocks (which are permanent), and CRDT state vectors (which grow monotonically)
+    - **Generation 2 (Permanent)**: objects that survived one Generation 1 collection. Collected every 100 batches. Permanent objects include configuration singletons, the capability mint, and the WAL's committed intent history. Generation 2 collections are rare because permanent objects are, by definition, rarely garbage -- but when they are, it usually indicates a memory leak in a long-running subsystem
+  - Collection triggers: the GC runs when any of the following conditions are met:
+    - Generation 0 tracked object count exceeds 700 (CPython's default gen0 threshold)
+    - Slab utilization across all slabs drops below 50% (indicating high fragmentation)
+    - Memory pressure callback from the OS kernel's virtual memory manager (the platform's own kernel, not the host OS)
+    - Manual trigger via `--fizzalloc-gc`
+- **Memory Pressure System**: A feedback loop between the allocator and memory-consuming subsystems:
+  - **Pressure levels**: NORMAL (slab utilization > 70%), ELEVATED (50-70%), HIGH (30-50%), CRITICAL (< 30%)
+  - **Pressure responses**:
+    - ELEVATED: the cache evicts entries using its configured eviction policy (LRU/LFU/FIFO/DramaticRandom) until slab utilization exceeds 70%
+    - HIGH: the event store compacts historical events into snapshots, the WAL checkpoints and truncates committed groups, and the CDC engine drops low-priority change events
+    - CRITICAL: the blockchain subsystem suspends mining (blocks are queued but not hashed until pressure drops), the quantum simulator reduces qubit count to 4 (reducing state vector memory from 256 to 16 complex amplitudes), and the neural architecture search pauses candidate evaluation
+  - Pressure transitions are logged as SLA events and CDC change events, creating a feedback loop where memory pressure generates observability events that consume memory, which increases memory pressure. The pressure system includes a "feedback loop breaker" that suppresses observability events generated by pressure responses, preventing the system from drowning in its own metadata
+- **Fragmentation Analyzer**: Measures internal and external fragmentation across all allocation strategies:
+  - **Internal fragmentation**: wasted space within allocated slab slots (e.g., a `FizzBuzzResult` that uses 112 bytes of its 128-byte slot has 12.5% internal fragmentation)
+  - **External fragmentation**: wasted space between allocated regions (free slab slots that are too small for the requested allocation). Measured as the ratio of free memory that cannot satisfy the largest pending allocation request
+  - **Fragmentation report**: per-slab fragmentation percentage, arena overflow rate, GC compaction effectiveness, and a "Memory Efficiency Score" that combines utilization, fragmentation, and GC pause time into a single metric
+- **FizzAlloc Dashboard**: Slab inventory (type, slot size, total slots, used slots, high-water mark, utilization %), arena pool status (arenas by size, active/free counts, overflow events), GC statistics (collections per generation, objects collected, collection pause time, survival rates), memory pressure level with historical timeline, fragmentation analysis, and an "Allocation Rate" sparkline showing objects allocated per evaluation over time
+- **CLI Flags**: `--fizzalloc`, `--fizzalloc-slab-sizes <config>`, `--fizzalloc-arena-size <bytes>`, `--fizzalloc-gc-threshold <n>`, `--fizzalloc-gc`, `--fizzalloc-pressure-sim`, `--fizzalloc-fragmentation`, `--fizzalloc-dashboard`
+
+### Why This Is Necessary
+
+Because a platform that manages processes, containers, virtual memory pages, blockchain blocks, database rows, CRDT replicas, capability tokens, and 188,639 lines of code should not delegate its own memory management to "whatever CPython does." The platform currently allocates and frees thousands of objects per evaluation batch -- results, events, spans, intents, CDC events, capability tokens, CRDT deltas -- with no visibility into allocation patterns, no control over object lifetime, and no mechanism to respond to memory pressure. When the cache grows to its maximum capacity, the only memory recovery mechanism is the cache's own eviction policy, which operates on cache semantics (LRU, LFU) rather than memory semantics (fragmentation, utilization). When the blockchain grows without bound, there is no memory pressure signal to suggest compaction or pruning. When a GC pause coincides with an SLA-monitored evaluation, the latency spike burns error budget with no explanation visible to the SLA monitor. FizzAlloc provides the application-level memory management layer that bridges this gap: slab allocation eliminates per-object allocation overhead for common types, arena allocation provides O(1) bulk deallocation for evaluation-scoped objects, generational garbage collection reclaims unreachable objects with age-appropriate collection frequency, and the memory pressure system coordinates cross-subsystem memory recovery when allocation rates threaten system stability. The Linux kernel has SLAB. PostgreSQL has MemoryContexts. jemalloc has arenas. The Enterprise FizzBuzz Platform has FizzAlloc.
+
+### Estimated Scale
+
+~2,800 lines of allocator engine, ~500 lines of slab allocator, ~450 lines of arena allocator, ~400 lines of garbage collector, ~350 lines of memory pressure system, ~300 lines of fragmentation analyzer, ~250 lines of dashboard, ~210 tests. Total: ~5,260 lines.
 
 ---
 
@@ -380,15 +410,15 @@ Because the evaluation pipeline is the platform's critical path, and the critica
 
 | # | Idea | Core Technology | Estimated Lines | Key Deliverable |
 |---|------|----------------|-----------------|-----------------|
-| 1 | FizzLock Distributed Lock Manager | Hierarchical locking, Tarjan's SCC deadlock detection, fencing tokens, leases | ~4,690 | Mutual exclusion for concurrent modulo operations |
-| 2 | FizzCDC Change Data Capture | Before/after image capture, outbox pattern, schema registry, sink connectors | ~4,485 | Real-time streaming of every MESI transition and block append |
-| 3 | FizzBill API Monetization | Subscription billing, usage metering, dunning, ASC 606 revenue recognition | ~5,045 | $0.01 per `SELECT * FROM evaluations` query |
-| 4 | FizzNAS Neural Architecture Search | DARTS, evolutionary search, Pareto front analysis, architecture encoding | ~4,950 | Discovering that 2x16 MLP was optimal all along |
-| 5 | FizzCorr Observability Correlation | Trace-log-metric unification, causal inference, exemplar linking, dependency map | ~4,795 | 80-event correlated timeline for a 2ms evaluation |
-| 6 | FizzJIT Runtime Code Generation | Trace recording, JIT-IR, 6 optimization passes, on-stack replacement | ~5,360 | 40-60% dispatch overhead reduction via compiled middleware |
+| 1 | FizzCap Capability-Based Security | Object capabilities, attenuation, delegation graphs, confused deputy prevention | ~4,800 | Unforgeable authority tokens for modulo operations |
+| 2 | FizzOTel OpenTelemetry Tracing | OTLP wire format, W3C Trace Context, Zipkin/Jaeger export, span processors | ~5,155 | 25-span trace trees exportable to any APM vendor |
+| 3 | FizzWAL Write-Ahead Intent Log | ARIES recovery, speculative execution, savepoints, intent groups | ~5,045 | Atomic rollback of 8-subsystem state mutations |
+| 4 | FizzCRDT Conflict-Free Replicated Data Types | GCounter, PNCounter, ORSet, LWWRegister, MVRegister, RGA, vector clocks | ~5,110 | Coordination-free convergence across evaluation replicas |
+| 5 | FizzGrammar Formal Grammar & Parser Generator | BNF/EBNF, FIRST/FOLLOW sets, LL(1) analysis, parser generation, AST framework | ~4,910 | Formal grammars for all 6 platform languages |
+| 6 | FizzAlloc Memory Allocator & GC | Slab allocation, arena management, mark-sweep-compact, generational GC, memory pressure | ~5,260 | Application-level memory management with slab-allocated FizzBuzzResults |
 
-**Total addition: ~29,325 estimated lines of code, ~1,175 estimated tests**
+**Total addition: ~30,280 estimated lines of code, ~1,230 estimated tests**
 
-**Projected platform size: ~189,000+ lines, ~7,700+ tests**
+**Projected platform size: ~218,919+ lines, ~8,270+ tests**
 
 ---
