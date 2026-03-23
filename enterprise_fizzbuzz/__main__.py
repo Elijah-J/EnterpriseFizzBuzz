@@ -497,6 +497,13 @@ from enterprise_fizzbuzz.infrastructure.otel_tracing import (
     TracerProvider as OTelTracerProvider,
     create_otel_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.network_stack import (
+    NetworkDashboard,
+    NetworkInterface,
+    NetworkMiddleware,
+    NetworkStack,
+    FizzBuzzProtocol,
+)
 from enterprise_fizzbuzz.infrastructure.mapreduce import (
     MapReduceDashboard,
     MapReduceJob,
@@ -2640,6 +2647,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzfs-dashboard",
         action="store_true",
         help="Display the FizzFS ASCII dashboard with mount table, inode stats, and directory tree",
+    )
+
+    # FizzNet — TCP/IP Protocol Stack
+    parser.add_argument(
+        "--fizznet",
+        action="store_true",
+        help="Enable FizzNet: full TCP/IP protocol stack for reliable FizzBuzz classification delivery",
+    )
+
+    parser.add_argument(
+        "--fizznet-ping",
+        type=int,
+        metavar="N",
+        default=None,
+        help="Send N ICMP echo requests through the FizzNet stack and display results",
+    )
+
+    parser.add_argument(
+        "--fizznet-dashboard",
+        action="store_true",
+        help="Display the FizzNet ASCII dashboard with packet counters, TCP state, and congestion window",
     )
 
     return parser
@@ -8491,6 +8519,84 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.synth_dashboard:
         print("\n  FizzSynth not enabled. Use --synth to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzNet TCP/IP Protocol Stack
+    # ----------------------------------------------------------------
+    fizznet_stack = None
+    fizznet_protocol = None
+    fizznet_middleware_instance = None
+
+    if args.fizznet or args.fizznet_ping is not None or args.fizznet_dashboard:
+        fizznet_stack = NetworkStack()
+        server_ip = config.fizznet_server_ip
+        client_ip = config.fizznet_client_ip
+        server_port = config.fizznet_server_port
+
+        server_iface = NetworkInterface(
+            name="fizz0",
+            mac_address="02:fb:00:00:00:01",
+            ip_address=server_ip,
+        )
+        client_iface = NetworkInterface(
+            name="fizz1",
+            mac_address="02:fb:00:00:00:02",
+            ip_address=client_ip,
+        )
+        fizznet_stack.add_interface(server_iface)
+        fizznet_stack.add_interface(client_iface)
+
+        fizznet_protocol = FizzBuzzProtocol(fizznet_stack)
+        fizznet_protocol.start_server(server_ip, server_port)
+
+        if args.fizznet:
+            fizznet_middleware_instance = NetworkMiddleware(
+                stack=fizznet_stack,
+                server_ip=server_ip,
+                client_ip=client_ip,
+                server_port=server_port,
+                enable_dashboard=args.fizznet_dashboard,
+            )
+            builder.with_middleware(fizznet_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZNET: TCP/IP PROTOCOL STACK ENABLED                  |\n"
+                f"  |   Server: {server_ip}:{server_port}                            |\n"
+                f"  |   Client: {client_ip}                                  |\n"
+                "  |   Stack: Ethernet II / IPv4 / TCP (Reno) / FBZP        |\n"
+                "  |   Every evaluation traverses the full OSI model.        |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+        # Handle --fizznet-ping
+        if args.fizznet_ping is not None:
+            ping_count = args.fizznet_ping
+            print(f"\n  PING {server_ip} via FizzNet ({ping_count} requests):")
+            for seq in range(1, ping_count + 1):
+                start_ns = time.perf_counter_ns()
+                reply = fizznet_stack.ping(client_ip, server_ip, sequence=seq)
+                elapsed_us = (time.perf_counter_ns() - start_ns) / 1000
+                if reply is not None:
+                    print(f"    Reply from {server_ip}: icmp_seq={seq} time={elapsed_us:.1f}us")
+                else:
+                    print(f"    Request timed out: icmp_seq={seq}")
+            print()
+
+    # FizzNet Dashboard (post-execution)
+    if args.fizznet_dashboard and fizznet_stack is not None:
+        conns = []
+        if fizznet_middleware_instance is not None:
+            conns = fizznet_middleware_instance.connections
+        print(NetworkDashboard.render(
+            stack=fizznet_stack,
+            protocol=fizznet_protocol,
+            connections=conns,
+            width=config.fizznet_dashboard_width,
+        ))
+    elif args.fizznet_dashboard:
+        print("\n  FizzNet not enabled. Use --fizznet to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
