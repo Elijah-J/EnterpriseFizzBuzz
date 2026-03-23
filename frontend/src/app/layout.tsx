@@ -126,8 +126,13 @@ export default function RootLayout({
               <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
                 Configuration
               </li>
-              <li className="rounded px-2 py-1.5 hover:bg-panel-800 transition-colors">
-                Audit Log
+              <li>
+                <a
+                  href="/audit"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Audit Log
+                </a>
               </li>
             </ul>
           </nav>

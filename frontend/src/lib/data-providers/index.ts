@@ -26,6 +26,9 @@ export type {
   HeatmapData,
   EvaluationTrendPoint,
   EvaluationTrend,
+  AuditLogFilter,
+  PaginatedAuditLog,
+  AuditLogSortField,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

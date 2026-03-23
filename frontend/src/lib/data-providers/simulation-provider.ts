@@ -26,6 +26,9 @@ import type {
   HeatmapCell,
   EvaluationTrend,
   EvaluationTrendPoint,
+  AuditLogFilter,
+  PaginatedAuditLog,
+  AuditLogSortField,
 } from "./types";
 
 /**
@@ -195,6 +198,217 @@ const INCIDENT_CATALOG: { title: string; description: string; severity: Incident
     severity: "P3",
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Audit log dataset generation constants
+// ---------------------------------------------------------------------------
+
+/**
+ * Source IP pool for audit event attribution. Comprises RFC 1918 internal
+ * addresses from platform infrastructure subnets and service mesh identifiers
+ * for automated subsystem-to-subsystem communication.
+ */
+const AUDIT_SOURCE_IPS = [
+  "10.0.1.12", "10.0.1.34", "10.0.1.56", "10.0.2.10", "10.0.2.78",
+  "10.0.3.15", "10.0.3.42", "172.16.0.5", "172.16.0.18", "172.16.1.3",
+  "172.16.1.22", "172.16.2.8", "172.16.2.41",
+  "svc://compliance-engine", "svc://cache-coherence", "svc://rule-engine",
+  "svc://blockchain-ledger", "svc://ml-pipeline", "svc://consensus-cluster",
+] as const;
+
+/**
+ * Subsystem identifiers that generate audit events. Each maps to a
+ * real infrastructure component in the Enterprise FizzBuzz backend.
+ */
+const AUDIT_SUBSYSTEMS = [
+  "compliance-engine", "cache-subsystem", "rule-engine", "blockchain-ledger",
+  "auth-service", "ml-pipeline", "consensus-cluster", "chaos-controller",
+  "rate-limiter", "service-mesh",
+] as const;
+
+/**
+ * Automated service principals that generate the majority of audit events.
+ * These represent the platform's continuous compliance monitoring and
+ * automated assessment pipelines.
+ */
+const AUTOMATED_AUDIT_ACTORS = [
+  "Compliance Automation Engine",
+  "SOX Continuous Monitor",
+  "GDPR Data Controller",
+  "HIPAA Audit Subsystem",
+  "FizzBuzz-ISO Validator",
+  "Cache Coherence Watchdog",
+  "Blockchain Integrity Verifier",
+  "ML Model Governance Agent",
+  "Chaos Engineering Orchestrator",
+  "Rate Limit Policy Enforcer",
+] as const;
+
+/**
+ * Descriptive templates for each audit action type. Metadata key-value
+ * pairs are generated alongside each description to provide drill-down
+ * context for forensic investigation.
+ */
+const AUDIT_DESCRIPTIONS: Record<AuditEntry["action"], { text: string; metadata: Record<string, string> }[]> = {
+  "control-assessed": [
+    { text: "Control GDPR-Art.32.1 assessed as PASSING — encryption at rest verified", metadata: { controlId: "GDPR-Art.32.1", result: "pass", duration: "1.24s" } },
+    { text: "Control SOX-404.3.7 assessed as FAILING — reconciliation gap detected", metadata: { controlId: "SOX-404.3.7", result: "fail", gapDays: "3" } },
+    { text: "Control HIPAA-164.312(a)(1) assessed as PASSING — access controls verified", metadata: { controlId: "HIPAA-164.312(a)(1)", result: "pass" } },
+    { text: "Control FIZZ-A.12.4.1 assessed as PASSING — audit logging operational", metadata: { controlId: "FIZZ-A.12.4.1", result: "pass", logRetentionDays: "365" } },
+    { text: "Control SOX-302.1.2 assessed as PASSING — CEO certification current", metadata: { controlId: "SOX-302.1.2", result: "pass" } },
+    { text: "Control GDPR-Art.17.3 assessed as FAILING — erasure backlog exceeds SLA", metadata: { controlId: "GDPR-Art.17.3", result: "fail", backlogCount: "47" } },
+    { text: "Control HIPAA-164.308(a)(5) assessed as PASSING — security awareness training current", metadata: { controlId: "HIPAA-164.308(a)(5)", result: "pass", completionRate: "98.7%" } },
+    { text: "Control FIZZ-A.9.2.3 assessed as PASSING — privilege escalation review completed", metadata: { controlId: "FIZZ-A.9.2.3", result: "pass" } },
+  ],
+  "audit-run": [
+    { text: "Automated SOX Section 404 assessment completed — 45/47 controls passed", metadata: { framework: "SOX", passed: "45", total: "47" } },
+    { text: "Scheduled GDPR Article 32 security assessment completed — 34/38 controls passed", metadata: { framework: "GDPR", passed: "34", total: "38" } },
+    { text: "HIPAA Security Rule quarterly assessment completed — 51/54 controls passed", metadata: { framework: "HIPAA", passed: "51", total: "54" } },
+    { text: "FizzBuzz-ISO-27001 continuous compliance scan completed — 61/62 controls passed", metadata: { framework: "FIZZBUZZ-ISO-27001", passed: "61", total: "62" } },
+  ],
+  "finding-created": [
+    { text: "New critical finding created for HIPAA framework — PHI exposure in debug log", metadata: { findingId: "CF-2024-0912", severity: "critical" } },
+    { text: "New high finding created for SOX framework — segregation of duties violation", metadata: { findingId: "CF-2024-0913", severity: "high" } },
+    { text: "New medium finding created for GDPR framework — consent record retention gap", metadata: { findingId: "CF-2024-0914", severity: "medium" } },
+    { text: "New low finding created for FIZZBUZZ-ISO-27001 — documentation update pending", metadata: { findingId: "CF-2024-0915", severity: "low" } },
+  ],
+  "finding-updated": [
+    { text: "Finding CF-2024-0847 status changed from open to in-progress", metadata: { findingId: "CF-2024-0847", oldStatus: "open", newStatus: "in-progress" } },
+    { text: "Finding CF-2024-0852 severity downgraded from high to medium after mitigation", metadata: { findingId: "CF-2024-0852", oldSeverity: "high", newSeverity: "medium" } },
+    { text: "Finding CF-2024-0861 status changed to remediated — evidence uploaded", metadata: { findingId: "CF-2024-0861", newStatus: "remediated" } },
+    { text: "Finding CF-2024-0855 assigned to Dr. Elara Modulus for remediation", metadata: { findingId: "CF-2024-0855", assignee: "Dr. Elara Modulus" } },
+  ],
+  "evidence-uploaded": [
+    { text: "SOX Section 404 evidence artifact uploaded: Q4 evaluation pipeline reconciliation report", metadata: { artifactType: "reconciliation-report", quarter: "Q4" } },
+    { text: "GDPR Article 30 processing activities register updated for Q1 reporting period", metadata: { artifactType: "processing-register", period: "Q1" } },
+    { text: "HIPAA risk assessment evidence uploaded: annual penetration test results", metadata: { artifactType: "pentest-results", scope: "full-platform" } },
+    { text: "FizzBuzz-ISO-27001 management review minutes uploaded for March review cycle", metadata: { artifactType: "review-minutes", month: "March" } },
+  ],
+  "policy-change": [
+    { text: "FizzBuzz-ISO-27001 password policy updated: minimum length increased to 128 characters", metadata: { policy: "password-complexity", field: "minLength", oldValue: "64", newValue: "128" } },
+    { text: "SOX Section 404 retention policy extended to 10 years for evaluation receipts", metadata: { policy: "data-retention", oldYears: "7", newYears: "10" } },
+    { text: "GDPR data subject access request SLA reduced from 30 to 15 business days", metadata: { policy: "dsar-sla", oldDays: "30", newDays: "15" } },
+    { text: "HIPAA minimum necessary standard policy updated for ML training data access", metadata: { policy: "minimum-necessary", scope: "ml-training" } },
+  ],
+};
+
+/**
+ * Weighted random selection utility. Picks an index from a weight array
+ * using cumulative distribution sampling.
+ */
+function weightedRandomIndex(weights: number[]): number {
+  const total = weights.reduce((s, w) => s + w, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return weights.length - 1;
+}
+
+/**
+ * Generates the canonical 250-entry audit dataset. The dataset is generated
+ * deterministically on first invocation and cached for the provider instance
+ * lifetime. Entries span a 7-day window with realistic temporal clustering.
+ */
+function generateAuditDataset(): AuditEntry[] {
+  const entries: AuditEntry[] = [];
+  const now = Date.now();
+  const sevenDaysMs = 7 * 24 * 3_600_000;
+
+  const actions: AuditEntry["action"][] = [
+    "control-assessed", "audit-run", "finding-created",
+    "finding-updated", "evidence-uploaded", "policy-change",
+  ];
+  const actionWeights = [30, 15, 15, 15, 15, 10];
+
+  const severities: AuditEntry["severity"][] = ["info", "low", "medium", "high", "critical"];
+  const severityWeights = [40, 25, 20, 10, 5];
+
+  const outcomes: AuditEntry["outcome"][] = ["success", "failure", "denied", "error"];
+  const outcomeWeights = [75, 10, 10, 5];
+
+  const frameworkIds = ["SOX", "GDPR", "HIPAA", "FIZZBUZZ-ISO-27001"];
+
+  // Generate session correlation groups: 50-125 groups of 2-5 entries each
+  const sessionGroups: { id: string; indices: number[] }[] = [];
+  let idx = 0;
+  while (idx < 250) {
+    const groupSize = 2 + Math.floor(Math.random() * 4); // 2-5
+    const sessionId = generateSessionId();
+    const indices: number[] = [];
+    for (let j = 0; j < groupSize && idx < 250; j++, idx++) {
+      indices.push(idx);
+    }
+    sessionGroups.push({ id: sessionId, indices });
+  }
+
+  // Build a lookup from entry index to session ID
+  const sessionMap = new Map<number, string>();
+  for (const group of sessionGroups) {
+    for (const i of group.indices) {
+      sessionMap.set(i, group.id);
+    }
+  }
+
+  for (let i = 0; i < 250; i++) {
+    const action = actions[weightedRandomIndex(actionWeights)];
+    const severity = severities[weightedRandomIndex(severityWeights)];
+    const outcome = outcomes[weightedRandomIndex(outcomeWeights)];
+
+    // Timestamp distribution: business hours clustering with periodic spikes
+    // Generate hour-of-day with business-hour bias
+    const dayOffset = Math.floor(Math.random() * 7);
+    const hourRoll = Math.random();
+    let hour: number;
+    if (hourRoll < 0.7) {
+      // 70% during business hours (8-18)
+      hour = 8 + Math.floor(Math.random() * 10);
+    } else if (hourRoll < 0.85) {
+      // 15% during automated scan windows (2-4 AM)
+      hour = 2 + Math.floor(Math.random() * 2);
+    } else {
+      // 15% other hours
+      hour = Math.floor(Math.random() * 24);
+    }
+    const minute = Math.floor(Math.random() * 60);
+    const second = Math.floor(Math.random() * 60);
+    const timestampMs = now - dayOffset * 86_400_000 - (24 - hour) * 3_600_000 - (60 - minute) * 60_000 - second * 1_000;
+
+    const isAutomated = Math.random() < 0.65;
+    const actor = isAutomated
+      ? AUTOMATED_AUDIT_ACTORS[Math.floor(Math.random() * AUTOMATED_AUDIT_ACTORS.length)]
+      : ON_CALL_ROSTER[Math.floor(Math.random() * ON_CALL_ROSTER.length)];
+
+    const descEntry = AUDIT_DESCRIPTIONS[action][Math.floor(Math.random() * AUDIT_DESCRIPTIONS[action].length)];
+    const sourceIp = AUDIT_SOURCE_IPS[Math.floor(Math.random() * AUDIT_SOURCE_IPS.length)];
+    const subsystem = AUDIT_SUBSYSTEMS[Math.floor(Math.random() * AUDIT_SUBSYSTEMS.length)];
+    const frameworkId = frameworkIds[Math.floor(Math.random() * frameworkIds.length)];
+
+    const hasEvalSession = Math.random() < 0.3;
+
+    entries.push({
+      id: `AE-${String(10000 + i).padStart(5, "0")}`,
+      timestamp: new Date(timestampMs).toISOString(),
+      action,
+      frameworkId,
+      actor,
+      description: descEntry.text,
+      metadata: { ...descEntry.metadata },
+      severity,
+      outcome,
+      sessionCorrelationId: sessionMap.get(i)!,
+      sourceIp,
+      subsystem,
+      evaluationSessionId: hasEvalSession ? `eval-${generateSessionId().slice(0, 8)}` : undefined,
+    });
+  }
+
+  // Sort by timestamp descending (most recent first)
+  entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  return entries;
+}
 
 let throughputHistory: number[] = [];
 let totalEvaluations = 847_293;
@@ -499,84 +713,118 @@ export class SimulationProvider implements IDataProvider {
     return filtered;
   }
 
+  /**
+   * Cached audit dataset. Generated on first access and reused across all
+   * audit log queries for the provider instance lifetime, ensuring consistent
+   * pagination and filtering behavior.
+   */
+  private auditDatasetCache: AuditEntry[] | null = null;
+
+  private getAuditDataset(): AuditEntry[] {
+    if (!this.auditDatasetCache) {
+      this.auditDatasetCache = generateAuditDataset();
+    }
+    return this.auditDatasetCache;
+  }
+
   async getAuditLog(limit: number = 50): Promise<AuditEntry[]> {
-    const entries: AuditEntry[] = [];
-    const actions: AuditEntry["action"][] = [
-      "audit-run", "finding-created", "finding-updated",
-      "control-assessed", "policy-change", "evidence-uploaded",
-    ];
-    const automatedActors = [
-      "Compliance Automation Engine",
-      "SOX Continuous Monitor",
-      "GDPR Data Controller",
-      "HIPAA Audit Subsystem",
-      "FizzBuzz-ISO Validator",
-    ];
-    const frameworkIds = ["SOX", "GDPR", "HIPAA", "FIZZBUZZ-ISO-27001"];
+    const dataset = this.getAuditDataset();
+    return dataset.slice(0, limit);
+  }
 
-    const auditDescriptions: Record<AuditEntry["action"], string[]> = {
-      "audit-run": [
-        "Automated SOX Section 404 assessment completed — 45/47 controls passed",
-        "Scheduled GDPR Article 32 security assessment completed — 34/38 controls passed",
-        "HIPAA Security Rule quarterly assessment completed — 51/54 controls passed",
-        "FizzBuzz-ISO-27001 continuous compliance scan completed — 61/62 controls passed",
-      ],
-      "finding-created": [
-        "New critical finding created for HIPAA framework — PHI exposure in debug log",
-        "New high finding created for SOX framework — segregation of duties violation",
-        "New medium finding created for GDPR framework — consent record retention gap",
-        "New low finding created for FIZZBUZZ-ISO-27001 — documentation update pending",
-      ],
-      "finding-updated": [
-        "Finding CF-2024-0847 status changed from open to in-progress",
-        "Finding CF-2024-0852 severity downgraded from high to medium after mitigation",
-        "Finding CF-2024-0861 status changed to remediated — evidence uploaded",
-        "Finding CF-2024-0855 assigned to Dr. Elara Modulus for remediation",
-      ],
-      "control-assessed": [
-        "Control GDPR-Art.32.1 assessed as PASSING — encryption at rest verified",
-        "Control SOX-404.3.7 assessed as FAILING — reconciliation gap detected",
-        "Control HIPAA-164.312(a)(1) assessed as PASSING — access controls verified",
-        "Control FIZZ-A.12.4.1 assessed as PASSING — audit logging operational",
-      ],
-      "policy-change": [
-        "FizzBuzz-ISO-27001 password policy updated: minimum length increased to 128 characters",
-        "SOX Section 404 retention policy extended to 10 years for evaluation receipts",
-        "GDPR data subject access request SLA reduced from 30 to 15 business days",
-        "HIPAA minimum necessary standard policy updated for ML training data access",
-      ],
-      "evidence-uploaded": [
-        "SOX Section 404 evidence artifact uploaded: Q4 evaluation pipeline reconciliation report",
-        "GDPR Article 30 processing activities register updated for Q1 reporting period",
-        "HIPAA risk assessment evidence uploaded: annual penetration test results",
-        "FizzBuzz-ISO-27001 management review minutes uploaded for March review cycle",
-      ],
-    };
+  async getAuditLogPaginated(
+    filters: AuditLogFilter,
+    page: number,
+    pageSize: number,
+    sortField: AuditLogSortField = "timestamp",
+    sortDirection: "asc" | "desc" = "desc",
+  ): Promise<PaginatedAuditLog> {
+    let entries = [...this.getAuditDataset()];
 
-    for (let i = 0; i < limit; i++) {
-      const action = actions[Math.floor(Math.random() * actions.length)];
-      const hoursAgo = Math.random() * 168; // 7 days in hours
-      const isAutomated = Math.random() > 0.35;
-      const actor = isAutomated
-        ? automatedActors[Math.floor(Math.random() * automatedActors.length)]
-        : ON_CALL_ROSTER[Math.floor(Math.random() * ON_CALL_ROSTER.length)];
-      const descriptions = auditDescriptions[action];
-      const description = descriptions[Math.floor(Math.random() * descriptions.length)];
-
-      entries.push({
-        id: `AE-${String(10000 + i).padStart(5, "0")}`,
-        timestamp: new Date(Date.now() - hoursAgo * 3_600_000).toISOString(),
-        action,
-        frameworkId: frameworkIds[Math.floor(Math.random() * frameworkIds.length)],
-        actor,
-        description,
+    // Apply filters
+    if (filters.dateFrom) {
+      const from = new Date(filters.dateFrom).getTime();
+      entries = entries.filter((e) => new Date(e.timestamp).getTime() >= from);
+    }
+    if (filters.dateTo) {
+      const to = new Date(filters.dateTo).getTime();
+      entries = entries.filter((e) => new Date(e.timestamp).getTime() <= to);
+    }
+    if (filters.actions && filters.actions.length > 0) {
+      entries = entries.filter((e) => filters.actions!.includes(e.action));
+    }
+    if (filters.outcome) {
+      entries = entries.filter((e) => e.outcome === filters.outcome);
+    }
+    if (filters.severity) {
+      entries = entries.filter((e) => e.severity === filters.severity);
+    }
+    if (filters.frameworkId) {
+      entries = entries.filter((e) => e.frameworkId === filters.frameworkId);
+    }
+    if (filters.subsystem) {
+      entries = entries.filter((e) => e.subsystem === filters.subsystem);
+    }
+    if (filters.actor) {
+      entries = entries.filter((e) => e.actor === filters.actor);
+    }
+    if (filters.searchQuery) {
+      const query = filters.searchQuery.toLowerCase();
+      entries = entries.filter((e) => {
+        if (e.actor.toLowerCase().includes(query)) return true;
+        if (e.description.toLowerCase().includes(query)) return true;
+        if (e.metadata) {
+          for (const val of Object.values(e.metadata)) {
+            if (val.toLowerCase().includes(query)) return true;
+          }
+        }
+        return false;
       });
     }
 
-    // Sort by timestamp, most recent first
-    entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // Apply sorting
+    const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3, info: 4 };
+    const outcomeOrder: Record<string, number> = { error: 0, failure: 1, denied: 2, success: 3 };
+    const direction = sortDirection === "asc" ? 1 : -1;
 
-    return entries;
+    entries.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "timestamp":
+          cmp = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+          break;
+        case "severity":
+          cmp = (severityOrder[a.severity] ?? 5) - (severityOrder[b.severity] ?? 5);
+          break;
+        case "outcome":
+          cmp = (outcomeOrder[a.outcome] ?? 5) - (outcomeOrder[b.outcome] ?? 5);
+          break;
+        case "action":
+          cmp = a.action.localeCompare(b.action);
+          break;
+        case "actor":
+          cmp = a.actor.localeCompare(b.actor);
+          break;
+        case "subsystem":
+          cmp = a.subsystem.localeCompare(b.subsystem);
+          break;
+      }
+      return cmp * direction;
+    });
+
+    const totalCount = entries.length;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const clampedPage = Math.max(1, Math.min(page, totalPages));
+    const startIdx = (clampedPage - 1) * pageSize;
+    const pageEntries = entries.slice(startIdx, startIdx + pageSize);
+
+    return {
+      entries: pageEntries,
+      totalCount,
+      page: clampedPage,
+      pageSize,
+      totalPages,
+    };
   }
 
   async getMetricTimeSeries(
