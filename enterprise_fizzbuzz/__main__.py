@@ -299,6 +299,12 @@ from enterprise_fizzbuzz.infrastructure.gpu_shader import (
     ShaderMiddleware as ShaderMiddlewareClass,
     create_shader_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.cpu_pipeline import (
+    CPIDashboard,
+    PipelineMiddleware as PipelineMiddlewareClass,
+    PipelineSimulator,
+    create_pipeline_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.probabilistic import (
     ProbabilisticDashboard,
     ProbabilisticMiddleware,
@@ -3154,6 +3160,28 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--shader-dashboard",
         action="store_true",
         help="Display the FizzShader GPU ASCII dashboard with occupancy, divergence, and memory stats",
+    )
+
+    # FizzCPU 5-Stage RISC Pipeline Simulator
+    parser.add_argument(
+        "--cpu-pipeline",
+        action="store_true",
+        help="Enable the FizzCPU 5-stage RISC pipeline simulator for cycle-accurate FizzBuzz evaluation",
+    )
+
+    parser.add_argument(
+        "--cpu-predictor",
+        type=str,
+        choices=["static", "1bit", "2bit", "gshare"],
+        default="2bit",
+        metavar="PREDICTOR",
+        help="Branch prediction strategy for the CPU pipeline simulator (default: 2bit)",
+    )
+
+    parser.add_argument(
+        "--cpu-dashboard",
+        action="store_true",
+        help="Display the FizzCPU pipeline ASCII dashboard with CPI breakdown, hazard analysis, and prediction stats",
     )
 
     return parser
@@ -7501,6 +7529,37 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # FizzCPU — 5-Stage RISC Pipeline Simulator
+    # ----------------------------------------------------------------
+    pipeline_sim = None
+    pipeline_middleware_instance = None
+
+    pipeline_active = (
+        args.cpu_pipeline or args.cpu_dashboard
+    )
+
+    if pipeline_active:
+        pipeline_sim, pipeline_middleware_instance = (
+            create_pipeline_subsystem(predictor_name=args.cpu_predictor)
+        )
+
+        builder.with_middleware(pipeline_middleware_instance)
+        logger.info(
+            "FizzCPU pipeline simulator enabled with %s branch predictor",
+            args.cpu_predictor,
+        )
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCPU: 5-STAGE RISC PIPELINE SIMULATOR ENABLED        |\n"
+                f"  |   Pipeline stages: IF -> ID -> EX -> MEM -> WB          |\n"
+                f"  |   Branch predictor: {args.cpu_predictor:<37}|\n"
+                f"  |   Hazard detection: forwarding + load-use stall         |\n"
+                f"  |   Registers: 8 (R0 hardwired to zero)                   |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # FizzContract — Smart Contract VM
     # ----------------------------------------------------------------
     contract_deployer = None
@@ -10009,6 +10068,13 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(ShaderDashboard.render(shader_gpu))
     elif args.shader_dashboard:
         print("\n  FizzShader not enabled. Use --shader to enable.\n")
+
+    # FizzCPU Pipeline Dashboard (post-execution)
+    if args.cpu_dashboard and pipeline_sim is not None:
+        print()
+        print(CPIDashboard.render(pipeline_sim))
+    elif args.cpu_dashboard:
+        print("\n  FizzCPU not enabled. Use --cpu-pipeline to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
