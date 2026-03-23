@@ -657,6 +657,17 @@ class EventType(Enum):
     PROXY_BACKEND_DRAINED = auto()
     PROXY_DASHBOARD_RENDERED = auto()
 
+    # Probabilistic Data Structures (FizzBloom) events
+    PROBABILISTIC_BLOOM_ADD = auto()
+    PROBABILISTIC_BLOOM_QUERY = auto()
+    PROBABILISTIC_CMS_INCREMENT = auto()
+    PROBABILISTIC_CMS_ESTIMATE = auto()
+    PROBABILISTIC_HLL_ADD = auto()
+    PROBABILISTIC_HLL_CARDINALITY = auto()
+    PROBABILISTIC_TDIGEST_ADD = auto()
+    PROBABILISTIC_TDIGEST_QUANTILE = auto()
+    PROBABILISTIC_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

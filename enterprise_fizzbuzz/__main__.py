@@ -283,6 +283,11 @@ from enterprise_fizzbuzz.infrastructure.compliance_chatbot import (
 from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     UnifiedAuditDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.probabilistic import (
+    ProbabilisticDashboard,
+    ProbabilisticMiddleware,
+    create_probabilistic_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.reverse_proxy import (
     LoadBalanceAlgorithm,
     ProxyDashboard,
@@ -2440,6 +2445,21 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--proxy-dashboard",
         action="store_true",
         help="Display the FizzProxy ASCII dashboard with backend pool status and traffic distribution",
+    )
+
+    # Probabilistic Data Structures (FizzBloom)
+    parser.add_argument(
+        "--probabilistic",
+        action="store_true",
+        help="Enable FizzBloom: probabilistic data structures for approximate FizzBuzz analytics "
+             "(Bloom filter, Count-Min Sketch, HyperLogLog, T-Digest)",
+    )
+
+    parser.add_argument(
+        "--probabilistic-dashboard",
+        action="store_true",
+        help="Display the FizzBloom ASCII dashboard with Bloom density, CMS top-k, HLL cardinality, "
+             "and T-Digest quantile estimates",
     )
 
     return parser
@@ -6078,6 +6098,32 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzBloom Probabilistic Data Structures
+    # ----------------------------------------------------------------
+    probabilistic_middleware_instance = None
+
+    if args.probabilistic or config.probabilistic_enabled:
+        probabilistic_middleware_instance, _, _, _, _ = create_probabilistic_subsystem(
+            bloom_expected=config.probabilistic_bloom_expected_elements,
+            bloom_fpr=config.probabilistic_bloom_false_positive_rate,
+            cms_width=config.probabilistic_cms_width,
+            cms_depth=config.probabilistic_cms_depth,
+            hll_precision=config.probabilistic_hll_precision,
+            tdigest_compression=config.probabilistic_tdigest_compression,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(probabilistic_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZBLOOM: PROBABILISTIC DATA STRUCTURES                |\n"
+                "  |   Bloom filter, Count-Min Sketch, HyperLogLog, T-Digest |\n"
+                "  |   Approximate analytics for FizzBuzz evaluation streams  |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -7940,6 +7986,17 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  FizzGate has no simulation results to display.\n")
     elif args.fizzgate_waveform and circuit_middleware_instance is None:
         print("\n  FizzGate not enabled. Use --fizzgate to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzBloom Probabilistic Dashboard
+    # ----------------------------------------------------------------
+    if args.probabilistic_dashboard and probabilistic_middleware_instance is not None:
+        print(ProbabilisticDashboard.render(
+            middleware=probabilistic_middleware_instance,
+            width=config.probabilistic_dashboard_width,
+        ))
+    elif args.probabilistic_dashboard:
+        print("\n  FizzBloom not enabled. Use --probabilistic to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzProxy Dashboard
