@@ -2271,6 +2271,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzCRDT ASCII dashboard with per-CRDT state, vector clocks, convergence stats, and merge history",
     )
 
+    # FizzGrammar -- Formal Grammar & Parser Generator
+    parser.add_argument(
+        "--grammar",
+        action="store_true",
+        help="Enable FizzGrammar: parse and analyze the built-in FizzBuzz Classification grammar with FIRST/FOLLOW sets",
+    )
+
+    parser.add_argument(
+        "--grammar-analyze",
+        action="store_true",
+        help="Run full grammar analysis: FIRST/FOLLOW sets, LL(1) classification, left recursion, ambiguity detection",
+    )
+
+    parser.add_argument(
+        "--grammar-dashboard",
+        action="store_true",
+        help="Display the FizzGrammar ASCII dashboard with grammar inventory, parse tables, and health index",
+    )
+
     return parser
 
 
@@ -4952,6 +4971,39 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     # ----------------------------------------------------------------
+    # FizzGrammar -- Formal Grammar & Parser Generator setup
+    # ----------------------------------------------------------------
+    grammar_obj = None
+    grammar_analyzer = None
+
+    if args.grammar or args.grammar_analyze or args.grammar_dashboard:
+        from enterprise_fizzbuzz.infrastructure.formal_grammar import (
+            GrammarAnalyzer,
+            GrammarDashboard,
+            ParserGenerator,
+            load_builtin_grammar,
+        )
+
+        grammar_obj = load_builtin_grammar()
+        grammar_analyzer = GrammarAnalyzer(grammar_obj)
+
+        print(
+            "\n  +---------------------------------------------------------+\n"
+            "  | FizzGrammar: Formal Grammar & Parser Generator ENABLED  |\n"
+            f"  | Grammar: {grammar_obj.name:<45}|\n"
+            f"  | Terminals: {len(grammar_obj.terminals):<44}|\n"
+            f"  | Non-terminals: {len(grammar_obj.non_terminals):<40}|\n"
+            f"  | Productions: {len(grammar_obj.productions):<41}|\n"
+            "  | Chomsky hierarchy compliance: guaranteed.               |\n"
+            "  +---------------------------------------------------------+"
+        )
+
+        if args.grammar_analyze:
+            print()
+            print(grammar_analyzer.render_text_report())
+            print()
+
+    # ----------------------------------------------------------------
     # Archaeological Recovery System setup
     # ----------------------------------------------------------------
     arch_engine = None
@@ -7266,6 +7318,21 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.crdt_dashboard:
         print("\n  FizzCRDT not enabled. Use --crdt to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzGrammar Dashboard
+    # ----------------------------------------------------------------
+    if args.grammar_dashboard and grammar_obj is not None:
+        from enterprise_fizzbuzz.infrastructure.formal_grammar import (
+            GrammarDashboard,
+        )
+        print(GrammarDashboard.render(
+            grammar=grammar_obj,
+            analyzer=grammar_analyzer,
+            width=config.grammar_dashboard_width,
+        ))
+    elif args.grammar_dashboard:
+        print("\n  FizzGrammar not enabled. Use --grammar to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

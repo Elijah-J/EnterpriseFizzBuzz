@@ -1771,6 +1771,20 @@ crdt:
   dashboard:
     width: 60                             # ASCII dashboard width
 
+# FizzGrammar -- Formal Grammar & Parser Generator configuration
+# Because a parser without a grammar is a function without a
+# specification. The platform's six hand-written parsers have
+# operated without formal BNF grammars for too long. FizzGrammar
+# rectifies this oversight by providing FIRST/FOLLOW set computation,
+# LL(1) classification, left-recursion detection, ambiguity analysis,
+# and a parser generator that compiles grammars to recursive-descent
+# parsers -- all in service of determining whether n % 3 == 0.
+# Chomsky would be proud. Or confused. Hard to tell.
+grammar:
+  enabled: false                          # Master switch -- opt-in via --grammar
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:
