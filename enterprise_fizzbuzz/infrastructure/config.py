@@ -5923,6 +5923,18 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         self._ensure_loaded()
         return self._raw_config.get("probabilistic", {}).get("dashboard", {}).get("width", 60)
 
+    @property
+    def datalog_enabled(self) -> bool:
+        """Whether the FizzLog Datalog query engine is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("datalog", {}).get("enabled", False)
+
+    @property
+    def datalog_dashboard_width(self) -> int:
+        """Width of the FizzLog ASCII dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("datalog", {}).get("dashboard", {}).get("width", 60)
+
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
         self._ensure_loaded()

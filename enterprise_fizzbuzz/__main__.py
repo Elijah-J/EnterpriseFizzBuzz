@@ -288,6 +288,14 @@ from enterprise_fizzbuzz.infrastructure.probabilistic import (
     ProbabilisticMiddleware,
     create_probabilistic_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.datalog import (
+    DatalogDashboard,
+    DatalogMiddleware,
+    DatalogSession,
+    FizzBuzzDatalogProgram,
+    QueryParser,
+    create_datalog_session,
+)
 from enterprise_fizzbuzz.infrastructure.linter import (
     AutoFixer,
     LintDashboard,
@@ -2484,6 +2492,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--lint-dashboard",
         action="store_true",
         help="Display the FizzLint ASCII dashboard with violation distribution and rule status grid",
+    )
+
+    # FizzLog Datalog Query Engine
+    parser.add_argument(
+        "--datalog",
+        action="store_true",
+        help="Enable FizzLog: Datalog query engine with stratified negation for declarative FizzBuzz reasoning",
+    )
+
+    parser.add_argument(
+        "--datalog-query",
+        type=str,
+        metavar="QUERY",
+        default=None,
+        help='Execute a Datalog query against the FizzBuzz knowledge base (e.g. --datalog-query "fizzbuzz(X)")',
+    )
+
+    parser.add_argument(
+        "--datalog-dashboard",
+        action="store_true",
+        help="Display the FizzLog ASCII dashboard with fact counts, stratification, and evaluation metrics",
     )
 
     return parser
@@ -6175,6 +6204,27 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzLog Datalog Query Engine
+    # ----------------------------------------------------------------
+    datalog_session = None
+    datalog_middleware_instance = None
+
+    if args.datalog or args.datalog_query or args.datalog_dashboard:
+        datalog_session = FizzBuzzDatalogProgram.create_session(start, end)
+        datalog_session.evaluate()
+        datalog_middleware_instance = DatalogMiddleware(datalog_session)
+        builder.with_middleware(datalog_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZLOG: DATALOG QUERY ENGINE                           |\n"
+                "  |   Stratified negation, semi-naive evaluation            |\n"
+                "  |   FizzBuzz encoded as Horn clauses with fixed-point     |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -8059,6 +8109,30 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.proxy_dashboard:
         print("\n  FizzProxy not enabled. Use --proxy to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzLog Datalog Dashboard & Query
+    # ----------------------------------------------------------------
+    if args.datalog_query and datalog_session is not None:
+        try:
+            query_results = datalog_session.query_text(args.datalog_query)
+            print(f"\n  Datalog Query: {args.datalog_query}")
+            print(f"  Results: {len(query_results)} bindings")
+            for i, bindings in enumerate(query_results[:50]):
+                binding_str = ", ".join(f"{k}={v}" for k, v in sorted(bindings.items()))
+                print(f"    [{i + 1}] {binding_str}")
+            if len(query_results) > 50:
+                print(f"    ... and {len(query_results) - 50} more")
+            print()
+        except Exception as e:
+            print(f"\n  Datalog query error: {e}\n")
+    elif args.datalog_query:
+        print("\n  FizzLog not enabled. Use --datalog to enable.\n")
+
+    if args.datalog_dashboard and datalog_session is not None:
+        print(DatalogDashboard.render(session=datalog_session, width=60))
+    elif args.datalog_dashboard:
+        print("\n  FizzLog not enabled. Use --datalog to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
