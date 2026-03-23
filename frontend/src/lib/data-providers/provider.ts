@@ -36,6 +36,9 @@ import type {
   ChaosExperiment,
   GameDayScenario,
   ChaosMetrics,
+  GAConfig,
+  GAEvolutionHistory,
+  GAPopulation,
 } from "./types";
 
 /**
@@ -316,4 +319,25 @@ export interface IDataProvider {
    * summary bar and MTTR trend chart.
    */
   getChaosMetrics(): Promise<ChaosMetrics>;
+
+  /**
+   * Launch a genetic algorithm evolution run with the specified configuration.
+   * Returns the complete evolution history once the run completes. The GA
+   * explores the FizzBuzz rule space via tournament selection, single-point
+   * crossover, and multi-operator mutation to discover optimal divisor/label
+   * combinations.
+   */
+  runEvolution(config: GAConfig): Promise<GAEvolutionHistory>;
+
+  /**
+   * Retrieve the most recent evolution run history, or null if no evolution
+   * has been executed in the current session.
+   */
+  getEvolutionHistory(): Promise<GAEvolutionHistory | null>;
+
+  /**
+   * Retrieve the current (latest-generation) population from the most
+   * recent evolution run. Returns null if no evolution has been executed.
+   */
+  getCurrentPopulation(): Promise<GAPopulation | null>;
 }

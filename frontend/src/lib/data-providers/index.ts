@@ -53,6 +53,12 @@ export type {
   GameDayStatus,
   GameDayScenario,
   ChaosMetrics,
+  GAGene,
+  GAFitnessScore,
+  GAChromosome,
+  GAPopulation,
+  GAEvolutionHistory,
+  GAConfig,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

@@ -48,6 +48,12 @@ import type {
   ExperimentResult,
   GameDayScenario,
   ChaosMetrics,
+  GAConfig,
+  GAEvolutionHistory,
+  GAPopulation,
+  GAChromosome,
+  GAGene,
+  GAFitnessScore,
 } from "./types";
 
 /**
@@ -698,11 +704,437 @@ function sampleMeasurements(
   return counts;
 }
 
+// ---------------------------------------------------------------------------
+// Genetic Algorithm — evolutionary simulation helpers
+// ---------------------------------------------------------------------------
+
+/** Consonants and vowels for the Markov-inspired label generator. */
+const GA_CONSONANTS = "bcdfghjklmnpqrstvwxyz";
+const GA_VOWELS = "aeiou";
+
+/**
+ * Generates a consonant-vowel alternating label of the specified length,
+ * matching the backend MarkovLabelGenerator phonotactic pattern.
+ */
+function generateRandomLabel(length: number): string {
+  let label = "";
+  for (let i = 0; i < length; i++) {
+    const pool = i % 2 === 0 ? GA_CONSONANTS : GA_VOWELS;
+    label += pool[Math.floor(Math.random() * pool.length)];
+  }
+  // Capitalize first letter
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+/**
+ * Generates a single random gene with a divisor in [2..15] and a
+ * phonotactically valid label of 3-6 characters.
+ */
+function generateRandomGene(priority: number): GAGene {
+  return {
+    divisor: 2 + Math.floor(Math.random() * 14),
+    label: generateRandomLabel(3 + Math.floor(Math.random() * 4)),
+    priority,
+  };
+}
+
+/**
+ * Produces the canonical FizzBuzz output for a given number in the range 1-100.
+ * Used as the ground-truth oracle for fitness evaluation.
+ */
+function canonicalFizzBuzz(n: number): string {
+  if (n % 15 === 0) return "FizzBuzz";
+  if (n % 3 === 0) return "Fizz";
+  if (n % 5 === 0) return "Buzz";
+  return String(n);
+}
+
+/**
+ * Evaluates a chromosome's gene set against the canonical FizzBuzz output
+ * for numbers 1-100, computing the multi-objective fitness score.
+ */
+function evaluateChromosomeFitness(chromosome: GAChromosome): void {
+  const correctnessMap: boolean[] = [];
+  let correctCount = 0;
+  let coveredCount = 0;
+  const uniqueLabels = new Set<string>();
+
+  for (let n = 1; n <= 100; n++) {
+    // Evaluate chromosome output for this number
+    const matchingGenes = chromosome.genes
+      .filter((g) => n % g.divisor === 0)
+      .sort((a, b) => a.priority - b.priority);
+
+    let output: string;
+    if (matchingGenes.length > 0) {
+      output = matchingGenes.map((g) => g.label).join("");
+      coveredCount++;
+      matchingGenes.forEach((g) => uniqueLabels.add(g.label));
+    } else {
+      output = String(n);
+    }
+
+    const expected = canonicalFizzBuzz(n);
+    const isCorrect = output === expected;
+    correctnessMap.push(isCorrect);
+    if (isCorrect) correctCount++;
+  }
+
+  const accuracy = correctCount / 100;
+  const coverage = coveredCount / 100;
+  // Distinctness: normalize to a 0-1 range (max reasonable is ~5 unique labels)
+  const distinctness = Math.min(uniqueLabels.size / 5, 1);
+
+  // Phonetic harmony: consonant-vowel alternation score across all labels
+  let harmonySum = 0;
+  let harmonyCount = 0;
+  for (const label of uniqueLabels) {
+    for (let i = 0; i < label.length; i++) {
+      const isVowel = GA_VOWELS.includes(label[i].toLowerCase());
+      const expectedVowel = i % 2 === 1;
+      if (isVowel === expectedVowel) harmonySum++;
+      harmonyCount++;
+    }
+  }
+  const phoneticHarmony = harmonyCount > 0 ? harmonySum / harmonyCount : 0;
+
+  // Mathematical elegance: prefer small and prime divisors
+  const primes = new Set([2, 3, 5, 7, 11, 13]);
+  let eleganceSum = 0;
+  for (const gene of chromosome.genes) {
+    const smallBonus = Math.max(0, 1 - (gene.divisor - 2) / 13);
+    const primeBonus = primes.has(gene.divisor) ? 0.3 : 0;
+    eleganceSum += smallBonus + primeBonus;
+  }
+  const mathematicalElegance = chromosome.genes.length > 0
+    ? Math.min(eleganceSum / chromosome.genes.length, 1)
+    : 0;
+
+  // Weighted overall score
+  const overall =
+    accuracy * 0.5 +
+    coverage * 0.15 +
+    distinctness * 0.1 +
+    phoneticHarmony * 0.1 +
+    mathematicalElegance * 0.15;
+
+  chromosome.fitness = {
+    accuracy,
+    coverage,
+    distinctness,
+    phoneticHarmony,
+    mathematicalElegance,
+    overall,
+  };
+  chromosome.correctnessMap = correctnessMap;
+}
+
+/**
+ * Generates the initial random population of chromosomes.
+ * Each chromosome contains 2-4 randomly generated genes.
+ */
+function generateInitialPopulation(size: number, generation: number): GAChromosome[] {
+  const population: GAChromosome[] = [];
+  for (let i = 0; i < size; i++) {
+    const geneCount = 2 + Math.floor(Math.random() * 3); // 2-4 genes
+    const genes: GAGene[] = [];
+    for (let g = 0; g < geneCount; g++) {
+      genes.push(generateRandomGene(g + 1));
+    }
+    population.push({
+      chromosomeId: generateSessionId(),
+      genes,
+      generation,
+      fitness: { accuracy: 0, coverage: 0, distinctness: 0, phoneticHarmony: 0, mathematicalElegance: 0, overall: 0 },
+      parentIds: [],
+      correctnessMap: [],
+    });
+  }
+  return population;
+}
+
+/**
+ * Tournament selection: pick `tournamentSize` random individuals and
+ * return the fittest among them. This provides selective pressure while
+ * maintaining population diversity better than truncation selection.
+ */
+function tournamentSelect(population: GAChromosome[], tournamentSize: number): GAChromosome {
+  let best: GAChromosome | null = null;
+  for (let i = 0; i < tournamentSize; i++) {
+    const candidate = population[Math.floor(Math.random() * population.length)];
+    if (!best || candidate.fitness.overall > best.fitness.overall) {
+      best = candidate;
+    }
+  }
+  return best!;
+}
+
+/**
+ * Single-point crossover on the gene arrays of two parent chromosomes.
+ * Produces two offspring by splicing gene lists at a random crossover point.
+ */
+function crossover(parent1: GAChromosome, parent2: GAChromosome, generation: number): [GAChromosome, GAChromosome] {
+  const maxLen = Math.max(parent1.genes.length, parent2.genes.length);
+  const point = 1 + Math.floor(Math.random() * Math.max(1, maxLen - 1));
+
+  const genes1 = [
+    ...parent1.genes.slice(0, point),
+    ...parent2.genes.slice(point),
+  ];
+  const genes2 = [
+    ...parent2.genes.slice(0, point),
+    ...parent1.genes.slice(point),
+  ];
+
+  // Re-index priorities
+  genes1.forEach((g, i) => (g.priority = i + 1));
+  genes2.forEach((g, i) => (g.priority = i + 1));
+
+  const emptyFitness: GAFitnessScore = { accuracy: 0, coverage: 0, distinctness: 0, phoneticHarmony: 0, mathematicalElegance: 0, overall: 0 };
+
+  return [
+    {
+      chromosomeId: generateSessionId(),
+      genes: genes1,
+      generation,
+      fitness: { ...emptyFitness },
+      parentIds: [parent1.chromosomeId, parent2.chromosomeId],
+      correctnessMap: [],
+    },
+    {
+      chromosomeId: generateSessionId(),
+      genes: genes2,
+      generation,
+      fitness: { ...emptyFitness },
+      parentIds: [parent1.chromosomeId, parent2.chromosomeId],
+      correctnessMap: [],
+    },
+  ];
+}
+
+/**
+ * Applies one of five mutation operators to a chromosome's gene set:
+ *   1. Divisor tweak (+/-1)
+ *   2. Label character swap
+ *   3. Gene insertion
+ *   4. Gene deletion (if >1 gene)
+ *   5. Priority shuffle
+ *
+ * As generations advance, mutations are biased toward the canonical FizzBuzz
+ * divisors (3, 5) and labels ("Fizz", "Buzz") to ensure the simulation
+ * produces satisfying convergence trajectories.
+ */
+function mutate(chromosome: GAChromosome, generation: number, maxGenerations: number): void {
+  if (chromosome.genes.length === 0) return;
+
+  // Convergence bias increases linearly with generation progress
+  const convergenceBias = Math.min(generation / (maxGenerations * 0.6), 1.0);
+
+  const operator = Math.floor(Math.random() * 5);
+
+  switch (operator) {
+    case 0: {
+      // Divisor tweak — with canonical bias
+      const idx = Math.floor(Math.random() * chromosome.genes.length);
+      if (Math.random() < convergenceBias * 0.7) {
+        // Bias toward canonical divisors
+        chromosome.genes[idx] = {
+          ...chromosome.genes[idx],
+          divisor: Math.random() < 0.5 ? 3 : 5,
+        };
+      } else {
+        const delta = Math.random() < 0.5 ? -1 : 1;
+        chromosome.genes[idx] = {
+          ...chromosome.genes[idx],
+          divisor: Math.max(2, Math.min(15, chromosome.genes[idx].divisor + delta)),
+        };
+      }
+      break;
+    }
+    case 1: {
+      // Label mutation — with canonical bias
+      const idx = Math.floor(Math.random() * chromosome.genes.length);
+      if (Math.random() < convergenceBias * 0.7) {
+        // Bias toward canonical labels
+        const gene = chromosome.genes[idx];
+        if (gene.divisor === 3) {
+          chromosome.genes[idx] = { ...gene, label: "Fizz" };
+        } else if (gene.divisor === 5) {
+          chromosome.genes[idx] = { ...gene, label: "Buzz" };
+        } else {
+          // Swap a random character
+          const label = gene.label.split("");
+          const ci = Math.floor(Math.random() * label.length);
+          const pool = ci % 2 === 0 ? GA_CONSONANTS : GA_VOWELS;
+          label[ci] = pool[Math.floor(Math.random() * pool.length)];
+          label[0] = label[0].toUpperCase();
+          chromosome.genes[idx] = { ...gene, label: label.join("") };
+        }
+      } else {
+        const gene = chromosome.genes[idx];
+        const label = gene.label.split("");
+        const ci = Math.floor(Math.random() * label.length);
+        const pool = ci % 2 === 0 ? GA_CONSONANTS : GA_VOWELS;
+        label[ci] = pool[Math.floor(Math.random() * pool.length)];
+        label[0] = label[0].toUpperCase();
+        chromosome.genes[idx] = { ...gene, label: label.join("") };
+      }
+      break;
+    }
+    case 2: {
+      // Gene insertion — prefer canonical genes at higher generations
+      if (chromosome.genes.length < 6) {
+        let newGene: GAGene;
+        if (Math.random() < convergenceBias * 0.5) {
+          const canonical = Math.random() < 0.5
+            ? { divisor: 3, label: "Fizz" }
+            : { divisor: 5, label: "Buzz" };
+          newGene = { ...canonical, priority: chromosome.genes.length + 1 };
+        } else {
+          newGene = generateRandomGene(chromosome.genes.length + 1);
+        }
+        chromosome.genes.push(newGene);
+      }
+      break;
+    }
+    case 3: {
+      // Gene deletion — avoid removing canonical genes in later generations
+      if (chromosome.genes.length > 1) {
+        const candidates = chromosome.genes
+          .map((g, i) => ({ gene: g, index: i }))
+          .filter((entry) => {
+            if (convergenceBias > 0.5) {
+              // Protect canonical genes
+              const isCanonical =
+                (entry.gene.divisor === 3 && entry.gene.label === "Fizz") ||
+                (entry.gene.divisor === 5 && entry.gene.label === "Buzz");
+              return !isCanonical;
+            }
+            return true;
+          });
+        if (candidates.length > 0) {
+          const removeIdx = candidates[Math.floor(Math.random() * candidates.length)].index;
+          chromosome.genes.splice(removeIdx, 1);
+          chromosome.genes.forEach((g, i) => (g.priority = i + 1));
+        }
+      }
+      break;
+    }
+    case 4: {
+      // Priority shuffle
+      for (let i = chromosome.genes.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [chromosome.genes[i], chromosome.genes[j]] = [chromosome.genes[j], chromosome.genes[i]];
+      }
+      chromosome.genes.forEach((g, i) => (g.priority = i + 1));
+      break;
+    }
+  }
+}
+
+/**
+ * Produces the next generation from the current population using
+ * elitism, tournament selection, single-point crossover, and mutation.
+ */
+function produceNextGeneration(
+  population: GAChromosome[],
+  config: GAConfig,
+  currentGen: number,
+): GAChromosome[] {
+  const nextGen: GAChromosome[] = [];
+  const newGeneration = currentGen + 1;
+
+  // Elitism: preserve top chromosomes unchanged
+  for (let i = 0; i < config.elitismCount && i < population.length; i++) {
+    nextGen.push({
+      ...population[i],
+      genes: population[i].genes.map((g) => ({ ...g })),
+      generation: newGeneration,
+    });
+  }
+
+  // Fill remainder via selection + crossover + mutation
+  while (nextGen.length < config.populationSize) {
+    const parent1 = tournamentSelect(population, 3);
+    const parent2 = tournamentSelect(population, 3);
+
+    let offspring1: GAChromosome;
+    let offspring2: GAChromosome;
+
+    if (Math.random() < config.crossoverRate) {
+      [offspring1, offspring2] = crossover(parent1, parent2, newGeneration);
+    } else {
+      // Clone parents
+      offspring1 = {
+        chromosomeId: generateSessionId(),
+        genes: parent1.genes.map((g) => ({ ...g })),
+        generation: newGeneration,
+        fitness: { accuracy: 0, coverage: 0, distinctness: 0, phoneticHarmony: 0, mathematicalElegance: 0, overall: 0 },
+        parentIds: [parent1.chromosomeId],
+        correctnessMap: [],
+      };
+      offspring2 = {
+        chromosomeId: generateSessionId(),
+        genes: parent2.genes.map((g) => ({ ...g })),
+        generation: newGeneration,
+        fitness: { accuracy: 0, coverage: 0, distinctness: 0, phoneticHarmony: 0, mathematicalElegance: 0, overall: 0 },
+        parentIds: [parent2.chromosomeId],
+        correctnessMap: [],
+      };
+    }
+
+    // Apply mutation
+    if (Math.random() < config.mutationRate) {
+      mutate(offspring1, newGeneration, config.maxGenerations);
+    }
+    if (Math.random() < config.mutationRate) {
+      mutate(offspring2, newGeneration, config.maxGenerations);
+    }
+
+    nextGen.push(offspring1);
+    if (nextGen.length < config.populationSize) {
+      nextGen.push(offspring2);
+    }
+  }
+
+  return nextGen;
+}
+
+/**
+ * Computes the Shannon diversity index over unique gene-set fingerprints
+ * in the population. Higher values indicate greater genetic variety;
+ * values approaching zero indicate a monoculture (convergence).
+ */
+function computeDiversityIndex(population: GAChromosome[]): number {
+  const fingerprints = new Map<string, number>();
+  for (const chromo of population) {
+    const fp = chromo.genes
+      .map((g) => `${g.divisor}:${g.label}`)
+      .sort()
+      .join("|");
+    fingerprints.set(fp, (fingerprints.get(fp) ?? 0) + 1);
+  }
+
+  let entropy = 0;
+  const total = population.length;
+  for (const count of fingerprints.values()) {
+    const p = count / total;
+    if (p > 0) {
+      entropy -= p * Math.log2(p);
+    }
+  }
+
+  return Math.round(entropy * 1000) / 1000;
+}
+
 export class SimulationProvider implements IDataProvider {
   readonly name = "Local Simulation Engine";
 
   /** Instance-level cache for the generated blockchain to ensure chain consistency across calls. */
   private _blockchainCache: Block[] | null = null;
+
+  /** Cached result of the most recent genetic algorithm evolution run. */
+  private _evolutionCache: GAEvolutionHistory | null = null;
 
   async evaluate(request: EvaluationRequest): Promise<EvaluationSession> {
     const { start, end, strategy } = request;
@@ -1721,6 +2153,80 @@ export class SimulationProvider implements IDataProvider {
       lastExperimentAt: new Date(now - Math.floor(Math.random() * 3_600_000)).toISOString(),
       mttrHistory,
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // Genetic Algorithm Observatory
+  // -------------------------------------------------------------------------
+
+  async runEvolution(config: GAConfig): Promise<GAEvolutionHistory> {
+    const runId = generateSessionId();
+    const startedAt = new Date().toISOString();
+
+    // Seed the initial population with random chromosomes
+    let population = generateInitialPopulation(config.populationSize, 0);
+    const generations: GAPopulation[] = [];
+    let globalBest: GAChromosome = population[0];
+
+    for (let gen = 0; gen < config.maxGenerations; gen++) {
+      // Evaluate fitness for every chromosome in this generation
+      for (const chromo of population) {
+        evaluateChromosomeFitness(chromo);
+      }
+
+      // Sort by fitness descending
+      population.sort((a, b) => b.fitness.overall - a.fitness.overall);
+
+      // Track global best
+      if (population[0].fitness.overall > globalBest.fitness.overall) {
+        globalBest = population[0];
+      }
+
+      // Compute generation statistics
+      const fitnesses = population.map((c) => c.fitness.overall);
+      const bestFitness = fitnesses[0];
+      const worstFitness = fitnesses[fitnesses.length - 1];
+      const averageFitness = fitnesses.reduce((s, v) => s + v, 0) / fitnesses.length;
+      const diversityIndex = computeDiversityIndex(population);
+
+      generations.push({
+        generation: gen,
+        chromosomes: population.map((c) => ({ ...c })),
+        bestFitness,
+        averageFitness,
+        worstFitness,
+        diversityIndex,
+      });
+
+      // Produce next generation
+      if (gen < config.maxGenerations - 1) {
+        population = produceNextGeneration(population, config, gen);
+      }
+    }
+
+    const history: GAEvolutionHistory = {
+      runId,
+      config,
+      generations,
+      startedAt,
+      completedAt: new Date().toISOString(),
+      isComplete: true,
+      bestChromosome: globalBest,
+    };
+
+    this._evolutionCache = history;
+    return history;
+  }
+
+  async getEvolutionHistory(): Promise<GAEvolutionHistory | null> {
+    return this._evolutionCache;
+  }
+
+  async getCurrentPopulation(): Promise<GAPopulation | null> {
+    if (!this._evolutionCache || this._evolutionCache.generations.length === 0) {
+      return null;
+    }
+    return this._evolutionCache.generations[this._evolutionCache.generations.length - 1];
   }
 }
 

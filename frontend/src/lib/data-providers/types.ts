@@ -788,3 +788,97 @@ export interface ChaosMetrics {
   /** Historical MTTR data points for trend chart rendering. */
   mttrHistory: { timestamp: number; mttrMs: number }[];
 }
+
+// ---------------------------------------------------------------------------
+// Genetic Algorithm Observatory types
+// ---------------------------------------------------------------------------
+
+/** A single FizzBuzz rule encoded as a gene — the atomic unit of FizzBuzz heredity. */
+export interface GAGene {
+  /** The divisor to test against (e.g., 3, 5, 7). */
+  divisor: number;
+  /** The string label emitted when the rule matches (e.g., "Fizz"). */
+  label: string;
+  /** Evaluation priority (lower = higher priority). */
+  priority: number;
+}
+
+/** Multi-objective fitness score for a chromosome, matching the backend FitnessScore dataclass. */
+export interface GAFitnessScore {
+  /** How well the rules match canonical FizzBuzz output (0-1). */
+  accuracy: number;
+  /** Fraction of numbers in 1-100 that receive at least one label (0-1). */
+  coverage: number;
+  /** Number of unique labels, normalized (0-1). */
+  distinctness: number;
+  /** Average phonetic quality of labels (0-1). */
+  phoneticHarmony: number;
+  /** Preference for small/prime divisors (0-1). */
+  mathematicalElegance: number;
+  /** Weighted combination of all components (0-1). */
+  overall: number;
+}
+
+/** A complete FizzBuzz rule set encoded as a chromosome. */
+export interface GAChromosome {
+  /** Unique identifier for tracking lineage. */
+  chromosomeId: string;
+  /** The list of genes (rules) in this chromosome. */
+  genes: GAGene[];
+  /** The generation in which this chromosome was created. */
+  generation: number;
+  /** The most recently computed fitness score. */
+  fitness: GAFitnessScore;
+  /** IDs of the parent chromosomes (empty for initial population). */
+  parentIds: string[];
+  /** Per-number correctness for the range 1-100: true if this chromosome produces the correct output. */
+  correctnessMap: boolean[];
+}
+
+/** A snapshot of the population at a single generation. */
+export interface GAPopulation {
+  /** Zero-indexed generation number. */
+  generation: number;
+  /** All chromosomes in this generation. */
+  chromosomes: GAChromosome[];
+  /** Best fitness score in this generation. */
+  bestFitness: number;
+  /** Mean fitness across the population. */
+  averageFitness: number;
+  /** Worst fitness in this generation. */
+  worstFitness: number;
+  /** Shannon diversity index measuring genetic diversity (0 = monoculture, higher = diverse). */
+  diversityIndex: number;
+}
+
+/** Complete history of an evolution run across all generations. */
+export interface GAEvolutionHistory {
+  /** Unique identifier for this evolution run. */
+  runId: string;
+  /** Configuration used for this run. */
+  config: GAConfig;
+  /** Population snapshots for each generation. */
+  generations: GAPopulation[];
+  /** ISO 8601 timestamp of run initiation. */
+  startedAt: string;
+  /** ISO 8601 timestamp of run completion. */
+  completedAt?: string;
+  /** Whether the run has finished (converged or hit max generations). */
+  isComplete: boolean;
+  /** The best chromosome discovered across all generations. */
+  bestChromosome: GAChromosome;
+}
+
+/** Configuration parameters for an evolution run. */
+export interface GAConfig {
+  /** Number of chromosomes per generation. */
+  populationSize: number;
+  /** Probability of gene mutation per chromosome per generation (0-1). */
+  mutationRate: number;
+  /** Probability of crossover between selected parents (0-1). */
+  crossoverRate: number;
+  /** Number of top chromosomes preserved unchanged into the next generation. */
+  elitismCount: number;
+  /** Maximum number of generations before termination. */
+  maxGenerations: number;
+}

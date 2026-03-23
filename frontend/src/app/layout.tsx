@@ -169,6 +169,14 @@ export default function RootLayout({
                   Quantum Workbench
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/evolution"
+                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                >
+                  Evolution Observatory
+                </Link>
+              </li>
             </ul>
           </nav>
         </aside>
