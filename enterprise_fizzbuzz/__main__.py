@@ -283,6 +283,12 @@ from enterprise_fizzbuzz.infrastructure.compliance_chatbot import (
 from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     UnifiedAuditDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.reverse_proxy import (
+    LoadBalanceAlgorithm,
+    ProxyDashboard,
+    ProxyMiddleware,
+    create_proxy_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.time_travel import (
     ConditionalBreakpoint,
     DiffViewer,
@@ -2385,6 +2391,36 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--model-check-dashboard",
         action="store_true",
         help="Display the FizzCheck ASCII dashboard with verification results, counterexamples, and reduction stats",
+    )
+
+    # Reverse Proxy & Load Balancer
+    parser.add_argument(
+        "--proxy",
+        action="store_true",
+        help="Enable the FizzProxy reverse proxy for load-balanced FizzBuzz evaluation across multiple backend engines",
+    )
+
+    parser.add_argument(
+        "--proxy-backends",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of backend engine instances in the proxy pool (default: from config)",
+    )
+
+    parser.add_argument(
+        "--proxy-algorithm",
+        type=str,
+        choices=["round_robin", "least_connections", "weighted_random", "ip_hash"],
+        default=None,
+        metavar="ALG",
+        help="Load balancing algorithm (default: from config)",
+    )
+
+    parser.add_argument(
+        "--proxy-dashboard",
+        action="store_true",
+        help="Display the FizzProxy ASCII dashboard with backend pool status and traffic distribution",
     )
 
     return parser
@@ -5955,6 +5991,48 @@ def main(argv: Optional[list[str]] = None) -> int:
     if tt_middleware is not None:
         builder.with_middleware(tt_middleware)
 
+    # ----------------------------------------------------------------
+    # Reverse Proxy & Load Balancer
+    # ----------------------------------------------------------------
+    proxy_instance = None
+    proxy_pool = None
+    proxy_middleware_instance = None
+
+    if args.proxy or config.proxy_enabled:
+        algorithm_name = args.proxy_algorithm or config.proxy_algorithm
+        algorithm_map = {
+            "round_robin": LoadBalanceAlgorithm.ROUND_ROBIN,
+            "least_connections": LoadBalanceAlgorithm.LEAST_CONNECTIONS,
+            "weighted_random": LoadBalanceAlgorithm.WEIGHTED_RANDOM,
+            "ip_hash": LoadBalanceAlgorithm.IP_HASH,
+        }
+        proxy_algorithm = algorithm_map.get(algorithm_name, LoadBalanceAlgorithm.ROUND_ROBIN)
+        proxy_num_backends = args.proxy_backends or config.proxy_num_backends
+
+        proxy_instance, proxy_pool = create_proxy_subsystem(
+            num_backends=proxy_num_backends,
+            algorithm=proxy_algorithm,
+            rules=list(config.rules),
+            enable_sticky=config.proxy_enable_sticky_sessions,
+            enable_health_check=config.proxy_enable_health_check,
+            dashboard_width=config.proxy_dashboard_width,
+        )
+
+        proxy_middleware_instance = ProxyMiddleware(
+            proxy=proxy_instance,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(proxy_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZPROXY: REVERSE PROXY & LOAD BALANCER                |\n"
+                f"  |   Backends: {proxy_num_backends:<5}  Algorithm: {algorithm_name:<21}|\n"
+                "  |   Layer 7 routing by number properties enabled          |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -7784,6 +7862,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.model_check_dashboard:
         print("\n  FizzCheck not enabled. Use --model-check to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzProxy Dashboard
+    # ----------------------------------------------------------------
+    if args.proxy_dashboard and proxy_instance is not None:
+        print(ProxyDashboard.render(
+            proxy=proxy_instance,
+            width=config.proxy_dashboard_width,
+        ))
+    elif args.proxy_dashboard:
+        print("\n  FizzProxy not enabled. Use --proxy to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

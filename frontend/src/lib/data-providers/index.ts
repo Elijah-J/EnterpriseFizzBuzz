@@ -33,6 +33,9 @@ export type {
   FeatureFlag,
   ConfigUpdateResult,
   FeatureFlagToggleResult,
+  AuditLogFilter,
+  PaginatedAuditLog,
+  AuditLogSortField,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

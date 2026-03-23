@@ -650,6 +650,13 @@ class EventType(Enum):
     LOCK_CONTENTION_DETECTED = auto()
     LOCK_DASHBOARD_RENDERED = auto()
 
+    # Reverse Proxy & Load Balancer events
+    PROXY_REQUEST_ROUTED = auto()
+    PROXY_REQUEST_COMPLETED = auto()
+    PROXY_BACKEND_HEALTH_CHANGED = auto()
+    PROXY_BACKEND_DRAINED = auto()
+    PROXY_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

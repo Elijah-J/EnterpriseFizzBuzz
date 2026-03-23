@@ -25,6 +25,9 @@ import type {
   ConfigUpdateResult,
   FeatureFlag,
   FeatureFlagToggleResult,
+  AuditLogFilter,
+  PaginatedAuditLog,
+  AuditLogSortField,
 } from "./types";
 
 /**
@@ -217,4 +220,23 @@ export interface IDataProvider {
    * Returns the updated flag state after server-side validation.
    */
   toggleFeatureFlag(flagId: string, enabled: boolean, rolloutPercentage?: number): Promise<FeatureFlagToggleResult>;
+
+  /**
+   * Retrieve paginated audit log entries with server-side filtering and sorting.
+   * Supports multi-dimensional filtering for forensic investigation and
+   * regulatory evidence production.
+   *
+   * @param filters - Filter criteria to apply
+   * @param page - Page number (1-indexed)
+   * @param pageSize - Entries per page
+   * @param sortField - Field to sort by (default: "timestamp")
+   * @param sortDirection - Sort direction (default: "desc")
+   */
+  getAuditLogPaginated(
+    filters: AuditLogFilter,
+    page: number,
+    pageSize: number,
+    sortField?: AuditLogSortField,
+    sortDirection?: "asc" | "desc",
+  ): Promise<PaginatedAuditLog>;
 }

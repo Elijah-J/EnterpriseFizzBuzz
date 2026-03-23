@@ -403,6 +403,18 @@ export interface AuditEntry {
   description: string;
   /** Arbitrary metadata for drill-down. */
   metadata?: Record<string, string>;
+  /** Severity/importance level of the audit event. */
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  /** Outcome of the audited operation. */
+  outcome: "success" | "failure" | "denied" | "error";
+  /** Session correlation identifier linking related audit events. */
+  sessionCorrelationId: string;
+  /** Source IP address or service identifier of the initiator. */
+  sourceIp: string;
+  /** Subsystem that generated this audit event. */
+  subsystem: string;
+  /** Evaluation session ID, if this event is associated with a specific evaluation. */
+  evaluationSessionId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -499,3 +511,42 @@ export interface FeatureFlagToggleResult {
   /** The updated feature flag. */
   flag?: FeatureFlag;
 }
+
+/** Filter criteria for paginated audit log queries. */
+export interface AuditLogFilter {
+  /** ISO 8601 start of date range (inclusive). */
+  dateFrom?: string;
+  /** ISO 8601 end of date range (inclusive). */
+  dateTo?: string;
+  /** Filter by one or more action types. */
+  actions?: AuditEntry["action"][];
+  /** Free-text search across actor, description, and metadata values. */
+  searchQuery?: string;
+  /** Filter by outcome. */
+  outcome?: AuditEntry["outcome"];
+  /** Filter by severity. */
+  severity?: AuditEntry["severity"];
+  /** Filter by framework ID. */
+  frameworkId?: string;
+  /** Filter by subsystem. */
+  subsystem?: string;
+  /** Filter by actor (exact match). */
+  actor?: string;
+}
+
+/** Paginated response for audit log queries. */
+export interface PaginatedAuditLog {
+  /** Audit entries for the current page. */
+  entries: AuditEntry[];
+  /** Total number of entries matching the current filters. */
+  totalCount: number;
+  /** Current page number (1-indexed). */
+  page: number;
+  /** Number of entries per page. */
+  pageSize: number;
+  /** Total number of pages. */
+  totalPages: number;
+}
+
+/** Sortable fields for audit log table columns. */
+export type AuditLogSortField = "timestamp" | "severity" | "action" | "actor" | "outcome" | "subsystem";

@@ -1866,6 +1866,25 @@ sli:
   dashboard:
     width: 60                               # ASCII dashboard width
 
+# Reverse Proxy & Load Balancer configuration
+# Because distributing FizzBuzz evaluations across multiple instances
+# of the same function running in the same process is the natural
+# evolution of microservices architecture. When a single StandardRuleEngine
+# can evaluate modulo operations in nanoseconds, the only responsible
+# engineering decision is to add a Layer 7 reverse proxy with health
+# checking, sticky sessions, and connection draining — ensuring that
+# each evaluation request is routed to the optimal backend based on
+# the mathematical properties of the input number.
+proxy:
+  enabled: false                          # Master switch — opt-in via --proxy
+  num_backends: 5                         # Number of backend engine instances in the pool
+  algorithm: "round_robin"                # round_robin | least_connections | weighted_random | ip_hash
+  enable_sticky_sessions: true            # Maintain number-to-backend affinity for cache locality
+  enable_health_check: true               # Active + passive health monitoring of backends
+  health_check_interval: 10               # Run health checks every N requests
+  dashboard:
+    width: 60                             # ASCII dashboard width
+
 # Observer configuration
 observers:
   console_observer:
