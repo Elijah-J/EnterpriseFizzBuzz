@@ -553,6 +553,14 @@ from enterprise_fizzbuzz.infrastructure.fizz_vcs import (
     VCSDashboard,
     VCSMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.elf_format import (
+    ELFDashboard,
+    ELFMiddleware,
+    ELFParser,
+    FizzBuzzELFGenerator,
+    ReadELF,
+    HexDumper,
+)
 from enterprise_fizzbuzz.domain.models import SchedulerAlgorithm
 
 logger = logging.getLogger(__name__)
@@ -2776,6 +2784,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--vcs-dashboard",
         action="store_true",
         help="Display the FizzGit ASCII dashboard with commit graph, branch list, and diff stats",
+    )
+
+    # FizzELF — ELF Binary Format Parser and Generator
+    parser.add_argument(
+        "--elf",
+        action="store_true",
+        help="Generate a standards-compliant ELF64 binary containing FizzBuzz evaluation logic",
+    )
+
+    parser.add_argument(
+        "--elf-output",
+        type=str,
+        default=None,
+        metavar="FILE",
+        help="Write the generated ELF binary to the specified file path",
+    )
+
+    parser.add_argument(
+        "--readelf",
+        action="store_true",
+        help="Display readelf-style ASCII output for the generated ELF binary",
+    )
+
+    parser.add_argument(
+        "--elf-dashboard",
+        action="store_true",
+        help="Display the FizzELF ASCII dashboard with section map, symbols, and segment layout",
     )
 
     return parser
@@ -6752,6 +6787,43 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzELF — ELF Binary Format Parser and Generator
+    # ----------------------------------------------------------------
+    elf_middleware_instance = None
+
+    elf_active = (
+        args.elf or args.elf_output is not None
+        or args.readelf or args.elf_dashboard
+    )
+
+    if elf_active:
+        elf_rules = list(config.rules)
+        elf_start = start
+        elf_end = end
+
+        elf_middleware_instance = ELFMiddleware(
+            rules=elf_rules,
+            start=elf_start,
+            end=elf_end,
+            output_path=args.elf_output,
+            enable_readelf=args.readelf,
+            enable_dashboard=args.elf_dashboard,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(elf_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZELF: ELF BINARY FORMAT GENERATOR ENABLED            |\n"
+                "  |   Format: ELF64 Little-Endian                           |\n"
+                "  |   Machine: EM_FIZZ (0xFB)                               |\n"
+                "  |   Sections: .text, .data, .fizz, .note.fizzbuzz         |\n"
+                "  |   Every evaluation becomes a loadable binary.           |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     service = builder.build()
 
     # ----------------------------------------------------------------
@@ -8838,6 +8910,29 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.fizznet_dashboard:
         print("\n  FizzNet not enabled. Use --fizznet to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzELF Post-Execution Output
+    # ----------------------------------------------------------------
+    if elf_middleware_instance is not None and elf_middleware_instance.parsed is not None:
+        parsed_elf = elf_middleware_instance.parsed
+
+        if args.readelf:
+            print("\n" + ReadELF.format_all(parsed_elf))
+
+        if args.elf_dashboard:
+            print("\n" + ELFDashboard.render(parsed_elf))
+
+        if args.elf_output:
+            print(f"\n  ELF binary written to: {args.elf_output}")
+            print(f"  Size: {len(elf_middleware_instance.elf_bytes)} bytes")
+
+        if args.elf and not args.readelf and not args.elf_dashboard:
+            print(
+                f"\n  ELF binary generated: {len(elf_middleware_instance.elf_bytes)} bytes, "
+                f"{parsed_elf.header.e_shnum} sections, "
+                f"{len(parsed_elf.symbols)} symbols"
+            )
 
     # ----------------------------------------------------------------
     # FizzGit Post-Execution Output

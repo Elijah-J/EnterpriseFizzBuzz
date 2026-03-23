@@ -6108,6 +6108,24 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         self._ensure_loaded()
         return self._raw_config.get("vcs", {}).get("dashboard", {}).get("width", 60)
 
+    @property
+    def elf_enabled(self) -> bool:
+        """Whether ELF binary generation is enabled via configuration."""
+        self._ensure_loaded()
+        return self._raw_config.get("elf", {}).get("enabled", False)
+
+    @property
+    def elf_output_path(self) -> Optional[str]:
+        """Default output path for generated ELF binaries."""
+        self._ensure_loaded()
+        return self._raw_config.get("elf", {}).get("output_path", None)
+
+    @property
+    def elf_dashboard_width(self) -> int:
+        """Width of the FizzELF ASCII dashboard."""
+        self._ensure_loaded()
+        return self._raw_config.get("elf", {}).get("dashboard", {}).get("width", 72)
+
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
         self._ensure_loaded()

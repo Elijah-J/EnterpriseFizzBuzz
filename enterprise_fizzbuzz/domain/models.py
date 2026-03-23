@@ -668,6 +668,11 @@ class EventType(Enum):
     PROBABILISTIC_TDIGEST_QUANTILE = auto()
     PROBABILISTIC_DASHBOARD_RENDERED = auto()
 
+    # ELF Binary Format events
+    ELF_BINARY_GENERATED = auto()
+    ELF_BINARY_WRITTEN = auto()
+    ELF_BINARY_PARSED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.
