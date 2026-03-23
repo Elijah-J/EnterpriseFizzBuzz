@@ -584,6 +584,16 @@ from enterprise_fizzbuzz.infrastructure.process_migration import (
     MigrationStrategy,
     create_migration_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.flame_graph import (
+    DifferentialFlameGraph,
+    FlameGraphDashboard as FlameASCIIDashboard,
+    FlameGraphMiddleware,
+    IcicleChart,
+    StackCollapser,
+    SVGRenderer as FlameSVGRenderer,
+    TimelineHeatMap,
+    generate_differential_flame_graph,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -2911,7 +2921,46 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzMigrate ASCII dashboard with transfer progress, dirty pages, and downtime",
     )
 
+    # FizzFlame — Flame Graph Generator
+    parser.add_argument(
+        "--flame",
+        action="store_true",
+        help="Enable FizzFlame flame graph generation: transforms OTel span trees into SVG flame graphs",
+    )
+
+    parser.add_argument(
+        "--flame-output",
+        type=str,
+        metavar="FILE",
+        default=None,
+        help="Output path for flame graph SVG file (default: flamegraph.svg)",
+    )
+
+    parser.add_argument(
+        "--flame-diff",
+        nargs=2,
+        type=str,
+        metavar=("BEFORE", "AFTER"),
+        default=None,
+        help="Generate a differential flame graph from two collapsed-stack files",
+    )
+
+    parser.add_argument(
+        "--flame-dashboard",
+        action="store_true",
+        help="Display the FizzFlame ASCII dashboard with top frames, subsystem distribution, and ASCII flame visualization",
+    )
+
     return parser
+
+
+def _walk_all_frames(roots: list) -> list:
+    """Recursively collect all FlameFrame objects from a frame forest."""
+    result = []
+    for r in roots:
+        result.append(r)
+        result.extend(_walk_all_frames(r.children))
+    return result
 
 
 def configure_logging(debug: bool = False) -> None:
@@ -8622,6 +8671,76 @@ def main(argv: Optional[list[str]] = None) -> int:
                 width=config.otel_dashboard_width,
             )
             print(dashboard.render())
+
+    # ----------------------------------------------------------------
+    # FizzFlame — Flame Graph Generator
+    # ----------------------------------------------------------------
+    # When --flame is active (and OTel tracing is enabled), the
+    # collected spans are transformed into SVG flame graphs for deep
+    # performance analysis. The flame graph width is proportional to
+    # total execution time, and each frame's width is proportional to
+    # its inclusive duration. Differential mode compares two runs and
+    # highlights regressions in red and improvements in blue.
+    # ----------------------------------------------------------------
+    if args.flame or args.flame_dashboard or args.flame_diff:
+        flame_output = args.flame_output or config.flame_output
+
+        if args.flame_diff:
+            # Differential flame graph from two collapsed-stack files
+            diff_svg = generate_differential_flame_graph(
+                before_path=args.flame_diff[0],
+                after_path=args.flame_diff[1],
+                output_path=flame_output,
+                width=config.flame_width,
+            )
+            print(
+                "\n  +---------------------------------------------------------+\n"
+                "  | FizzFlame — Differential Flame Graph                    |\n"
+                "  | Before/after performance comparison                    |\n"
+                "  +---------------------------------------------------------+"
+            )
+            print(f"\n  Baseline:   {args.flame_diff[0]}")
+            print(f"  Comparison: {args.flame_diff[1]}")
+            print(f"  Output:     {flame_output}")
+            print()
+
+        elif otel_provider is not None:
+            all_spans = otel_provider.get_all_spans()
+            collapser = StackCollapser()
+            roots = collapser.collapse_spans(all_spans)
+
+            print(
+                "\n  +---------------------------------------------------------+\n"
+                "  | FizzFlame — Flame Graph Generator                      |\n"
+                "  | OTel span tree to SVG flame graph transformation       |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+            if args.flame:
+                renderer = FlameSVGRenderer(
+                    width=config.flame_width,
+                    frame_height=config.flame_frame_height,
+                    title="FizzFlame — Enterprise FizzBuzz Flame Graph",
+                )
+                svg = renderer.render(roots)
+                with open(flame_output, "w", encoding="utf-8") as flame_f:
+                    flame_f.write(svg)
+                print(f"\n  Flame graph written to: {flame_output}")
+                print(f"  Spans:     {len(all_spans)}")
+                print(f"  Frames:    {sum(1 for _ in _walk_all_frames(roots))}")
+                print()
+
+            if args.flame_dashboard:
+                flame_dash = FlameASCIIDashboard(
+                    width=config.flame_dashboard_width,
+                )
+                print(flame_dash.render(roots, spans=all_spans))
+        else:
+            if args.flame_dashboard:
+                print(
+                    "\n  FizzFlame: No OTel tracing data available.\n"
+                    "  Enable tracing with --otel to collect spans for flame graphs.\n"
+                )
 
     # ----------------------------------------------------------------
     # FizzJIT — Runtime Code Generation

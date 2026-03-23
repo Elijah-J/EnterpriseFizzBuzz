@@ -11591,3 +11591,63 @@ class ZSpecRefinementError(ZSpecError):
         self.spec_name = spec_name
         self.impl_name = impl_name
         self.violation_count = violations
+
+
+# ------------------------------------------------------------------
+# FizzFlame — Flame Graph Generator Exceptions
+# ------------------------------------------------------------------
+
+
+class FlameGraphError(FizzBuzzError):
+    """Base exception for the FizzFlame flame graph subsystem.
+
+    Raised when flame graph generation, stack collapsing, or SVG
+    rendering encounters an unrecoverable condition.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(
+            message,
+            error_code="EFP-FG00",
+            context={},
+        )
+
+
+class FlameGraphRenderError(FlameGraphError):
+    """Raised when SVG rendering of a flame graph fails.
+
+    This may occur due to invalid frame dimensions, XML serialization
+    errors, or memory constraints when rendering extremely deep call
+    stacks (though any FizzBuzz call stack exceeding 100 frames
+    warrants an architectural review rather than a rendering fix).
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.error_code = "EFP-FG01"
+
+
+class FlameGraphCollapseError(FlameGraphError):
+    """Raised when span tree collapsing fails.
+
+    This indicates a structural problem in the span tree, such as
+    cycles in parent references, orphaned spans, or timing anomalies
+    where a child span outlives its parent.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.error_code = "EFP-FG02"
+
+
+class FlameGraphDiffError(FlameGraphError):
+    """Raised when differential flame graph computation fails.
+
+    This may occur when comparing incompatible flame graphs (different
+    trace structures) or when the baseline or comparison data is
+    corrupted or empty.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.error_code = "EFP-FG03"
