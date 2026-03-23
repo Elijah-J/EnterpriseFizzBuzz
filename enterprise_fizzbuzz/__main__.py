@@ -295,6 +295,12 @@ from enterprise_fizzbuzz.infrastructure.compliance_chatbot import (
 from enterprise_fizzbuzz.infrastructure.audit_dashboard import (
     UnifiedAuditDashboard,
 )
+from enterprise_fizzbuzz.infrastructure.garbage_collector import (
+    GCDashboard,
+    GCMiddleware,
+    GenerationalCollector,
+    ManagedHeap,
+)
 from enterprise_fizzbuzz.infrastructure.dns_server import (
     DNSDashboard,
     DNSQueryFormatter,
@@ -3334,6 +3340,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--codec-dashboard",
         action="store_true",
         help="Display the FizzCodec video compression dashboard after execution",
+    )
+
+    # FizzGC — Tri-Color Mark-Sweep-Compact Garbage Collector
+    parser.add_argument(
+        "--gc",
+        action="store_true",
+        help="Enable FizzGC: allocate FizzBuzz results on a managed heap with tri-color mark-sweep-compact collection",
+    )
+    parser.add_argument(
+        "--gc-heap-size",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Managed heap capacity in bytes (default: 1048576)",
+    )
+    parser.add_argument(
+        "--gc-dashboard",
+        action="store_true",
+        help="Display the FizzGC garbage collector dashboard after execution",
     )
 
     return parser
@@ -7244,6 +7269,38 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
         builder.with_middleware(qo_middleware)
 
+    # Add FizzGC garbage collector middleware (priority 55, after allocator)
+    gc_middleware_instance = None
+
+    if args.gc or args.gc_dashboard:
+        gc_heap_size = args.gc_heap_size or config.gc_heap_size
+        gc_heap = ManagedHeap(capacity=gc_heap_size)
+        gc_collector = GenerationalCollector(
+            heap=gc_heap,
+            young_promotion_threshold=config.gc_young_promotion_threshold,
+            tenured_promotion_threshold=config.gc_tenured_promotion_threshold,
+            young_collection_trigger=config.gc_young_collection_trigger,
+            major_collection_trigger=config.gc_major_collection_trigger,
+            compact_threshold=config.gc_compact_threshold,
+        )
+        gc_middleware_instance = GCMiddleware(
+            collector=gc_collector,
+            enable_dashboard=args.gc_dashboard,
+        )
+        builder.with_middleware(gc_middleware_instance)
+
+        if not args.no_banner:
+            heap_str = f"{gc_heap_size:,}"
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZGC: TRI-COLOR MARK-SWEEP-COMPACT COLLECTOR          |\n"
+                f"  | Heap: {heap_str:<12} bytes | 3 generations            |\n"
+                "  | Dijkstra tri-color marking | Lisp 2 compaction         |\n"
+                "  | Card-table write barrier | Generational promotion     |\n"
+                "  | Managed memory for managed-memory objects.              |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -10439,6 +10496,13 @@ def main(argv: Optional[list[str]] = None) -> int:
             print("\n  FizzPrint: No results to typeset.\n")
     elif args.typeset_dashboard and not typeset_active:
         print("\n  FizzPrint not enabled. Use --typeset to enable.\n")
+
+    # FizzGC Dashboard (post-execution)
+    if args.gc_dashboard and gc_middleware_instance is not None:
+        print()
+        print(gc_middleware_instance.render_dashboard())
+    elif args.gc_dashboard and gc_middleware_instance is None:
+        print("\n  FizzGC not enabled. Use --gc to enable.\n")
 
     # FizzCodec Dashboard (post-execution)
     if codec_middleware_instance is not None:
