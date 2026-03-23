@@ -609,6 +609,13 @@ from enterprise_fizzbuzz.infrastructure.regex_engine import (
     RegexDashboard,
     RegexMiddleware,
 )
+from enterprise_fizzbuzz.infrastructure.spreadsheet import (
+    SpreadsheetDashboard,
+    SpreadsheetMiddleware,
+    SpreadsheetRenderer,
+    Spreadsheet,
+    evaluate_formula,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -3016,6 +3023,27 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzRegex ASCII dashboard with NFA/DFA state counts and minimization statistics",
     )
 
+    # FizzSheet — Spreadsheet Engine
+    parser.add_argument(
+        "--sheet",
+        action="store_true",
+        help="Enable the FizzSheet spreadsheet engine to capture evaluation results in a tabular grid",
+    )
+
+    parser.add_argument(
+        "--sheet-formula",
+        type=str,
+        default=None,
+        metavar="FORMULA",
+        help="Evaluate a standalone spreadsheet formula (e.g. --sheet-formula '=FIZZBUZZ(15)')",
+    )
+
+    parser.add_argument(
+        "--sheet-dashboard",
+        action="store_true",
+        help="Display the FizzSheet ASCII dashboard with cell statistics and dependency graph metrics",
+    )
+
     return parser
 
 
@@ -3576,6 +3604,22 @@ def main(argv: Optional[list[str]] = None) -> int:
                 f"{br.speedup_ratio:>9.1f}x  "
                 f"{'Y' if br.results_agree else 'N':>4}"
             )
+        print()
+        return 0
+
+    # ----------------------------------------------------------------
+    # FizzSheet — Standalone Formula Evaluation (early exit)
+    # ----------------------------------------------------------------
+    if args.sheet_formula is not None:
+        result = evaluate_formula(args.sheet_formula)
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | FIZZSHEET: FORMULA EVALUATION                           |\n"
+            "  +---------------------------------------------------------+"
+        )
+        print(f"  Formula:  {args.sheet_formula}")
+        print(f"  Result:   {result.to_string()}")
+        print(f"  Type:     {result.value_type.name}")
         print()
         return 0
 
@@ -7225,6 +7269,31 @@ def main(argv: Optional[list[str]] = None) -> int:
             )
 
     # ----------------------------------------------------------------
+    # FizzSheet — Spreadsheet Engine
+    # ----------------------------------------------------------------
+    sheet_middleware_instance = None
+
+    sheet_active = args.sheet or args.sheet_dashboard
+
+    if sheet_active:
+        sheet_middleware_instance = SpreadsheetMiddleware(
+            enable_dashboard=args.sheet_dashboard,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(sheet_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZSHEET: SPREADSHEET ENGINE ENABLED                   |\n"
+                "  |   Cell addressing: A1 notation (A-Z, 1-999)            |\n"
+                "  |   Formula parser: Recursive descent w/ precedence      |\n"
+                "  |   Recalculation: Kahn's topological sort               |\n"
+                "  |   Built-in functions: 20 (incl. FIZZBUZZ, COST, TAX)   |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # FizzReplica — Database Replication with WAL Shipping
     # ----------------------------------------------------------------
     replication_set = None
@@ -9634,6 +9703,17 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
     elif args.regex_dashboard:
         print("\n  FizzRegex not enabled. Use --regex to enable.\n")
+
+    # FizzSheet Dashboard (post-execution)
+    if args.sheet_dashboard and sheet_middleware_instance is not None:
+        sheet = sheet_middleware_instance.spreadsheet
+        renderer = SpreadsheetRenderer()
+        print()
+        print(renderer.render(sheet))
+        print()
+        print(SpreadsheetDashboard.render(sheet))
+    elif args.sheet_dashboard:
+        print("\n  FizzSheet not enabled. Use --sheet to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:
