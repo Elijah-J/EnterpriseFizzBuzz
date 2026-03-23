@@ -404,3 +404,98 @@ export interface AuditEntry {
   /** Arbitrary metadata for drill-down. */
   metadata?: Record<string, string>;
 }
+
+// ---------------------------------------------------------------------------
+// Configuration Management types
+// ---------------------------------------------------------------------------
+
+/** Top-level category for grouping related configuration items. */
+export type ConfigCategory =
+  | "evaluation"
+  | "cache"
+  | "compliance"
+  | "chaos"
+  | "blockchain"
+  | "ml"
+  | "feature_flags"
+  | "rate_limiting"
+  | "sla"
+  | "service_mesh"
+  | "observability"
+  | "persistence";
+
+/** The primitive type of a configuration value, determining the input widget rendered. */
+export type ConfigValueType = "string" | "number" | "boolean" | "enum";
+
+/** A single configurable parameter of the platform. */
+export interface ConfigItem {
+  /** Stable machine identifier (e.g., "cache.eviction_policy"). */
+  id: string;
+  /** Human-readable display name. */
+  name: string;
+  /** Current effective value (always serialized as string). */
+  value: string;
+  /** Data type governing the editor widget. */
+  type: ConfigValueType;
+  /** For enum types, the set of allowed values. */
+  enumValues?: string[];
+  /** For number types, optional minimum value. */
+  min?: number;
+  /** For number types, optional maximum value. */
+  max?: number;
+  /** Short description of what this parameter controls. */
+  description: string;
+  /** Factory default value. */
+  defaultValue: string;
+  /** Category this item belongs to. */
+  category: ConfigCategory;
+  /** Whether this parameter requires a platform restart to take effect. */
+  requiresRestart: boolean;
+  /** ISO 8601 timestamp of the last modification, if ever changed from default. */
+  lastModifiedAt?: string;
+  /** Principal who last modified this value. */
+  lastModifiedBy?: string;
+}
+
+/** Lifecycle state of a feature flag. */
+export type FeatureFlagLifecycle = "development" | "testing" | "canary" | "ga" | "deprecated";
+
+/** A feature flag governing progressive rollout of platform capabilities. */
+export interface FeatureFlag {
+  /** Unique flag identifier (e.g., "wuzz_rule_experimental"). */
+  id: string;
+  /** Human-readable flag name. */
+  name: string;
+  /** Extended description of the capability gated by this flag. */
+  description: string;
+  /** Whether the flag is currently enabled. */
+  enabled: boolean;
+  /** Percentage of evaluations receiving the flagged behavior (0-100). */
+  rolloutPercentage: number;
+  /** Current lifecycle state. */
+  lifecycle: FeatureFlagLifecycle;
+  /** ISO 8601 timestamp of the last state change. */
+  lastToggledAt: string;
+  /** Principal who last toggled this flag. */
+  lastToggledBy: string;
+}
+
+/** Result of a configuration update operation. */
+export interface ConfigUpdateResult {
+  /** Whether the update was accepted. */
+  success: boolean;
+  /** Reason for rejection, if applicable. */
+  error?: string;
+  /** The updated configuration item. */
+  item?: ConfigItem;
+}
+
+/** Result of a feature flag toggle operation. */
+export interface FeatureFlagToggleResult {
+  /** Whether the toggle was accepted. */
+  success: boolean;
+  /** Reason for rejection, if applicable. */
+  error?: string;
+  /** The updated feature flag. */
+  flag?: FeatureFlag;
+}

@@ -26,6 +26,13 @@ export type {
   HeatmapData,
   EvaluationTrendPoint,
   EvaluationTrend,
+  ConfigCategory,
+  ConfigValueType,
+  ConfigItem,
+  FeatureFlagLifecycle,
+  FeatureFlag,
+  ConfigUpdateResult,
+  FeatureFlagToggleResult,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

@@ -20,6 +20,11 @@ import type {
   ClassificationDistribution,
   HeatmapData,
   EvaluationTrend,
+  ConfigCategory,
+  ConfigItem,
+  ConfigUpdateResult,
+  FeatureFlag,
+  FeatureFlagToggleResult,
 } from "./types";
 
 /**
@@ -188,4 +193,28 @@ export interface IDataProvider {
    * @param period - Time period: "1h", "6h", "24h", "7d"
    */
   getEvaluationTrend(period: string): Promise<EvaluationTrend>;
+
+  /**
+   * Retrieve all platform configuration items, optionally filtered by category.
+   * Returns items sorted by category, then by name.
+   */
+  getConfiguration(category?: ConfigCategory): Promise<ConfigItem[]>;
+
+  /**
+   * Submit a configuration change. The change is validated server-side
+   * against type constraints and business rules before acceptance.
+   */
+  updateConfigItem(itemId: string, newValue: string): Promise<ConfigUpdateResult>;
+
+  /**
+   * Retrieve all registered feature flags with current state and rollout
+   * configuration. Returns flags sorted by lifecycle stage, then by name.
+   */
+  getFeatureFlags(): Promise<FeatureFlag[]>;
+
+  /**
+   * Toggle a feature flag's enabled state or update its rollout percentage.
+   * Returns the updated flag state after server-side validation.
+   */
+  toggleFeatureFlag(flagId: string, enabled: boolean, rolloutPercentage?: number): Promise<FeatureFlagToggleResult>;
 }

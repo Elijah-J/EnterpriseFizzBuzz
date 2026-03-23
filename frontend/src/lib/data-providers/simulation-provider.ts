@@ -26,6 +26,11 @@ import type {
   HeatmapCell,
   EvaluationTrend,
   EvaluationTrendPoint,
+  ConfigCategory,
+  ConfigItem,
+  ConfigUpdateResult,
+  FeatureFlag,
+  FeatureFlagToggleResult,
 } from "./types";
 
 /**
@@ -882,6 +887,96 @@ export class SimulationProvider implements IDataProvider {
       bucketSizeSeconds: config.bucketSize,
     };
   }
+
+  async getConfiguration(category?: ConfigCategory): Promise<ConfigItem[]> {
+    let items = [...configurationItems];
+    if (category) {
+      items = items.filter((item) => item.category === category);
+    }
+    items.sort((a, b) => {
+      const catCmp = a.category.localeCompare(b.category);
+      if (catCmp !== 0) return catCmp;
+      return a.name.localeCompare(b.name);
+    });
+    return items;
+  }
+
+  async updateConfigItem(itemId: string, newValue: string): Promise<ConfigUpdateResult> {
+    const item = configurationItems.find((i) => i.id === itemId);
+    if (!item) {
+      return { success: false, error: `Configuration item "${itemId}" not found.` };
+    }
+
+    // Type validation
+    if (item.type === "number") {
+      const num = Number(newValue);
+      if (isNaN(num)) {
+        return { success: false, error: `Value "${newValue}" is not a valid number.` };
+      }
+      if (item.min !== undefined && num < item.min) {
+        return { success: false, error: `Value ${num} is below minimum ${item.min}.` };
+      }
+      if (item.max !== undefined && num > item.max) {
+        return { success: false, error: `Value ${num} exceeds maximum ${item.max}.` };
+      }
+    }
+
+    if (item.type === "boolean" && newValue !== "true" && newValue !== "false") {
+      return { success: false, error: `Value "${newValue}" is not a valid boolean.` };
+    }
+
+    if (item.type === "enum" && item.enumValues && !item.enumValues.includes(newValue)) {
+      return {
+        success: false,
+        error: `Value "${newValue}" is not in allowed values: ${item.enumValues.join(", ")}.`,
+      };
+    }
+
+    item.value = newValue;
+    item.lastModifiedAt = new Date().toISOString();
+    item.lastModifiedBy = "platform-admin";
+
+    return { success: true, item: { ...item } };
+  }
+
+  async getFeatureFlags(): Promise<FeatureFlag[]> {
+    const lifecycleOrder: Record<string, number> = {
+      development: 0,
+      testing: 1,
+      canary: 2,
+      ga: 3,
+      deprecated: 4,
+    };
+    return [...featureFlagItems].sort((a, b) => {
+      const lcCmp = (lifecycleOrder[a.lifecycle] ?? 99) - (lifecycleOrder[b.lifecycle] ?? 99);
+      if (lcCmp !== 0) return lcCmp;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  async toggleFeatureFlag(
+    flagId: string,
+    enabled: boolean,
+    rolloutPercentage?: number,
+  ): Promise<FeatureFlagToggleResult> {
+    const flag = featureFlagItems.find((f) => f.id === flagId);
+    if (!flag) {
+      return { success: false, error: `Feature flag "${flagId}" not found.` };
+    }
+
+    if (rolloutPercentage !== undefined && (rolloutPercentage < 0 || rolloutPercentage > 100)) {
+      return { success: false, error: `Rollout percentage must be between 0 and 100.` };
+    }
+
+    flag.enabled = enabled;
+    if (rolloutPercentage !== undefined) {
+      flag.rolloutPercentage = rolloutPercentage;
+    }
+    flag.lastToggledAt = new Date().toISOString();
+    flag.lastToggledBy = "platform-admin";
+
+    return { success: true, flag: { ...flag } };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1564,4 +1659,89 @@ const COMPLIANCE_FINDINGS_SEED: {
     description:
       "The automated data subject notification templates used for GDPR Article 12 transparency communications reference the previous platform version identifier. The templates are functionally correct and contain all required information but should be updated to reflect the current platform version for consistency.",
   },
+];
+
+// ---------------------------------------------------------------------------
+// Configuration items — derived from the platform's 80+ CLI flags
+// ---------------------------------------------------------------------------
+
+const configurationItems: ConfigItem[] = [
+  // Evaluation (5)
+  { id: "evaluation.strategy", name: "Evaluation Strategy", value: "standard", type: "enum", enumValues: ["standard", "chain_of_responsibility", "parallel_async", "machine_learning"], description: "Primary rule evaluation strategy", defaultValue: "standard", category: "evaluation", requiresRestart: true },
+  { id: "evaluation.range_start", name: "Default Range Start", value: "1", type: "number", min: 1, max: 1_000_000, description: "Default start of evaluation range", defaultValue: "1", category: "evaluation", requiresRestart: false },
+  { id: "evaluation.range_end", name: "Default Range End", value: "100", type: "number", min: 1, max: 1_000_000, description: "Default end of evaluation range", defaultValue: "100", category: "evaluation", requiresRestart: false },
+  { id: "evaluation.output_format", name: "Output Format", value: "plain", type: "enum", enumValues: ["plain", "json", "xml", "csv"], description: "Serialization format for evaluation results", defaultValue: "plain", category: "evaluation", requiresRestart: false },
+  { id: "evaluation.locale", name: "Locale", value: "en", type: "enum", enumValues: ["en", "de", "fr", "ja", "tlh", "sjn", "qya"], description: "Internationalized output locale", defaultValue: "en", category: "evaluation", requiresRestart: false },
+  // Cache (5)
+  { id: "cache.enabled", name: "Cache Enabled", value: "false", type: "boolean", description: "Enable MESI-coherent caching layer", defaultValue: "false", category: "cache", requiresRestart: true },
+  { id: "cache.eviction_policy", name: "Eviction Policy", value: "lru", type: "enum", enumValues: ["lru", "lfu", "fifo", "dramatic_random"], description: "Cache eviction algorithm", defaultValue: "lru", category: "cache", requiresRestart: false },
+  { id: "cache.max_entries", name: "Max Cache Entries", value: "1024", type: "number", min: 1, max: 1_000_000, description: "Maximum entries before eviction triggers", defaultValue: "1024", category: "cache", requiresRestart: false },
+  { id: "cache.warm_on_start", name: "Warm on Start", value: "false", type: "boolean", description: "Pre-populate cache during boot sequence", defaultValue: "false", category: "cache", requiresRestart: true },
+  { id: "cache.ttl_seconds", name: "TTL (seconds)", value: "3600", type: "number", min: 1, max: 86_400, description: "Time-to-live for cached evaluation results", defaultValue: "3600", category: "cache", requiresRestart: false },
+  // Compliance (5)
+  { id: "compliance.enabled", name: "Compliance Framework Enabled", value: "false", type: "boolean", description: "Enable SOX/GDPR/HIPAA compliance subsystem", defaultValue: "false", category: "compliance", requiresRestart: true },
+  { id: "compliance.sox_audit", name: "SOX Audit Trail", value: "true", type: "boolean", description: "Emit segregation-of-duties audit entries", defaultValue: "true", category: "compliance", requiresRestart: false },
+  { id: "compliance.gdpr_erasure_enabled", name: "GDPR Right-to-Erasure", value: "true", type: "boolean", description: "Honor GDPR Art. 17 erasure requests", defaultValue: "true", category: "compliance", requiresRestart: false },
+  { id: "compliance.hipaa_encryption", name: "HIPAA PHI Encryption", value: "true", type: "boolean", description: "Encrypt PHI data at rest and in transit", defaultValue: "true", category: "compliance", requiresRestart: true },
+  { id: "compliance.audit_retention_days", name: "Audit Retention (days)", value: "2555", type: "number", min: 30, max: 36_500, description: "Minimum retention period for compliance records", defaultValue: "2555", category: "compliance", requiresRestart: false },
+  // Chaos Engineering (5)
+  { id: "chaos.enabled", name: "Chaos Engineering Enabled", value: "false", type: "boolean", description: "Enable fault injection subsystem", defaultValue: "false", category: "chaos", requiresRestart: true },
+  { id: "chaos.severity_level", name: "Severity Level", value: "1", type: "enum", enumValues: ["1", "2", "3", "4", "5"], description: "Chaos fault severity (1=gentle, 5=apocalypse)", defaultValue: "1", category: "chaos", requiresRestart: false },
+  { id: "chaos.gameday_scenario", name: "Game Day Scenario", value: "total_chaos", type: "enum", enumValues: ["modulo_meltdown", "confidence_crisis", "slow_burn", "total_chaos"], description: "Default Game Day scenario", defaultValue: "total_chaos", category: "chaos", requiresRestart: false },
+  { id: "chaos.auto_postmortem", name: "Auto Post-Mortem", value: "true", type: "boolean", description: "Automatically generate incident reports", defaultValue: "true", category: "chaos", requiresRestart: false },
+  { id: "chaos.blast_radius_percent", name: "Blast Radius (%)", value: "25", type: "number", min: 0, max: 100, description: "Percentage of evaluations subject to fault injection", defaultValue: "25", category: "chaos", requiresRestart: false },
+  // Blockchain (4)
+  { id: "blockchain.enabled", name: "Blockchain Ledger Enabled", value: "false", type: "boolean", description: "Enable immutable audit ledger", defaultValue: "false", category: "blockchain", requiresRestart: true },
+  { id: "blockchain.mining_difficulty", name: "Mining Difficulty", value: "2", type: "number", min: 1, max: 32, description: "Proof-of-work hash prefix zeros required", defaultValue: "2", category: "blockchain", requiresRestart: false },
+  { id: "blockchain.consensus_algorithm", name: "Consensus Algorithm", value: "pow", type: "enum", enumValues: ["pow", "pos", "poa"], description: "Block validation consensus mechanism", defaultValue: "pow", category: "blockchain", requiresRestart: true },
+  { id: "blockchain.block_size_limit", name: "Block Size Limit", value: "100", type: "number", min: 1, max: 10_000, description: "Maximum evaluation results per block", defaultValue: "100", category: "blockchain", requiresRestart: false },
+  // ML (5)
+  { id: "ml.enabled", name: "ML Engine Enabled", value: "false", type: "boolean", description: "Enable neural network evaluation strategy", defaultValue: "false", category: "ml", requiresRestart: true },
+  { id: "ml.learning_rate", name: "Learning Rate", value: "0.001", type: "number", min: 0.0001, max: 1, description: "Gradient descent step size", defaultValue: "0.001", category: "ml", requiresRestart: false },
+  { id: "ml.hidden_layers", name: "Hidden Layer Count", value: "3", type: "number", min: 1, max: 100, description: "Neural network depth", defaultValue: "3", category: "ml", requiresRestart: true },
+  { id: "ml.epochs", name: "Training Epochs", value: "100", type: "number", min: 1, max: 100_000, description: "Complete passes through training data", defaultValue: "100", category: "ml", requiresRestart: false },
+  { id: "ml.confidence_threshold", name: "Confidence Threshold", value: "0.85", type: "number", min: 0, max: 1, description: "Minimum prediction confidence for acceptance", defaultValue: "0.85", category: "ml", requiresRestart: false },
+  // Rate Limiting (5)
+  { id: "rate_limiting.enabled", name: "Rate Limiting Enabled", value: "false", type: "boolean", description: "Enable evaluation rate governance", defaultValue: "false", category: "rate_limiting", requiresRestart: true },
+  { id: "rate_limiting.rpm", name: "Max Evaluations/min", value: "1000", type: "number", min: 1, max: 1_000_000, description: "Requests-per-minute ceiling", defaultValue: "1000", category: "rate_limiting", requiresRestart: false },
+  { id: "rate_limiting.algorithm", name: "Algorithm", value: "token_bucket", type: "enum", enumValues: ["token_bucket", "sliding_window", "fixed_window"], description: "Rate limiting algorithm", defaultValue: "token_bucket", category: "rate_limiting", requiresRestart: false },
+  { id: "rate_limiting.burst_multiplier", name: "Burst Multiplier", value: "2", type: "number", min: 1, max: 100, description: "Allowed burst factor over sustained rate", defaultValue: "2", category: "rate_limiting", requiresRestart: false },
+  { id: "rate_limiting.quota_enabled", name: "Quota Tracking", value: "true", type: "boolean", description: "Enable per-tenant quota accounting", defaultValue: "true", category: "rate_limiting", requiresRestart: false },
+  // SLA (5)
+  { id: "sla.enabled", name: "SLA Monitoring Enabled", value: "false", type: "boolean", description: "Enable SLO/SLA monitoring subsystem", defaultValue: "false", category: "sla", requiresRestart: true },
+  { id: "sla.availability_target", name: "Availability Target (%)", value: "99.95", type: "number", min: 0, max: 100, description: "Target availability percentage", defaultValue: "99.95", category: "sla", requiresRestart: false },
+  { id: "sla.latency_p99_target_ms", name: "P99 Latency Target (ms)", value: "50", type: "number", min: 1, max: 10_000, description: "99th-percentile latency SLO threshold", defaultValue: "50", category: "sla", requiresRestart: false },
+  { id: "sla.error_budget_window_days", name: "Error Budget Window (days)", value: "30", type: "number", min: 1, max: 365, description: "Rolling window for error budget calculation", defaultValue: "30", category: "sla", requiresRestart: false },
+  { id: "sla.auto_escalation", name: "Auto Escalation", value: "true", type: "boolean", description: "Automatically page on-call for SLO breach", defaultValue: "true", category: "sla", requiresRestart: false },
+  // Service Mesh (3)
+  { id: "service_mesh.enabled", name: "Service Mesh Enabled", value: "false", type: "boolean", description: "Decompose FizzBuzz into 7 microservices", defaultValue: "false", category: "service_mesh", requiresRestart: true },
+  { id: "service_mesh.latency_injection", name: "Latency Injection", value: "false", type: "boolean", description: "Inject simulated network latency between services", defaultValue: "false", category: "service_mesh", requiresRestart: false },
+  { id: "service_mesh.packet_loss", name: "Packet Loss Simulation", value: "false", type: "boolean", description: "Simulate packet loss between mesh services", defaultValue: "false", category: "service_mesh", requiresRestart: false },
+  // Observability (4)
+  { id: "observability.tracing", name: "Distributed Tracing", value: "false", type: "boolean", description: "Enable OpenTelemetry distributed tracing", defaultValue: "false", category: "observability", requiresRestart: true },
+  { id: "observability.metrics", name: "Prometheus Metrics", value: "false", type: "boolean", description: "Enable Prometheus-style metrics collection", defaultValue: "false", category: "observability", requiresRestart: true },
+  { id: "observability.webhooks", name: "Webhook Notifications", value: "false", type: "boolean", description: "Enable event-driven webhook telemetry", defaultValue: "false", category: "observability", requiresRestart: false },
+  { id: "observability.hot_reload", name: "Config Hot-Reload", value: "false", type: "boolean", description: "Enable Raft-consensus configuration hot-reload", defaultValue: "false", category: "observability", requiresRestart: true },
+  // Persistence (4)
+  { id: "persistence.backend", name: "Storage Backend", value: "in_memory", type: "enum", enumValues: ["in_memory", "sqlite", "filesystem"], description: "Result persistence repository backend", defaultValue: "in_memory", category: "persistence", requiresRestart: true },
+  { id: "persistence.db_path", name: "SQLite Database Path", value: "fizzbuzz.db", type: "string", description: "Path to SQLite database file", defaultValue: "fizzbuzz.db", category: "persistence", requiresRestart: true },
+  { id: "persistence.results_dir", name: "Results Directory", value: "./results", type: "string", description: "Filesystem persistence output directory", defaultValue: "./results", category: "persistence", requiresRestart: true },
+  { id: "persistence.event_sourcing", name: "Event Sourcing", value: "false", type: "boolean", description: "Enable CQRS event-sourced persistence", defaultValue: "false", category: "persistence", requiresRestart: true },
+];
+
+// ---------------------------------------------------------------------------
+// Feature flags — progressive rollout controls for platform capabilities
+// ---------------------------------------------------------------------------
+
+const featureFlagItems: FeatureFlag[] = [
+  { id: "wuzz_rule_experimental", name: "Wuzz Rule (Experimental)", description: "Adds \"Wuzz\" output for numbers divisible by 7", enabled: false, rolloutPercentage: 0, lifecycle: "development", lastToggledAt: new Date(Date.now() - 86_400_000 * 3).toISOString(), lastToggledBy: "Dr. Elara Modulus" },
+  { id: "quantum_strategy", name: "Quantum Evaluation Strategy", description: "Route eligible evaluations through quantum circuit simulator", enabled: true, rolloutPercentage: 15, lifecycle: "canary", lastToggledAt: new Date(Date.now() - 7_200_000).toISOString(), lastToggledBy: "platform-admin" },
+  { id: "ml_confidence_override", name: "ML Confidence Override", description: "Allow ML strategy to override low-confidence predictions with fallback", enabled: true, rolloutPercentage: 100, lifecycle: "ga", lastToggledAt: new Date(Date.now() - 86_400_000 * 14).toISOString(), lastToggledBy: "Prof. Byron Divisor" },
+  { id: "blockchain_async_mining", name: "Async Block Mining", description: "Mine blocks asynchronously to reduce evaluation latency", enabled: false, rolloutPercentage: 0, lifecycle: "testing", lastToggledAt: new Date(Date.now() - 86_400_000).toISOString(), lastToggledBy: "Eng. Cassandra Remainder" },
+  { id: "cache_predictive_warm", name: "Predictive Cache Warming", description: "Use access pattern analysis to pre-warm cache entries", enabled: true, rolloutPercentage: 50, lifecycle: "canary", lastToggledAt: new Date(Date.now() - 3_600_000 * 5).toISOString(), lastToggledBy: "platform-admin" },
+  { id: "gdpr_enhanced_erasure", name: "Enhanced GDPR Erasure", description: "Extended erasure covering backup and replica stores", enabled: true, rolloutPercentage: 100, lifecycle: "ga", lastToggledAt: new Date(Date.now() - 86_400_000 * 30).toISOString(), lastToggledBy: "Arch. Dmitri Quotient" },
+  { id: "chaos_adaptive_severity", name: "Adaptive Chaos Severity", description: "Dynamically adjust chaos severity based on system health", enabled: false, rolloutPercentage: 0, lifecycle: "development", lastToggledAt: new Date(Date.now() - 86_400_000 * 2).toISOString(), lastToggledBy: "SRE Jenkins McFizzface" },
+  { id: "federated_aggregation", name: "Federated Model Aggregation", description: "Enable FedAvg aggregation across distributed training nodes", enabled: true, rolloutPercentage: 25, lifecycle: "testing", lastToggledAt: new Date(Date.now() - 86_400_000 * 5).toISOString(), lastToggledBy: "Dir. Priya Evaluator" },
+  { id: "genetic_crossover_v2", name: "Genetic Algorithm Crossover v2", description: "Replaced by uniform crossover in v3 engine", enabled: false, rolloutPercentage: 0, lifecycle: "deprecated", lastToggledAt: new Date(Date.now() - 86_400_000 * 60).toISOString(), lastToggledBy: "Prof. Byron Divisor" },
+  { id: "dark_launch_fizzdap", name: "FizzDAP Dark Launch", description: "Shadow-route evaluations to FizzDAP debug adapter protocol", enabled: true, rolloutPercentage: 10, lifecycle: "canary", lastToggledAt: new Date(Date.now() - 3_600_000 * 8).toISOString(), lastToggledBy: "platform-admin" },
 ];
