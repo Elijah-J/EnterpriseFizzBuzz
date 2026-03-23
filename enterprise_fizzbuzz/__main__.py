@@ -2393,6 +2393,25 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help="Display the FizzCheck ASCII dashboard with verification results, counterexamples, and reduction stats",
     )
 
+    # Digital Logic Circuit Simulator (FizzGate)
+    parser.add_argument(
+        "--fizzgate",
+        action="store_true",
+        help="Enable FizzGate: gate-level digital logic simulation for FizzBuzz divisibility checking",
+    )
+
+    parser.add_argument(
+        "--fizzgate-waveform",
+        action="store_true",
+        help="Display ASCII waveform timing diagrams of circuit signal transitions",
+    )
+
+    parser.add_argument(
+        "--fizzgate-dashboard",
+        action="store_true",
+        help="Display the FizzGate ASCII dashboard with circuit topology, gate counts, and critical path analysis",
+    )
+
     # Reverse Proxy & Load Balancer
     parser.add_argument(
         "--proxy",
@@ -5992,6 +6011,32 @@ def main(argv: Optional[list[str]] = None) -> int:
         builder.with_middleware(tt_middleware)
 
     # ----------------------------------------------------------------
+    # Digital Logic Circuit Simulator (FizzGate)
+    # ----------------------------------------------------------------
+    circuit_middleware_instance = None
+
+    if args.fizzgate or config.circuit_enabled:
+        from enterprise_fizzbuzz.infrastructure.circuit_simulator import (
+            CircuitMiddleware,
+        )
+
+        circuit_middleware_instance = CircuitMiddleware(
+            event_bus=event_bus,
+            enable_waveform=args.fizzgate_waveform or config.circuit_enable_waveform,
+            enable_dashboard=args.fizzgate_dashboard or config.circuit_enable_dashboard,
+        )
+        builder.with_middleware(circuit_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZGATE: DIGITAL LOGIC CIRCUIT SIMULATOR               |\n"
+                "  |   Gate-level divisibility verification enabled           |\n"
+                "  |   Modulo-3 and Modulo-5 circuits active                 |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
     # Reverse Proxy & Load Balancer
     # ----------------------------------------------------------------
     proxy_instance = None
@@ -7862,6 +7907,39 @@ def main(argv: Optional[list[str]] = None) -> int:
         ))
     elif args.model_check_dashboard:
         print("\n  FizzCheck not enabled. Use --model-check to enable.\n")
+
+    # ----------------------------------------------------------------
+    # FizzGate Circuit Dashboard
+    # ----------------------------------------------------------------
+    if args.fizzgate_dashboard and circuit_middleware_instance is not None:
+        from enterprise_fizzbuzz.infrastructure.circuit_simulator import (
+            CircuitDashboard,
+        )
+        classifier = circuit_middleware_instance.classifier
+        if classifier is not None:
+            print(CircuitDashboard.render(
+                classifier=classifier,
+                simulation_results=circuit_middleware_instance.results,
+                width=config.circuit_dashboard_width,
+            ))
+        else:
+            print("\n  FizzGate circuit has not been exercised yet.\n")
+    elif args.fizzgate_dashboard:
+        print("\n  FizzGate not enabled. Use --fizzgate to enable.\n")
+
+    # FizzGate Waveform Display
+    if args.fizzgate_waveform and circuit_middleware_instance is not None:
+        results = circuit_middleware_instance.results
+        if results:
+            last_result = results[-1]
+            waveform = last_result.get("waveform")
+            if waveform is not None:
+                print("\n  FizzGate Signal Waveform (last evaluation):")
+                print(waveform.render_ascii(width=config.circuit_dashboard_width))
+        else:
+            print("\n  FizzGate has no simulation results to display.\n")
+    elif args.fizzgate_waveform and circuit_middleware_instance is None:
+        print("\n  FizzGate not enabled. Use --fizzgate to enable.\n")
 
     # ----------------------------------------------------------------
     # FizzProxy Dashboard

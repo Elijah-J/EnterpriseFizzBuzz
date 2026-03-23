@@ -30,6 +30,9 @@ import type {
   AuditLogSortField,
   Block,
   BlockchainStats,
+  QuantumCircuit,
+  QuantumSimulationResult,
+  QuantumState,
 } from "./types";
 
 /**
@@ -261,4 +264,29 @@ export interface IDataProvider {
    * transaction volume, mining performance, and integrity status.
    */
   getBlockchainStats(): Promise<BlockchainStats>;
+
+  /**
+   * Retrieve all pre-built quantum circuits available for simulation.
+   * Returns circuits ordered by qubit count ascending, then alphabetically.
+   */
+  getQuantumCircuits(): Promise<QuantumCircuit[]>;
+
+  /**
+   * Execute a quantum simulation of the specified circuit for the given
+   * number of measurement shots. Returns the final state vector,
+   * measurement histogram, and Quantum Advantage Ratio.
+   *
+   * @param circuitId - Identifier of the circuit to simulate
+   * @param shots - Number of measurement repetitions (default: 1024)
+   */
+  runQuantumSimulation(circuitId: string, shots: number): Promise<QuantumSimulationResult>;
+
+  /**
+   * Retrieve the current state vector for a circuit without performing
+   * measurement. Used for state visualization before collapsing the
+   * superposition.
+   *
+   * @param circuitId - Identifier of the circuit to inspect
+   */
+  getQuantumState(circuitId: string): Promise<QuantumState>;
 }

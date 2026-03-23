@@ -39,6 +39,12 @@ export type {
   BlockTransaction,
   Block,
   BlockchainStats,
+  QuantumGateType,
+  QuantumGate,
+  QuantumCircuit,
+  ComplexAmplitude,
+  QuantumState,
+  QuantumSimulationResult,
 } from "./types";
 export type { IDataProvider } from "./provider";
 export { SimulationProvider } from "./simulation-provider";

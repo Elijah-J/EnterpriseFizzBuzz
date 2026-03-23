@@ -37,6 +37,11 @@ import type {
   Block,
   BlockTransaction,
   BlockchainStats,
+  QuantumCircuit,
+  QuantumGate,
+  QuantumState,
+  QuantumSimulationResult,
+  ComplexAmplitude,
 } from "./types";
 
 /**
@@ -435,6 +440,258 @@ let ballotNumber = 42;
  * data with controlled variance to ensure the Operations Center displays
  * realistic behavior without requiring a live backend.
  */
+// ---------------------------------------------------------------------------
+// Quantum circuit definitions — pre-built circuits for FizzBuzz evaluation
+// ---------------------------------------------------------------------------
+
+const QUANTUM_CIRCUITS: QuantumCircuit[] = [
+  {
+    id: "bell-fizzbuzz",
+    name: "Bell State Entanglement Probe",
+    description:
+      "Prepares a Bell state |00> + |11> to test qubit entanglement fidelity. Serves as a calibration circuit for the quantum evaluation pipeline — if the Bell state is impure, all subsequent FizzBuzz evaluations are suspect.",
+    numQubits: 2,
+    gates: [
+      { type: "H", qubit: 0, step: 0 },
+      { type: "CNOT", qubit: 1, controlQubit: 0, step: 1 },
+      { type: "M", qubit: 0, step: 2 },
+      { type: "M", qubit: 1, step: 2 },
+    ],
+    numClassicalBits: 2,
+    depth: 3,
+  },
+  {
+    id: "shor-3",
+    name: "Shor-3 Divisibility Oracle",
+    description:
+      "Simplified Shor's period-finding circuit for modular exponentiation base-a mod 3. Applies Hadamard superposition on counting register, controlled modular multiplication, and inverse QFT to extract the period r=2, confirming divisibility by 3.",
+    numQubits: 4,
+    gates: [
+      { type: "H", qubit: 0, step: 0 },
+      { type: "H", qubit: 1, step: 0 },
+      { type: "CNOT", qubit: 2, controlQubit: 1, step: 1 },
+      { type: "CNOT", qubit: 3, controlQubit: 0, step: 2 },
+      { type: "H", qubit: 0, step: 3 },
+      { type: "CNOT", qubit: 1, controlQubit: 0, step: 4 },
+      { type: "H", qubit: 1, step: 5 },
+      { type: "M", qubit: 0, step: 6 },
+      { type: "M", qubit: 1, step: 6 },
+      { type: "M", qubit: 2, step: 6 },
+      { type: "M", qubit: 3, step: 6 },
+    ],
+    numClassicalBits: 4,
+    depth: 7,
+  },
+  {
+    id: "shor-5",
+    name: "Shor-5 Divisibility Oracle",
+    description:
+      "Period-finding circuit targeting divisor 5. Uses a 4-qubit register to find the period of a^x mod 5. The QFT resolves the period r=4, enabling factorization of the Buzz divisor.",
+    numQubits: 4,
+    gates: [
+      { type: "H", qubit: 0, step: 0 },
+      { type: "H", qubit: 1, step: 0 },
+      { type: "CNOT", qubit: 2, controlQubit: 0, step: 1 },
+      { type: "CNOT", qubit: 3, controlQubit: 1, step: 2 },
+      { type: "S", qubit: 2, step: 3 },
+      { type: "T", qubit: 3, step: 3 },
+      { type: "H", qubit: 0, step: 4 },
+      { type: "CNOT", qubit: 1, controlQubit: 0, step: 5 },
+      { type: "H", qubit: 1, step: 6 },
+      { type: "M", qubit: 0, step: 7 },
+      { type: "M", qubit: 1, step: 7 },
+      { type: "M", qubit: 2, step: 7 },
+      { type: "M", qubit: 3, step: 7 },
+    ],
+    numClassicalBits: 4,
+    depth: 8,
+  },
+  {
+    id: "grover-fizzbuzz",
+    name: "Grover FizzBuzz Search",
+    description:
+      "Grover's search algorithm with an oracle marking states divisible by 15 (FizzBuzz). Applies sqrt(N) Grover iterations to amplify the probability of measuring a FizzBuzz-classified integer.",
+    numQubits: 5,
+    gates: [
+      // Initial superposition
+      { type: "H", qubit: 0, step: 0 },
+      { type: "H", qubit: 1, step: 0 },
+      { type: "H", qubit: 2, step: 0 },
+      { type: "H", qubit: 3, step: 0 },
+      { type: "X", qubit: 4, step: 1 },
+      { type: "H", qubit: 4, step: 2 },
+      // Oracle
+      { type: "CNOT", qubit: 4, controlQubit: 0, step: 3 },
+      { type: "CNOT", qubit: 4, controlQubit: 1, step: 4 },
+      { type: "CNOT", qubit: 4, controlQubit: 2, step: 5 },
+      { type: "CNOT", qubit: 4, controlQubit: 3, step: 6 },
+      // Diffusion operator
+      { type: "H", qubit: 0, step: 7 },
+      { type: "H", qubit: 1, step: 7 },
+      { type: "H", qubit: 2, step: 7 },
+      { type: "H", qubit: 3, step: 7 },
+      { type: "X", qubit: 0, step: 8 },
+      { type: "X", qubit: 1, step: 8 },
+      { type: "X", qubit: 2, step: 8 },
+      { type: "X", qubit: 3, step: 8 },
+      { type: "H", qubit: 3, step: 9 },
+      { type: "CNOT", qubit: 3, controlQubit: 0, step: 10 },
+      { type: "CNOT", qubit: 3, controlQubit: 1, step: 11 },
+      { type: "CNOT", qubit: 3, controlQubit: 2, step: 12 },
+      { type: "H", qubit: 3, step: 13 },
+      { type: "X", qubit: 0, step: 14 },
+      { type: "X", qubit: 1, step: 14 },
+      { type: "X", qubit: 2, step: 14 },
+      { type: "X", qubit: 3, step: 14 },
+      { type: "H", qubit: 0, step: 15 },
+      { type: "H", qubit: 1, step: 15 },
+      { type: "H", qubit: 2, step: 15 },
+      { type: "H", qubit: 3, step: 15 },
+      // Measurement
+      { type: "M", qubit: 0, step: 16 },
+      { type: "M", qubit: 1, step: 16 },
+      { type: "M", qubit: 2, step: 16 },
+      { type: "M", qubit: 3, step: 16 },
+      { type: "M", qubit: 4, step: 16 },
+    ],
+    numClassicalBits: 5,
+    depth: 17,
+  },
+];
+
+/**
+ * Pre-computed quantum state vectors for each circuit. These represent
+ * the ideal state-vector output of the circuit simulation prior to
+ * measurement collapse.
+ */
+function buildQuantumState(circuitId: string): QuantumState {
+  switch (circuitId) {
+    case "bell-fizzbuzz": {
+      // Bell state: |00> + |11> with equal superposition
+      const amplitudes: ComplexAmplitude[] = [
+        { real: Math.SQRT1_2, imag: 0 },
+        { real: 0, imag: 0 },
+        { real: 0, imag: 0 },
+        { real: Math.SQRT1_2, imag: 0 },
+      ];
+      return {
+        amplitudes,
+        probabilities: [0.5, 0, 0, 0.5],
+        numQubits: 2,
+        basisLabels: ["|00>", "|01>", "|10>", "|11>"],
+      };
+    }
+    case "shor-3": {
+      // Period r=2 encoded: peaked at |00> and |10> in counting register
+      const amp = Math.SQRT1_2;
+      const amplitudes: ComplexAmplitude[] = Array.from({ length: 16 }, (_, i) => {
+        // States |0000> (0) and |1000> (8) are peaked
+        if (i === 0) return { real: amp * 0.9, imag: amp * 0.1 };
+        if (i === 8) return { real: amp * 0.85, imag: -amp * 0.15 };
+        return { real: 0.02, imag: 0.01 };
+      });
+      const probabilities = amplitudes.map((a) => a.real * a.real + a.imag * a.imag);
+      // Normalize
+      const total = probabilities.reduce((s, p) => s + p, 0);
+      const normalizedProbs = probabilities.map((p) => p / total);
+      return {
+        amplitudes,
+        probabilities: normalizedProbs,
+        numQubits: 4,
+        basisLabels: Array.from({ length: 16 }, (_, i) =>
+          "|" + i.toString(2).padStart(4, "0") + ">",
+        ),
+      };
+    }
+    case "shor-5": {
+      // Period r=4: peaked at |0000> (0) and |0100> (4) representing 1/4 fractions
+      const amp = Math.SQRT1_2;
+      const amplitudes: ComplexAmplitude[] = Array.from({ length: 16 }, (_, i) => {
+        if (i === 0) return { real: amp * 0.88, imag: amp * 0.12 };
+        if (i === 4) return { real: amp * 0.82, imag: -amp * 0.18 };
+        return { real: 0.025, imag: 0.015 };
+      });
+      const probabilities = amplitudes.map((a) => a.real * a.real + a.imag * a.imag);
+      const total = probabilities.reduce((s, p) => s + p, 0);
+      const normalizedProbs = probabilities.map((p) => p / total);
+      return {
+        amplitudes,
+        probabilities: normalizedProbs,
+        numQubits: 4,
+        basisLabels: Array.from({ length: 16 }, (_, i) =>
+          "|" + i.toString(2).padStart(4, "0") + ">",
+        ),
+      };
+    }
+    case "grover-fizzbuzz": {
+      // Grover amplification: multiples of 15 within 5-qubit range (0-31)
+      // States 0 and 15 (|01111>) are amplified
+      const N = 32;
+      const amplitudes: ComplexAmplitude[] = Array.from({ length: N }, (_, i) => {
+        const isMultOf15 = i > 0 && i % 15 === 0; // state 15 and 30
+        if (i === 0) return { real: 0.08, imag: 0.01 }; // |00000> — not a FizzBuzz
+        if (isMultOf15) return { real: 0.55, imag: 0.12 }; // Amplified by Grover
+        return { real: 0.12, imag: -0.03 }; // Background uniform amplitude
+      });
+      const probabilities = amplitudes.map((a) => a.real * a.real + a.imag * a.imag);
+      const total = probabilities.reduce((s, p) => s + p, 0);
+      const normalizedProbs = probabilities.map((p) => p / total);
+      return {
+        amplitudes,
+        probabilities: normalizedProbs,
+        numQubits: 5,
+        basisLabels: Array.from({ length: N }, (_, i) =>
+          "|" + i.toString(2).padStart(5, "0") + ">",
+        ),
+      };
+    }
+    default:
+      throw new Error(`Unknown circuit: ${circuitId}`);
+  }
+}
+
+/**
+ * Samples measurement outcomes from a probability distribution using
+ * weighted random selection with quantum shot noise simulation.
+ */
+function sampleMeasurements(
+  probabilities: number[],
+  basisLabels: string[],
+  shots: number,
+): Record<string, number> {
+  // Build cumulative distribution
+  const cdf: number[] = [];
+  let cumulative = 0;
+  for (const p of probabilities) {
+    cumulative += p;
+    cdf.push(cumulative);
+  }
+
+  // Sample from the distribution
+  const counts: Record<string, number> = {};
+  for (let i = 0; i < shots; i++) {
+    const r = Math.random();
+    let idx = 0;
+    while (idx < cdf.length - 1 && r > cdf[idx]) {
+      idx++;
+    }
+    const label = basisLabels[idx];
+    counts[label] = (counts[label] ?? 0) + 1;
+  }
+
+  // Add Gaussian shot noise (stddev = 2% of expected count per state)
+  for (let i = 0; i < basisLabels.length; i++) {
+    const label = basisLabels[i];
+    const expected = probabilities[i] * shots;
+    if (expected > 0 && counts[label] !== undefined) {
+      const noise = gaussianRandom(0, expected * 0.02);
+      counts[label] = Math.max(0, Math.round(counts[label] + noise));
+    }
+  }
+
+  return counts;
+}
+
 export class SimulationProvider implements IDataProvider {
   readonly name = "Local Simulation Engine";
 
@@ -1343,6 +1600,60 @@ export class SimulationProvider implements IDataProvider {
       hashRate: Math.round(hashRate * 10) / 10,
       chainValid: true,
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // Quantum Circuit Workbench
+  // -------------------------------------------------------------------------
+
+  async getQuantumCircuits(): Promise<QuantumCircuit[]> {
+    return [...QUANTUM_CIRCUITS].sort((a, b) => {
+      const qubitCmp = a.numQubits - b.numQubits;
+      if (qubitCmp !== 0) return qubitCmp;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  async runQuantumSimulation(
+    circuitId: string,
+    shots: number,
+  ): Promise<QuantumSimulationResult> {
+    const circuit = QUANTUM_CIRCUITS.find((c) => c.id === circuitId);
+    if (!circuit) {
+      throw new Error(`Quantum circuit "${circuitId}" not found in the circuit registry.`);
+    }
+
+    const state = buildQuantumState(circuitId);
+    const measurementCounts = sampleMeasurements(
+      state.probabilities,
+      state.basisLabels,
+      shots,
+    );
+
+    // Classical evaluation: a single modulo operation per shot
+    const classicalTimeMs = 0.001 * shots;
+    // Quantum simulation: state-vector simulation is computationally expensive
+    const quantumTimeMs = 50 + gaussianRandom(shots * 0.2, shots * 0.05);
+    const quantumAdvantageRatio = quantumTimeMs / classicalTimeMs;
+
+    return {
+      circuit,
+      finalState: state,
+      measurementCounts,
+      shotsExecuted: shots,
+      quantumAdvantageRatio: Math.round(quantumAdvantageRatio * 10) / 10,
+      quantumTimeMs: Math.round(quantumTimeMs * 100) / 100,
+      classicalTimeMs: Math.round(classicalTimeMs * 1000) / 1000,
+      simulatedAt: new Date().toISOString(),
+    };
+  }
+
+  async getQuantumState(circuitId: string): Promise<QuantumState> {
+    const circuit = QUANTUM_CIRCUITS.find((c) => c.id === circuitId);
+    if (!circuit) {
+      throw new Error(`Quantum circuit "${circuitId}" not found in the circuit registry.`);
+    }
+    return buildQuantumState(circuitId);
   }
 }
 
