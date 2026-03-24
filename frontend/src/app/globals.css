@@ -226,6 +226,125 @@
 }
 
 /* ----------------------------------------------------------------
+ * Advanced Typography Utilities
+ *
+ * These utilities provide precise typographic control for display
+ * headings, data-dense layouts, and prose contexts. Text wrapping
+ * utilities prevent orphaned words in headings while maintaining
+ * natural line breaks in body content. Numeric variant utilities
+ * ensure consistent digit rendering across all metric displays.
+ * ---------------------------------------------------------------- */
+
+/**
+ * Text balance — prevents orphaned words in headings by distributing
+ * text evenly across lines. Applied to display and page headings.
+ */
+@utility text-balance {
+  text-wrap: balance;
+}
+
+/**
+ * Text pretty — optimizes line breaking for body text, avoiding
+ * typographic widows on the last line.
+ */
+@utility text-pretty {
+  text-wrap: pretty;
+}
+
+/**
+ * Tabular numerals with tight tracking — ensures equal-width digits
+ * for column-aligned data displays. The negative letter-spacing
+ * compensates for the wider digit forms in tabular mode.
+ */
+@utility tabular-nums {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/**
+ * Oldstyle numerals — text-harmonized digits with varying heights
+ * and descenders. Used for inline prose numbers where tabular
+ * alignment is not required and readability is prioritized.
+ */
+@utility oldstyle-nums {
+  font-variant-numeric: oldstyle-nums;
+}
+
+/**
+ * Diagonal fractions — renders fraction sequences (e.g. 1/3, 2/5)
+ * as proper diagonal fractions when supported by the font.
+ */
+@utility diagonal-fractions {
+  font-variant-numeric: diagonal-fractions;
+}
+
+/**
+ * Decimal alignment for tabular number displays.
+ */
+.tabular-number-decimal {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-align: right;
+}
+
+/* ----------------------------------------------------------------
+ * Split Text Animation Keyframes
+ *
+ * Per-character entrance animations for hero display headings.
+ * Each character receives a staggered delay via inline style,
+ * creating a typewriter-style reveal that draws attention to
+ * primary page titles without competing for ongoing visual focus.
+ * ---------------------------------------------------------------- */
+
+@keyframes split-text-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes split-text-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.split-text-char {
+  display: inline-block;
+}
+
+.split-text-fade {
+  opacity: 0;
+  animation: split-text-fade-in var(--duration-normal, 250ms) var(--easing-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.split-text-slide {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: split-text-slide-in var(--duration-normal, 250ms) var(--easing-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+/* ----------------------------------------------------------------
+ * Responsive Type Scale
+ *
+ * Display headings use fluid typography via CSS clamp() to scale
+ * gracefully from mobile (1.75rem) to desktop (2.5rem) viewports.
+ * This eliminates the need for breakpoint-specific font-size
+ * overrides while maintaining typographic hierarchy at all widths.
+ * ---------------------------------------------------------------- */
+
+.heading-display {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+/* ----------------------------------------------------------------
  * Motion Keyframes
  *
  * The platform's animation vocabulary is deliberately minimal.
@@ -365,6 +484,12 @@
     animation: none;
   }
   .animate-enter {
+    animation: none;
+  }
+  .split-text-fade,
+  .split-text-slide {
+    opacity: 1;
+    transform: none;
     animation: none;
   }
 }
