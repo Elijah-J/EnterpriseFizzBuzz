@@ -2905,9 +2905,13 @@ def run_animated(
             # Show final frame before exiting
             pass
 
+        # Clear screen using platform-native command. ANSI escapes
+        # are unreliable on Windows terminals prior to Windows 10 1511.
+        import os
+        os.system("cls" if os.name == "nt" else "clear")
+
         # Build the frame
         lines: list[str] = []
-        lines.append("\033[2J\033[H")  # Clear screen, cursor to top
         lines.append("=" * 68)
         lines.append(
             f"  FIZZLIFE LIVE  |  Gen {gen + 1:>4d}/{config.generations}  "

@@ -77,7 +77,7 @@ fizzlife:
   growth:
     type: "gaussian"
     center: 0.15
-    width: 0.015
+    width: 0.065
   species:
     min_mass: 0.01
     stability_window: 10
