@@ -1,0 +1,49 @@
+
+# FizzBuzz-as-a-Service (FBaaS) configuration
+# Because the only thing better than running FizzBuzz locally is
+# offering it as a multi-tenant SaaS product with subscription tiers,
+# usage metering, simulated Stripe billing, and a free tier watermark
+# that reminds users they're too cheap to pay for modulo arithmetic.
+# Every evaluation is metered. Every result is billable. Every tenant
+# is one missed invoice away from losing their FizzBuzz privileges.
+fbaas:
+  enabled: false                           # Master switch — opt-in via --fbaas
+  default_tier: "free"                     # Default subscription tier for new tenants
+  free_tier:
+    daily_limit: 10                        # Free tier: 10 evaluations per day (barely enough)
+    watermark: "[Powered by FBaaS Free Tier]"  # Appended to every result like a badge of shame
+    features:                              # Features available on Free tier
+      - "standard"
+  pro_tier:
+    daily_limit: 1000                      # Pro tier: 1000 evaluations per day
+    monthly_price_cents: 2999              # $29.99/month for modulo arithmetic
+    features:                              # Features available on Pro tier
+      - "standard"
+      - "chain_of_responsibility"
+      - "parallel_async"
+      - "tracing"
+      - "caching"
+      - "feature_flags"
+  enterprise_tier:
+    daily_limit: -1                        # Enterprise tier: unlimited (-1)
+    monthly_price_cents: 99999             # $999.99/month because enterprise
+    features:                              # Features available on Enterprise tier
+      - "standard"
+      - "chain_of_responsibility"
+      - "parallel_async"
+      - "machine_learning"
+      - "chaos"
+      - "tracing"
+      - "caching"
+      - "feature_flags"
+      - "blockchain"
+      - "compliance"
+  sla:
+    free_uptime_target: 0.95               # Free tier: 95% uptime (best effort)
+    pro_uptime_target: 0.999               # Pro tier: 99.9% uptime
+    enterprise_uptime_target: 0.9999       # Enterprise tier: 99.99% uptime
+    free_response_time_ms: 500             # Free tier: 500ms SLA (patience required)
+    pro_response_time_ms: 100              # Pro tier: 100ms SLA
+    enterprise_response_time_ms: 10        # Enterprise tier: 10ms SLA (ludicrous speed)
+  dashboard:
+    width: 60                              # ASCII dashboard width

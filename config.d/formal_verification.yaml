@@ -1,0 +1,15 @@
+
+# Formal Verification & Proof System configuration
+# Because the only thing more reassuring than running FizzBuzz is
+# constructing a Gentzen-style natural deduction proof that FizzBuzz
+# is correct. This module verifies totality, determinism, completeness,
+# and correctness of the evaluation function using structural induction,
+# Hoare triples, and proof obligations — all to confirm what a five-line
+# for loop already demonstrates. If Coq can verify CompCert, surely we
+# can verify n % 3.
+formal_verification:
+  enabled: false                         # Master switch — opt-in via --verify
+  proof_depth: 100                       # Maximum numbers to verify in induction proofs
+  timeout_ms: 5000                       # Maximum time for property verification
+  dashboard:
+    width: 60                            # ASCII dashboard width

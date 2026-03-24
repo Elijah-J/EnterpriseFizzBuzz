@@ -1,0 +1,21 @@
+
+# Natural Language Query Interface configuration
+# Because typing "python main.py --range 1 100" is far too simple.
+# Users deserve the ability to ask a CLI application questions in
+# plain English, have those questions parsed by a regex-based NLP
+# engine that would make Chomsky weep, and receive answers formatted
+# in ASCII dashboards that nobody asked for. The future of FizzBuzz
+# is conversational, and the conversation is one-sided.
+nlq:
+  enabled: false                         # Master switch — opt-in via --nlq
+  max_query_length: 500                  # Maximum query length (because even NLP has limits)
+  max_results: 1000                      # Maximum results returned for LIST queries
+  history_size: 50                       # Number of queries to remember in session history
+  dashboard:
+    width: 60                            # ASCII dashboard width
+  supported_intents:                     # Documentation-only: which intents are implemented
+    - "EVALUATE"                         # Is N FizzBuzz?
+    - "COUNT"                            # How many Fizzes below 100?
+    - "LIST"                             # Which primes are Buzz?
+    - "STATISTICS"                       # What is the most common classification?
+    - "EXPLAIN"                          # Why is 9 Fizz?

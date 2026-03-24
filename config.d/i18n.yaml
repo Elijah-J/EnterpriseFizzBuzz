@@ -1,0 +1,13 @@
+
+# Internationalization (i18n) configuration
+# Controls the locale-aware translation subsystem.
+# Ensures compliance with enterprise globalization standards
+# by supporting locale-aware output translation.
+i18n:
+  enabled: true                 # Master switch for the i18n subsystem
+  locale: "en"                  # Active locale (overridable via --locale or EFP_LOCALE)
+  locale_directory: "./locales" # Directory containing .fizztranslation files
+  strict_mode: false            # If true, missing keys raise errors instead of falling back
+  fallback_chain:               # Global fallback chain (locale files may override)
+    - "en"
+  log_missing_keys: true        # Log warnings when translation keys are not found

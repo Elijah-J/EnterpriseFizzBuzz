@@ -1,0 +1,19 @@
+
+# FizzBuzz Intellectual Property Office configuration
+# Because the labels "Fizz", "Buzz", and "FizzBuzz" are registered
+# trademarks, the rule {3:"Fizz"} is a granted patent, and every
+# output sequence is a copyrightable work. The IP Office enforces
+# all of this with phonetic similarity analysis (Soundex + Metaphone),
+# Kolmogorov complexity estimation, Levenshtein distance scoring,
+# and — when disputes arise — formal judicial opinions issued by
+# the FizzBuzz Intellectual Property Tribunal. Because modulo
+# arithmetic deserves the same IP protection as pharmaceuticals.
+ip_office:
+  enabled: false                          # Master switch — opt-in via --ip-office
+  trademark_similarity_threshold: 0.7     # Phonetic similarity above this = confusingly similar
+  patent_novelty_threshold: 0.5           # Prior art similarity below this = novel
+  copyright_originality_threshold: 0.3    # Levenshtein distance above this = original
+  default_license: "FBPL"                 # FBPL (permissive), FBEL (enterprise), FBCL (copyleft)
+  trademark_renewal_days: 365             # Trademark registration validity period
+  dashboard:
+    width: 60                             # ASCII dashboard width

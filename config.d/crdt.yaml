@@ -1,0 +1,16 @@
+
+# FizzCRDT — Conflict-Free Replicated Data Types configuration
+# Because a single-process FizzBuzz CLI clearly needs eventual
+# consistency guarantees across multiple simulated replicas.
+# The join-semilattice merge ensures that all replicas converge
+# to the same FizzBuzz classification, even when faced with
+# concurrent evaluations, network partitions, and the general
+# entropy of the universe. Every merge is commutative,
+# associative, and idempotent — as the distributed systems
+# gods intended.
+crdt:
+  enabled: false                          # Master switch — opt-in via --crdt
+  replica_count: 3                        # Number of simulated replicas
+  anti_entropy_interval: 1               # Anti-entropy rounds between evaluations
+  dashboard:
+    width: 60                             # ASCII dashboard width

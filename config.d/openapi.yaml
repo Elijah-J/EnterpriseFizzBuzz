@@ -1,0 +1,18 @@
+
+# OpenAPI Specification Generator & ASCII Swagger UI configuration
+# Generates a complete OpenAPI 3.1.0 specification following
+# specification-first design methodology. The specification is fully
+# compliant with OpenAPI 3.1.0, the server URL is http://localhost:0
+# (which does not exist), and the ASCII Swagger UI features [Try It]
+# buttons that honestly acknowledge there is nothing to try.
+openapi:
+  enabled: false                       # Master switch — opt-in via --openapi
+  spec_version: "3.1.0"               # OpenAPI specification version
+  server_url: "http://localhost:0"     # This server does not exist
+  server_description: "This server does not exist"
+  swagger_ui_width: 80                 # ASCII Swagger UI width in characters
+  dashboard_width: 70                  # ASCII dashboard width in characters
+  include_deprecated: true             # Include deprecated endpoints in output
+  contact_name: "Bob McFizzington"     # API contact person (unavailable)
+  contact_email: "bob.mcfizzington@enterprise.example.com"
+  license_name: "Enterprise FizzBuzz Public License v1.0"

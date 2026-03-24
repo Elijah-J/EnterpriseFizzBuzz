@@ -1,0 +1,18 @@
+
+# Change Data Capture (FizzCDC) configuration
+# Streams platform state changes as structured events through an outbox
+# relay to pluggable sink connectors. Captures BEFORE/AFTER snapshots
+# of cache MESI transitions, blockchain block appends, SLA budget burns,
+# and compliance verdict changes. Events are schema-validated against
+# a per-subsystem registry with SHA-256 version fingerprints to ensure
+# downstream consumers never receive malformed payloads.
+cdc:
+  enabled: false                            # Master switch — opt-in via --cdc
+  relay_interval_s: 0.5                     # Background sweep interval for outbox relay
+  outbox_capacity: 10000                    # Maximum events in the outbox before back-pressure
+  schema_compatibility: "full"              # full | forward | backward
+  sinks:                                    # Which sinks receive relayed events
+    - "log"
+    - "metrics"
+  dashboard:
+    width: 60                               # ASCII dashboard width

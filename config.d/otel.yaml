@@ -1,0 +1,19 @@
+
+# FizzOTel — OpenTelemetry-Compatible Distributed Tracing configuration
+# Because the existing TracingMiddleware was merely a single-node
+# tracing solution. In the modern enterprise, FizzBuzz evaluations
+# span multiple (imaginary) microservices, and correlating n % 3 == 0
+# across service boundaries requires W3C-standard 128-bit trace IDs,
+# parent-child span relationships, and at least three different export
+# formats. The OTLP JSON output matches the official OpenTelemetry
+# specification, which means it could theoretically be ingested by
+# Jaeger or Tempo — if this were an HTTP server and not a CLI.
+otel:
+  enabled: false                          # Master switch — opt-in via --otel
+  export_format: "otlp"                   # otlp | zipkin | console
+  sampling_rate: 1.0                      # Probabilistic sampling rate (0.0 to 1.0)
+  batch_mode: false                       # Use BatchSpanProcessor instead of SimpleSpanProcessor
+  max_queue_size: 2048                    # Maximum spans in the batch queue
+  max_batch_size: 512                     # Maximum spans per export batch
+  dashboard:
+    width: 60                             # ASCII dashboard width

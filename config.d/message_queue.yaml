@@ -1,0 +1,47 @@
+
+# Message Queue & Event Bus with Kafka-Style Partitioned Topics
+# Because the only thing missing from our FizzBuzz platform was a
+# distributed message queue backed entirely by Python lists. Every
+# "partition" is a list. Every "broker" is a dict. Every "consumer
+# group rebalance" is a reassignment of integer keys. The architecture
+# diagrams are indistinguishable from real Kafka — provided you never
+# look at the implementation.
+message_queue:
+  enabled: false                        # Master switch — opt-in via --mq
+  default_partitions: 3                 # Number of partitions per topic (3 Python lists per topic)
+  partitioner_strategy: "hash"          # hash | round_robin | sticky
+  enable_schema_validation: true        # Validate message payloads against the Schema Registry (a dict)
+  enable_idempotency: true              # Exactly-once delivery via SHA-256 dedup (a set)
+  max_poll_records: 10                  # Max messages per consumer poll (list slicing)
+  consumer_session_timeout_ms: 30000    # Consumer session timeout (aspirational — no heartbeats)
+  topics:
+    evaluations.requested:
+      partitions: 3
+      description: "FizzBuzz evaluation requests awaiting processing"
+    evaluations.completed:
+      partitions: 3
+      description: "Completed FizzBuzz evaluation results"
+    audit.events:
+      partitions: 2
+      description: "Audit trail events for compliance theatre"
+    alerts.critical:
+      partitions: 1
+      description: "Critical alerts that wake up Bob McFizzington"
+    fizzbuzz.feelings:
+      partitions: 1
+      description: "The topic nobody subscribes to. Messages go here to be ignored."
+  consumer_groups:
+    fizzbuzz-evaluators:
+      subscribed_topics:
+        - "evaluations.requested"
+      description: "The hardworking consumers that actually process FizzBuzz"
+    audit-loggers:
+      subscribed_topics:
+        - "audit.events"
+        - "evaluations.completed"
+      description: "Consumers that log everything for compliance reasons"
+    feelings-listener:
+      subscribed_topics: []
+      description: "This consumer group has zero members and zero subscriptions. It exists for solidarity."
+  dashboard:
+    width: 60                           # ASCII dashboard width

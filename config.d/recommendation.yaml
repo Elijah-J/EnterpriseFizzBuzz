@@ -1,0 +1,25 @@
+
+# Recommendation Engine configuration
+# Because you evaluated 15, you might enjoy 45. The Enterprise FizzBuzz
+# Platform now features a Netflix-style recommendation engine, complete
+# with collaborative filtering, content-based filtering, hybrid blending,
+# cold-start handling, and an explainability module. All to suggest which
+# integers you should evaluate next. The algorithm considers number parity,
+# primality, Fibonacci membership, zodiac sign (n%12), and digit sum to
+# build rich feature vectors for every integer. Because every number
+# deserves a personality profile.
+recommendation:
+  enabled: false                             # Master switch — opt-in via --recommend
+  collaborative_weight: 0.6                  # Weight for collaborative filtering (0.0-1.0)
+  content_weight: 0.4                        # Weight for content-based filtering (0.0-1.0)
+  serendipity_factor: 0.1                    # Probability of injecting a random low-similarity item
+  num_recommendations: 5                     # Number of recommendations to generate per request
+  min_evaluations_for_personalization: 3     # Minimum evaluations before collaborative filtering kicks in
+  max_similar_users: 10                      # Maximum number of similar users for collaborative filtering
+  popular_items_fallback_size: 10            # Number of popular items for cold-start fallback
+  seed: null                                 # Random seed for reproducibility (null = entropy)
+  dashboard:
+    width: 60                                # ASCII dashboard width
+    show_feature_vectors: true               # Show number feature vectors in dashboard
+    show_user_profiles: true                 # Show user preference profiles in dashboard
+    show_similarity_matrix: true             # Show user-user similarity matrix in dashboard

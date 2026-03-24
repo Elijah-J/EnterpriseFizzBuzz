@@ -1,0 +1,28 @@
+
+# FizzBuzz Operating System Kernel configuration
+# Because the only thing standing between your FizzBuzz platform and
+# true enterprise legitimacy is an operating system kernel. Every
+# FizzBuzz evaluation deserves its own process with a PID, a PCB,
+# simulated CPU registers, a virtual memory address space, and a
+# preemptive scheduler that context-switches between modulo operations
+# as if they were threads in a real OS. Linus Torvalds wrote Linux
+# for less ambitious workloads than this.
+kernel:
+  enabled: false                               # Master switch — opt-in via --kernel
+  scheduler: "rr"                              # rr | priority | cfs
+  time_quantum_ms: 10.0                        # Round-robin time quantum (milliseconds)
+  max_processes: 256                           # Maximum concurrent FizzBuzz processes
+  page_size: 64                                # Virtual memory page size (bytes, aspirational)
+  tlb_size: 16                                 # TLB entries (16-entry LRU, like a real CPU)
+  physical_pages: 128                          # Total physical memory pages
+  swap_pages: 256                              # Swap space pages (in RAM, obviously)
+  irq_vectors: 16                              # Number of IRQ vectors (0-15)
+  boot_delay_ms: 5.0                           # Simulated boot delay for dramatic effect
+  context_switch_overhead_us: 50.0             # Simulated context switch overhead (microseconds)
+  cfs_default_weight: 1024                     # CFS nice-0 weight (Linux kernel default)
+  cfs_min_granularity_ms: 1.0                  # CFS minimum scheduling granularity
+  dashboard:
+    width: 60                                  # ASCII dashboard width
+    show_process_table: true                   # Show process table in dashboard
+    show_memory_map: true                      # Show virtual memory page map
+    show_interrupt_log: true                   # Show interrupt history

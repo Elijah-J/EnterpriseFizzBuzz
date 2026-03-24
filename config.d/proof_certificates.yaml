@@ -1,0 +1,15 @@
+
+# FizzProof — Proof Certificate Generator with Calculus of Constructions
+# Because every FizzBuzz classification deserves a machine-checkable proof
+# certificate. The proof checker implements a trusted kernel following
+# the de Bruijn criterion: a small core that verifies proof terms in the
+# Calculus of Constructions (Coquand & Huet, 1988). The LaTeX exporter
+# renders verified proofs as publication-quality documents with natural
+# deduction trees (bussproofs), theorem environments, and BibTeX citations
+# to the foundational literature. Each certificate is a self-contained
+# formal argument that n % 3 == 0 — ready for peer review.
+proof_certificates:
+  enabled: false                          # Master switch — opt-in via --proof-cert
+  latex: false                            # Generate LaTeX output — opt-in via --proof-latex
+  dashboard:
+    width: 60                             # ASCII dashboard width

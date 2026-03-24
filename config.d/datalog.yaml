@@ -1,0 +1,13 @@
+
+# FizzLog Datalog Query Engine configuration
+# Because the correctness of FizzBuzz classification should be derivable
+# from first principles through fixed-point computation over Horn clauses
+# with stratified negation, not merely asserted by imperative modulo
+# operations. The Datalog encoding provides a declarative specification
+# of FizzBuzz that is simultaneously a program AND its own proof of
+# correctness — every derived fact is a logical consequence of the
+# extensional database and the rule set.
+datalog:
+  enabled: false                          # Master switch — opt-in via --datalog
+  dashboard:
+    width: 60                             # ASCII dashboard width

@@ -1,0 +1,34 @@
+
+# FizzKube Container Orchestration configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is scheduling that computation across a cluster of
+# simulated Kubernetes worker nodes, each with its own resource
+# capacity measured in milliFizz CPU and FizzBytes memory. Every
+# evaluation becomes a Pod with a full lifecycle (Pending → Running
+# → Succeeded), a ReplicaSet ensures desired pod count, and an HPA
+# autoscales based on CPU utilization. The fact that each pod's
+# workload is a single modulo operation that takes microseconds is
+# beside the point. If Google needs Kubernetes, so do we.
+fizzkube:
+  enabled: false                          # Master switch — opt-in via --fizzkube
+  num_nodes: 3                            # Number of simulated worker nodes in the cluster
+  default_replicas: 2                     # Default desired replica count per ReplicaSet
+  cpu_per_node: 4000                      # CPU capacity per node in milliFizz (4 full FizzCores)
+  memory_per_node: 8192                   # Memory capacity per node in FizzBytes (8 FizzGiB)
+  pod_cpu_request: 100                    # CPU requested per FizzBuzz pod (milliFizz)
+  pod_memory_request: 128                 # Memory requested per FizzBuzz pod (FizzBytes)
+  pod_cpu_limit: 200                      # CPU limit per pod (milliFizz)
+  pod_memory_limit: 256                   # Memory limit per pod (FizzBytes)
+  hpa:
+    enabled: true                         # Enable Horizontal Pod Autoscaler
+    min_replicas: 1                       # Minimum replica count (can't go lower)
+    max_replicas: 10                      # Maximum replica count (can't go higher)
+    target_cpu_utilization: 70            # Target average CPU utilization percentage
+    scale_up_cooldown_seconds: 15         # Cooldown after scaling up (aspirational)
+    scale_down_cooldown_seconds: 30       # Cooldown after scaling down (aspirational)
+  namespace: "fizzbuzz-production"        # Default Kubernetes namespace
+  resource_quota:
+    cpu_limit: 16000                      # Namespace CPU quota in milliFizz
+    memory_limit: 32768                   # Namespace memory quota in FizzBytes
+  dashboard:
+    width: 60                             # ASCII dashboard width

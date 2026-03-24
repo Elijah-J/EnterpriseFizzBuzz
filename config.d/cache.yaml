@@ -1,0 +1,17 @@
+
+# In-Memory Caching Layer configuration
+# Because the result of 15 % 3 might change between invocations,
+# and we need to be prepared. Caching modulo arithmetic results
+# is the kind of optimization that makes senior engineers weep —
+# either from pride or from despair, depending on their perspective.
+cache:
+  enabled: false                     # Master switch — opt-in via --cache
+  max_size: 1024                     # Maximum number of cached FizzBuzz results
+  ttl_seconds: 3600.0                # Time-to-live for cache entries (1 hour)
+  eviction_policy: "lru"             # lru | lfu | fifo | dramatic_random
+  enable_coherence_protocol: true    # Enable MESI state tracking for cache consistency
+  enable_eulogies: true              # Generate obituaries for evicted entries
+  warming:
+    enabled: false                   # Pre-populate cache on startup (defeats the purpose)
+    range_start: 1                   # Warming range start
+    range_end: 100                   # Warming range end

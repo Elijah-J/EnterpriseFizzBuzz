@@ -1,0 +1,10 @@
+
+fizzcgroup:
+  enabled: false                          # Master switch — opt-in via --fizzcgroup
+  oom_policy: kill_largest                # OOM victim selection policy (kill_largest, kill_oldest, kill_lowest_priority)
+  default_cpu_weight: 100                 # Default CPU weight for new cgroups (1-10000)
+  default_memory_max: -1                  # Default memory.max in bytes (-1 = unlimited)
+  default_pids_max: -1                    # Default pids.max (-1 = unlimited)
+  default_io_weight: 100                  # Default I/O weight for new cgroups (1-10000)
+  dashboard:
+    width: 72                             # ASCII dashboard width

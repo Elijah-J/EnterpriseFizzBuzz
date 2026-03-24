@@ -1,0 +1,20 @@
+
+# FizzSQL Relational Query Engine configuration
+# Because querying FizzBuzz platform internals with raw Python
+# attribute access is beneath the dignity of any self-respecting
+# enterprise. FizzSQL provides a fully relational SQL engine —
+# complete with lexer, recursive descent parser, logical planner,
+# physical planner, and Volcano-model iterator execution — for
+# the express purpose of running SELECT * FROM evaluations WHERE
+# classification = 'FizzBuzz' on an in-memory list of modulo
+# arithmetic results. The query optimizer has a cost model.
+# The cost model has no basis in reality. This is fine.
+fizzsql:
+  enabled: false                          # Master switch — opt-in via --fizzsql
+  max_query_length: 4096                  # Maximum allowed query length in characters
+  slow_query_threshold_ms: 50.0           # Queries exceeding this are logged as slow
+  max_result_rows: 10000                  # Maximum rows returned before truncation
+  enable_query_history: true              # Maintain a history of executed queries
+  query_history_size: 100                 # Maximum entries in the query history ring buffer
+  dashboard:
+    width: 60                             # ASCII dashboard width

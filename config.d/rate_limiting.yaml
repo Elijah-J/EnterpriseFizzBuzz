@@ -1,0 +1,19 @@
+
+# Rate Limiting & API Quota Management configuration
+# Rate limiting protects the evaluation pipeline from abuse.
+# Without rate limiting, unrestricted access could overwhelm
+# downstream subsystems and exhaust computational resources.
+rate_limiting:
+  enabled: false                       # Master switch — opt-in via --rate-limit
+  algorithm: "token_bucket"            # token_bucket | sliding_window | fixed_window
+  requests_per_minute: 60             # Maximum FizzBuzz evaluations per minute
+  burst_credits:
+    enabled: true                      # Allow unused quota to carry over as burst credits
+    max_credits: 30                    # Maximum burst credits that can be accumulated
+    earn_rate: 0.5                     # Credits earned per unused evaluation slot
+  reservations:
+    enabled: true                      # Allow pre-reserving evaluation capacity
+    max_reservations: 10               # Maximum concurrent active reservations
+    ttl_seconds: 30                    # How long a reservation remains valid
+  dashboard:
+    width: 60                          # ASCII dashboard width

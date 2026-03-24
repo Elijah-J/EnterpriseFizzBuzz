@@ -1,0 +1,25 @@
+
+# FinOps Cost Tracking & Chargeback Engine configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is understanding exactly how much it costs per evaluation,
+# per subsystem, per tax jurisdiction. Every modulo operation has a
+# price, and that price will be itemized on a beautiful ASCII invoice
+# that nobody asked for but everyone deserves.
+finops:
+  enabled: false                        # Master switch — opt-in via --finops
+  currency: "FB$"                       # FizzBuck — the only currency backed by modulo arithmetic
+  exchange_rate_base: 0.0001            # Base USD value of 1 FizzBuck (before cache adjustment)
+  tax_rates:
+    fizz: 0.03                          # 3% Fizz Tax (matches divisibility by 3)
+    buzz: 0.05                          # 5% Buzz Tax (matches divisibility by 5)
+    fizzbuzz: 0.15                      # 15% FizzBuzz Tax (the combined burden of divisibility)
+    plain: 0.00                         # Plain numbers are tax-exempt (they contribute nothing)
+  friday_premium_pct: 50.0              # 50% cost surcharge on Fridays (because TGIF costs extra)
+  budget:
+    monthly_limit: 10.0                 # Monthly FizzBuzz budget in FizzBucks
+    warning_threshold_pct: 80.0         # Warn at 80% budget utilization
+  savings_plans:
+    one_year_discount_pct: 30.0         # 30% discount for 1-year FizzBuzz commitment
+    three_year_discount_pct: 55.0       # 55% discount for 3-year FizzBuzz commitment
+  dashboard:
+    width: 60                           # ASCII dashboard width

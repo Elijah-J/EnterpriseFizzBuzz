@@ -1,0 +1,18 @@
+
+# Custom Bytecode VM (FBVM) configuration
+# Because running FizzBuzz in Python was too straightforward,
+# the platform now includes its own bytecode virtual machine with
+# a custom instruction set, 8 registers, a zero flag, and a fetch-
+# decode-execute loop. The JVM was built by hundreds of engineers
+# over years; this one was built in an afternoon for modulo arithmetic.
+# Peak enterprise engineering.
+vm:
+  enabled: false                           # Master switch — opt-in via --vm
+  cycle_limit: 10000                       # Max instructions before aborting (infinite loop protection)
+  trace_execution: false                   # Log every instruction as it executes
+  enable_optimizer: true                   # Run the peephole optimizer on compiled bytecode
+  register_count: 8                        # Number of general-purpose registers (R0-R7)
+  dashboard:
+    width: 60                              # ASCII dashboard width
+    show_registers: true                   # Show register file in dashboard
+    show_disassembly: true                 # Show disassembly listing in dashboard

@@ -1,0 +1,22 @@
+
+# Query Optimizer configuration
+# Because computing n % 3 without a cost-based query planner is
+# like building a house without an architect: technically possible,
+# but no enterprise would ever sign off on it. The optimizer
+# generates alternative execution plans, estimates their cost
+# using a sophisticated cost model (modulo=cheap, ML=expensive,
+# blockchain=why), and selects the cheapest one. PostgreSQL does
+# this for SQL queries across terabytes of data. We do it for
+# a single modulo operation. Same energy.
+query_optimizer:
+  enabled: false                           # Master switch — opt-in via --optimize
+  cost_weights:
+    modulo: 1.0                            # Base cost of a modulo operation (the fast path)
+    cache_miss: 5.0                        # Cost penalty for a cache miss (should have warmed)
+    ml: 20.0                               # Cost of invoking the ML neural network (overkill)
+    compliance: 10.0                       # Cost of compliance checks (SOX/GDPR/HIPAA overhead)
+    blockchain: 50.0                       # Cost of blockchain mining (proof-of-work for FizzBuzz)
+  plan_cache_max_size: 256                 # Maximum cached execution plans
+  max_plans: 16                            # Maximum plans generated per optimization round
+  dashboard:
+    width: 60                              # ASCII dashboard width

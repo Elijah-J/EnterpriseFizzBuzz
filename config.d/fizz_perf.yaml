@@ -1,0 +1,11 @@
+
+fizz_perf:
+  enabled: false                          # Master switch — opt-in via --perf
+  review_period: Q1 2026                  # Current performance review period
+  operator: Bob McFizzington              # The operator under review
+  goal_completion_target: 78.0            # OKR completion target percentage
+  pto_target_days: 15                     # Target PTO days for the review period
+  compensation_actual: 145000.0           # Operator's actual annual compensation (USD)
+  equity_alert_threshold: 0.50            # MEI threshold for REQUIRES_IMMEDIATE_ATTENTION
+  dashboard:
+    width: 72                             # ASCII dashboard width

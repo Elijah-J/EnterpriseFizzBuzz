@@ -1,0 +1,10 @@
+
+fizz_approval:
+  enabled: false                          # Master switch — opt-in via --approval
+  default_change_type: NORMAL             # Default ITIL change type (STANDARD, NORMAL, EMERGENCY)
+  default_timeout: 300.0                  # Approval request timeout in seconds
+  required_eyes: 2                        # Independent reviewers for four-eyes principle
+  max_delegation_depth: 10                # Maximum delegation chain depth before cycle detection
+  quorum_size: 1                          # Minimum CAB members for quorum
+  dashboard:
+    width: 72                             # ASCII dashboard width

@@ -1,0 +1,37 @@
+
+# Kubernetes-Style Health Check Probes configuration
+# Because monitoring the health of a FizzBuzz platform with
+# liveness, readiness, and startup probes is exactly the kind
+# of operational maturity that Kubernetes demands. If your
+# FizzBuzz pod fails a liveness check, it gets restarted.
+# If it fails readiness, traffic is diverted. If it fails
+# startup, it never joins the cluster. Production-grade.
+health_check:
+  enabled: false                     # Master switch — opt-in via --health
+  liveness:
+    canary_number: 15                # Number to evaluate as liveness canary
+    canary_expected: "FizzBuzz"      # Expected result from canary evaluation
+    interval_seconds: 30             # How often to run liveness checks (aspirational)
+  readiness:
+    required_subsystems:             # Subsystems that must be UP for readiness
+      - "config"
+      - "circuit_breaker"
+      - "cache"
+      - "sla"
+      - "ml_engine"
+    degraded_is_ready: true          # Treat DEGRADED subsystems as ready
+  startup:
+    milestones:                      # Boot sequence milestones to track
+      - "config_loaded"
+      - "rules_initialized"
+      - "engine_created"
+      - "middleware_assembled"
+      - "service_built"
+    timeout_seconds: 60              # Max time for startup sequence
+  self_healing:
+    enabled: true                    # Attempt automatic recovery on failures
+    max_retries: 3                   # Maximum recovery attempts per subsystem
+    backoff_base_ms: 500             # Base delay between recovery attempts
+  dashboard:
+    width: 60                        # ASCII dashboard width
+    show_details: true               # Show diagnostic details in dashboard

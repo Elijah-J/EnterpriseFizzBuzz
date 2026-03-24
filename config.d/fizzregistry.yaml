@@ -1,0 +1,9 @@
+
+fizzregistry:
+  enabled: false                          # Master switch — opt-in via --registry
+  max_blobs: 4096                         # Maximum blobs in the content-addressable store
+  max_repos: 256                          # Maximum repositories in the registry
+  max_tags: 1024                          # Maximum tags per repository
+  gc_grace_period: 86400.0                # GC grace period in seconds (24 hours)
+  dashboard:
+    width: 72                             # ASCII dashboard width

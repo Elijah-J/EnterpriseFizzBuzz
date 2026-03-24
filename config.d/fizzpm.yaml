@@ -1,0 +1,18 @@
+
+# FizzPM Package Manager configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is managing the dependencies required to compute it,
+# using a SAT-solver-backed dependency resolution engine that
+# converts semantic version constraints into Boolean satisfiability
+# clauses and solves them via the DPLL algorithm. The registry
+# contains exactly 8 packages. The solver is NP-complete.
+# The irony is palpable.
+fizzpm:
+  enabled: false                          # Master switch — opt-in via --fizzpm
+  audit_on_install: true                  # Automatically run vulnerability scan after install
+  default_packages:                       # Packages auto-installed when FizzPM is enabled
+    - "fizzbuzz-core"
+  lockfile_path: "fizzpm.lock"            # Path to the deterministic lockfile
+  registry_mirror: "https://registry.fizzpm.io"  # The registry URL (fictional, naturally)
+  dashboard:
+    width: 60                             # ASCII dashboard width

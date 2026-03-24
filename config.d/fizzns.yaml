@@ -1,0 +1,7 @@
+
+fizzns:
+  enabled: false                          # Master switch — opt-in via --fizzns
+  default_hostname: fizzbuzz-container    # Default hostname for new UTS namespaces
+  default_domainname: enterprise.local    # Default domain name for new UTS namespaces
+  dashboard:
+    width: 72                             # ASCII dashboard width

@@ -1,0 +1,7 @@
+
+fizz_org:
+  enabled: false                          # Master switch — opt-in via --org
+  operator: Bob McFizzington              # The sole employee populating every position
+  target_headcount: 42                    # Organizational headcount target
+  dashboard:
+    width: 72                             # ASCII dashboard width

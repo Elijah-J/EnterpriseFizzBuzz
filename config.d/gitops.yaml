@@ -1,0 +1,32 @@
+
+# GitOps Configuration-as-Code Simulator
+# Because the only thing more responsible than storing your FizzBuzz
+# configuration in a YAML file is version-controlling that YAML file
+# with an in-memory git simulator, complete with SHA-256 hash-chained
+# commits, three-way merges, policy enforcement, dry-run simulation,
+# approval gates (where you approve your own changes), drift detection,
+# and blast radius estimation. If Argo CD can do it for Kubernetes
+# manifests, surely our modulo arithmetic configuration deserves the
+# same level of GitOps ceremony.
+gitops:
+  enabled: false                          # Master switch — opt-in via --gitops
+  default_branch: "main"                  # The sacred trunk branch
+  auto_commit_on_load: true               # Create an initial commit when config loads
+  policy_enforcement: true                # Enforce policy rules on all changes
+  dry_run_range_start: 1                  # Start of FizzBuzz range for dry-run simulation
+  dry_run_range_end: 30                   # End of FizzBuzz range for dry-run simulation
+  reconciliation_on_drift: true           # Auto-reconcile when drift is detected
+  max_commit_history: 100                 # Maximum commits to retain in the log
+  approval_mode: "single_operator"        # single_operator | committee (committee requires 0 committee members)
+  blast_radius_subsystems:                # Subsystems tracked for blast radius estimation
+    - "rules"
+    - "engine"
+    - "output"
+    - "range"
+    - "middleware"
+    - "circuit_breaker"
+    - "cache"
+    - "feature_flags"
+    - "chaos"
+  dashboard:
+    width: 60                             # ASCII dashboard width

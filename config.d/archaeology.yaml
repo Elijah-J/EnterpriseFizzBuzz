@@ -1,0 +1,28 @@
+
+# Archaeological Recovery System configuration
+# Because when a FizzBuzz evaluation result is lost to the sands of time,
+# the only reasonable response is to mount a full-scale archaeological
+# excavation across seven stratigraphic evidence layers, reconstruct the
+# classification via Bayesian inference, and render a forensic ASCII report.
+# The fact that the same answer could be recomputed in a single CPU cycle
+# (n % 3 == 0 or n % 5 == 0) is beside the point. Science demands rigor.
+archaeology:
+  enabled: false                              # Master switch — opt-in via --archaeology
+  corruption_rate: 0.15                       # Probability of evidence corruption per stratum (0.0-1.0)
+  min_fragments_for_reconstruction: 2         # Minimum evidence fragments needed for Bayesian inference
+  confidence_threshold: 0.6                   # Minimum posterior probability for classification acceptance
+  enable_corruption_simulation: true          # Simulate data degradation across strata (the fun part)
+  seed: null                                  # Random seed for reproducibility (null = entropy)
+  strata_weights:                             # Reliability weight per stratum (higher = more trustworthy)
+    blockchain: 1.0                           # Immutable ledger — if it's on-chain, it's gospel
+    event_store: 0.9                          # Append-only event log — reliable but verbose
+    cache_coherence: 0.7                      # MESI protocol state — ephemeral but honest
+    rule_engine: 0.8                          # Direct computation trace — surprisingly trustworthy
+    middleware_pipeline: 0.6                  # Pipeline metadata — noisy but has signal
+    metrics: 0.5                              # Prometheus-style counters — statistical ghosts
+    cache_eulogies: 0.4                       # Obituaries of evicted cache entries — poetic but unreliable
+  dashboard:
+    width: 60                                 # ASCII dashboard width
+    show_strata_reliability: true             # Show reliability weights per stratum
+    show_bayesian_posterior: true             # Show posterior probability distribution
+    show_corruption_report: true             # Show corruption simulation details

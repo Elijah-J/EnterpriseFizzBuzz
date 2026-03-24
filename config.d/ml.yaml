@@ -1,0 +1,11 @@
+
+# Anti-Corruption Layer / ML Strategy configuration
+# Because the ML engine's probabilistic outputs need a formal
+# translation layer before they're allowed anywhere near the
+# domain model. Without these thresholds, raw sigmoid outputs
+# would leak into business logic, and that's a DDD violation
+# punishable by architecture review board.
+ml:
+  decision_threshold: 0.5              # Confidence above which a prediction is a match
+  ambiguity_margin: 0.1                # Margin around threshold for ambiguity detection
+  enable_disagreement_tracking: false  # Cross-check ML against deterministic baseline

@@ -1,0 +1,13 @@
+
+fizz_pager:
+  enabled: false                          # Master switch — opt-in via --pager
+  default_severity: P3                    # Default incident severity (P1-P5)
+  auto_acknowledge: true                  # Auto-acknowledge incidents (MTTA = 0.000s)
+  auto_resolve: true                      # Auto-resolve incidents after pipeline processing
+  simulate_incident: false                # Simulate an incident per evaluation
+  dedup_window: 300.0                     # Alert deduplication window in seconds
+  escalation_l1_timeout: 300.0            # L1 (Bob) acknowledgment timeout in seconds
+  escalation_l2_timeout: 900.0            # L2 (Senior Bob) acknowledgment timeout in seconds
+  escalation_l3_timeout: 1800.0           # L3 (Principal Bob) acknowledgment timeout in seconds
+  dashboard:
+    width: 72                             # ASCII dashboard width

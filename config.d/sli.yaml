@@ -1,0 +1,20 @@
+
+# FizzSLI — Service Level Indicator Framework configuration
+# Because measuring reliability with SLAs alone is a relic of the
+# SRE pre-history. Modern enterprises demand multi-window burn-rate
+# alerting, error budget attribution by root cause, and automated
+# feature gates that suspend chaos experiments when your FizzBuzz
+# pipeline's error budget is running low. Google's SRE handbook
+# introduced these concepts to keep Gmail running; we use them to
+# ensure n % 3 meets its five-nines correctness target.
+sli:
+  enabled: false                            # Master switch — opt-in via --sli
+  default_target: 0.999                     # Default SLO target for all SLIs (99.9%)
+  measurement_window_seconds: 3600          # Default measurement window (1 hour)
+  burn_rate_short_window: 3600              # Short burn-rate window in seconds (1h)
+  burn_rate_medium_window: 21600            # Medium burn-rate window in seconds (6h)
+  burn_rate_long_window: 259200             # Long burn-rate window in seconds (3d)
+  short_threshold: 14.4                     # Multi-window alert: short window burn-rate threshold
+  long_threshold: 6.0                       # Multi-window alert: long window burn-rate threshold
+  dashboard:
+    width: 60                               # ASCII dashboard width

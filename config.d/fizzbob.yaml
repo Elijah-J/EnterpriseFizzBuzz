@@ -1,0 +1,14 @@
+
+fizzbob:
+  enabled: false                          # Master switch — opt-in via --bob
+  hours_awake: 0.0                        # Initial hours-awake at shift start
+  shift_start_hour: 8.0                   # Wall-clock hour when Bob's shift begins
+  tau_rise: 18.18                         # Sleep pressure time constant (hours)
+  c_amplitude: 0.12                       # Circadian oscillation amplitude
+  alert_halflife_hours: 2.0               # Alert fatigue decay half-life (hours)
+  burnout_threshold: 0.60                 # MBI composite threshold for clinical burnout
+  tlx_activate: 80.0                      # Weighted TLX threshold for overload activation
+  auto_assess_interval: 10                # Evaluations between automatic TLX re-assessments
+  generate_synthetic_alerts: true         # Generate alerts from evaluation results
+  dashboard:
+    width: 72                             # ASCII dashboard width

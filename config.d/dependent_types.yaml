@@ -1,0 +1,24 @@
+
+# Dependent Type System & Curry-Howard Proof Engine configuration
+# Because evaluating n % 3 == 0 is merely correct, whereas constructing
+# a typed proof term with a divisibility witness, beta-normalizing
+# the type expression, running bidirectional type checking, and
+# discharging proof obligations via tactics is provably correct.
+# The Curry-Howard correspondence maps propositions to types and
+# proofs to programs — meaning that every FizzBuzz evaluation is now
+# a theorem, and every result is a proof. The "auto" tactic just
+# computes n % d, making the entire system a monument to the noble
+# pursuit of doing nothing, very carefully.
+dependent_types:
+  enabled: false                            # Master switch — opt-in via --dependent-types
+  max_beta_reductions: 1000                 # Safety limit for beta-normalization steps
+  max_unification_depth: 100                # Maximum depth for first-order unification
+  enable_proof_cache: true                  # Cache proof terms for previously-proven numbers
+  proof_cache_size: 4096                    # Maximum entries in the proof cache
+  enable_type_inference: true               # Enable bidirectional type inference (infer mode)
+  strict_mode: false                        # If true, require explicit witnesses (no auto tactic)
+  dashboard:
+    width: 60                               # ASCII dashboard width
+    show_curry_howard: true                 # Show Curry-Howard correspondence table
+    show_proof_tree: true                   # Show proof tree structure
+    show_complexity_index: true             # Show Proof Complexity Index (ratio of effort to necessity)

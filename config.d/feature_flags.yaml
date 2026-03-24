@@ -1,0 +1,45 @@
+
+# Feature Flags / Progressive Rollout configuration
+# Because the ability to toggle FizzBuzz rules on and off at runtime
+# is clearly a mission-critical capability that every enterprise
+# platform demands. Without feature flags, how would you progressively
+# roll out the "Wuzz" rule to 30% of your integers?
+feature_flags:
+  enabled: false                    # Master switch — opt-in via --feature-flags
+  default_lifecycle: "ACTIVE"       # Default lifecycle state for new flags
+  log_evaluations: true             # Log every flag evaluation for audit compliance
+  strict_dependencies: true         # Enforce dependency graph constraints
+  predefined_flags:
+    fizz_rule_enabled:
+      type: "BOOLEAN"
+      enabled: true
+      description: "Controls the sacred Fizz rule (divisor=3)"
+    buzz_rule_enabled:
+      type: "BOOLEAN"
+      enabled: true
+      description: "Controls the venerable Buzz rule (divisor=5)"
+    wuzz_rule_experimental:
+      type: "PERCENTAGE"
+      enabled: true
+      percentage: 30
+      description: "Experimental Wuzz rule (divisor=7) — 30% progressive rollout"
+    wuzz_prime_targeting:
+      type: "TARGETING"
+      enabled: true
+      targeting_rule: "prime"
+      description: "Wuzz targeting: only activates for prime numbers"
+      dependencies:
+        - "wuzz_rule_experimental"
+    ml_strategy_canary:
+      type: "PERCENTAGE"
+      enabled: false
+      percentage: 10
+      description: "Canary rollout for ML evaluation strategy"
+    blockchain_audit:
+      type: "BOOLEAN"
+      enabled: false
+      description: "Toggle blockchain audit ledger at runtime"
+    tracing_enabled:
+      type: "BOOLEAN"
+      enabled: false
+      description: "Toggle distributed tracing at runtime"

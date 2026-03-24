@@ -1,0 +1,36 @@
+
+# FizzCorr Observability Correlation Engine configuration
+# Because having traces, logs, and metrics in separate subsystems is
+# merely table stakes. True enterprise observability demands a unified
+# correlation engine that cross-references every signal across every
+# subsystem, computes confidence scores for causal relationships,
+# builds service dependency maps from correlated traces, detects
+# anomalies in latency and error patterns, and renders it all in an
+# ASCII dashboard that would make Grafana weep with jealousy (or pity).
+# Three pillars of observability. One engine to correlate them all.
+observability_correlation:
+  enabled: false                          # Master switch — opt-in via --correlate
+  temporal_window_seconds: 2.0            # Max time delta for temporal correlation (seconds)
+  confidence_threshold: 0.3               # Minimum confidence to accept a correlation
+  anomaly_latency_threshold_ms: 50.0      # Latency above this triggers anomaly detection
+  anomaly_error_burst_window_s: 5.0       # Window for error burst detection (seconds)
+  anomaly_error_burst_threshold: 3        # Errors in window to trigger burst anomaly
+  anomaly_metric_deviation_sigma: 2.0     # Standard deviations for metric deviation anomaly
+  causal_patterns:                        # Known causal relationships between subsystem events
+    - cause: "cache_eviction"
+      effect: "cache_miss"
+      confidence: 0.85
+    - cause: "circuit_open"
+      effect: "fallback_activated"
+      confidence: 0.95
+    - cause: "error_budget_burn"
+      effect: "alert_escalation"
+      confidence: 0.90
+    - cause: "rate_limit_exceeded"
+      effect: "request_rejected"
+      confidence: 0.92
+    - cause: "config_reload"
+      effect: "cache_invalidation"
+      confidence: 0.80
+  dashboard:
+    width: 60                             # ASCII dashboard width

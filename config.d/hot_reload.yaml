@@ -1,0 +1,18 @@
+
+# Configuration Hot-Reload with Single-Node Raft Consensus
+# Because re-reading a YAML file at runtime requires a distributed
+# consensus algorithm, even when the cluster has exactly one node.
+# The election is always unanimous. The heartbeats reach 0 followers.
+# Consensus latency: 0.000ms. Democracy at its finest.
+hot_reload:
+  enabled: false                      # Master switch — opt-in via --hot-reload
+  poll_interval_seconds: 2.0          # How often to poll the config file for changes
+  raft_heartbeat_interval_ms: 150     # Raft heartbeat interval (to 0 followers)
+  raft_election_timeout_ms: 300       # Election timeout (always wins immediately)
+  max_rollback_history: 10            # Number of previous configs to retain for rollback
+  validate_before_apply: true         # Run validation before applying changes
+  log_diffs: true                     # Log configuration diffs on reload
+  subsystem_reload_timeout_ms: 5000   # Timeout for each subsystem to accept new config
+  dashboard:
+    width: 60                         # ASCII dashboard width
+    show_raft_details: true           # Show Raft consensus details in dashboard

@@ -1,0 +1,15 @@
+
+fizzcontainerd:
+  enabled: false                          # Master switch — opt-in via --containerd
+  socket_path: "/run/fizzcontainerd/fizzcontainerd.sock"
+  state_dir: "/var/lib/fizzcontainerd"
+  gc_interval: 300.0                      # Garbage collection interval in seconds
+  gc_policy: conservative                 # GC policy: aggressive, conservative, manual
+  max_containers: 512                     # Maximum managed containers
+  max_content_blobs: 8192                 # Maximum content blobs in the store
+  max_images: 256                         # Maximum locally cached images
+  log_buffer_size: 10000                  # Log ring buffer size per container
+  cri_timeout: 30.0                       # CRI operation timeout in seconds
+  shim_heartbeat: 10.0                    # Shim heartbeat interval in seconds
+  dashboard:
+    width: 72                             # ASCII dashboard width

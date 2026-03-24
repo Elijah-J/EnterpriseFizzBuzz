@@ -1,0 +1,23 @@
+
+fizzcompose:
+  enabled: false
+  file_path: "fizzbuzz-compose.yaml"
+  project_name: "fizzbuzz"
+  health_check:
+    interval: 2.0
+    timeout: 60.0
+  restart:
+    delay: 5.0
+    max_attempts: 5
+    window: 120.0
+  scale:
+    max_replicas: 10
+  log:
+    tail_lines: 100
+  dashboard:
+    width: 76
+    enabled: false
+  default_network:
+    driver: bridge
+    subnet: "172.28.0.0/16"
+    gateway: "172.28.0.1"

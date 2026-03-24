@@ -1,0 +1,16 @@
+
+# FizzSchema — Consensus-Based Schema Evolution configuration
+# Because deploying a new version of your FizzBuzz evaluation
+# result schema without Avro-style compatibility checking,
+# Paxos-based consensus approval, and a full migration plan
+# would be reckless. Data contracts are sacred. Schema changes
+# without governance are the leading cause of production
+# incidents that nobody wants to page the on-call team about
+# at 3 AM on a Saturday. This subsystem ensures that never happens.
+schema_evolution:
+  enabled: false                          # Master switch — opt-in via --schema-evolution
+  compatibility_mode: "BACKWARD"          # BACKWARD | FORWARD | FULL | NONE
+  consensus_nodes: 5                      # Number of Paxos consensus nodes
+  consensus_quorum: 3                     # Minimum approvals required for schema changes
+  dashboard:
+    width: 60                             # ASCII dashboard width

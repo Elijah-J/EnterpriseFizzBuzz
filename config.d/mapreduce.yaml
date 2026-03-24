@@ -1,0 +1,15 @@
+
+# FizzReduce — MapReduce Framework configuration
+# Because evaluating FizzBuzz sequentially is a single-threaded
+# relic of the pre-Hadoop era. Modern enterprises demand distributed
+# computation with input splitting, parallel mapping, shuffle-and-sort,
+# and reduction. Google published the MapReduce paper in 2004 to
+# index the entire internet; we use it to count how many numbers
+# between 1 and 100 are divisible by 3. Same technology. Same gravity.
+mapreduce:
+  enabled: false                          # Master switch — opt-in via --mapreduce
+  num_mappers: 4                          # Number of parallel mapper tasks
+  num_reducers: 2                         # Number of reducer partitions
+  speculative_threshold: 1.5              # Launch speculative duplicate if task_time > threshold * avg
+  dashboard:
+    width: 60                             # ASCII dashboard width

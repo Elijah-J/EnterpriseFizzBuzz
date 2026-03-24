@@ -1,0 +1,12 @@
+
+# Database Migration Framework configuration
+# Manages schema migrations for in-memory data structures,
+# providing a versioned DDL lifecycle with forward and reverse
+# migration support.
+migrations:
+  enabled: false                     # Master switch — opt-in via --migrate
+  auto_apply: false                  # Automatically apply pending migrations on startup
+  seed_range_start: 1                # Start of range for FizzBuzz seed data generation
+  seed_range_end: 50                 # End of range for seed data (the ouroboros range)
+  log_fake_sql: true                 # Log fake SQL statements for maximum enterprise cosplay
+  visualize_schema: true             # Render ASCII ER diagrams after migrations

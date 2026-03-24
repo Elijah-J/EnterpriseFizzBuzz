@@ -1,0 +1,64 @@
+
+# Secrets Management Vault configuration
+# Because the only thing more secure than storing FizzBuzz configuration
+# values in a plaintext YAML file is storing them in a Vault that requires
+# 3-of-5 Shamir's Secret Sharing unseal shares to open. The secrets are
+# "encrypted" with military-grade double-base64 + XOR, which provides
+# approximately zero actual security but an impressive amount of ceremony.
+# If HashiCorp can charge enterprise licensing fees for this, so can we.
+vault:
+  enabled: false                         # Master switch — opt-in via --vault
+  shamir:
+    threshold: 3                         # Minimum shares required to unseal (k)
+    num_shares: 5                        # Total shares generated on init (n)
+    prime_bits: 127                      # Mersenne prime exponent (2^127-1)
+  encryption:
+    algorithm: "military_grade_double_base64_xor"  # The only algorithm worthy of FizzBuzz
+    key_derivation: "sha256"             # Key derivation function for XOR key
+    iterations: 1                        # One iteration is sufficient for military-grade security
+  rotation:
+    enabled: true                        # Enable automatic secret rotation
+    interval_evaluations: 50             # Rotate secrets every N evaluations
+    rotatable_secrets:                   # Secrets eligible for automatic rotation
+      - "fizzbuzz/blockchain/difficulty"
+      - "fizzbuzz/ml/learning_rate"
+      - "fizzbuzz/cache/ttl_seconds"
+      - "fizzbuzz/sla/latency_threshold_ms"
+  scanner:
+    enabled: true                        # Enable AST-based secret scanner
+    scan_paths:                          # Directories to scan for leaked secrets
+      - "./enterprise_fizzbuzz"
+    flag_integers: true                  # Flag ALL integer literals as potential secrets
+    flag_strings: false                  # Do not flag string literals (yet)
+    min_integer_suspicion: 0             # Minimum integer value to consider suspicious (0 = all)
+  access_policies:
+    "fizzbuzz/rules/*":                  # Access policy for rule secrets
+      allowed_components:
+        - "rule_engine"
+        - "feature_flags"
+        - "middleware"
+      operations:
+        - "read"
+    "fizzbuzz/blockchain/*":             # Access policy for blockchain secrets
+      allowed_components:
+        - "blockchain"
+        - "compliance"
+      operations:
+        - "read"
+        - "write"
+    "fizzbuzz/ml/*":                     # Access policy for ML secrets
+      allowed_components:
+        - "ml_engine"
+        - "ab_testing"
+      operations:
+        - "read"
+    "fizzbuzz/infrastructure/*":         # Access policy for infrastructure secrets
+      allowed_components:
+        - "config"
+        - "middleware"
+        - "health_check"
+      operations:
+        - "read"
+        - "write"
+  dashboard:
+    width: 60                            # ASCII dashboard width

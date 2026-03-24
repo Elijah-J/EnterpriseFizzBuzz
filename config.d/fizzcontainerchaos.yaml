@@ -1,0 +1,13 @@
+
+fizzcontainerchaos:
+  enabled: false
+  cognitive_load_threshold: 60.0
+  blast_radius_limit: 0.50
+  blast_radius_scope: "global"
+  observation_interval: 5.0
+  steady_state_tolerance: 0.15
+  experiment_timeout: 300.0
+  gameday_timeout: 1800.0
+  default_latency_ms: 200.0
+  dashboard:
+    width: 72

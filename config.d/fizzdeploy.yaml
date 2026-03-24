@@ -1,0 +1,18 @@
+
+fizzdeploy:
+  enabled: false                              # Master switch — opt-in via --fizzdeploy
+  default_strategy: rolling_update            # Default deployment strategy
+  pipeline_timeout: 600.0                     # Pipeline execution timeout (seconds)
+  reconcile_interval: 30.0                    # GitOps reconciliation loop interval (seconds)
+  sync_strategy: auto                         # GitOps sync strategy: auto, manual, dry_run
+  revision_history_depth: 10                  # Max deployment revisions retained
+  cognitive_load_threshold: 70.0              # NASA-TLX threshold for deployment gating
+  rolling_update:
+    max_surge: 0.25                           # Max pods above desired during update
+    max_unavailable: 0.25                     # Max pods unavailable during update
+  canary:
+    analysis_interval: 30.0                   # Seconds between canary metric samples
+    error_rate_threshold: 0.05                # Canary error rate regression threshold
+    latency_threshold: 50.0                   # Canary P99 latency regression threshold (ms)
+  dashboard:
+    width: 72                                 # ASCII dashboard width

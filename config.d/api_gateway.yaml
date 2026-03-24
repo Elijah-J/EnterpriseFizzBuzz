@@ -1,0 +1,69 @@
+
+# API Gateway with Routing, Versioning & Request Transformation
+# Because the only thing more ambitious than building an API Gateway
+# for a CLI application that has no HTTP server is building one with
+# full semantic versioning, request/response transformation pipelines,
+# HATEOAS link enrichment, gzip compression that saves -847% space
+# (making responses larger is a feature, not a bug), and a 340-character
+# request ID because UUID v4 was simply not enterprise enough.
+api_gateway:
+  enabled: false                          # Master switch — opt-in via --gateway
+  versions:
+    v1:
+      status: "DEPRECATED"               # v1 is deprecated but still limping along
+      sunset_date: "2025-12-31"           # Already past sunset. Living on borrowed time.
+      deprecation_urgency: "CRITICAL"     # The warnings escalate in panic
+    v2:
+      status: "ACTIVE"                    # v2 is the current stable version
+      sunset_date: null                   # No sunset planned (yet)
+      deprecation_urgency: null
+    v3:
+      status: "ACTIVE"                    # v3 is the bleeding edge
+      sunset_date: null
+      deprecation_urgency: null
+  default_version: "v2"                   # Default API version if none specified
+  routes:
+    - path: "/api/{version}/fizzbuzz/{number}"
+      method: "GET"
+      handler: "evaluate_number"
+      versions: ["v1", "v2", "v3"]
+      description: "Evaluate a single number through the FizzBuzz pipeline"
+    - path: "/api/{version}/fizzbuzz/range"
+      method: "POST"
+      handler: "evaluate_range"
+      versions: ["v2", "v3"]
+      description: "Evaluate a range of numbers (batch endpoint)"
+    - path: "/api/{version}/fizzbuzz/feelings"
+      method: "GET"
+      handler: "get_feelings"
+      versions: ["v2", "v3"]
+      description: "How does the FizzBuzz engine feel about its existence?"
+    - path: "/api/{version}/health"
+      method: "GET"
+      handler: "health_check"
+      versions: ["v1", "v2", "v3"]
+      description: "Gateway health check endpoint"
+    - path: "/api/{version}/metrics"
+      method: "GET"
+      handler: "get_metrics"
+      versions: ["v3"]
+      description: "Prometheus-style metrics (v3 only, because v1 and v2 don't deserve metrics)"
+  api_keys:
+    default_quota: 1000                   # Default requests per API key
+    key_prefix: "efp_"                    # All keys start with this prefix
+    key_length: 32                        # Random key length (after prefix)
+  transformers:
+    request:
+      normalizer: true                    # Normalize input (abs value, because negatives are confusing)
+      enricher: true                      # Enrich with 27 metadata fields including lunar phase
+      validator: true                     # Validate request structure
+      deprecation_injector: true          # Inject deprecation warnings for v1
+    response:
+      compressor: true                    # Gzip + base64 (saves -847% space)
+      pagination_wrapper: true            # Wrap in pagination (page=1, total_pages=1, per_page=1)
+      hateoas_enricher: true              # Add _links including /feelings endpoint
+  replay_journal:
+    enabled: true                         # Append-only request journal
+    max_entries: 10000                    # Maximum journal entries (in RAM)
+  dashboard:
+    width: 60                             # ASCII dashboard width

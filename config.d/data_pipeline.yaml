@@ -1,0 +1,28 @@
+
+# Data Pipeline & ETL Framework configuration
+# Because the only thing better than computing FizzBuzz in a for
+# loop is routing each integer through a five-stage Extract-Validate-
+# Transform-Enrich-Load pipeline with topological DAG resolution,
+# data lineage provenance chains, retroactive backfill capabilities,
+# and an ASCII dashboard that visualizes a linear chain as if it
+# were a complex dependency graph. The Extract stage wraps range().
+# The Load stage wraps print(). Everything in between is pure ceremony.
+data_pipeline:
+  enabled: false                        # Master switch — opt-in via --pipeline
+  source: "range"                       # Source connector: range | devnull
+  sink: "stdout"                        # Sink connector: stdout | devnull
+  batch_size: 10                        # Records per batch (because streaming is too simple)
+  max_retries: 3                        # Retry attempts per stage on failure
+  retry_backoff_ms: 100                 # Base backoff between retries (exponential)
+  enable_checkpoints: true              # Save pipeline state after each stage (in RAM)
+  enable_lineage: true                  # Track full data provenance chain per record
+  enable_backfill: false                # Allow retroactive enrichment of processed records
+  enrichments:
+    fibonacci: true                     # Check if number is in the Fibonacci sequence
+    primality: true                     # Check if number is prime (the hard way)
+    roman_numerals: true                # Convert to Roman numerals (because why not)
+    emotional_valence: true             # Assign emotional valence based on number % 100
+  dag:
+    visualization_width: 60             # ASCII DAG visualization width
+  dashboard:
+    width: 60                           # ASCII dashboard width

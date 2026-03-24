@@ -1,0 +1,31 @@
+
+# A/B Testing Framework configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is scientifically proving that one method of computing
+# FizzBuzz is statistically equivalent to another. This framework
+# enables rigorous experimentation across evaluation strategies,
+# complete with chi-squared tests, confidence intervals, ramp
+# schedules, and auto-rollback — all to confirm what everyone
+# already knows: modulo arithmetic works.
+ab_testing:
+  enabled: false                        # Master switch — opt-in via --ab-test
+  significance_level: 0.05             # p-value threshold for declaring significance
+  min_sample_size: 30                  # Minimum samples per variant before analysis
+  safety_accuracy_threshold: 0.95      # Auto-rollback if treatment accuracy drops below this
+  ramp_schedule:                       # Gradual traffic ramp for treatment variant
+    - 10                               # Phase 1: 10% treatment traffic
+    - 25                               # Phase 2: 25% treatment traffic
+    - 50                               # Phase 3: 50% treatment traffic (full split)
+  experiments:
+    modulo_vs_ml:
+      control_strategy: "standard"
+      treatment_strategy: "machine_learning"
+      description: "Does a neural network outperform the modulo operator? (Spoiler: no.)"
+      traffic_percentage: 50
+    standard_vs_chain:
+      control_strategy: "standard"
+      treatment_strategy: "chain_of_responsibility"
+      description: "Does wrapping modulo in a linked list improve accuracy? (Spoiler: identical.)"
+      traffic_percentage: 50
+  dashboard:
+    width: 60                           # ASCII dashboard width

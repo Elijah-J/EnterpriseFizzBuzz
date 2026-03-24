@@ -1,0 +1,12 @@
+
+# Event Sourcing / CQRS configuration
+# Because every FizzBuzz evaluation deserves an append-only audit
+# log, command/query segregation, and point-in-time state reconstruction.
+# Martin Fowler would be so proud. Or horrified. Hard to tell.
+event_sourcing:
+  enabled: false
+  snapshot_interval: 10          # Take a snapshot every N events
+  max_events_before_compaction: 1000  # Compact the event store after N events
+  enable_temporal_queries: true  # Allow point-in-time state reconstruction
+  enable_projections: true       # Maintain materialized read-model views
+  event_version: 1               # Current event schema version

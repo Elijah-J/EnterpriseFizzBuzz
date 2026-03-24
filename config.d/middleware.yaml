@@ -1,0 +1,12 @@
+
+# Middleware pipeline (executed in order of priority)
+middleware:
+  timing:
+    enabled: true
+    priority: 1
+  logging:
+    enabled: true
+    priority: 2
+  validation:
+    enabled: true
+    priority: 0

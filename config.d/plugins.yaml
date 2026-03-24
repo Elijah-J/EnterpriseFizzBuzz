@@ -1,0 +1,6 @@
+
+# Plugin system
+plugins:
+  auto_discover: true
+  plugin_directory: "./plugins"
+  enabled_plugins: []

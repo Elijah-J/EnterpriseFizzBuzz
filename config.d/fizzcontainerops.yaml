@@ -1,0 +1,15 @@
+
+fizzcontainerops:
+  enabled: false
+  log_retention_hours: 24
+  max_log_entries: 100000
+  log_context_lines: 3
+  scrape_interval: 10.0
+  metrics_buffer_size: 8640
+  alert_evaluation_interval: 30.0
+  exec_timeout: 30.0
+  flamegraph_samples: 200
+  dashboard:
+    width: 80
+    refresh_rate: 5.0
+    use_color: true

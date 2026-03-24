@@ -1,0 +1,12 @@
+
+# FizzIR SSA Intermediate Representation configuration
+# Because FizzBuzz evaluation deserves the same compiler infrastructure
+# as a production language runtime. The IR uses Static Single Assignment
+# form (Cytron et al., 1989) with eight optimization passes that reduce
+# modulo arithmetic to its theoretical minimum instruction count.
+ir:
+  enabled: false                          # Master switch — opt-in via --ir
+  optimize: true                          # Run the 8-pass optimization pipeline
+  print: false                            # Print LLVM-style textual IR to stdout
+  dashboard:
+    width: 60                             # ASCII dashboard width

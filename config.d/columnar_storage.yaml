@@ -1,0 +1,15 @@
+
+# FizzColumn — Columnar Storage Engine configuration
+# Because storing FizzBuzz results in rows is a relic of the
+# 1970s relational era. Modern analytical workloads demand
+# column-oriented storage with Parquet-style encoding,
+# dictionary compression, run-length encoding, delta encoding,
+# zone maps for predicate pushdown, and vectorized batch
+# processing. Your modulo results deserve columnar majesty.
+columnar_storage:
+  enabled: false                          # Master switch — opt-in via --columnar
+  row_group_size: 1024                    # Max rows per row group before sealing
+  encoding_sample_size: 1024             # Values to sample for encoding selection
+  dictionary_cardinality_limit: 256       # Max distinct values for dictionary encoding
+  dashboard:
+    width: 60                             # ASCII dashboard width

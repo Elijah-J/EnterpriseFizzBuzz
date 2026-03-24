@@ -1,0 +1,29 @@
+
+# FizzAlloc — Custom Memory Allocator configuration
+# Because Python's built-in memory management — with its reference
+# counting, generational garbage collector, and pymalloc arena
+# allocator — is clearly insufficient for a program that computes
+# n % 3 == 0. FizzAlloc provides slab allocation with free-list
+# management, bump-pointer arenas with O(1) bulk reset, and a
+# tri-generational mark-sweep-compact garbage collector. All
+# simulated, naturally, because actually replacing Python's
+# allocator would require a C extension, and we have standards.
+memory_allocator:
+  enabled: false                          # Master switch — opt-in via --alloc
+  gc_enabled: true                        # Enable tri-generational garbage collection
+  gc_young_threshold: 10                  # Collections before promoting young -> tenured
+  gc_tenured_threshold: 5                 # Collections before promoting tenured -> permanent
+  slab_sizes:                             # Slab slot sizes by object type (bytes, simulated)
+    result: 128
+    cache_entry: 96
+    event: 256
+  arena_tiers:                            # Arena size tiers (bytes, simulated)
+    - 4096
+    - 16384
+    - 65536
+  pressure_thresholds:                    # Memory pressure level thresholds (% utilization)
+    elevated: 0.60
+    high: 0.80
+    critical: 0.95
+  dashboard:
+    width: 60                             # ASCII dashboard width

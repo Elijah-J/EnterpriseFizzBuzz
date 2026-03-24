@@ -1,0 +1,15 @@
+
+# Cross-Compiler configuration
+# Because FizzBuzz rules expressed in Python are simply too
+# portable and readable, the Cross-Compiler transpiles them
+# into C, Rust, and WebAssembly Text format. The overhead
+# factor (Python: 2 lines -> C: 47 lines) is not a bug,
+# it's a feature — and a metaphor for enterprise software.
+cross_compiler:
+  enabled: false                               # Master switch — opt-in via --compile-to
+  verify_round_trip: true                      # Verify generated code matches Python reference
+  verification_range_end: 100                  # Verify for n=1..N
+  emit_comments: true                          # Include descriptive comments in generated code
+  dashboard:
+    width: 60                                  # ASCII dashboard width
+    show_ir: false                             # Show IR instructions in dashboard

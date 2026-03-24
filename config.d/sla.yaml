@@ -1,0 +1,31 @@
+
+# SLA Monitoring / PagerDuty-Style Alerting configuration
+# Because the only thing more important than computing FizzBuzz
+# correctly is proving, with mathematical certainty, that you
+# computed it within the agreed-upon latency budget. Service Level
+# Agreements for the evaluation pipeline ensure contractual
+# performance guarantees are met.
+sla:
+  enabled: false                    # Master switch — opt-in via --sla
+  slos:
+    latency:
+      target: 0.999                 # 99.9% of evaluations under threshold
+      threshold_ms: 100.0           # Maximum acceptable latency per evaluation
+    accuracy:
+      target: 0.99999               # 99.999% accuracy (five nines of correctness)
+    availability:
+      target: 0.9999                # 99.99% availability (four nines)
+  error_budget:
+    window_days: 30                 # Rolling window for error budget calculation
+    burn_rate_threshold: 2.0        # Alert when burning budget 2x faster than planned
+  alerting:
+    cooldown_seconds: 60            # Minimum seconds between alerts of the same type
+    escalation_timeout_seconds: 300 # Seconds before escalating to next level
+  on_call:
+    team_name: "FizzBuzz Reliability Engineering"
+    rotation_interval_hours: 168    # Weekly rotation (168 hours = 7 days)
+    engineers:
+      - name: "Bob McFizzington"
+        email: "bob.mcfizzington@enterprise.example.com"
+        phone: "+1-555-FIZZBUZZ"
+        title: "Senior Principal Staff FizzBuzz Reliability Engineer II"
