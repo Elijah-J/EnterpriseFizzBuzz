@@ -49,11 +49,50 @@ class GeneticAlgorithmFeature(FeatureDescriptor):
             event_callback=event_bus.publish if event_bus else None,
         )
 
+        print(f"\n  [GA] Starting Genetic Algorithm for Optimal FizzBuzz Rule Discovery...")
+        print(f"  [GA] Population: {config.genetic_algorithm_population_size} | Generations: {ga_generations}")
+        print(f"  [GA] Evolving...\n")
+
+        best_chromosome = ga_engine.evolve()
+
+        rules = best_chromosome.to_rules_dict()
+        rules_str = ", ".join(f"{d}:{l!r}" for d, l in sorted(rules.items()))
+        print(f"  [GA] Evolution complete in {ga_engine.elapsed_ms:.1f}ms")
+        print(f"  [GA] Best rules discovered: {{{rules_str}}}")
+        print(f"  [GA] Fitness: {best_chromosome.fitness.overall:.6f}")
+        print(f"  [GA] Converged: {'YES' if ga_engine.converged else 'NO'}")
+        print(f"  [GA] Generations run: {ga_engine.generation}")
+        print(f"  [GA] Mass extinctions: {ga_engine.convergence_monitor.extinction_count}")
+
+        is_canonical = (rules == {3: "Fizz", 5: "Buzz"})
+        if is_canonical:
+            print()
+            print("  [GA] PUNCHLINE: After all that evolutionary computation,")
+            print("  [GA] the algorithm rediscovered {3:'Fizz', 5:'Buzz'} --")
+            print("  [GA] the exact same rules from the original 5-line solution.")
+            print("  [GA] Darwin would be proud. Or embarrassed.")
+        print()
+
+        self._ga_engine = ga_engine
+        self._config = config
+
         return ga_engine, None
+
+    def get_banner(self, config: Any, args: Any) -> Optional[str]:
+        return None
 
     def render(self, middleware: Any, args: Any) -> Optional[str]:
         if not getattr(args, "genetic_dashboard", False):
             return None
-        # The GA engine is passed as the service (first element), not middleware.
-        # Rendering requires the engine to have already run.
-        return None
+        engine = getattr(self, "_ga_engine", None)
+        if engine is None:
+            return None
+        from enterprise_fizzbuzz.infrastructure.genetic_algorithm import EvolutionDashboard
+        config = getattr(self, "_config", None)
+        if config is None:
+            return None
+        return EvolutionDashboard.render(
+            engine,
+            width=config.genetic_algorithm_dashboard_width,
+            chart_height=config.genetic_algorithm_fitness_chart_height,
+        )

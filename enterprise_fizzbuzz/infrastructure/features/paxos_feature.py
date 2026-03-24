@@ -65,6 +65,19 @@ class PaxosFeature(FeatureDescriptor):
         # Store byzantine_node_id on the cluster for dashboard rendering
         cluster._byzantine_node_id = byzantine_node_id
 
+        byz_status = f"node {byzantine_node_id}" if byzantine_node_id is not None else "NONE"
+        print(
+            "  +---------------------------------------------------------+\n"
+            "  | PAXOS CONSENSUS: Distributed FizzBuzz ENABLED           |\n"
+            f"  | Nodes: {num_nodes:<49}|\n"
+            f"  | Quorum: {cluster.quorum_size:<48}|\n"
+            f"  | Byzantine traitor: {byz_status:<37}|\n"
+            "  | Every number will be evaluated by ALL nodes and then    |\n"
+            "  | ratified through Lamport's Paxos protocol. Because one  |\n"
+            "  | modulo operation is never enough for enterprise.        |\n"
+            "  +---------------------------------------------------------+"
+        )
+
         return cluster, middleware
 
     def render(self, middleware: Any, args: Any) -> Optional[str]:

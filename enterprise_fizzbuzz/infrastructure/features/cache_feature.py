@@ -78,4 +78,7 @@ class CacheFeature(FeatureDescriptor):
         if middleware is None:
             return None
         from enterprise_fizzbuzz.infrastructure.cache import CacheDashboard
-        return CacheDashboard.render(middleware.cache_store)
+        cache_store = middleware.cache_store if hasattr(middleware, "cache_store") else None
+        if cache_store is None:
+            return None
+        return CacheDashboard.render(cache_store.get_statistics())

@@ -57,6 +57,10 @@ class OTelTracingFeature(FeatureDescriptor):
 
         set_active_provider(provider)
 
+        # Attach provider/exporter to middleware for post-execution rendering
+        middleware._otel_provider = provider
+        middleware._otel_exporter = exporter
+
         service = {"provider": provider, "exporter": exporter}
         return service, middleware
 
@@ -73,8 +77,8 @@ class OTelTracingFeature(FeatureDescriptor):
         from enterprise_fizzbuzz.infrastructure.config import ConfigurationManager
         config = ConfigurationManager()
 
-        provider = middleware.provider
-        exporter = middleware.exporter if hasattr(middleware, "exporter") else None
+        provider = getattr(middleware, "_otel_provider", None)
+        exporter = getattr(middleware, "_otel_exporter", None)
         if provider is None or exporter is None:
             return None
 

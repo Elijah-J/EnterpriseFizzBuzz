@@ -68,6 +68,21 @@ class QuantumFeature(FeatureDescriptor):
 
         return engine, middleware
 
+    def get_banner(self, config: Any, args: Any) -> Optional[str]:
+        qubits = config.quantum_num_qubits
+        hilbert_dim = 2 ** qubits
+        return (
+            "  +---------------------------------------------------------+\n"
+            "  | QUANTUM COMPUTING: Shor's Algorithm ENABLED             |\n"
+            f"  | Qubits: {qubits:<48}|\n"
+            f"  | Hilbert Space: {f'{hilbert_dim} dimensions':<41}|\n"
+            "  | Divisibility will be checked via quantum period-finding |\n"
+            "  | using a simplified Shor's algorithm. Classical fallback |\n"
+            "  | is armed, because quantum supremacy is aspirational.    |\n"
+            "  | Quantum Advantage Ratio: NEGATIVE (as expected)         |\n"
+            "  +---------------------------------------------------------+"
+        )
+
     def render(self, middleware: Any, args: Any) -> Optional[str]:
         if middleware is None:
             return None

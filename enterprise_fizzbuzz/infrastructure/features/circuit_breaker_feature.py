@@ -67,4 +67,4 @@ class CircuitBreakerFeature(FeatureDescriptor):
             CircuitBreakerRegistry,
         )
         registry = CircuitBreakerRegistry.get_instance()
-        return CircuitBreakerDashboard.render(registry)
+        return CircuitBreakerDashboard.render_all(registry)

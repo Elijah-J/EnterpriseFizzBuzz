@@ -12,12 +12,9 @@ class I18nFeature(FeatureDescriptor):
     name = "i18n"
     description = "Internationalization with 7 locales including Klingon, Sindarin, and Quenya"
     middleware_priority = 6
-    cli_flags = [
-        ("--locale", {"type": str, "metavar": "LOCALE", "default": None,
-                      "help": "Locale for internationalized output (en, de, fr, ja, tlh, sjn, qya)"}),
-        ("--list-locales", {"action": "store_true", "default": False,
-                            "help": "Display available locales and exit"}),
-    ]
+    # --locale and --list-locales are core platform flags defined in
+    # build_argument_parser(). This descriptor only checks them.
+    cli_flags = []
 
     def is_enabled(self, args: Any) -> bool:
         return any([

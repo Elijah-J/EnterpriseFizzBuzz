@@ -31,4 +31,35 @@ class EventSourcingFeature(FeatureDescriptor):
         )
         es_middleware = es_system.create_middleware()
 
+        self._es_system = es_system
+
         return es_system, es_middleware
+
+    def render(self, middleware: Any, args: Any) -> Optional[str]:
+        es_system = getattr(self, "_es_system", None)
+        if es_system is None:
+            return None
+
+        parts = [es_system.render_summary()]
+
+        if getattr(args, "replay", False):
+            replay_result = es_system.replay_events()
+            parts.append(f"  Replayed {replay_result['replayed_events']} events.")
+            parts.append(f"  Statistics after replay: {replay_result['statistics']}")
+            parts.append("")
+
+        temporal_seq = getattr(args, "temporal_query", None)
+        if temporal_seq is not None:
+            temporal_state = es_system.temporal_engine.query_at_sequence(temporal_seq)
+            temporal_lines = [
+                "  +===========================================================+",
+                "  |             TEMPORAL QUERY RESULT                         |",
+                "  +===========================================================+",
+                f"  |  As-of sequence    : {temporal_seq:<37}|",
+                f"  |  Events processed  : {temporal_state['events_processed']:<37}|",
+                f"  |  Evaluations       : {temporal_state['total_evaluations']:<37}|",
+                "  +===========================================================+",
+            ]
+            parts.append("\n".join(temporal_lines))
+
+        return "\n".join(parts)

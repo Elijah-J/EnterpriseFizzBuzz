@@ -11,14 +11,9 @@ class AuthFeature(FeatureDescriptor):
     name = "auth"
     description = "RBAC with trust-mode authentication, token validation, and authorization middleware"
     middleware_priority = 5
-    cli_flags = [
-        ("--user", {"type": str, "metavar": "USERNAME", "default": None,
-                     "help": "Authenticate as the specified user (trust-mode, no token required)"}),
-        ("--role", {"type": str, "default": None,
-                    "help": "Assign the specified RBAC role (requires --user or --token)"}),
-        ("--token", {"type": str, "metavar": "TOKEN", "default": None,
-                     "help": "Authenticate using an Enterprise FizzBuzz Platform token"}),
-    ]
+    # --user, --role, --token are core platform flags defined in
+    # build_argument_parser(). This descriptor only checks them.
+    cli_flags = []
 
     def is_enabled(self, args: Any) -> bool:
         return any([

@@ -47,23 +47,27 @@ class AuditDashboardFeature(FeatureDescriptor):
         if event_bus is not None:
             event_bus.subscribe(audit_dashboard.aggregator)
 
-        return audit_dashboard, audit_dashboard
+        # UnifiedAuditDashboard is not a pipeline middleware — it subscribes
+        # to the event bus directly. Return it as the service with no middleware.
+        self._dashboard_instance = audit_dashboard
+        return audit_dashboard, None
 
     def render(self, middleware: Any, args: Any) -> Optional[str]:
-        if middleware is None:
+        dashboard = getattr(self, "_dashboard_instance", None)
+        if dashboard is None:
             return None
 
         parts = []
 
         if getattr(args, "audit_dashboard", False):
-            parts.append(middleware.render_dashboard(width=80))
+            parts.append(dashboard.render_dashboard(width=80))
 
         if getattr(args, "audit_stream", False):
-            stream_output = middleware.render_stream()
+            stream_output = dashboard.render_stream()
             if stream_output:
                 parts.append(stream_output)
 
         if getattr(args, "audit_anomalies", False):
-            parts.append(middleware.render_anomalies())
+            parts.append(dashboard.render_anomalies())
 
         return "\n".join(parts) if parts else None

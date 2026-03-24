@@ -92,13 +92,56 @@ class ComplianceFeature(FeatureDescriptor):
         if middleware is None:
             return None
         from enterprise_fizzbuzz.infrastructure.compliance import ComplianceDashboard
+        from enterprise_fizzbuzz.infrastructure.config import ConfigurationManager
+        config = ConfigurationManager()
+        framework = middleware._framework
         parts = []
         if getattr(args, "compliance_dashboard", False):
-            parts.append(ComplianceDashboard.render(middleware._compliance_framework))
+            parts.append(ComplianceDashboard.render(framework, width=config.compliance_dashboard_width))
         if getattr(args, "compliance_report", False):
-            parts.append(ComplianceDashboard.render_report(middleware._compliance_framework))
+            parts.append(ComplianceDashboard.render_report(framework))
         if getattr(args, "sox_audit", False):
-            parts.append(ComplianceDashboard.render_sox(middleware._compliance_framework))
+            posture = framework.get_posture_summary()
+            sox_trail = posture.get("sox_stats", [])
+            if sox_trail:
+                lines = [
+                    "  +---------------------------------------------------------+",
+                    "  | SOX SEGREGATION OF DUTIES AUDIT TRAIL                   |",
+                    "  +---------------------------------------------------------+",
+                ]
+                for entry in sox_trail[-10:]:
+                    assignments = entry.get("assignments", {})
+                    segregated = entry.get("segregation_satisfied", False)
+                    status = "OK" if segregated else "VIOLATION"
+                    num_val = entry.get("number", "?")
+                    sox_line = f"Number {num_val:>5} [{status}]"
+                    lines.append(f"  | {sox_line:<57}|")
+                    for role, person in assignments.items():
+                        person_name = person.get("name", "?")
+                        role_line = f"  {role}: {person_name}"
+                        lines.append(f"  | {role_line:<57}|")
+                if len(sox_trail) > 10:
+                    more_line = f"... and {len(sox_trail) - 10} more entries"
+                    lines.append(f"  | {more_line:<57}|")
+                lines.append("  +---------------------------------------------------------+")
+                parts.append("\n".join(lines))
+            else:
+                parts.append("  No SOX audit trail entries recorded.")
         if getattr(args, "hipaa_check", False):
-            parts.append(ComplianceDashboard.render_hipaa(middleware._compliance_framework))
+            posture = framework.get_posture_summary()
+            hipaa_stats = posture.get("hipaa_stats", {})
+            if hipaa_stats:
+                parts.append(
+                    "  +---------------------------------------------------------+\n"
+                    "  | HIPAA PHI ACCESS LOG & ENCRYPTION STATISTICS            |\n"
+                    "  +---------------------------------------------------------+\n"
+                    f"  | PHI Encryptions:    {hipaa_stats.get('phi_encryptions', 0):<36}|\n"
+                    f"  | PHI Redactions:     {hipaa_stats.get('phi_redactions', 0):<36}|\n"
+                    f"  | PHI Access Events:  {hipaa_stats.get('phi_access_events', 0):<36}|\n"
+                    f"  | Algorithm:          {hipaa_stats.get('encryption_algorithm', 'N/A'):<36}|\n"
+                    f"  | Actual Security:    {hipaa_stats.get('actual_security_provided', 'None'):<36}|\n"
+                    "  +---------------------------------------------------------+"
+                )
+            else:
+                parts.append("  No HIPAA statistics recorded.")
         return "\n".join(parts) if parts else None
