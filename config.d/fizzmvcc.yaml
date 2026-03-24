@@ -1,0 +1,40 @@
+
+# FizzMVCC — Multi-Version Concurrency Control & ACID Transactions
+# The Enterprise FizzBuzz Platform has accumulated a SQLite persistence
+# backend, a write-ahead intent log, a database replication system with
+# WAL shipping, a relational query engine, a cost-based query optimizer,
+# and a distributed lock manager. Every one of these subsystems assumes
+# transactional integrity. The compliance modules (SOX, GDPR, HIPAA)
+# certify that evaluation records are atomically written. The replication
+# protocol assumes that WAL records correspond to committed, atomic units
+# of work. The query optimizer estimates selectivity based on stable
+# table statistics that assume consistent snapshots. None of these
+# assumptions were enforced — until now. FizzMVCC is the concurrency
+# control layer that binds the storage engine, query processor,
+# replication system, and lock manager into a correct database.
+fizzmvcc:
+  enabled: false
+  isolation_level: "read_committed"
+  cc_mode: "mvcc"
+  deadlock_timeout_ms: 1000
+  deadlock_interval_ms: 100
+  gc_strategy: "lazy"
+  gc_interval_ms: 5000
+  gc_warning_threshold_s: 60
+  gc_force_abort_threshold_s: 300
+  lock_escalation_threshold: 5000
+  plan_cache_size: 1000
+  pool_min: 5
+  pool_max: 20
+  pool_timeout_s: 30.0
+  pool_max_lifetime_s: 1800.0
+  pool_max_idle_time_s: 300.0
+  pool_validation_query: "SELECT 1"
+  auto_analyze_threshold: 50
+  auto_analyze_scale_factor: 0.1
+  statistics_target: 100
+  explain_analyze: false
+  explain_buffers: false
+  occ_threshold: 10
+  dashboard:
+    width: 72
