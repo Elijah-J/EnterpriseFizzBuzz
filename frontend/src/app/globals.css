@@ -234,6 +234,22 @@
  * No pulse, glow, spin, or ambient animations exist by design.
  * ---------------------------------------------------------------- */
 
+/**
+ * Loading dot animation — sequential opacity pulse for button loading states.
+ * Three dots animate with staggered delays to create a typing-indicator pattern
+ * that communicates pending operations without spinner overhead.
+ */
+@keyframes loading-dot {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
