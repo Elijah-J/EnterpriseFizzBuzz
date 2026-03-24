@@ -64,13 +64,17 @@ def _get_imports_from_file(filepath: Path) -> list[tuple[int, str]]:
 
 
 def _get_python_files(directory: Path) -> list[Path]:
-    """Get all .py files in a directory."""
+    """Get all .py files in a directory, including sub-packages."""
     if not directory.exists():
         return []
-    return [
-        f for f in directory.iterdir()
-        if f.is_file() and f.suffix == ".py" and f.name != "__init__.py"
-    ]
+    results = []
+    for f in directory.iterdir():
+        if f.is_file() and f.suffix == ".py" and f.name != "__init__.py":
+            results.append(f)
+        elif f.is_dir() and (f / "__init__.py").exists():
+            # Recurse into sub-packages
+            results.extend(_get_python_files(f))
+    return results
 
 
 class TestDomainLayerPurity:
@@ -89,7 +93,12 @@ class TestDomainLayerPurity:
         """Verify domain layer contains expected files."""
         filenames = {f.name for f in domain_files}
         assert "models.py" in filenames, "Domain layer must contain models.py"
-        assert "exceptions.py" in filenames, "Domain layer must contain exceptions.py"
+        # exceptions may be a single file or a package (directory with __init__.py)
+        has_exceptions = (
+            "exceptions.py" in filenames
+            or (DOMAIN_DIR / "exceptions" / "__init__.py").exists()
+        )
+        assert has_exceptions, "Domain layer must contain exceptions module"
         assert "interfaces.py" in filenames, "Domain layer must contain interfaces.py"
 
     def test_domain_does_not_import_application(self, domain_files: list[Path]) -> None:
@@ -159,9 +168,17 @@ class TestPackageStructure:
         assert (INFRASTRUCTURE_DIR / "__init__.py").exists()
 
     def test_domain_contains_expected_modules(self) -> None:
-        expected = {"models.py", "exceptions.py", "interfaces.py"}
+        # exceptions may be a package (directory) rather than a single file
         actual = {f.name for f in _get_python_files(DOMAIN_DIR)}
-        assert expected.issubset(actual), f"Missing domain modules: {expected - actual}"
+        always_expected = {"models.py", "interfaces.py"}
+        assert always_expected.issubset(actual), (
+            f"Missing domain modules: {always_expected - actual}"
+        )
+        has_exceptions = (
+            "exceptions.py" in actual
+            or (DOMAIN_DIR / "exceptions" / "__init__.py").exists()
+        )
+        assert has_exceptions, "Missing domain module: exceptions"
 
     def test_application_contains_expected_modules(self) -> None:
         expected = {"factory.py", "fizzbuzz_service.py"}

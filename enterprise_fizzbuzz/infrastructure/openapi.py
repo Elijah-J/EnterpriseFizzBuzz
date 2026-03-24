@@ -1192,7 +1192,7 @@ class ExceptionToHTTPMapper:
             if (
                 inspect.isclass(obj)
                 and issubclass(obj, FizzBuzzError)
-                and obj.__module__ == exceptions_module.__name__
+                and obj.__module__.startswith(exceptions_module.__name__)
             ):
                 mappings[name] = cls._resolve_status(name, obj)
 
