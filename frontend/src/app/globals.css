@@ -225,6 +225,70 @@
   color: var(--text-secondary);
 }
 
+/* ----------------------------------------------------------------
+ * Motion Keyframes
+ *
+ * The platform's animation vocabulary is deliberately minimal.
+ * Two keyframes serve all motion needs: a warm shimmer for loading
+ * states and a subtle entrance for viewport-triggered reveals.
+ * No pulse, glow, spin, or ambient animations exist by design.
+ * ---------------------------------------------------------------- */
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * Shimmer animation utility — applies a warm-toned gradient sweep
+ * across the element background. The gradient uses off-white highlights
+ * over the raised surface tone, maintaining palette cohesion during
+ * loading states.
+ */
+@utility animate-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-raised) 0%,
+    var(--surface-overlay) 40%,
+    var(--surface-raised) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/**
+ * Entrance animation utility — fade in with 4px upward translation.
+ * Duration and easing calibrated to be perceptible but not theatrical.
+ * Applied via intersection observer triggers, not on initial render.
+ */
+@utility animate-enter {
+  animation: enter 300ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+  .animate-enter {
+    animation: none;
+  }
+}
+
 body {
   background: var(--surface-ground);
   color: var(--text-primary);
