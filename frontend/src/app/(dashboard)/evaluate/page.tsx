@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EvaluationSession, FizzBuzzResult } from "@/lib/data-providers";
@@ -93,6 +94,9 @@ export default function EvaluateConsolePage() {
   const [evaluating, setEvaluating] = useState(false);
   const [visibleCount, setVisibleCount] = useState(0);
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("plain");
+  const [evalStage, setEvalStage] = useState<string>("");
+  const [evalProgress, setEvalProgress] = useState(0);
+  const stageTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Validation
   const startValid = Number.isInteger(start) && start >= 1 && start <= 10_000;
@@ -109,10 +113,27 @@ export default function EvaluateConsolePage() {
     setEvaluating(true);
     setSession(null);
     setVisibleCount(0);
+    setEvalStage("Initializing");
+    setEvalProgress(10);
 
     try {
+      // Simulate pipeline stage progression during evaluation
+      stageTimer.current = setTimeout(() => {
+        setEvalStage("Evaluating");
+        setEvalProgress(40);
+      }, 100);
+
       const result = await provider.evaluate({ start, end, strategy });
+
+      setEvalStage("Formatting");
+      setEvalProgress(80);
+
       setSession(result);
+
+      // Brief pause before marking complete
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      setEvalStage("Complete");
+      setEvalProgress(100);
 
       // Animate results appearing one by one via CSS — we just need to
       // increment visibleCount on a timer so CSS transitions can fire.
@@ -125,6 +146,7 @@ export default function EvaluateConsolePage() {
       }, 30);
     } finally {
       setEvaluating(false);
+      if (stageTimer.current) clearTimeout(stageTimer.current);
     }
   }, [provider, start, end, strategy, rangeValid, evaluating]);
 
@@ -277,6 +299,25 @@ export default function EvaluateConsolePage() {
           </Button>
         </CardFooter>
       </Card>
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Evaluation Progress                                                */}
+      {/* ----------------------------------------------------------------- */}
+      {evaluating && (
+        <Card>
+          <CardContent>
+            <ProgressBar
+              value={evalProgress}
+              variant="determinate"
+              label={evalStage}
+              aria-label="Evaluation pipeline progress"
+            />
+            <p className="mt-2 text-[10px] text-text-muted">
+              Initializing &rarr; Evaluating &rarr; Formatting &rarr; Complete
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* ----------------------------------------------------------------- */}
       {/* Results Grid                                                       */}

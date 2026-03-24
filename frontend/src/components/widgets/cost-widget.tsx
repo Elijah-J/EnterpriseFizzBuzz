@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AnimatedNumber } from "@/components/ui/animated-number";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CostSummary } from "@/lib/data-providers";
 import { useDataProvider } from "@/lib/data-providers";
@@ -81,9 +82,9 @@ export function CostWidget() {
             decimals={2}
             className="data-value text-2xl text-fizzbuzz-gold"
           />
-          <span className={`text-sm font-mono ${trend.color}`}>
-            {trend.arrow} {deltaPercent}%
-          </span>
+          <DeltaBadge
+            value={cost.trend === "down" ? -Number(deltaPercent) : Number(deltaPercent)}
+          />
         </div>
       </div>
 

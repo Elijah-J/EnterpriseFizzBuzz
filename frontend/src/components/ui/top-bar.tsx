@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { LiveIndicator } from "./live-indicator";
 
 interface Breadcrumb {
   label: string;
@@ -12,6 +13,10 @@ interface TopBarProps {
   trailing?: ReactNode;
   /** Callback triggered when the search trigger is activated. */
   onSearchClick?: () => void;
+  /** Timestamp of the last telemetry data update, for the LiveIndicator. */
+  lastUpdated?: number | null;
+  /** Whether telemetry data is stale. */
+  isDataStale?: boolean;
 }
 
 /**
@@ -23,7 +28,7 @@ interface TopBarProps {
  * transparency effects that would compromise rendering performance or
  * visual clarity.
  */
-export function TopBar({ breadcrumbs, trailing, onSearchClick }: TopBarProps) {
+export function TopBar({ breadcrumbs, trailing, onSearchClick, lastUpdated, isDataStale }: TopBarProps) {
   return (
     <header className="flex h-14 items-center justify-between border-b border-border-subtle bg-surface-base px-6">
       <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
@@ -73,11 +78,8 @@ export function TopBar({ breadcrumbs, trailing, onSearchClick }: TopBarProps) {
           </button>
         )}
 
-        {/* Operational status indicator */}
-        <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
-          <span className="h-2 w-2 rounded-full bg-accent" />
-          All Systems Operational
-        </span>
+        {/* Operational status — live temporal indicator */}
+        <LiveIndicator lastUpdated={lastUpdated ?? null} isStale={isDataStale} />
 
         {trailing && <>{trailing}</>}
       </div>

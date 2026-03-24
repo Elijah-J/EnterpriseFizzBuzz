@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkline } from "@/components/charts";
 import { AnimatedNumber } from "@/components/ui/animated-number";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MetricsSummary } from "@/lib/data-providers";
 import { useDataProvider } from "@/lib/data-providers";
@@ -83,12 +84,7 @@ export function ThroughputWidget() {
             <span className="data-unit">eval/s</span>
           </div>
           {throughputDelta !== null && (
-            <span
-              className={`text-xs font-medium ${throughputDelta >= 0 ? "text-fizz-400" : "text-[var(--status-error)]"}`}
-            >
-              {throughputDelta >= 0 ? "\u25B2" : "\u25BC"}{" "}
-              {Math.abs(throughputDelta).toFixed(1)}%
-            </span>
+            <DeltaBadge value={throughputDelta} />
           )}
         </div>
         <div>

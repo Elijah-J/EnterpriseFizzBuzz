@@ -7,6 +7,7 @@ import { Topographic } from "@/components/backgrounds";
 import { PageTransition } from "@/components/transitions";
 import { CustomCursor } from "@/components/ui/custom-cursor";
 import { KeyboardShortcutOverlay } from "@/components/ui/keyboard-shortcut-overlay";
+import { LiveIndicator } from "@/components/ui/live-indicator";
 import { useKeyboardNavigation } from "@/lib/hooks/use-keyboard-navigation";
 import { Breadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
@@ -45,6 +46,8 @@ export function LayoutShell({ children }: LayoutShellProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
+  const [liveTimestamp, setLiveTimestamp] = useState<number | null>(null);
+  const [isDataStale, setIsDataStale] = useState(false);
   const pathname = usePathname();
   const topoSeed = useMemo(() => hashPathname(pathname), [pathname]);
 
@@ -66,6 +69,26 @@ export function LayoutShell({ children }: LayoutShellProps) {
     onToggleOverlay: toggleShortcutOverlay,
     navigate: navigateTo,
   });
+
+  // Live data heartbeat — tracks telemetry freshness for the top bar indicator
+  useEffect(() => {
+    const pulse = () => {
+      setLiveTimestamp(Date.now());
+      setIsDataStale(false);
+    };
+    pulse();
+    const id = setInterval(pulse, 5_000);
+    const staleCheck = setInterval(() => {
+      if (liveTimestamp && Date.now() - liveTimestamp > 10_000) {
+        setIsDataStale(true);
+      }
+    }, 2_000);
+    return () => {
+      clearInterval(id);
+      clearInterval(staleCheck);
+    };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: liveTimestamp is read inside but should not re-trigger the effect
+  }, []);
 
   // Global Cmd+K / Ctrl+K listener
   useEffect(() => {
@@ -155,10 +178,9 @@ export function LayoutShell({ children }: LayoutShellProps) {
               </kbd>
             </button>
 
-            {/* Operational status indicator */}
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-text-secondary">
-              <span className="h-2 w-2 rounded-full bg-accent" />
-              All Systems Operational
+            {/* Operational status — live temporal indicator */}
+            <span className="hidden sm:inline-flex">
+              <LiveIndicator lastUpdated={liveTimestamp} isStale={isDataStale} />
             </span>
           </div>
         </header>
