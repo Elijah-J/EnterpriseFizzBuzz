@@ -767,8 +767,8 @@ export default function ChaosEngineeringPage() {
           items={[
             { label: "Resilience Score", value: `${metrics.resilienceScore}/100`, trend: { direction: metrics.resilienceScore >= 80 ? "up" as const : "down" as const, label: metrics.resilienceScore >= 80 ? "Healthy" : "Below threshold" } },
             { label: "Experiments Run", value: String(metrics.experimentsRun) },
-            { label: "MTTR", value: `${metrics.mttrMs}ms` },
-            { label: "Fault Injection Rate", value: `${metrics.faultInjectionRate.toFixed(1)}/hr` },
+            { label: "MTTR", value: `${(metrics.meanTimeToRecovery / 1000).toFixed(1)}s` },
+            { label: "Faults Injected", value: String(metrics.faultsInjected) },
           ]}
           className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
         />
