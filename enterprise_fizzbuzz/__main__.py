@@ -817,6 +817,14 @@ from enterprise_fizzbuzz.infrastructure.bootloader import (
     BootMiddleware,
     KernelLoader,
 )
+from enterprise_fizzbuzz.infrastructure.fizzlife import (
+    FizzLifeDashboard,
+    FizzLifeEngine,
+    FizzLifeEvolver,
+    FizzLifeMiddleware,
+    SpeciesCatalog,
+    create_fizzlife_subsystem,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -4218,6 +4226,123 @@ def build_argument_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="TYPE",
         help="Default ITIL change type for evaluations: STANDARD, NORMAL, or EMERGENCY (default: from config, typically NORMAL)",
+    )
+
+    # FizzLife — Flow-Lenia Continuous Cellular Automaton Engine
+    parser.add_argument(
+        "--fizzlife",
+        action="store_true",
+        help="Enable FizzLife: Flow-Lenia continuous cellular automaton engine for emergent FizzBuzz classification",
+    )
+    parser.add_argument(
+        "--fizzlife-grid-size",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Grid dimensions NxN for the toroidal simulation grid (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-generations",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of simulation generations to evolve (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-kernel-type",
+        type=str,
+        default=None,
+        choices=["exponential", "polynomial", "rectangular"],
+        metavar="TYPE",
+        help="Kernel core function type: exponential, polynomial, or rectangular (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-kernel-radius",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Convolution kernel radius R (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-kernel-rank",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of concentric kernel rings for multi-ring kernels (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-growth-mu",
+        type=float,
+        default=None,
+        metavar="FLOAT",
+        help="Growth function center parameter mu (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-growth-sigma",
+        type=float,
+        default=None,
+        metavar="FLOAT",
+        help="Growth function width parameter sigma (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-dt",
+        type=float,
+        default=None,
+        metavar="FLOAT",
+        help="Simulation time step dt (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-channels",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of state channels for multi-channel Lenia (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-mass-conservation",
+        action="store_true",
+        help="Enable mass conservation mode (Flow-Lenia divergence-free velocity field)",
+    )
+    parser.add_argument(
+        "--fizzlife-species-catalog",
+        action="store_true",
+        help="Print the FizzLife species catalog and exit",
+    )
+    parser.add_argument(
+        "--fizzlife-evolve",
+        action="store_true",
+        help="Use genetic algorithm to discover novel Lenia species for FizzBuzz classification",
+    )
+    parser.add_argument(
+        "--fizzlife-population",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Population size for evolutionary species discovery (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-evo-generations",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Number of evolution generations for species discovery (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-seed",
+        type=int,
+        default=None,
+        metavar="SEED",
+        help="Random seed for reproducible simulations and evolution (default: from config)",
+    )
+    parser.add_argument(
+        "--fizzlife-dashboard",
+        action="store_true",
+        help="Display the FizzLife ASCII simulation dashboard after execution",
+    )
+    parser.add_argument(
+        "--fizzlife-verbose",
+        action="store_true",
+        help="Enable verbose logging of per-generation simulation telemetry in context metadata",
     )
 
     return parser
@@ -8824,6 +8949,67 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +----------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzLife: Flow-Lenia Continuous Cellular Automaton Engine
+    # ----------------------------------------------------------------
+    fizzlife_middleware_instance = None
+    fizzlife_dashboard_instance = None
+    fizzlife_catalog_instance = None
+
+    if (args.fizzlife or args.fizzlife_dashboard or args.fizzlife_species_catalog
+            or args.fizzlife_evolve):
+        fizzlife_middleware_instance, fizzlife_dashboard_instance, fizzlife_catalog_instance, fizzlife_config = create_fizzlife_subsystem(
+            grid_size=args.fizzlife_grid_size or config.fizzlife_grid_width,
+            generations=args.fizzlife_generations or config.fizzlife_max_generations,
+            kernel_type=args.fizzlife_kernel_type or config.fizzlife_kernel_type,
+            kernel_radius=args.fizzlife_kernel_radius or config.fizzlife_kernel_radius,
+            kernel_rank=args.fizzlife_kernel_rank or 1,
+            growth_mu=args.fizzlife_growth_mu if args.fizzlife_growth_mu is not None else config.fizzlife_growth_center,
+            growth_sigma=args.fizzlife_growth_sigma if args.fizzlife_growth_sigma is not None else config.fizzlife_growth_width,
+            dt=args.fizzlife_dt if args.fizzlife_dt is not None else config.fizzlife_dt,
+            channels=args.fizzlife_channels or 1,
+            mass_conservation=args.fizzlife_mass_conservation,
+            seed=args.fizzlife_seed if args.fizzlife_seed is not None else config.fizzlife_seed,
+            verbose=args.fizzlife_verbose,
+            event_bus=event_bus if 'event_bus' in dir() else None,
+        )
+
+        # Species catalog: print and exit
+        if args.fizzlife_species_catalog:
+            print()
+            print(fizzlife_catalog_instance.render())
+            return 0
+
+        # Evolutionary species discovery
+        if args.fizzlife_evolve:
+            evolver = FizzLifeEvolver(
+                population_size=args.fizzlife_population or config.fizzlife_evolution_population_size,
+                generations=args.fizzlife_evo_generations or config.fizzlife_evolution_generations,
+                mutation_rate=config.fizzlife_evolution_mutation_rate,
+                crossover_rate=config.fizzlife_evolution_crossover_rate,
+                seed=args.fizzlife_seed if args.fizzlife_seed is not None else config.fizzlife_seed,
+            )
+            evolver.evolve()
+            print()
+            print(evolver.render_results())
+
+        builder.with_middleware(fizzlife_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "\n"
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZLIFE: FLOW-LENIA CONTINUOUS CELLULAR AUTOMATON      |\n"
+                "  +---------------------------------------------------------+\n"
+                f"  | Grid: {fizzlife_config.grid_size}x{fizzlife_config.grid_size:<10} Generations: {fizzlife_config.generations:<14}|\n"
+                f"  | Kernel: {fizzlife_config.kernel.kernel_type.name:<12} R={fizzlife_config.kernel.radius:<3} "
+                f"dt={fizzlife_config.dt:<18.3f}|\n"
+                f"  | Growth: mu={fizzlife_config.growth.mu:<8.4f} sigma={fizzlife_config.growth.sigma:<15.4f}|\n"
+                "  | FFT convolution, species detection, mass conservation   |\n"
+                "  | Lenia (Bert Chan, 2019) architecture                    |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -12630,6 +12816,19 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(BootDashboard.render(boot_middleware_instance.loader))
     elif args.boot_dashboard and not boot_active:
         print("\n  FizzBoot not enabled. Use --boot to enable.\n")
+
+    # FizzLife Dashboard (post-execution)
+    if args.fizzlife_dashboard and fizzlife_middleware_instance is not None:
+        print()
+        if fizzlife_middleware_instance.engine is not None:
+            print(fizzlife_dashboard_instance.render(
+                fizzlife_middleware_instance.engine,
+                fizzlife_middleware_instance.reports,
+            ))
+        print()
+        print(fizzlife_middleware_instance.render_stats())
+    elif args.fizzlife_dashboard and fizzlife_middleware_instance is None:
+        print("\n  FizzLife not enabled. Use --fizzlife to enable.\n")
 
     # Shutdown the kernel if it was booted
     if fizzbuzz_kernel is not None:

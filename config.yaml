@@ -55,3 +55,43 @@ observers:
     enabled: false
   statistics_observer:
     enabled: true
+
+# FizzLife — Flow-Lenia Continuous Cellular Automaton Engine
+# Embeds FizzBuzz evaluation into a continuous cellular automaton
+# (Lenia) for spatiotemporal pattern classification.
+fizzlife:
+  enabled: false
+  grid_width: 64
+  grid_height: 64
+  dt: 0.1
+  max_generations: 500
+  convergence_threshold: 0.001
+  mass_tolerance: 0.05
+  seed: null
+  kernel:
+    type: "polynomial"
+    radius: 13
+    alpha: 4.0
+    peaks: [1.0]
+    normalize: true
+  growth:
+    type: "gaussian"
+    center: 0.15
+    width: 0.015
+  species:
+    min_mass: 0.01
+    stability_window: 10
+    similarity_threshold: 0.85
+  evolution:
+    enabled: false
+    population_size: 20
+    generations: 50
+    mutation_rate: 0.2
+    crossover_rate: 0.7
+    fitness_weights:
+      diversity: 0.40
+      longevity: 0.30
+      complexity: 0.30
+  dashboard:
+    width: 72
+    grid_display_size: 32
