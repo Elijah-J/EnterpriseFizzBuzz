@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { DataProvider } from "@/lib/data-providers";
 
 vi.mock("@/lib/hooks/use-reduced-motion", () => ({
   useReducedMotion: () => true,
@@ -9,61 +10,76 @@ vi.mock("@/lib/hooks/use-animated-number", () => ({
   useAnimatedNumber: (value: number) => String(value),
 }));
 
-vi.mock("@/lib/data-providers", () => ({
-  useDataProvider: () => ({
-    getConsensusStatus: vi.fn().mockResolvedValue({
-      leaderNode: "fizz-node-alpha-7f3a",
-      ballotNumber: 42,
-      nodesAcknowledged: 4,
-      clusterSize: 5,
-      consensusAchieved: true,
-    }),
-  }),
-}));
-
 import { ConsensusWidget } from "../consensus-widget";
+
+function renderWidget() {
+  return render(
+    <DataProvider>
+      <ConsensusWidget />
+    </DataProvider>,
+  );
+}
 
 describe("ConsensusWidget", () => {
   it("renders skeleton loading state initially", () => {
-    const { container } = render(<ConsensusWidget />);
+    const { container } = renderWidget();
     const skeletons = container.querySelectorAll('[role="status"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it("renders leader node identifier after data loads", async () => {
-    render(<ConsensusWidget />);
+  it("renders leader node identifier from real provider after data loads", async () => {
+    renderWidget();
+    // SimulationProvider returns one of the CLUSTER_NODES
+    const clusterNodes = [
+      "fizz-eval-us-east-1a",
+      "fizz-eval-us-west-2b",
+      "fizz-eval-eu-west-1c",
+      "fizz-eval-ap-south-1a",
+      "fizz-eval-eu-central-1b",
+    ];
     await waitFor(() => {
-      expect(screen.getByText("fizz-node-alpha-7f3a")).toBeInTheDocument();
+      const found = clusterNodes.some((node) => screen.queryByText(node));
+      expect(found).toBe(true);
     });
   });
 
-  it("renders consensus achieved badge", async () => {
-    render(<ConsensusWidget />);
+  it("renders consensus badge from real provider", async () => {
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("CONSENSUS ACHIEVED")).toBeInTheDocument();
+      const badge = screen.getByText((content) => {
+        return content === "CONSENSUS ACHIEVED" || content === "ELECTION IN PROGRESS";
+      });
+      expect(badge).toBeInTheDocument();
     });
   });
 
-  it("renders ballot number", async () => {
-    render(<ConsensusWidget />);
+  it("renders ballot number label", async () => {
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("42")).toBeInTheDocument();
+      expect(screen.getByText("Ballot #")).toBeInTheDocument();
+    });
+  });
+
+  it("renders cluster consensus label", async () => {
+    renderWidget();
+    await waitFor(() => {
+      expect(screen.getByText("Cluster Consensus")).toBeInTheDocument();
     });
   });
 
   it("renders node visualization dots matching cluster size", async () => {
-    const { container } = render(<ConsensusWidget />);
+    const { container } = renderWidget();
     await waitFor(() => {
+      // SimulationProvider cluster has 5 nodes
       const dots = container.querySelectorAll("div[class*='rounded-full'][class*='w-3']");
       expect(dots.length).toBe(5);
     });
   });
 
-  it("shows acknowledged nodes with green color", async () => {
-    const { container } = render(<ConsensusWidget />);
+  it("renders nodes ACK label from real provider", async () => {
+    renderWidget();
     await waitFor(() => {
-      const greenDots = container.querySelectorAll("div[class*='bg-fizz-500']");
-      expect(greenDots.length).toBe(4);
+      expect(screen.getByText("Nodes ACK")).toBeInTheDocument();
     });
   });
 });

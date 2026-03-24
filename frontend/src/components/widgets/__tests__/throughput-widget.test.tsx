@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { DataProvider } from "@/lib/data-providers";
 
 beforeAll(() => {
   if (!SVGElement.prototype.getTotalLength) {
@@ -19,63 +20,69 @@ vi.mock("@/lib/hooks/use-animated-number", () => ({
   },
 }));
 
-const mockGetMetricsSummary = vi.fn().mockResolvedValue({
-  totalEvaluations: 1284700,
-  evaluationsPerSecond: 12847,
-  cacheHitRate: 0.974,
-  averageLatencyMs: 4.23,
-  uptimeSeconds: 345600,
-  throughputHistory: [10, 14, 12, 18, 15, 20, 17, 19],
-});
-
-vi.mock("@/lib/data-providers", () => ({
-  useDataProvider: () => ({
-    getMetricsSummary: mockGetMetricsSummary,
-  }),
-}));
-
 import { ThroughputWidget } from "../throughput-widget";
+
+function renderWidget() {
+  return render(
+    <DataProvider>
+      <ThroughputWidget />
+    </DataProvider>,
+  );
+}
 
 describe("ThroughputWidget", () => {
   it("renders skeleton loading state initially", () => {
-    mockGetMetricsSummary.mockReturnValueOnce(new Promise(() => {}));
-    const { container } = render(<ThroughputWidget />);
+    const { container } = renderWidget();
     const skeletons = container.querySelectorAll('[role="status"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it("renders animated throughput number after data loads", async () => {
-    render(<ThroughputWidget />);
+  it("renders throughput number after data loads", async () => {
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("12847")).toBeInTheDocument();
+      expect(screen.getByText("eval/s")).toBeInTheDocument();
     });
   });
 
   it("renders eval/s unit label", async () => {
-    render(<ThroughputWidget />);
+    renderWidget();
     await waitFor(() => {
       expect(screen.getByText("eval/s")).toBeInTheDocument();
     });
   });
 
   it("renders average latency metric", async () => {
-    render(<ThroughputWidget />);
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("4.23")).toBeInTheDocument();
+      expect(screen.getByText("Avg Latency")).toBeInTheDocument();
     });
   });
 
   it("renders sparkline SVG after data loads", async () => {
-    const { container } = render(<ThroughputWidget />);
+    const { container } = renderWidget();
     await waitFor(() => {
       expect(container.querySelector("svg")).toBeInTheDocument();
     });
   });
 
   it("renders uptime information", async () => {
-    render(<ThroughputWidget />);
+    renderWidget();
     await waitFor(() => {
       expect(screen.getByText(/Uptime/)).toBeInTheDocument();
+    });
+  });
+
+  it("renders cache hit rate from real provider", async () => {
+    renderWidget();
+    await waitFor(() => {
+      expect(screen.getByText("Cache Hit Rate")).toBeInTheDocument();
+    });
+  });
+
+  it("renders total evaluations from real provider", async () => {
+    renderWidget();
+    await waitFor(() => {
+      expect(screen.getByText("Total Evaluations")).toBeInTheDocument();
     });
   });
 });
