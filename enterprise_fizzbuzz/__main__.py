@@ -530,6 +530,16 @@ from enterprise_fizzbuzz.infrastructure.fizzimage import (
     FizzImageMiddleware,
     create_fizzimage_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzcontainerchaos import (
+    ChaosExecutor,
+    ChaosExperiment,
+    FaultConfig,
+    GameDayOrchestrator,
+    ContainerChaosDashboard,
+    FizzContainerChaosMiddleware,
+    PredefinedGameDays,
+    create_fizzcontainerchaos_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3833,6 +3843,56 @@ def build_argument_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="Run vulnerability scanning against all catalog images",
+    )
+
+    # FizzContainerChaos — Container-Native Chaos Engineering
+    parser.add_argument(
+        "--fizzcontainerchaos",
+        action="store_true",
+        help="Enable FizzContainerChaos: container-native chaos engineering with fault injection, game days, and cognitive load gating",
+    )
+    parser.add_argument(
+        "--fizzcontainerchaos-run",
+        type=str,
+        default=None,
+        metavar="EXPERIMENT",
+        help="Run a chaos experiment (experiment name or YAML path)",
+    )
+    parser.add_argument(
+        "--fizzcontainerchaos-gameday",
+        type=str,
+        default=None,
+        metavar="GAMEDAY",
+        help="Run a predefined game day (container_restart, network_partition, resource_exhaustion, full_outage)",
+    )
+    parser.add_argument(
+        "--fizzcontainerchaos-status",
+        action="store_true",
+        help="Display active chaos experiments with status",
+    )
+    parser.add_argument(
+        "--fizzcontainerchaos-abort",
+        type=str,
+        default=None,
+        metavar="EXPERIMENT_ID",
+        help="Abort a running chaos experiment by ID",
+    )
+    parser.add_argument(
+        "--fizzcontainerchaos-report",
+        type=str,
+        default=None,
+        metavar="EXPERIMENT_ID",
+        help="Display chaos experiment report by ID",
+    )
+    parser.add_argument(
+        "--fizzcontainerchaos-list-faults",
+        action="store_true",
+        help="List available fault types with configurable parameters",
+    )
+    parser.add_argument(
+        "--fizzcontainerchaos-blast-radius",
+        action="store_true",
+        help="Show current blast radius across all active experiments",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8301,6 +8361,42 @@ def main(argv: Optional[list[str]] = None) -> int:
         if args.fizzimage_build_all:
             fizzimage_catalog_instance.build_all()
 
+    # ----------------------------------------------------------------
+    # FizzContainerChaos: Container-Native Chaos Engineering
+    # ----------------------------------------------------------------
+    chaos_executor_instance = None
+    chaos_orchestrator_instance = None
+    chaos_middleware_instance = None
+
+    if (args.fizzcontainerchaos or args.fizzcontainerchaos_run or args.fizzcontainerchaos_gameday
+            or args.fizzcontainerchaos_status or args.fizzcontainerchaos_abort
+            or args.fizzcontainerchaos_report or args.fizzcontainerchaos_list_faults
+            or args.fizzcontainerchaos_blast_radius):
+        chaos_executor_instance, chaos_orchestrator_instance, chaos_middleware_instance = create_fizzcontainerchaos_subsystem(
+            cognitive_load_threshold=config.fizzcontainerchaos_cognitive_load_threshold,
+            blast_radius_limit=config.fizzcontainerchaos_blast_radius_limit,
+            blast_radius_scope=config.fizzcontainerchaos_blast_radius_scope,
+            observation_interval=config.fizzcontainerchaos_observation_interval,
+            steady_state_tolerance=config.fizzcontainerchaos_steady_state_tolerance,
+            dashboard_width=config.fizzcontainerchaos_dashboard_width,
+            enable_dashboard=args.fizzcontainerchaos_status,
+            event_bus=event_bus if 'event_bus' in dir() else None,
+        )
+        builder.with_middleware(chaos_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "\n"
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCONTAINERCHAOS: CONTAINER-NATIVE CHAOS ENGINEERING  |\n"
+                "  +---------------------------------------------------------+\n"
+                f"  | Blast Radius Limit: {config.fizzcontainerchaos_blast_radius_limit:<6.0%}  Cognitive Threshold: {config.fizzcontainerchaos_cognitive_load_threshold:<4.0f} |\n"
+                "  | 8 fault types: kill, partition, CPU, memory, disk,      |\n"
+                "  | image pull, DNS, latency | Game day orchestration       |\n"
+                "  | Chaos Mesh v2.6 architecture                            |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11852,6 +11948,69 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.fizzimage_scan and fizzimage_middleware_instance is not None:
         print()
         print(fizzimage_middleware_instance.render_scan_results())
+
+    # FizzContainerChaos Status (post-execution)
+    if args.fizzcontainerchaos_status and chaos_middleware_instance is not None:
+        print()
+        print(chaos_middleware_instance.render_status())
+    elif args.fizzcontainerchaos_status and chaos_middleware_instance is None:
+        print("\n  FizzContainerChaos not enabled. Use --fizzcontainerchaos to enable.\n")
+
+    # FizzContainerChaos List Faults (post-execution)
+    if args.fizzcontainerchaos_list_faults and chaos_middleware_instance is not None:
+        print()
+        print(chaos_middleware_instance.render_fault_list())
+    elif args.fizzcontainerchaos_list_faults and chaos_middleware_instance is None:
+        print("\n  FizzContainerChaos not enabled. Use --fizzcontainerchaos to enable.\n")
+
+    # FizzContainerChaos Blast Radius (post-execution)
+    if args.fizzcontainerchaos_blast_radius and chaos_middleware_instance is not None:
+        print()
+        print(chaos_middleware_instance.render_blast_radius())
+    elif args.fizzcontainerchaos_blast_radius and chaos_middleware_instance is None:
+        print("\n  FizzContainerChaos not enabled. Use --fizzcontainerchaos to enable.\n")
+
+    # FizzContainerChaos Report (post-execution)
+    if args.fizzcontainerchaos_report and chaos_middleware_instance is not None:
+        print()
+        print(chaos_middleware_instance.render_report(args.fizzcontainerchaos_report))
+    elif args.fizzcontainerchaos_report and chaos_middleware_instance is None:
+        print("\n  FizzContainerChaos not enabled. Use --fizzcontainerchaos to enable.\n")
+
+    # FizzContainerChaos Run Experiment (post-execution)
+    if args.fizzcontainerchaos_run and chaos_executor_instance is not None:
+        # Create and run experiment from the specified name/type
+        from enterprise_fizzbuzz.infrastructure.fizzcontainerchaos import FaultType as CCFaultType
+        fault_type_map = {ft.value: ft for ft in CCFaultType}
+        if args.fizzcontainerchaos_run in fault_type_map:
+            exp = ChaosExperiment(
+                name=f"CLI {args.fizzcontainerchaos_run} experiment",
+                fault_config=FaultConfig(fault_type=fault_type_map[args.fizzcontainerchaos_run]),
+            )
+            exp_id = chaos_executor_instance.register_experiment(exp)
+            report = chaos_executor_instance.run_experiment(exp_id)
+            print()
+            print(chaos_middleware_instance.render_report(exp_id))
+
+    # FizzContainerChaos Game Day (post-execution)
+    if args.fizzcontainerchaos_gameday and chaos_orchestrator_instance is not None:
+        gameday_map = {
+            "container_restart": PredefinedGameDays.container_restart_resilience,
+            "network_partition": PredefinedGameDays.network_partition_tolerance,
+            "resource_exhaustion": PredefinedGameDays.resource_exhaustion,
+            "full_outage": PredefinedGameDays.full_outage_recovery,
+        }
+        if args.fizzcontainerchaos_gameday in gameday_map:
+            gameday = gameday_map[args.fizzcontainerchaos_gameday]()
+            gd_id = chaos_orchestrator_instance.register_gameday(gameday)
+            gd_report = chaos_orchestrator_instance.run_gameday(gd_id)
+            print()
+            print(chaos_middleware_instance.render_gameday_report(gd_id))
+
+    # FizzContainerChaos Abort (post-execution)
+    if args.fizzcontainerchaos_abort and chaos_executor_instance is not None:
+        chaos_executor_instance.abort_experiment(args.fizzcontainerchaos_abort)
+        print(f"\n  Experiment {args.fizzcontainerchaos_abort} aborted.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:
