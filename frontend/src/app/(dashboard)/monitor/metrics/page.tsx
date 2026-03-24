@@ -8,6 +8,7 @@ import { Sparkline } from "@/components/charts/sparkline";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs } from "@/components/ui/tabs";
 import type { MetricDefinition, TimeSeriesData } from "@/lib/data-providers";
 import { useDataProvider } from "@/lib/data-providers";
 
@@ -287,23 +288,18 @@ export default function MetricsPage() {
           )}
         </div>
 
-        {/* Time range selector */}
-        <div className="flex rounded border border-border-subtle overflow-hidden">
-          {TIME_RANGES.map((tr) => (
-            <button
-              key={tr.label}
-              type="button"
-              onClick={() => setTimeRange(tr)}
-              className={`px-2.5 py-1 text-xs transition-colors ${
-                tr.label === timeRange.label
-                  ? "bg-surface-overlay text-text-primary"
-                  : "bg-surface-raised text-text-secondary hover:bg-surface-overlay hover:text-text-secondary"
-              }`}
-            >
-              {tr.label}
-            </button>
-          ))}
-        </div>
+        {/* Time range selector — Tabs component for consistent navigation */}
+        <Tabs
+          items={TIME_RANGES.map((tr) => ({
+            label: tr.label,
+            content: null as unknown as React.ReactNode,
+          }))}
+          activeIndex={TIME_RANGES.findIndex(
+            (tr) => tr.label === timeRange.label,
+          )}
+          onChange={(idx) => setTimeRange(TIME_RANGES[idx])}
+          className="[&_[role=tabpanel]]:hidden [&_[role=tablist]]:border-0"
+        />
 
         {/* Auto-refresh controls */}
         <div className="flex items-center gap-2 ml-auto">

@@ -382,6 +382,35 @@
   }
 }
 
+/**
+ * Dialog backdrop entrance — opacity fade from transparent to final state.
+ * Separated from the panel animation to allow independent timing control.
+ */
+@keyframes dialog-backdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/**
+ * Dialog panel entrance — combined opacity and vertical shift matching
+ * the platform's standard enter motion vocabulary. The 8px translateY
+ * offset creates a subtle upward settle that communicates layering depth.
+ */
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
