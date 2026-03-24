@@ -1332,6 +1332,13 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --fizzcgroup-stats PATH      Display resource statistics for a specific cgroup path, including CPU usage/throttling, memory current/max/high/low, I/O bytes read/written per device, PIDs current/max, and OOM event history
 --fizzcgroup-limit PATH:CTRL:PARAM=VALUE  Set a resource limit on a cgroup: CPU (cpu.max, cpu.weight), Memory (memory.max, memory.high, memory.low), IO (io.max, io.weight), PIDs (pids.max). Example: --fizzcgroup-limit /fizzkube/pod-1:memory:max=268435456
 --fizzcgroup-top             Display real-time resource usage across all cgroups, sorted by CPU or memory utilization, with throttle state indicators and OOM kill counts -- the cgroup equivalent of the Unix top command
+
+# FizzOverlay -- Copy-on-Write Union Filesystem
+--overlay                    Enable the FizzOverlay copy-on-write union filesystem, providing OverlayFS-style layered filesystem semantics with content-addressable layer storage, whiteout management, and snapshot lifecycle for container image layers
+--overlay-layers             List all layers in the content-addressable store, displaying SHA-256 digest, diff_id, uncompressed size, reference count, compression type, and creation timestamp for each layer
+--overlay-mounts             Display all active overlay mounts with their lowerdir stack, upperdir path, merged view path, mount state, and associated container ID
+--overlay-diff DIGEST_A DIGEST_B  Compute and display the filesystem differences between two layers identified by digest, showing added, modified, and deleted entries with file sizes and whiteout markers
+--overlay-cache              Display layer cache statistics including cache size, capacity, hit rate, miss rate, eviction count, and memory utilization with LRU ordering
 ```
 
 ## Environment Variables

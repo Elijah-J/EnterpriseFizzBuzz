@@ -494,6 +494,12 @@ from enterprise_fizzbuzz.infrastructure.fizzcgroup import (
     ResourceAccountant,
     create_fizzcgroup_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzoverlay import (
+    FizzOverlayMiddleware,
+    LayerStore,
+    OverlayDashboard,
+    create_fizzoverlay_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.fizzoci import (
     OCIDashboard,
     OCIRuntime,
@@ -3641,6 +3647,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzoci-lifecycle",
         action="store_true",
         help="Display the container lifecycle event log after execution",
+    )
+
+    # FizzOverlay — Copy-on-Write Union Filesystem
+    parser.add_argument(
+        "--overlay",
+        action="store_true",
+        help="Enable FizzOverlay: copy-on-write union filesystem with content-addressable layers, whiteouts, and snapshotter",
+    )
+    parser.add_argument(
+        "--overlay-layers",
+        action="store_true",
+        help="Display list of all layers in the content store after execution",
+    )
+    parser.add_argument(
+        "--overlay-mounts",
+        action="store_true",
+        help="Display list of active overlay mounts after execution",
+    )
+    parser.add_argument(
+        "--overlay-diff",
+        action="store_true",
+        help="Display diff engine summary after execution",
+    )
+    parser.add_argument(
+        "--overlay-cache",
+        action="store_true",
+        help="Display layer cache statistics after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -7946,6 +7979,35 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzOverlay — Copy-on-Write Union Filesystem
+    # ----------------------------------------------------------------
+    overlay_store = None
+    overlay_middleware_instance = None
+
+    if args.overlay or args.overlay_layers or args.overlay_mounts or args.overlay_diff or args.overlay_cache:
+        overlay_store, overlay_middleware_instance = create_fizzoverlay_subsystem(
+            max_layers=config.fizzoverlay_max_layers,
+            layer_cache_size=config.fizzoverlay_layer_cache_size,
+            default_compression=config.fizzoverlay_default_compression,
+            dashboard_width=config.fizzoverlay_dashboard_width,
+            enable_dashboard=args.overlay_layers,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(overlay_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZOVERLAY: COPY-ON-WRITE UNION FILESYSTEM            |\n"
+                f"  | Max Layers: {config.fizzoverlay_max_layers:<10} Cache: {config.fizzoverlay_layer_cache_size:<10}       |\n"
+                f"  | Compression: {config.fizzoverlay_default_compression:<20}                |\n"
+                "  | Content-addressable layers, SHA-256 deduplication      |\n"
+                "  | OverlayFS semantics: lowerdir + upperdir = merged      |\n"
+                "  | Whiteouts, copy-on-write, snapshotter, diff engine     |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11354,6 +11416,34 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(oci_middleware_instance.render_lifecycle())
     elif args.fizzoci_lifecycle and oci_middleware_instance is None:
         print("\n  FizzOCI not enabled. Use --fizzoci to enable.\n")
+
+    # FizzOverlay Layers (post-execution)
+    if args.overlay_layers and overlay_middleware_instance is not None:
+        print()
+        print(overlay_middleware_instance.render_layer_list())
+    elif args.overlay_layers and overlay_middleware_instance is None:
+        print("\n  FizzOverlay not enabled. Use --overlay to enable.\n")
+
+    # FizzOverlay Mounts (post-execution)
+    if args.overlay_mounts and overlay_middleware_instance is not None:
+        print()
+        print(overlay_middleware_instance.render_mount_list())
+    elif args.overlay_mounts and overlay_middleware_instance is None:
+        print("\n  FizzOverlay not enabled. Use --overlay to enable.\n")
+
+    # FizzOverlay Diff (post-execution)
+    if args.overlay_diff and overlay_middleware_instance is not None:
+        print()
+        print(overlay_middleware_instance.render_diff_summary())
+    elif args.overlay_diff and overlay_middleware_instance is None:
+        print("\n  FizzOverlay not enabled. Use --overlay to enable.\n")
+
+    # FizzOverlay Cache (post-execution)
+    if args.overlay_cache and overlay_middleware_instance is not None:
+        print()
+        print(overlay_middleware_instance.render_cache_stats())
+    elif args.overlay_cache and overlay_middleware_instance is None:
+        print("\n  FizzOverlay not enabled. Use --overlay to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

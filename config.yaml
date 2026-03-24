@@ -2007,6 +2007,14 @@ fizzcgroup:
   dashboard:
     width: 72                             # ASCII dashboard width
 
+fizzoverlay:
+  enabled: false                          # Master switch — opt-in via --overlay
+  max_layers: 128                         # Maximum layers in the content-addressable store
+  layer_cache_size: 64                    # Maximum cached unpacked layers (LRU)
+  default_compression: gzip              # Compression for layer archives (none, gzip, zstd)
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizzoci:
   enabled: false                          # Master switch — opt-in via --fizzoci
   default_seccomp_profile: default        # Seccomp profile: default, strict, unconfined

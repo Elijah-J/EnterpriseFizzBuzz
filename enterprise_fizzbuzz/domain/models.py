@@ -808,6 +808,24 @@ class EventType(Enum):
     OCI_SPEC_GENERATED = auto()
     OCI_DASHBOARD_RENDERED = auto()
 
+    # FizzOverlay: Copy-on-Write Union Filesystem
+    OVL_LAYER_CREATED = auto()
+    OVL_LAYER_DELETED = auto()
+    OVL_LAYER_VERIFIED = auto()
+    OVL_STORE_GC = auto()
+    OVL_MOUNT_CREATED = auto()
+    OVL_MOUNT_DESTROYED = auto()
+    OVL_COPY_UP = auto()
+    OVL_WHITEOUT_CREATED = auto()
+    OVL_SNAPSHOT_PREPARED = auto()
+    OVL_SNAPSHOT_COMMITTED = auto()
+    OVL_SNAPSHOT_ABORTED = auto()
+    OVL_DIFF_COMPUTED = auto()
+    OVL_CACHE_HIT = auto()
+    OVL_CACHE_EVICTION = auto()
+    OVL_TAR_PACKED = auto()
+    OVL_PROVIDER_MOUNTED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

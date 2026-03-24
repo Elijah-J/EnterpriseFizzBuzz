@@ -63,6 +63,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzOrg Organizational Hierarchy Architecture](#fizzorg-organizational-hierarchy-architecture)
 - [FizzNS Linux Namespace Isolation Architecture](#fizzns-linux-namespace-isolation-architecture)
 - [FizzCgroup Control Group Resource Accounting Architecture](#fizzcgroup-control-group-resource-accounting-architecture)
+- [FizzOverlay Copy-on-Write Union Filesystem Architecture](#fizzoverlay-copy-on-write-union-filesystem-architecture)
 - [FizzOCI OCI-Compliant Container Runtime Architecture](#fizzoci-oci-compliant-container-runtime-architecture)
 
 ---
@@ -5284,6 +5285,108 @@ The `FizzCgroupMiddleware` integrates into the middleware pipeline at priority 1
 | Test count | ~400 |
 
 FizzCgroup transforms FizzKube's resource specifications from advisory metadata into hard guarantees. A pod that declares `resources.limits.cpu: "500m"` now receives a CFS bandwidth quota of 50000 microseconds per 100000-microsecond period. A pod that declares `resources.limits.memory: "256Mi"` now has a `memory.max` of 268435456 bytes. Resource limits without enforcement are suggestions. Suggestions do not prevent outages. Cgroups do.
+
+---
+
+## FizzOverlay Copy-on-Write Union Filesystem Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/fizzoverlay.py`
+
+FizzOverlay implements an OverlayFS-style copy-on-write union filesystem for composing container image layers into coherent filesystem views. Container images are not monolithic filesystem snapshots -- they are ordered stacks of layers, each containing only the filesystem differences relative to the layer below. FizzOverlay provides the union mount mechanism that composes these layers at runtime.
+
+### Layer Model
+
+```
+                    Content-Addressable Layer Store
+                    ┌─────────────────────────────────────┐
+                    │  Layer A (sha256:a1b2...)            │
+                    │    /bin/fizzbuzz                     │
+                    │    /etc/config.yaml                  │
+                    │    /lib/libfizz.so                   │
+                    │                                     │
+                    │  Layer B (sha256:c3d4...)            │
+                    │    /etc/config.yaml  (modified)      │
+                    │    /opt/plugins/buzz.py              │
+                    │                                     │
+                    │  Layer C (sha256:e5f6...)            │
+                    │    .wh.lib/libfizz.so  (whiteout)   │
+                    │    /var/log/fizz.log                 │
+                    └─────────────────────────────────────┘
+```
+
+Each `Layer` is an immutable, content-addressable filesystem snapshot identified by its SHA-256 digest. The `diff_id` is the SHA-256 of the uncompressed tar archive (identifying content). The `digest` is the SHA-256 of the compressed archive (identifying the distribution artifact). Layers are stored in the `LayerStore` with deduplication -- identical content is stored once regardless of how many images reference it. Reference counting tracks which images and containers hold references; garbage collection reclaims unreferenced layers.
+
+### Union Mount Architecture
+
+```
+    ┌──────────────────────────────────────────────┐
+    │              Merged View                     │
+    │  /bin/fizzbuzz        (from Layer A)         │
+    │  /etc/config.yaml     (from upperdir)        │
+    │  /opt/plugins/buzz.py (from Layer B)         │
+    │  /var/log/fizz.log    (from Layer C)         │
+    │  [/lib/libfizz.so     whited out by Layer C] │
+    └──────────────────────────────────────────────┘
+           ▲
+           │ overlay mount
+    ┌──────┴──────┐
+    │  upperdir   │  ← read-write (container writes go here)
+    ├─────────────┤
+    │  Layer C    │  ← read-only (lowerdir[0])
+    ├─────────────┤
+    │  Layer B    │  ← read-only (lowerdir[1])
+    ├─────────────┤
+    │  Layer A    │  ← read-only (lowerdir[2], base)
+    └─────────────┘
+```
+
+The `OverlayMount` composes one or more read-only `lowerdir` layers with a single read-write `upperdir` into a `merged` view. Path resolution checks `upperdir` first, then each `lowerdir` from top to bottom. Whiteout markers in higher layers hide entries in lower layers.
+
+### Copy-on-Write Engine
+
+The `CopyOnWrite` engine intercepts write operations targeting files that exist only in lower layers. On the first write, the file is copied from its source layer to `upperdir` with full metadata preservation (permissions, ownership, timestamps, extended attributes). Ancestor directories are created as needed. Subsequent writes go directly to `upperdir`. Lower layers are never modified.
+
+### Whiteout Management
+
+File deletion across layers uses whiteout markers per the OCI image specification:
+
+| Whiteout Type | Marker | Effect |
+|---------------|--------|--------|
+| Standard | `.wh.<filename>` | Hides a specific file in lower layers |
+| Opaque | `.wh..wh..opq` (inside dir) | Hides entire directory subtree in lower layers |
+
+Whiteout markers are implementation details invisible to container processes -- the `WhiteoutManager` filters them from directory listings.
+
+### Snapshotter Lifecycle
+
+| Operation | Purpose | Usage |
+|-----------|---------|-------|
+| `prepare(key, layers)` | Create overlay mount with fresh upperdir | Container creation |
+| `commit(key)` | Freeze upperdir as new immutable layer | Image building |
+| `abort(key)` | Discard overlay mount and upperdir | Cancelled operations |
+| `remove(key)` | Unmount and clean up | Container deletion |
+
+### Diff Engine
+
+The `DiffEngine` compares two filesystem trees and produces a diff: the set of added, modified, and deleted entries. Deletions are converted to whiteout entries in the output. This enables image building: after a build step executes, the diff between the overlay's merged view and the previous committed layer produces the new layer's content.
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| Layer types | 3 (BASE, DIFF, SCRATCH) |
+| Mount states | 3 (UNMOUNTED, MOUNTED, FROZEN) |
+| Diff types | 3 (ADDED, MODIFIED, DELETED) |
+| Compression types | 3 (NONE, GZIP, ZSTD) |
+| Snapshot states | 3 (ACTIVE, COMMITTED, ABORTED) |
+| Whiteout types | 2 (standard, opaque) |
+| Middleware priority | 109 |
+| Custom exceptions | 20 (EFP-OVL00 through EFP-OVL19) |
+| EventType entries | 16 |
+| CLI flags | 5 (`--overlay`, `--overlay-layers`, `--overlay-mounts`, `--overlay-diff`, `--overlay-cache`) |
+| Test count | ~300 |
+
+FizzOverlay provides the filesystem layer that makes container images work. FizzRegistry will produce layered images. FizzOCI will consume them. FizzOverlay is the union filesystem that composes layers into a single coherent view at container creation time -- enabling image sharing, fast startup, and efficient storage through content-addressable deduplication.
 
 ---
 
