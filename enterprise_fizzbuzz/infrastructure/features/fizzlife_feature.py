@@ -111,10 +111,24 @@ class FizzLifeFeature(FeatureDescriptor):
         parts = []
 
         if getattr(args, "fizzlife_dashboard", False):
-            engine = getattr(middleware, "engine", None)
-            if engine is not None:
-                # Dashboard instance would need to be retrieved from service tuple
-                pass
-            parts.append(middleware.render_stats())
+            # Run a full-size showcase simulation for the dashboard.
+            # The per-number middleware uses fast 16x16 grids; the
+            # dashboard deserves the full 64x64 experience.
+            from enterprise_fizzbuzz.infrastructure.fizzlife import (
+                FizzLifeDashboard,
+                FizzLifeEngine,
+                SimulationConfig,
+                create_default_config,
+            )
+            config = create_default_config()
+            config.grid_size = 64
+            config.generations = 200
+            config.seed = 42
+            engine = FizzLifeEngine(config)
+            result = engine.run()
+            dashboard = FizzLifeDashboard(config)
+            parts.append(dashboard.render(result.reports))
+
+        parts.append(middleware.render_stats())
 
         return "\n".join(parts) if parts else None

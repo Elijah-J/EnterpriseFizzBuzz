@@ -3112,6 +3112,17 @@ class FizzLifeMiddleware:
         result = engine.run()
         self._total_simulations += 1
 
+        # Progress indicator: print inline status to stderr.
+        # The carriage return overwrites the previous line, producing
+        # a live-updating counter without scrolling the output.
+        import sys
+        label = result.classification or str(number)
+        sys.stderr.write(
+            f"\r  FizzLife: simulating n={number:<6d} -> {label:<8s} "
+            f"[{self._total_simulations} done, {result.final_mass:.1f} mass]"
+        )
+        sys.stderr.flush()
+
         # Track mass conservation fidelity
         if result.mass_conserved:
             self._total_mass_conserved += 1
@@ -3171,6 +3182,10 @@ class FizzLifeMiddleware:
 
     def render_stats(self) -> str:
         """Render a summary of all simulations run through this middleware."""
+        # Clear the progress line from stderr
+        import sys
+        sys.stderr.write("\r" + " " * 80 + "\r")
+        sys.stderr.flush()
         lines = [
             "FizzLife Middleware Statistics",
             f"  Total Simulations:    {self._total_simulations}",
