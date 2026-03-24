@@ -192,9 +192,16 @@ test.describe('Health Check Matrix data flow', () => {
     await expect(page.getByText('Overall').first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Healthy').first()).toBeVisible();
 
-    // Verify health cards rendered with status indicators
-    const statusLabels = page.locator('text=UP, text=DEGRADED, text=DOWN, text=UNKNOWN').first();
-    await expect(statusLabels).toBeAttached({ timeout: 10_000 });
+    // Verify health cards rendered with status indicator labels.
+    // The health page renders each subsystem's status as an uppercase label
+    // (UP, DEGRADED, DOWN, UNKNOWN) inside a <span>. At least one must be
+    // present once the data has loaded.
+    const upLabel = page.getByText('UP', { exact: true }).first();
+    const degradedLabel = page.getByText('DEGRADED', { exact: true }).first();
+    const downLabel = page.getByText('DOWN', { exact: true }).first();
+    await expect(
+      upLabel.or(degradedLabel).or(downLabel),
+    ).toBeAttached({ timeout: 10_000 });
 
     // SVG sparklines should be present
     const sparklines = page.locator('svg[aria-label="Health trend sparkline"]');
@@ -351,14 +358,16 @@ test.describe('Blockchain Explorer data flow', () => {
 
     await expect(page.getByText('Chain Visualization').first()).toBeVisible({ timeout: 15_000 });
 
-    // Block elements should render in the chain strip
+    // Stats bar should have numeric values (rendered once stats load)
+    await expect(page.getByText('Block Height').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Total Transactions').first()).toBeVisible();
+
+    // Block elements render asynchronously after fetchBlocks resolves.
+    // Wait for at least one block to appear in the chain strip.
     const blocks = page.locator('[id^="block-"]');
+    await expect(blocks.first()).toBeAttached({ timeout: 10_000 });
     const blockCount = await blocks.count();
     expect(blockCount, 'Blockchain should render block elements').toBeGreaterThan(0);
-
-    // Stats bar should have numeric values
-    await expect(page.getByText('Block Height').first()).toBeVisible();
-    await expect(page.getByText('Total Transactions').first()).toBeVisible();
 
     assertClean(consoleErrors, uncaughtErrors);
   });
@@ -369,8 +378,11 @@ test.describe('Blockchain Explorer data flow', () => {
 
     await expect(page.getByText('Chain Visualization').first()).toBeVisible({ timeout: 15_000 });
 
-    // Click the first block in the chain
+    // Wait for blocks to render asynchronously
     const firstBlock = page.locator('[id^="block-"]').first();
+    await expect(firstBlock).toBeAttached({ timeout: 10_000 });
+
+    // Click the first block in the chain
     if (await firstBlock.isVisible().catch(() => false)) {
       await firstBlock.click();
       await page.waitForTimeout(1000);
