@@ -1,0 +1,23 @@
+
+# FizzLSP Language Server Protocol Configuration
+# The Language Server Protocol was designed to help developers write code
+# faster.  FizzLang programs average 8 lines and take under 30 seconds
+# to write.  The LSP infrastructure providing IDE intelligence for those
+# 30 seconds exceeds 3,500 lines of protocol handling, analysis pipeline,
+# completion engine, diagnostic publisher, semantic token classifier,
+# code action provider, and formatting engine.  This configuration file
+# controls the 3,500 lines that serve the 8.
+fizzlsp:
+  enabled: false                          # Master switch -- opt-in via --fizzlsp
+  transport: "stdio"                      # Transport type: "stdio" or "tcp"
+  tcp_port: 5007                          # TCP port for the TCP transport (simulated)
+  diagnostic_debounce_ms: 150             # Debounce interval for diagnostic publication
+  max_completion_items: 50                # Maximum completion items per request
+  semantic_tokens_enabled: true           # Whether to compute semantic tokens
+  dependent_type_diagnostics: true        # Include dependent type observations in diagnostics
+  dashboard:
+    width: 60                             # ASCII dashboard width
+    show_documents: true                  # Show active documents table
+    show_diagnostics: true                # Show diagnostic breakdown
+    show_protocol_stats: true             # Show protocol statistics
+    show_complexity_index: true           # Show LSP Complexity Index
