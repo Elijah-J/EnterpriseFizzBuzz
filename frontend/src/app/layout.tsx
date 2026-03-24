@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { Wordmark } from "@/components/brand";
 import { ServiceWorkerRegistration } from "@/components/service-worker-registration";
 import "./globals.css";
 
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
   description:
     "Mission-critical monitoring and administration interface for the Enterprise FizzBuzz Platform. Provides real-time observability into FizzBuzz evaluation pipelines, compliance dashboards, and operational analytics.",
   manifest: "/manifest.json",
-  themeColor: "#0f172a",
+  themeColor: "#0C0A09",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -38,30 +39,27 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <head>
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content="#0C0A09" />
       </head>
-      <body className="min-h-full flex bg-panel-950 text-panel-50">
+      <body className="min-h-full flex bg-surface-ground text-text-primary">
         <ServiceWorkerRegistration />
         {/* Sidebar region */}
-        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-panel-700 bg-panel-900">
-          <div className="flex h-14 items-center border-b border-panel-700 px-4">
-            <span className="text-sm font-semibold tracking-wide text-fizzbuzz-400">
-              EFP
-            </span>
-            <span className="ml-1 text-sm text-panel-400">Operations</span>
+        <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border-subtle bg-surface-base">
+          <div className="flex h-14 items-center border-b border-border-subtle px-4">
+            <Wordmark />
           </div>
           <nav className="flex-1 p-4">
-            <p className="text-xs text-panel-500 uppercase tracking-wider mb-3">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-3">
               Navigation
             </p>
-            <ul className="space-y-1 text-sm text-panel-300">
-              <li className="rounded px-2 py-1.5 bg-panel-800 text-panel-50">
+            <ul className="space-y-1 text-sm text-text-secondary">
+              <li className="rounded px-2 py-1.5 bg-surface-raised text-text-primary">
                 Dashboard
               </li>
               <li>
                 <Link
                   href="/evaluate"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Evaluation Console
                 </Link>
@@ -69,20 +67,20 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/monitor/health"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Infrastructure Monitor
                 </Link>
               </li>
             </ul>
-            <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-2 mt-5">
               Monitor
             </p>
-            <ul className="space-y-1 text-sm text-panel-300">
+            <ul className="space-y-1 text-sm text-text-secondary">
               <li>
                 <Link
                   href="/monitor/metrics"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Metrics
                 </Link>
@@ -90,7 +88,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/monitor/traces"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Traces
                 </Link>
@@ -98,7 +96,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/monitor/alerts"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Alerts
                 </Link>
@@ -106,7 +104,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/cache"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Cache Coherence
                 </Link>
@@ -114,20 +112,20 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/monitor/consensus"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Consensus
                 </Link>
               </li>
             </ul>
-            <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-2 mt-5">
               Platform
             </p>
-            <ul className="space-y-1 text-sm text-panel-300">
+            <ul className="space-y-1 text-sm text-text-secondary">
               <li>
                 <Link
                   href="/compliance"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Compliance
                 </Link>
@@ -135,7 +133,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/blockchain"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Blockchain
                 </Link>
@@ -143,7 +141,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/analytics"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Analytics
                 </Link>
@@ -151,7 +149,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/configuration"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Configuration
                 </Link>
@@ -159,7 +157,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/audit"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Audit Log
                 </Link>
@@ -167,7 +165,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/chaos"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Chaos Engineering
                 </Link>
@@ -175,33 +173,33 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/digital-twin"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Digital Twin
                 </Link>
               </li>
             </ul>
-            <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-2 mt-5">
               Finance
             </p>
-            <ul className="space-y-1 text-sm text-panel-300">
+            <ul className="space-y-1 text-sm text-text-secondary">
               <li>
                 <Link
                   href="/finops"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   FinOps
                 </Link>
               </li>
             </ul>
-            <p className="text-xs text-panel-500 uppercase tracking-wider mb-2 mt-5">
+            <p className="text-xs text-text-muted uppercase tracking-wider mb-2 mt-5">
               Research
             </p>
-            <ul className="space-y-1 text-sm text-panel-300">
+            <ul className="space-y-1 text-sm text-text-secondary">
               <li>
                 <Link
                   href="/quantum"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Quantum Workbench
                 </Link>
@@ -209,7 +207,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/evolution"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Evolution Observatory
                 </Link>
@@ -217,7 +215,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/federated-learning"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Federated Learning
                 </Link>
@@ -225,7 +223,7 @@ export default function RootLayout({
               <li>
                 <Link
                   href="/archaeology"
-                  className="block rounded px-2 py-1.5 hover:bg-panel-800 transition-colors"
+                  className="block rounded px-2 py-1.5 hover:bg-surface-raised transition-colors"
                 >
                   Archaeological Recovery
                 </Link>
@@ -237,15 +235,15 @@ export default function RootLayout({
         {/* Main content region */}
         <div className="flex flex-1 flex-col">
           {/* Top bar */}
-          <header className="flex h-14 items-center justify-between border-b border-panel-700 bg-panel-900 px-6">
-            <div className="flex items-center gap-2 text-sm text-panel-400">
+          <header className="flex h-14 items-center justify-between border-b border-border-subtle bg-surface-base px-6">
+            <div className="flex items-center gap-2 text-sm text-text-secondary">
               <span>Enterprise FizzBuzz Platform</span>
-              <span>/</span>
-              <span className="text-panel-50">Dashboard</span>
+              <span className="text-text-muted">/</span>
+              <span className="text-text-primary">Dashboard</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="inline-flex items-center gap-1.5 text-xs text-fizz-400">
-                <span className="h-2 w-2 rounded-full bg-fizz-400" />
+              <span className="inline-flex items-center gap-1.5 text-xs text-text-secondary">
+                <span className="h-2 w-2 rounded-full bg-accent" />
                 All Systems Operational
               </span>
             </div>

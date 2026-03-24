@@ -2,26 +2,86 @@
  * Enterprise FizzBuzz Platform — Design Token Taxonomy
  *
  * These tokens form the foundational visual language of the FizzBuzz
- * Operations Center. Each color family maps directly to a domain concept
- * in the FizzBuzz evaluation pipeline. Unauthorized modification of these
- * tokens may result in audit failures and SLA violations.
+ * Operations Center. The Warm Precision palette uses stone-based neutrals
+ * with amber accent to establish an editorial, high-trust aesthetic. Each
+ * color family maps directly to a domain concept in the FizzBuzz evaluation
+ * pipeline. Unauthorized modification of these tokens may result in audit
+ * failures and SLA violations.
  */
 
 :root {
-  /* Fizz Result Tokens — Green spectrum */
-  --fizz-50: #ecfdf5;
-  --fizz-100: #d1fae5;
-  --fizz-200: #a7f3d0;
-  --fizz-300: #6ee7b7;
-  --fizz-400: #34d399;
-  --fizz-500: #10b981;
-  --fizz-600: #059669;
-  --fizz-700: #047857;
-  --fizz-800: #065f46;
-  --fizz-900: #064e3b;
-  --fizz-950: #022c22;
+  /* ----------------------------------------------------------------
+   * Surface Tokens — Warm stone layering system
+   * Depth is communicated through surface elevation, not shadows.
+   * Each level adds warmth, moving from near-black ground to
+   * mid-tone overlays for modals and popovers.
+   * ---------------------------------------------------------------- */
+  --surface-ground: #0c0a09;
+  --surface-base: #1c1917;
+  --surface-raised: #292524;
+  --surface-overlay: #44403c;
 
-  /* Buzz Result Tokens — Blue spectrum */
+  /* ----------------------------------------------------------------
+   * Text Tokens — Off-white hierarchy
+   * Pure white (#FFF) is never used. Text tokens follow a three-tier
+   * system: primary for content, secondary for supporting labels,
+   * muted for de-emphasized metadata.
+   * ---------------------------------------------------------------- */
+  --text-primary: #fafaf9;
+  --text-secondary: #a8a29e;
+  --text-muted: #78716c;
+  --text-inverse: #0c0a09;
+
+  /* ----------------------------------------------------------------
+   * Accent Tokens — Amber/Gold (singular)
+   * A single accent color provides maximum signal clarity. Amber was
+   * selected for its warmth, high contrast against stone surfaces,
+   * and association with operational alertness.
+   * ---------------------------------------------------------------- */
+  --accent: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-subtle: #78350f;
+  --accent-muted: rgba(245, 158, 11, 0.15);
+
+  /* ----------------------------------------------------------------
+   * Border Tokens
+   * Low-contrast borders create structure that is felt rather than
+   * seen, maintaining visual calm at density.
+   * ---------------------------------------------------------------- */
+  --border-subtle: #292524;
+  --border-default: #44403c;
+
+  /* ----------------------------------------------------------------
+   * Grain Texture
+   * An inline SVG noise pattern applied at low opacity to counter
+   * the flatness of digital surfaces. Provides an editorial,
+   * human-curated quality to backgrounds.
+   * ---------------------------------------------------------------- */
+  --texture-grain: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+
+  /* ----------------------------------------------------------------
+   * Fizz Result Tokens — Green spectrum (desaturated for warmth)
+   * Divisibility by 3 is represented in the green channel. Values
+   * are toned to integrate with the warm stone surface system.
+   * ---------------------------------------------------------------- */
+  --fizz-50: #f0fdf4;
+  --fizz-100: #dcfce7;
+  --fizz-200: #bbf7d0;
+  --fizz-300: #86efac;
+  --fizz-400: #4ade80;
+  --fizz-500: #22c55e;
+  --fizz-600: #16a34a;
+  --fizz-700: #15803d;
+  --fizz-800: #166534;
+  --fizz-900: #14532d;
+  --fizz-950: #052e16;
+
+  /* ----------------------------------------------------------------
+   * Buzz Result Tokens — Blue spectrum
+   * Divisibility by 5 retains cool blue tones as deliberate contrast
+   * against the warm palette, ensuring maximum legibility in data
+   * visualizations where fizz/buzz distinction is critical.
+   * ---------------------------------------------------------------- */
   --buzz-50: #eff6ff;
   --buzz-100: #dbeafe;
   --buzz-200: #bfdbfe;
@@ -34,63 +94,82 @@
   --buzz-900: #1e3a8a;
   --buzz-950: #172554;
 
-  /* FizzBuzz Result Tokens — Purple/Gold spectrum */
-  --fizzbuzz-50: #faf5ff;
-  --fizzbuzz-100: #f3e8ff;
-  --fizzbuzz-200: #e9d5ff;
-  --fizzbuzz-300: #d8b4fe;
-  --fizzbuzz-400: #c084fc;
-  --fizzbuzz-500: #a855f7;
-  --fizzbuzz-600: #9333ea;
-  --fizzbuzz-700: #7e22ce;
-  --fizzbuzz-800: #6b21a8;
-  --fizzbuzz-900: #581c87;
-  --fizzbuzz-950: #3b0764;
+  /* ----------------------------------------------------------------
+   * FizzBuzz Result Tokens — Amber spectrum
+   * Divisibility by 15 maps to the brand accent color. This dual
+   * purpose — brand identity and domain semantics — reduces cognitive
+   * load by unifying the most significant evaluation result with the
+   * platform's primary visual signal.
+   * ---------------------------------------------------------------- */
+  --fizzbuzz-50: #fffbeb;
+  --fizzbuzz-100: #fef3c7;
+  --fizzbuzz-200: #fde68a;
+  --fizzbuzz-300: #fcd34d;
+  --fizzbuzz-400: #fbbf24;
+  --fizzbuzz-500: #f59e0b;
+  --fizzbuzz-600: #d97706;
+  --fizzbuzz-700: #b45309;
+  --fizzbuzz-800: #92400e;
+  --fizzbuzz-900: #78350f;
+  --fizzbuzz-950: #451a03;
   --fizzbuzz-gold: #f59e0b;
   --fizzbuzz-gold-light: #fbbf24;
 
-  /* Number Result Tokens — Neutral spectrum */
-  --number-50: #fafafa;
-  --number-100: #f4f4f5;
-  --number-200: #e4e4e7;
-  --number-300: #d4d4d8;
-  --number-400: #a1a1aa;
-  --number-500: #71717a;
-  --number-600: #52525b;
-  --number-700: #3f3f46;
-  --number-800: #27272a;
-  --number-900: #18181b;
-  --number-950: #09090b;
+  /* ----------------------------------------------------------------
+   * Number Result Tokens — Warm neutral spectrum
+   * Plain integers that match neither fizz nor buzz criteria use
+   * the stone neutral scale, consistent with the surface system.
+   * ---------------------------------------------------------------- */
+  --number-50: #fafaf9;
+  --number-100: #f5f5f4;
+  --number-200: #e7e5e4;
+  --number-300: #d6d3d1;
+  --number-400: #a8a29e;
+  --number-500: #78716c;
+  --number-600: #57534e;
+  --number-700: #44403c;
+  --number-800: #292524;
+  --number-900: #1c1917;
+  --number-950: #0c0a09;
 
-  /* Panel Tokens — Dark dashboard surfaces */
-  --panel-50: #f8fafc;
-  --panel-100: #f1f5f9;
-  --panel-200: #e2e8f0;
-  --panel-300: #cbd5e1;
-  --panel-400: #94a3b8;
-  --panel-500: #64748b;
-  --panel-600: #475569;
-  --panel-700: #334155;
-  --panel-800: #1e293b;
-  --panel-900: #0f172a;
-  --panel-950: #020617;
+  /* ----------------------------------------------------------------
+   * Panel Tokens — Backward-compatible surface mappings
+   * These tokens are preserved for existing component compatibility.
+   * They now map to the warm stone scale rather than the original
+   * cool slate values, ensuring visual cohesion without requiring
+   * refactoring of downstream consumers.
+   * ---------------------------------------------------------------- */
+  --panel-50: #fafaf9;
+  --panel-100: #f5f5f4;
+  --panel-200: #e7e5e4;
+  --panel-300: #d6d3d1;
+  --panel-400: #a8a29e;
+  --panel-500: #78716c;
+  --panel-600: #57534e;
+  --panel-700: #44403c;
+  --panel-800: #292524;
+  --panel-900: #1c1917;
+  --panel-950: #0c0a09;
 
-  /* Semantic Tokens */
-  --status-success: var(--fizz-500);
-  --status-warning: var(--fizzbuzz-gold);
-  --status-error: #ef4444;
-  --status-info: var(--buzz-500);
+  /* ----------------------------------------------------------------
+   * Semantic Status Tokens — Desaturated for warmth
+   * Status colors are toned down 20% from their pure hue values
+   * to maintain palette cohesion. The amber warning state maps
+   * directly to the brand accent for conceptual consistency.
+   * ---------------------------------------------------------------- */
+  --status-success: #4ade80;
+  --status-warning: var(--accent);
+  --status-error: #f87171;
+  --status-info: #60a5fa;
 
-  /* Surface Tokens */
-  --surface-primary: var(--panel-950);
-  --surface-secondary: var(--panel-900);
-  --surface-card: var(--panel-800);
-  --surface-card-hover: var(--panel-700);
-  --surface-border: var(--panel-700);
-
-  /* Typography Tokens */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-inverse: var(--panel-950);
+  /* ----------------------------------------------------------------
+   * Legacy Surface Tokens — Backward compatibility
+   * Maps the original surface-primary/secondary/card hierarchy to
+   * the new warm surface elevation system.
+   * ---------------------------------------------------------------- */
+  --surface-primary: var(--surface-ground);
+  --surface-secondary: var(--surface-base);
+  --surface-card: var(--surface-raised);
+  --surface-card-hover: var(--surface-overlay);
+  --surface-border: var(--border-default);
 }

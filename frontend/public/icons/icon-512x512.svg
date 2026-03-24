@@ -1,6 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="64" fill="#0f172a"/>
-  <rect x="16" y="16" width="480" height="480" rx="56" fill="#1e293b" stroke="#334155" stroke-width="3"/>
-  <text x="256" y="280" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="148" fill="#38bdf8">EFB</text>
-  <text x="256" y="370" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="400" font-size="42" fill="#94a3b8">PLATFORM</text>
+  <rect width="512" height="512" rx="64" fill="#0C0A09"/>
+  <rect x="16" y="16" width="480" height="480" rx="56" fill="#1C1917" stroke="#292524" stroke-width="4"/>
+  <!-- F vertical stem -->
+  <rect x="112" y="96" width="52" height="320" rx="8" fill="#44403C"/>
+  <!-- B vertical stem -->
+  <rect x="348" y="96" width="52" height="320" rx="8" fill="#44403C"/>
+  <!-- Amber crossbar -->
+  <rect x="112" y="200" width="288" height="52" rx="8" fill="#F59E0B"/>
+  <!-- F top bar -->
+  <rect x="112" y="96" width="186" height="52" rx="8" fill="#A8A29E"/>
+  <!-- B upper bowl -->
+  <rect x="306" y="96" width="94" height="52" rx="8" fill="#A8A29E"/>
+  <!-- B lower bowl -->
+  <rect x="306" y="364" width="94" height="52" rx="8" fill="#A8A29E"/>
 </svg>

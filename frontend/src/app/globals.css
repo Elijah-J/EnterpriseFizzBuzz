@@ -2,10 +2,31 @@
 @import "../styles/tokens.css";
 
 @theme inline {
-  --color-background: var(--surface-primary);
+  --color-background: var(--surface-ground);
   --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Surface system */
+  --color-surface-ground: var(--surface-ground);
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+
+  /* Text system */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  /* Accent */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-muted: var(--accent-muted);
+
+  /* Borders */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
 
   /* Fizz — divisible by 3 */
   --color-fizz-50: var(--fizz-50);
@@ -60,7 +81,7 @@
   --color-number-900: var(--number-900);
   --color-number-950: var(--number-950);
 
-  /* Panel — dashboard surfaces */
+  /* Panel — backward-compatible surface tokens */
   --color-panel-50: var(--panel-50);
   --color-panel-100: var(--panel-100);
   --color-panel-200: var(--panel-200);
@@ -74,7 +95,45 @@
   --color-panel-950: var(--panel-950);
 }
 
+/**
+ * Grain overlay utility — applies a positioned noise texture at low opacity
+ * to counter the flatness of digital rendering. Should be applied to a
+ * pseudo-element or dedicated overlay div, never directly to content layers.
+ */
+@utility grain {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--texture-grain);
+    background-repeat: repeat;
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+/**
+ * Amber text gradient — reserved exclusively for hero-level display headings.
+ * Overuse dilutes the editorial impact. Maximum one instance per viewport.
+ */
+@utility text-gradient-amber {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/**
+ * Subtle border utility — applies the low-contrast border token for
+ * structural separation without visual noise.
+ */
+@utility border-subtle {
+  border-color: var(--border-subtle);
+}
+
 body {
-  background: var(--surface-primary);
+  background: var(--surface-ground);
   color: var(--text-primary);
 }

@@ -5,8 +5,8 @@
   "start_url": "/EnterpriseFizzBuzz/",
   "display": "standalone",
   "orientation": "any",
-  "theme_color": "#0f172a",
-  "background_color": "#020617",
+  "theme_color": "#0C0A09",
+  "background_color": "#0C0A09",
   "icons": [
     {
       "src": "/EnterpriseFizzBuzz/icons/icon-192x192.svg",
