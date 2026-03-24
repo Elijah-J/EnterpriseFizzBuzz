@@ -3370,14 +3370,15 @@ class FizzLifeMiddleware:
         result = engine.run()
         self._total_simulations += 1
 
-        # Progress indicator: print inline status to stderr.
-        # The carriage return overwrites the previous line, producing
-        # a live-updating counter without scrolling the output.
+        # Progress indicator with simulation telemetry.
         import sys
         label = result.classification or str(number)
+        kernel = seeded_config.kernel
+        growth = seeded_config.growth
+        fate = "ALIVE" if result.final_mass > 0.1 else "EXTINCT"
         sys.stderr.write(
-            f"\r  FizzLife: simulating n={number:<6d} -> {label:<8s} "
-            f"[{self._total_simulations} done, {result.final_mass:.1f} mass]"
+            f"\r  n={number:<4d} R={kernel.radius} s={growth.sigma:.3f} "
+            f"-> {fate:7s} mass={result.final_mass:>6.1f} -> {label:<8s}"
         )
         sys.stderr.flush()
 
@@ -3439,20 +3440,59 @@ class FizzLifeMiddleware:
         return self._total_simulations
 
     def render_stats(self) -> str:
-        """Render a summary of all simulations run through this middleware."""
+        """Render a summary explaining how FizzLife classified numbers."""
         # Clear the progress line from stderr
         import sys
         sys.stderr.write("\r" + " " * 80 + "\r")
         sys.stderr.flush()
+
+        w = 72
         lines = [
-            "FizzLife Middleware Statistics",
-            f"  Total Simulations:    {self._total_simulations}",
-            f"  Mass Conserved:       {self._total_mass_conserved}/{self._total_simulations}",
+            "",
+            "=" * w,
+            "  HOW FIZZLIFE DETERMINES FIZZBUZZ".center(w),
+            "=" * w,
+            "",
+            "  Each number seeds a Lenia cellular automaton simulation.",
+            "  The number's factors of 3 and 5 shape two physical parameters:",
+            "",
+            "    Kernel Radius (R)  — spatial scale of cell interactions",
+            "    Growth Sigma (s)   — width of the viable growth band",
+            "",
+            "  The growth function G(u) = 2*exp(-(u-mu)^2 / 2s^2) - 1",
+            "  is identical for every number. Only R and s change.",
+            "",
+            "  +-----------+------+--------+---------------------------+-----------+",
+            "  | Factors   |  R   | Sigma  | What emerges               | Label     |",
+            "  +-----------+------+--------+---------------------------+-----------+",
+            "  | 3 and 5   |  2   | 0.065  | Compound triple-shield     | FizzBuzz  |",
+            "  | 3 only    |  4   | 0.065  | Translating soliton        | Fizz      |",
+            "  | 5 only    |  6   | 0.065  | Dense shield pattern       | Buzz      |",
+            "  | neither   |  5   | 0.012  | Growth band too narrow     | (number)  |",
+            "  |           |      |        | -> pattern goes extinct    |           |",
+            "  +-----------+------+--------+---------------------------+-----------+",
+            "",
+            "  The CA runs the same update rule for all numbers:",
+            "    1. Convolve grid with annular kernel of radius R (via FFT)",
+            "    2. Apply growth function to the convolution potential",
+            "    3. Update cell states: A(t+dt) = clip(A(t) + dt*G, 0, 1)",
+            "",
+            "  Different R values produce different attractor basins.",
+            "  Wider sigma sustains life; narrow sigma causes extinction.",
+            "  The emergent species determines the FizzBuzz classification.",
+            "",
+            "-" * w,
+            f"  Simulations:  {self._total_simulations}",
+            f"  Grid:         {MIDDLEWARE_GRID_SIZE}x{MIDDLEWARE_GRID_SIZE} "
+            f"({MIDDLEWARE_GRID_SIZE**2} cells per simulation)",
+            f"  Generations:  {MIDDLEWARE_GENERATIONS} per number",
         ]
         if self._engine is not None:
             elapsed = self._engine.get_elapsed_time()
             if elapsed is not None:
-                lines.append(f"  Last Elapsed:         {elapsed:.4f}s")
+                lines.append(f"  Last elapsed: {elapsed:.3f}s")
+        lines.append("=" * w)
+
         return "\n".join(lines)
 
 
