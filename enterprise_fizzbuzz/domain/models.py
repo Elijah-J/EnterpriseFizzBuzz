@@ -844,6 +844,24 @@ class EventType(Enum):
     REG_REPO_CREATED = auto()
     REG_DASHBOARD_RENDERED = auto()
 
+    # FizzCNI: Container Network Interface events
+    CNI_CONTAINER_ADDED = auto()
+    CNI_CONTAINER_DELETED = auto()
+    CNI_CONTAINER_CHECKED = auto()
+    CNI_VETH_CREATED = auto()
+    CNI_VETH_DELETED = auto()
+    CNI_BRIDGE_CREATED = auto()
+    CNI_IP_ALLOCATED = auto()
+    CNI_IP_RELEASED = auto()
+    CNI_LEASE_GRANTED = auto()
+    CNI_LEASE_EXPIRED = auto()
+    CNI_PORT_MAPPED = auto()
+    CNI_PORT_UNMAPPED = auto()
+    CNI_DNS_RECORD_ADDED = auto()
+    CNI_DNS_RESOLVED = auto()
+    CNI_POLICY_EVALUATED = auto()
+    CNI_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

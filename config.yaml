@@ -2024,6 +2024,18 @@ fizzregistry:
   dashboard:
     width: 72                             # ASCII dashboard width
 
+fizzcni:
+  enabled: false                          # Master switch — opt-in via --cni
+  subnet: "10.244.0.0/16"                # Pod network CIDR range
+  gateway: "10.244.0.1"                  # Gateway IP address
+  bridge_name: "fizzbr0"                 # Bridge interface name
+  lease_duration: 3600.0                 # DHCP lease duration in seconds
+  mtu: 1500                             # Maximum Transmission Unit
+  dns_domain: "cluster.fizz"            # Container DNS domain
+  dns_ttl: 30                           # Default DNS record TTL
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizzoci:
   enabled: false                          # Master switch — opt-in via --fizzoci
   default_seccomp_profile: default        # Seccomp profile: default, strict, unconfined

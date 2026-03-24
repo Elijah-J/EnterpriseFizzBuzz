@@ -1345,6 +1345,11 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --registry-gc                Run the garbage collector: mark-and-sweep with reference walking from manifests to blobs, reclaiming unreferenced storage
 --registry-scan              Run the vulnerability scanner against all images in the registry, classifying findings by CRITICAL/HIGH/MEDIUM/LOW severity
 --registry-sign              Sign all unsigned images in the registry using cosign-style ECDSA-P256 signatures for supply chain verification
+--cni                        Enable FizzCNI: container network interface plugin system with bridge/overlay drivers, IPAM, port mapping, DNS, and network policies
+--cni-topology               Display the container network topology showing bridges, veth pairs, overlay tunnels, connected containers, and IP assignments
+--cni-ipam                   Display IPAM allocation statistics including subnet utilization, active leases, expired leases, address pool exhaustion, and gateway assignments
+--cni-policies               Display active network policies with pod selectors, ingress/egress rules, matched containers, and connection tracking statistics
+--cni-dns                    Display the ContainerDNS resolution cache showing A/SRV/PTR records, upstream forwarding statistics, and service endpoint synchronization status
 ```
 
 ## Environment Variables

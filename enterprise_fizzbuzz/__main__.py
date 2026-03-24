@@ -512,6 +512,12 @@ from enterprise_fizzbuzz.infrastructure.fizzregistry import (
     RegistryDashboard,
     create_fizzregistry_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzcni import (
+    CNIManager,
+    CNIDashboard,
+    FizzCNIMiddleware,
+    create_fizzcni_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3712,6 +3718,33 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--registry-sign",
         action="store_true",
         help="Display image signing statistics after execution",
+    )
+
+    # FizzCNI — Container Network Interface Plugin System
+    parser.add_argument(
+        "--cni",
+        action="store_true",
+        help="Enable FizzCNI: CNI-compliant container networking with bridge/overlay plugins, IPAM, port mapping, DNS, and network policies",
+    )
+    parser.add_argument(
+        "--cni-topology",
+        action="store_true",
+        help="Display network topology after execution",
+    )
+    parser.add_argument(
+        "--cni-ipam",
+        action="store_true",
+        help="Display IPAM statistics after execution",
+    )
+    parser.add_argument(
+        "--cni-policies",
+        action="store_true",
+        help="Display network policy summary after execution",
+    )
+    parser.add_argument(
+        "--cni-dns",
+        action="store_true",
+        help="Display container DNS dashboard after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8076,6 +8109,39 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzCNI — Container Network Interface Plugin System
+    # ----------------------------------------------------------------
+    cni_manager_instance = None
+    cni_middleware_instance = None
+
+    if args.cni or args.cni_topology or args.cni_ipam or args.cni_policies or args.cni_dns:
+        cni_manager_instance, cni_middleware_instance = create_fizzcni_subsystem(
+            subnet=config.fizzcni_subnet,
+            gateway=config.fizzcni_gateway,
+            bridge_name=config.fizzcni_bridge_name,
+            lease_duration=config.fizzcni_lease_duration,
+            mtu=config.fizzcni_mtu,
+            dns_domain=config.fizzcni_dns_domain,
+            dns_ttl=config.fizzcni_dns_ttl,
+            dashboard_width=config.fizzcni_dashboard_width,
+            enable_dashboard=args.cni_topology,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(cni_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCNI: CONTAINER NETWORK INTERFACE                    |\n"
+                f"  | Subnet: {config.fizzcni_subnet:<15} Gateway: {config.fizzcni_gateway:<13}|\n"
+                f"  | Bridge: {config.fizzcni_bridge_name:<15} MTU: {config.fizzcni_mtu:<17}|\n"
+                "  | Bridge, host, none, overlay (VXLAN) plugins             |\n"
+                "  | IPAM, port mapping, DNS, network policies               |\n"
+                "  | CNI Specification v1.0.0 compliant                      |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11547,6 +11613,34 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(registry_middleware_instance.render_stats())
     elif args.registry_sign and registry_middleware_instance is None:
         print("\n  FizzRegistry not enabled. Use --registry to enable.\n")
+
+    # FizzCNI Topology (post-execution)
+    if args.cni_topology and cni_middleware_instance is not None:
+        print()
+        print(cni_middleware_instance.render_topology())
+    elif args.cni_topology and cni_middleware_instance is None:
+        print("\n  FizzCNI not enabled. Use --cni to enable.\n")
+
+    # FizzCNI IPAM Stats (post-execution)
+    if args.cni_ipam and cni_middleware_instance is not None:
+        print()
+        print(cni_middleware_instance.render_ipam_stats())
+    elif args.cni_ipam and cni_middleware_instance is None:
+        print("\n  FizzCNI not enabled. Use --cni to enable.\n")
+
+    # FizzCNI Policies (post-execution)
+    if args.cni_policies and cni_middleware_instance is not None:
+        print()
+        print(cni_middleware_instance.render_policies())
+    elif args.cni_policies and cni_middleware_instance is None:
+        print("\n  FizzCNI not enabled. Use --cni to enable.\n")
+
+    # FizzCNI DNS (post-execution)
+    if args.cni_dns and cni_middleware_instance is not None:
+        print()
+        print(cni_middleware_instance.render_dashboard())
+    elif args.cni_dns and cni_middleware_instance is None:
+        print("\n  FizzCNI not enabled. Use --cni to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

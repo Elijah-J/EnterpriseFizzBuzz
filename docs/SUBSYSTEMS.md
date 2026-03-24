@@ -66,6 +66,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzOverlay Copy-on-Write Union Filesystem Architecture](#fizzoverlay-copy-on-write-union-filesystem-architecture)
 - [FizzOCI OCI-Compliant Container Runtime Architecture](#fizzoci-oci-compliant-container-runtime-architecture)
 - [FizzRegistry OCI Distribution-Compliant Image Registry Architecture](#fizzregistry-oci-distribution-compliant-image-registry-architecture)
+- [FizzCNI Container Network Interface Architecture](#fizzcni-container-network-interface-architecture)
 
 ---
 
@@ -5672,3 +5673,123 @@ The `RegistryMiddleware` integrates into the middleware pipeline at priority 110
 | Test count | ~300 |
 
 FizzRegistry is the distribution layer that transforms FizzKube's `importlib`-based image resolution into a standards-compliant pull protocol. Previously, `image: "enterprise_fizzbuzz.infrastructure.cache"` resolved to a Python import. Now, images are OCI manifests stored in a content-addressable registry, pulled via the OCI Distribution API, and composed into containers by FizzOCI via FizzOverlay's layered filesystem. The FizzFile DSL provides reproducible image builds. Layer caching avoids redundant work. Signing provides supply chain attestation. Vulnerability scanning provides security posture visibility. Garbage collection reclaims storage. The container stack now has its registry.
+
+---
+
+## FizzCNI Container Network Interface Architecture
+
+The Container Network Interface (CNI) plugin system provides network connectivity for containers isolated by FizzNS network namespaces. A container in its own NET namespace starts with only a loopback interface -- no external connectivity, no IP address, no routes. FizzCNI implements the CNI specification's plugin model to configure network interfaces, assign addresses, establish routes, and apply network policies.
+
+```
+                              ┌─────────────────────────────┐
+                              │       CNIManager            │
+                              │  (plugin dispatch & chain)  │
+                              └─────┬───┬───┬───┬───────────┘
+                                    │   │   │   │
+                    ┌───────────────┘   │   │   └───────────────┐
+                    │                   │   │                   │
+              ┌─────▼─────┐   ┌────────▼───▼────────┐   ┌─────▼─────┐
+              │  Bridge    │   │  Host  │   │  None  │   │  Overlay  │
+              │  Plugin    │   │ Plugin │   │ Plugin │   │  Plugin   │
+              └─────┬──────┘   └────────┘   └────────┘   └─────┬─────┘
+                    │                                           │
+        ┌───────────┼───────────┐                    ┌──────────┤
+        │           │           │                    │          │
+   ┌────▼────┐ ┌────▼────┐ ┌───▼───┐          ┌─────▼───┐ ┌───▼───┐
+   │  IPAM   │ │  Port   │ │ DNS   │          │  VXLAN  │ │  FDB  │
+   │ Plugin  │ │ Mapper  │ │       │          │  Encap  │ │       │
+   └─────────┘ └─────────┘ └───────┘          └─────────┘ └───────┘
+
+                    ┌─────────────────────────┐
+                    │    Network Policies     │
+                    │  (microsegmentation)    │
+                    └─────────────────────────┘
+```
+
+### CNI Plugin Interface
+
+The `CNIPlugin` ABC defines the three standard CNI operations:
+
+- **ADD**: Configure networking for a container. Creates a network interface in the container's NET namespace, assigns an IP address via IPAM, configures routes, and returns the interface configuration (IP, gateway, routes, DNS)
+- **DEL**: Remove networking for a container. Deletes the interface, releases the IP address, and cleans up routes
+- **CHECK**: Verify that networking is correctly configured. Returns success if configuration matches expectations, error if it has drifted
+
+The `CNIConfig` models the JSON configuration following the CNI spec: `cniVersion`, `name`, `type`, `args`, `ipam`, and `dns`. Plugin chaining is supported -- multiple plugins are executed in order for ADD and reverse order for DEL.
+
+### Bridge Plugin
+
+The most common CNI plugin in single-host deployments:
+
+1. Creates the `fizzbr0` virtual bridge on the host (if it doesn't exist)
+2. Creates a veth pair -- two virtual ethernet interfaces connected like a pipe
+3. Moves one end into the container's NET namespace (via FizzNS)
+4. Attaches the other end to `fizzbr0`
+5. Assigns an IP address to the container's interface (via IPAM)
+6. Configures the default route to point to the bridge's IP as gateway
+7. Enables IP forwarding for container-to-external traffic
+
+The bridge maintains a MAC learning table for L2 forwarding and implements STP port states (BLOCKING, LISTENING, LEARNING, FORWARDING, DISABLED) for loop prevention.
+
+### Overlay Plugin
+
+Creates overlay networks using VXLAN-style encapsulation for cross-host container networking. Each host has a VTEP (VXLAN Tunnel Endpoint) that encapsulates container traffic in UDP packets for transit across the host network. The forwarding database (FDB) maps container MAC addresses to VTEP endpoints. Host discovery and VTEP registration integrate with the platform's peer-to-peer network.
+
+### IPAM Plugin
+
+Manages IP address allocation for container networks:
+
+- **Subnet management**: each network is assigned a CIDR range. The IPAM plugin carves per-host subnets (e.g., 10.244.1.0/24 for host 1)
+- **Address allocation**: addresses are allocated sequentially within each subnet, with released addresses returned to the free list after a configurable cooldown
+- **Gateway reservation**: the first usable address in each subnet is reserved for the bridge gateway
+- **Lease management**: each allocation has a TTL. Containers that crash without cleanup have their address reclaimed after lease expiration
+
+### Port Mapping
+
+The `PortMapper` configures DNAT rules to expose container services on host ports. A mapping `hostPort:containerPort` forwards traffic from the host to the container's IP. Port conflicts are detected and rejected. TCP and UDP protocols are both supported.
+
+### Container DNS
+
+A DNS responder configured as the nameserver for container networks:
+
+- Container names resolve to their assigned IP (A records)
+- Service names resolve to cluster IPs via Service Mesh synchronization (SRV records)
+- Reverse lookups resolve IPs to container names (PTR records)
+- External names are forwarded to FizzDNS or a configured upstream resolver
+
+### Network Policies
+
+Kubernetes-style network policies controlling ingress and egress traffic based on labels, namespaces, and port/protocol selectors. Policies are default-deny when applied. Connection tracking enables stateful packet filtering -- return traffic for established connections is automatically allowed.
+
+### FizzCNI Dashboard
+
+The `CNIDashboard` renders an ASCII display with:
+
+- Network topology showing bridges, veth pairs, and overlay tunnels
+- IPAM allocation table with subnet utilization and lease status
+- Port mapping list with host-to-container forwarding rules
+- DNS cache with resolution statistics
+- Policy enforcement statistics with allowed/denied connection counts
+
+### FizzCNI Middleware
+
+The `FizzCNIMiddleware` integrates into the middleware pipeline at priority 111, after RegistryMiddleware (110). When a FizzBuzz evaluation runs in a containerized context, the middleware ensures the container's network interface has been configured by the appropriate CNI plugin before evaluation begins.
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| Network drivers | 4 (bridge, host, none, overlay) |
+| CNI operations | 3 (ADD, DEL, CHECK) |
+| IPAM features | Subnet allocation, sequential addressing, lease TTL, conflict detection |
+| DNS record types | 5 (A, AAAA, SRV, PTR, CNAME) |
+| STP port states | 5 (BLOCKING, LISTENING, LEARNING, FORWARDING, DISABLED) |
+| Network policy actions | 2 (ALLOW, DENY) |
+| Policy directions | 2 (INGRESS, EGRESS) |
+| Encapsulation | VXLAN |
+| Middleware priority | 111 |
+| Custom exceptions | 18 (EFP-CNI00 through EFP-CNI17) |
+| EventType entries | 16 |
+| CLI flags | 5 (`--cni`, `--cni-topology`, `--cni-ipam`, `--cni-policies`, `--cni-dns`) |
+| Test count | ~300 |
+
+FizzCNI is the network plumbing layer that connects FizzNS-isolated containers to each other and to the outside world. A container without CNI has only a loopback interface. A container with CNI has a routable IP address, a default route to a gateway, DNS resolution, and policy-controlled connectivity to every other container in the network. FizzKube's pod networking model -- every pod gets a routable IP, every pod can reach every other pod -- now has the infrastructure to deliver on that promise.
