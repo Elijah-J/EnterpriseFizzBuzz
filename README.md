@@ -66,8 +66,9 @@ Operated and maintained by **Bob McFizzington**, Senior Principal Staff FizzBuzz
 - **SLA Monitoring** with burn-rate alerting and an on-call rotation algorithm that uses modulo arithmetic to select the current engineer from a team of one, which means the rotation is both technically correct and existentially cruel (it's always Bob)
 
 - **Container Network Interface** with four CNI drivers (bridge, host, none, overlay), IPAM with subnet allocation and lease management, port mapping with DNAT rules, container DNS with service discovery, and Kubernetes-style network policies with label-based microsegmentation -- because a container without networking is not a networked container, and FizzKube's pod networking model requires routable IP addresses that did not exist until something created them
+- **High-Level Container Daemon** (FizzContainerd) with content-addressable blob storage, image service (pull/push from FizzRegistry), snapshot service (FizzOverlay lifecycle management), per-container shims that survive daemon restarts for zero-downtime upgrades, a CRI service implementing the Container Runtime Interface for FizzKube integration, and mark-and-sweep garbage collection -- because the platform had an orchestrator and a low-level runtime but no daemon layer between them, and calling runc directly from the kubelet is an architectural anti-pattern that containerd was invented to solve
 
-All implementations are technically faithful. The MESI cache coherence matches the real protocol. The neural network trains with actual backpropagation. The blockchain mines real blocks. The protein folder minimizes real energy functions. See [Subsystems](docs/SUBSYSTEMS.md) for the full 115-module breakdown.
+All implementations are technically faithful. The MESI cache coherence matches the real protocol. The neural network trains with actual backpropagation. The blockchain mines real blocks. The protein folder minimizes real energy functions. See [Subsystems](docs/SUBSYSTEMS.md) for the full 116-module breakdown.
 
 ### Quick Stats
 
@@ -77,8 +78,8 @@ All implementations are technically faithful. The MESI cache coherence matches t
 | Files | 289 |
 | Test Count | 11,400+ |
 | Custom Exceptions | 608 |
-| Infrastructure Modules | 115 |
-| CLI Flags | 336+ |
+| Infrastructure Modules | 116 |
+| CLI Flags | 342+ |
 | Locales | 7 (English, German, French, Japanese, Klingon, Sindarin, Quenya) |
 | Design Patterns | 100+ |
 | ASCII Dashboards | 90+ |

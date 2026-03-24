@@ -862,6 +862,26 @@ class EventType(Enum):
     CNI_POLICY_EVALUATED = auto()
     CNI_DASHBOARD_RENDERED = auto()
 
+    # FizzContainerd: High-Level Container Daemon events
+    CONTAINERD_DAEMON_STARTED = auto()
+    CONTAINERD_DAEMON_STOPPED = auto()
+    CONTAINERD_CONTAINER_CREATED = auto()
+    CONTAINERD_CONTAINER_UPDATED = auto()
+    CONTAINERD_CONTAINER_DELETED = auto()
+    CONTAINERD_TASK_CREATED = auto()
+    CONTAINERD_TASK_STARTED = auto()
+    CONTAINERD_TASK_KILLED = auto()
+    CONTAINERD_TASK_PAUSED = auto()
+    CONTAINERD_TASK_RESUMED = auto()
+    CONTAINERD_TASK_DELETED = auto()
+    CONTAINERD_SHIM_SPAWNED = auto()
+    CONTAINERD_SHIM_EXITED = auto()
+    CONTAINERD_IMAGE_PULLED = auto()
+    CONTAINERD_IMAGE_REMOVED = auto()
+    CONTAINERD_CONTENT_INGESTED = auto()
+    CONTAINERD_GC_STARTED = auto()
+    CONTAINERD_GC_COMPLETED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

@@ -1350,6 +1350,12 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --cni-ipam                   Display IPAM allocation statistics including subnet utilization, active leases, expired leases, address pool exhaustion, and gateway assignments
 --cni-policies               Display active network policies with pod selectors, ingress/egress rules, matched containers, and connection tracking statistics
 --cni-dns                    Display the ContainerDNS resolution cache showing A/SRV/PTR records, upstream forwarding statistics, and service endpoint synchronization status
+--containerd                 Enable FizzContainerd: containerd-style high-level container daemon with content store, metadata management, shims, CRI, and garbage collection
+--containerd-containers      Display all containers managed by the daemon with image reference, snapshot key, creation time, labels, and associated task status
+--containerd-tasks           Display all running tasks with PID, status (CREATED/RUNNING/PAUSED/STOPPED), exit code, shim reference, and I/O stream configuration
+--containerd-shims           Display all active per-container shims with PID, socket path, container ID, namespace references held, and health status
+--containerd-images          Display all locally cached images with tags, digests, layer count, unpacked size, and snapshot chain status
+--containerd-gc              Run the garbage collector: mark-and-sweep with reference walking through images, containers, and snapshots, reclaiming unreferenced content blobs
 ```
 
 ## Environment Variables

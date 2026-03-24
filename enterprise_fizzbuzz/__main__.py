@@ -518,6 +518,12 @@ from enterprise_fizzbuzz.infrastructure.fizzcni import (
     FizzCNIMiddleware,
     create_fizzcni_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzcontainerd import (
+    ContainerdDaemon,
+    ContainerdDashboard,
+    FizzContainerdMiddleware,
+    create_fizzcontainerd_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3745,6 +3751,38 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--cni-dns",
         action="store_true",
         help="Display container DNS dashboard after execution",
+    )
+
+    # FizzContainerd — High-Level Container Daemon
+    parser.add_argument(
+        "--containerd",
+        action="store_true",
+        help="Enable FizzContainerd: containerd-style daemon with content store, metadata, shims, CRI, and garbage collection",
+    )
+    parser.add_argument(
+        "--containerd-containers",
+        action="store_true",
+        help="Display container inventory after execution",
+    )
+    parser.add_argument(
+        "--containerd-tasks",
+        action="store_true",
+        help="Display running tasks after execution",
+    )
+    parser.add_argument(
+        "--containerd-shims",
+        action="store_true",
+        help="Display active shims after execution",
+    )
+    parser.add_argument(
+        "--containerd-images",
+        action="store_true",
+        help="Display cached images after execution",
+    )
+    parser.add_argument(
+        "--containerd-gc",
+        action="store_true",
+        help="Display garbage collection dashboard after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8142,6 +8180,40 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzContainerd — High-Level Container Daemon
+    # ----------------------------------------------------------------
+    containerd_daemon_instance = None
+    containerd_middleware_instance = None
+
+    if args.containerd or args.containerd_containers or args.containerd_tasks or args.containerd_shims or args.containerd_images or args.containerd_gc:
+        containerd_daemon_instance, containerd_middleware_instance = create_fizzcontainerd_subsystem(
+            socket_path=config.fizzcontainerd_socket_path,
+            state_dir=config.fizzcontainerd_state_dir,
+            gc_interval=config.fizzcontainerd_gc_interval,
+            gc_policy=config.fizzcontainerd_gc_policy,
+            max_containers=config.fizzcontainerd_max_containers,
+            max_content_blobs=config.fizzcontainerd_max_content_blobs,
+            max_images=config.fizzcontainerd_max_images,
+            log_buffer_size=config.fizzcontainerd_log_buffer_size,
+            dashboard_width=config.fizzcontainerd_dashboard_width,
+            enable_dashboard=args.containerd_containers,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(containerd_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCONTAINERD: HIGH-LEVEL CONTAINER DAEMON             |\n"
+                f"  | Socket: {config.fizzcontainerd_socket_path:<47}|\n"
+                f"  | Max Containers: {config.fizzcontainerd_max_containers:<8} GC Policy: {config.fizzcontainerd_gc_policy:<14}|\n"
+                "  | Content store, metadata, images, tasks, shims           |\n"
+                "  | Event service, GC, CRI for FizzKube                     |\n"
+                "  | containerd v1.7 architecture                            |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11641,6 +11713,41 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(cni_middleware_instance.render_dashboard())
     elif args.cni_dns and cni_middleware_instance is None:
         print("\n  FizzCNI not enabled. Use --cni to enable.\n")
+
+    # FizzContainerd Containers (post-execution)
+    if args.containerd_containers and containerd_middleware_instance is not None:
+        print()
+        print(containerd_middleware_instance.render_containers())
+    elif args.containerd_containers and containerd_middleware_instance is None:
+        print("\n  FizzContainerd not enabled. Use --containerd to enable.\n")
+
+    # FizzContainerd Tasks (post-execution)
+    if args.containerd_tasks and containerd_middleware_instance is not None:
+        print()
+        print(containerd_middleware_instance.render_tasks())
+    elif args.containerd_tasks and containerd_middleware_instance is None:
+        print("\n  FizzContainerd not enabled. Use --containerd to enable.\n")
+
+    # FizzContainerd Shims (post-execution)
+    if args.containerd_shims and containerd_middleware_instance is not None:
+        print()
+        print(containerd_middleware_instance.render_shims())
+    elif args.containerd_shims and containerd_middleware_instance is None:
+        print("\n  FizzContainerd not enabled. Use --containerd to enable.\n")
+
+    # FizzContainerd Images (post-execution)
+    if args.containerd_images and containerd_middleware_instance is not None:
+        print()
+        print(containerd_middleware_instance.render_images())
+    elif args.containerd_images and containerd_middleware_instance is None:
+        print("\n  FizzContainerd not enabled. Use --containerd to enable.\n")
+
+    # FizzContainerd GC (post-execution)
+    if args.containerd_gc and containerd_middleware_instance is not None:
+        print()
+        print(containerd_middleware_instance.render_gc())
+    elif args.containerd_gc and containerd_middleware_instance is None:
+        print("\n  FizzContainerd not enabled. Use --containerd to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

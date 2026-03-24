@@ -32,11 +32,11 @@ Clean Architecture with three layers. The **Dependency Rule** is enforced by AST
 
 - **Domain** (`domain/`): Models, enums, exceptions (600+ custom exception classes), and abstract interfaces (`IRule`, `IRuleEngine`, `IMiddleware`, `IFormatter`, `IEventBus`). Zero outward dependencies.
 - **Application** (`application/`): `FizzBuzzServiceBuilder` (fluent builder), rule factories (Standard/Configurable/Caching), and hexagonal ports (`StrategyPort`, `AbstractUnitOfWork`, `AbstractRepository`).
-- **Infrastructure** (`infrastructure/`): 115 modules implementing enterprise subsystems — rule engines, formatters, middleware pipeline, observers, DI container, cache (MESI coherence), service mesh, blockchain, auth (RBAC + HMAC tokens), i18n (7 locales inc. Klingon/Sindarin/Quenya), event sourcing/CQRS, chaos engineering, feature flags, SLA monitoring, metrics, webhooks, hot-reload (Raft consensus), rate limiting, compliance (SOX/GDPR/HIPAA), three persistence backends (in-memory, SQLite, filesystem), bytecode VM, query optimizer, digital twin, archaeological recovery, ML engine, genetic algorithm, graph database, secrets vault, OS kernel, cross-compiler, FizzLang DSL, Paxos consensus, quantum simulator, federated learning, dependent type system, FizzKube container orchestrator, package manager, FizzSQL query engine, debug adapter protocol, IP office, distributed locks, CDC, billing/monetization, JIT compiler, capability security, OpenTelemetry tracing, write-ahead intent log, CRDTs, memory allocator, columnar storage, MapReduce, model checker, reverse proxy, ray tracer, protein folding, TCP/IP stack, audio synthesizer, virtual file system, version control, ELF binary generator, database replication, Z notation specs, process migration, flame graph generator, theorem prover, GPU shader compiler, smart contracts, DNS server, spreadsheet engine, regex engine, spatial database, clock sync (NTP/PTP), CPU pipeline simulator, x86 bootloader, video codec, TeX typesetter, garbage collector, microkernel IPC, operator succession planning, operator performance review, organizational hierarchy, Linux namespace isolation, cgroup resource accounting, OCI container runtime, copy-on-write union filesystem, OCI image registry, container network interface.
+- **Infrastructure** (`infrastructure/`): 116 modules implementing enterprise subsystems — rule engines, formatters, middleware pipeline, observers, DI container, cache (MESI coherence), service mesh, blockchain, auth (RBAC + HMAC tokens), i18n (7 locales inc. Klingon/Sindarin/Quenya), event sourcing/CQRS, chaos engineering, feature flags, SLA monitoring, metrics, webhooks, hot-reload (Raft consensus), rate limiting, compliance (SOX/GDPR/HIPAA), three persistence backends (in-memory, SQLite, filesystem), bytecode VM, query optimizer, digital twin, archaeological recovery, ML engine, genetic algorithm, graph database, secrets vault, OS kernel, cross-compiler, FizzLang DSL, Paxos consensus, quantum simulator, federated learning, dependent type system, FizzKube container orchestrator, package manager, FizzSQL query engine, debug adapter protocol, IP office, distributed locks, CDC, billing/monetization, JIT compiler, capability security, OpenTelemetry tracing, write-ahead intent log, CRDTs, memory allocator, columnar storage, MapReduce, model checker, reverse proxy, ray tracer, protein folding, TCP/IP stack, audio synthesizer, virtual file system, version control, ELF binary generator, database replication, Z notation specs, process migration, flame graph generator, theorem prover, GPU shader compiler, smart contracts, DNS server, spreadsheet engine, regex engine, spatial database, clock sync (NTP/PTP), CPU pipeline simulator, x86 bootloader, video codec, TeX typesetter, garbage collector, microkernel IPC, operator succession planning, operator performance review, organizational hierarchy, Linux namespace isolation, cgroup resource accounting, OCI container runtime, copy-on-write union filesystem, OCI image registry, container network interface, container daemon.
 
 ### Wiring
 
-`__main__.py` is the composition root — it parses 336+ CLI flags, builds `ConfigurationManager` (singleton), and manually wires all subsystems via `FizzBuzzServiceBuilder`. A separate IoC container (`container.py`) exists with auto-wiring and Kahn's cycle detection but isn't used by the main entry point.
+`__main__.py` is the composition root — it parses 342+ CLI flags, builds `ConfigurationManager` (singleton), and manually wires all subsystems via `FizzBuzzServiceBuilder`. A separate IoC container (`container.py`) exists with auto-wiring and Kahn's cycle detection but isn't used by the main entry point.
 
 ### Configuration precedence (highest wins)
 
@@ -63,8 +63,8 @@ Root-level `.py` files are re-export stubs (e.g., `cache.py` re-exports from `en
 | Python Files | 289 |
 | Test Count | ~11,400 |
 | Custom Exceptions | 608 |
-| Infrastructure Modules | 115 |
-| CLI Flags | 336+ |
+| Infrastructure Modules | 116 |
+| CLI Flags | 342+ |
 | Commits | 203 |
 | Brainstorm Rounds Completed | 13 (Round 14 in progress — 2 of 6 done) |
 
@@ -82,7 +82,7 @@ Each step uses a **separate agent**. Steps are never combined. The cycle repeats
 
 ### Roadmaps
 
-- `roadmaps/BRAINSTORM_REPORT.md` — feature backlog (current: Round 16, 6 of 7 done)
+- `roadmaps/BRAINSTORM_REPORT.md` — feature backlog (current: Round 16, COMPLETE -- all 7 of 7 done)
 - `roadmaps/QA_E2E_ROADMAP.md` — QA items (completed)
 - `roadmaps/FORMAT_ROADMAP.md` — formatting audit (completed)
 - `roadmaps/CURATION_AUDIT.md` — module curation audit (completed)

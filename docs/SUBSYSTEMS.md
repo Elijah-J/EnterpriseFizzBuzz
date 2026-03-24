@@ -5793,3 +5793,123 @@ The `FizzCNIMiddleware` integrates into the middleware pipeline at priority 111,
 | Test count | ~300 |
 
 FizzCNI is the network plumbing layer that connects FizzNS-isolated containers to each other and to the outside world. A container without CNI has only a loopback interface. A container with CNI has a routable IP address, a default route to a gateway, DNS resolution, and policy-controlled connectivity to every other container in the network. FizzKube's pod networking model -- every pod gets a routable IP, every pod can reach every other pod -- now has the infrastructure to deliver on that promise.
+
+---
+
+## FizzContainerd High-Level Container Daemon Architecture
+
+In the standard container stack, the orchestrator (Kubernetes) does not call the low-level runtime (runc) directly. Between them sits a high-level container daemon -- containerd or CRI-O -- that manages the complete lifecycle of containers above the runtime layer. containerd manages images (pulling from registries, unpacking layers into snapshots), content (content-addressable storage for image blobs), snapshots (preparing overlay mounts for containers), containers (metadata associating an image with runtime configuration), tasks (the running state of a container -- process, I/O streams, exit code), and shims (per-container lifecycle daemons that survive daemon restarts).
+
+FizzContainerd occupies this daemon layer in the Enterprise FizzBuzz Platform's container stack, sitting between FizzKube (the orchestrator) and FizzOCI (the low-level OCI runtime).
+
+### Component Architecture
+
+```
+                    +---------------------------+
+                    |    ContainerdDaemon        |
+                    +---------------------------+
+                       /    |    |    |    \    \
+                      /     |    |    |     \    \
+            +--------+ +--------+ +-------+ +--------+ +--------+ +--------+
+            |Content | |Image   | |Snap-  | |Meta-   | |Task    | |Event   |
+            |Store   | |Service | |shot   | |data    | |Service | |Service |
+            |        | |        | |Service| |Store   | |        | |        |
+            +--------+ +--------+ +-------+ +--------+ +--------+ +--------+
+                 |          |         |           |         |           |
+                 v          v         v           v         v           v
+            Blob       Pull/Push  Prepare/   Container  Create/    Pub/Sub
+            Ingest     from       Commit/    Specs &    Start/     Lifecycle
+            & GC       Registry   Remove     Labels     Kill/Exec  Events
+                                                           |
+                                                     +----------+
+                                                     |   Shim   |
+                                                     | (per-ctr)|
+                                                     +----------+
+                                                         |
+                                                     +----------+
+                                                     | FizzOCI  |
+                                                     | Runtime  |
+                                                     +----------+
+```
+
+### Content Store
+
+The `ContentStore` provides local content-addressable blob storage. Blobs are ingested via atomic write transactions: `ingest(ref)` starts a transaction, `writer.write(data)` streams data, and `writer.commit(expected_digest)` finalizes the blob after verifying the SHA-256 digest matches. Partially written blobs are not visible until committed. The store serves as the local cache for image blobs pulled from FizzRegistry. Label-based reference tracking links blobs to images, containers, and snapshots. The garbage collector periodically walks the reference graph and reclaims unreferenced content.
+
+### Image Service
+
+The `ImageService` manages the lifecycle of images in the local daemon:
+
+| Operation | Description |
+|-----------|-------------|
+| `pull(reference)` | Fetch manifest from FizzRegistry, download missing layer blobs into ContentStore, unpack layers into SnapshotService |
+| `push(reference)` | Push locally built image blobs and manifest to FizzRegistry |
+| `list()` | List all locally available images with tags, digests, sizes, creation dates |
+| `remove(reference)` | Remove image and associated content if not referenced by other images |
+
+Image unpacking at pull time pre-computes the snapshot chain, reducing container start latency to the cost of adding a single writable layer.
+
+### Snapshot Service
+
+The `SnapshotService` wraps FizzOverlay's Snapshotter with daemon-managed lifecycle:
+
+| Operation | Description |
+|-----------|-------------|
+| `prepare(key, parent)` | Create active (read-write) snapshot from image layer chain. Used for container creation |
+| `commit(key, name)` | Freeze active snapshot as committed (read-only). Used for image building |
+| `remove(key)` | Remove snapshot and associated storage. Used for container deletion |
+| `mounts(key)` | Return overlay mount parameters for FizzOCI to use as rootfs |
+
+Container snapshots form a tree: each image creates a chain of committed snapshots (one per layer), and container snapshots are active snapshots with the image chain as parent.
+
+### Task Service and Shim Architecture
+
+Tasks represent the running state of a container, separated from container metadata. The separation enables containers to exist as metadata records without a running process.
+
+Task operations: `create`, `start`, `kill`, `delete`, `exec` (execute additional process inside running container), `pause`, `resume`. Each operation delegates to the per-container shim.
+
+The **shim** is a lightweight daemon spawned for each container task:
+
+- Owns the container's init process (is the parent in the process tree)
+- Holds namespace references open (preventing garbage collection)
+- Captures the container's exit code when the init process terminates
+- Survives daemon restarts: if FizzContainerd restarts, shims continue running, and the daemon reconnects by scanning the shim socket directory
+
+This architecture enables zero-downtime daemon upgrades. The `ShimManager` maintains the shim registry with health checks and crash recovery.
+
+### CRI Service
+
+The `CRIService` implements the Container Runtime Interface (CRI) that FizzKube's kubelet calls:
+
+- **RuntimeService**: `RunPodSandbox`, `StopPodSandbox`, `RemovePodSandbox`, `CreateContainer`, `StartContainer`, `StopContainer`, `RemoveContainer`, `ListContainers`, `ContainerStatus`, `ExecSync`
+- **ImageService**: `ListImages`, `ImageStatus`, `PullImage`, `RemoveImage`
+
+CRI translates pod-level operations into containerd container/task operations. A pod sandbox maps to shared namespaces (NET, IPC, UTS). Each container in the pod joins the shared namespaces while maintaining its own PID and MNT namespaces -- matching real Kubernetes pod networking semantics.
+
+### Garbage Collection
+
+The `GarbageCollector` reclaims unreferenced content blobs via mark-and-sweep:
+
+1. **Mark**: walk all images, containers, and snapshots, collecting the set of referenced blob digests
+2. **Sweep**: delete any blob in the ContentStore whose digest is not in the referenced set
+
+GC runs periodically (configurable interval) and respects a grace period for in-progress operations.
+
+### FizzContainerd Statistics
+
+| Spec | Value |
+|------|-------|
+| Core services | 6 (content, image, snapshot, metadata, task, event) |
+| CRI operations | 11 (RuntimeService) + 4 (ImageService) |
+| Container statuses | 5 (CREATING, CREATED, RUNNING, PAUSED, STOPPED) |
+| Task operations | 7 (create, start, kill, delete, exec, pause, resume) |
+| GC algorithm | Mark-and-sweep with reference walking |
+| Shim recovery | Socket directory scan on daemon restart |
+| Content addressing | SHA-256 with atomic commit |
+| Middleware priority | 112 |
+| Custom exceptions | 20 (EFP-CTD00 through EFP-CTD19) |
+| EventType entries | 18 |
+| CLI flags | 6 (`--containerd`, `--containerd-containers`, `--containerd-tasks`, `--containerd-shims`, `--containerd-images`, `--containerd-gc`) |
+| Test count | ~350 |
+
+FizzContainerd completes the container stack. The full hierarchy is now: FizzKube (orchestrator) -> CRI -> FizzContainerd (high-level daemon) -> FizzOCI (low-level runtime) -> FizzNS (namespaces) + FizzCgroup (resource limits) + FizzOverlay (filesystem) + FizzCNI (networking) + FizzRegistry (image distribution). Every layer in the standard container stack is populated. FizzKube's containers are no longer Python dataclass instances -- they are OCI-compliant, namespace-isolated, cgroup-limited, overlay-mounted, registry-pulled, network-connected, shim-managed containers.
