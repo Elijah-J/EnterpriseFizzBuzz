@@ -1,18 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
-  CostAllocation,
   BudgetStatus,
+  CostAllocation,
+  CostSummary,
+  DailyCostPoint,
   FizzBuckExchangeRate,
   Invoice,
-  DailyCostPoint,
-  CostSummary,
 } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -153,9 +155,12 @@ function KPISummaryCards({
   const totalSpend = costBreakdown.reduce((s, c) => s + c.cost, 0);
   const trendDirection = costSummary ? costSummary.trend : "stable";
   // Compute period-over-period delta percentage from CostSummary
-  const trendDelta = costSummary && costSummary.previousPeriodCost > 0
-    ? ((costSummary.currentPeriodCost - costSummary.previousPeriodCost) / costSummary.previousPeriodCost) * 100
-    : 0;
+  const trendDelta =
+    costSummary && costSummary.previousPeriodCost > 0
+      ? ((costSummary.currentPeriodCost - costSummary.previousPeriodCost) /
+          costSummary.previousPeriodCost) *
+        100
+      : 0;
 
   // Cost per evaluation from CostSummary
   const costPerEval = costSummary ? costSummary.costPerEvaluation : 0;
@@ -163,21 +168,29 @@ function KPISummaryCards({
   // Overall budget utilization
   const totalAllocated = budgetStatuses.reduce((s, b) => s + b.allocated, 0);
   const totalSpent = budgetStatuses.reduce((s, b) => s + b.spent, 0);
-  const overallUtilization = totalAllocated > 0 ? totalSpent / totalAllocated : 0;
+  const overallUtilization =
+    totalAllocated > 0 ? totalSpent / totalAllocated : 0;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {/* Total Period Spend */}
       <Card>
         <CardContent className="py-4">
-          <p className="text-xs text-panel-400 uppercase tracking-wider mb-1">
+          <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">
             Total Period Spend
           </p>
-          <p className="text-2xl font-semibold text-panel-50 font-mono">
+          <p className="text-2xl font-semibold text-text-primary font-mono">
             {formatFB(totalSpend)}
           </p>
-          <p className={`text-xs mt-1 ${trendDirection === "up" ? "text-red-400" : trendDirection === "down" ? "text-fizz-400" : "text-panel-400"}`}>
-            {trendDirection === "up" ? "\u2191" : trendDirection === "down" ? "\u2193" : "\u2194"} {Math.abs(trendDelta).toFixed(1)}% vs. previous period
+          <p
+            className={`text-xs mt-1 ${trendDirection === "up" ? "text-red-400" : trendDirection === "down" ? "text-fizz-400" : "text-text-secondary"}`}
+          >
+            {trendDirection === "up"
+              ? "\u2191"
+              : trendDirection === "down"
+                ? "\u2193"
+                : "\u2194"}{" "}
+            {Math.abs(trendDelta).toFixed(1)}% vs. previous period
           </p>
         </CardContent>
       </Card>
@@ -185,13 +198,13 @@ function KPISummaryCards({
       {/* Cost Per Evaluation */}
       <Card>
         <CardContent className="py-4">
-          <p className="text-xs text-panel-400 uppercase tracking-wider mb-1">
+          <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">
             Cost Per Evaluation
           </p>
-          <p className="text-2xl font-semibold text-panel-50 font-mono">
+          <p className="text-2xl font-semibold text-text-primary font-mono">
             FB$ {costPerEval.toFixed(4)}
           </p>
-          <p className="text-xs text-panel-500 mt-1">
+          <p className="text-xs text-text-muted mt-1">
             Across all evaluation strategies
           </p>
         </CardContent>
@@ -200,16 +213,23 @@ function KPISummaryCards({
       {/* Exchange Rate */}
       <Card>
         <CardContent className="py-4">
-          <p className="text-xs text-panel-400 uppercase tracking-wider mb-1">
+          <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">
             FB$/USD Exchange Rate
           </p>
-          <p className="text-2xl font-semibold text-panel-50 font-mono">
+          <p className="text-2xl font-semibold text-text-primary font-mono">
             ${exchangeRate ? exchangeRate.rate.toFixed(6) : "---"}
           </p>
           {exchangeRate && (
-            <p className={`text-xs mt-1 ${exchangeRate.change24h >= 0 ? "text-fizz-400" : "text-red-400"}`}>
-              {exchangeRate.trend === "up" ? "\u2191" : exchangeRate.trend === "down" ? "\u2193" : "\u2194"}{" "}
-              {exchangeRate.change24h >= 0 ? "+" : ""}{exchangeRate.change24h.toFixed(2)}% (24h)
+            <p
+              className={`text-xs mt-1 ${exchangeRate.change24h >= 0 ? "text-fizz-400" : "text-red-400"}`}
+            >
+              {exchangeRate.trend === "up"
+                ? "\u2191"
+                : exchangeRate.trend === "down"
+                  ? "\u2193"
+                  : "\u2194"}{" "}
+              {exchangeRate.change24h >= 0 ? "+" : ""}
+              {exchangeRate.change24h.toFixed(2)}% (24h)
             </p>
           )}
         </CardContent>
@@ -218,14 +238,17 @@ function KPISummaryCards({
       {/* Budget Health */}
       <Card>
         <CardContent className="py-4">
-          <p className="text-xs text-panel-400 uppercase tracking-wider mb-1">
+          <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">
             Budget Health
           </p>
-          <p className={`text-2xl font-semibold font-mono ${utilizationColor(overallUtilization)}`}>
+          <p
+            className={`text-2xl font-semibold font-mono ${utilizationColor(overallUtilization)}`}
+          >
             {(overallUtilization * 100).toFixed(1)}%
           </p>
-          <p className="text-xs text-panel-500 mt-1">
-            {budgetStatuses.filter((b) => b.overBudget).length} categories projected over budget
+          <p className="text-xs text-text-muted mt-1">
+            {budgetStatuses.filter((b) => b.overBudget).length} categories
+            projected over budget
           </p>
         </CardContent>
       </Card>
@@ -248,9 +271,10 @@ function CostTreemap({ allocations }: { allocations: CostAllocation[] }) {
   return (
     <Card className="flex-1">
       <CardHeader>
-        <h3 className="text-sm font-medium text-panel-200">Cost Allocation Treemap</h3>
-        <p className="text-xs text-panel-500">
-          Rectangle area proportional to FizzBuck spend. Color indicates budget utilization.
+        <h3 className="heading-section">Cost Allocation Treemap</h3>
+        <p className="text-xs text-text-muted">
+          Rectangle area proportional to FizzBuck spend. Color indicates budget
+          utilization.
         </p>
       </CardHeader>
       <CardContent>
@@ -305,11 +329,15 @@ function CostTreemap({ allocations }: { allocations: CostAllocation[] }) {
 // Component: Exchange Rate Ticker
 // ---------------------------------------------------------------------------
 
-function ExchangeRateTicker({ exchangeRate }: { exchangeRate: FizzBuckExchangeRate | null }) {
+function ExchangeRateTicker({
+  exchangeRate,
+}: {
+  exchangeRate: FizzBuckExchangeRate | null;
+}) {
   if (!exchangeRate) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-panel-500 text-sm">
+        <CardContent className="py-8 text-center text-text-muted text-sm">
           Loading exchange rate data...
         </CardContent>
       </Card>
@@ -333,26 +361,35 @@ function ExchangeRateTicker({ exchangeRate }: { exchangeRate: FizzBuckExchangeRa
   });
   const pathD = `M ${points.join(" L ")}`;
 
-  const trendArrow = trend === "up" ? "\u2191" : trend === "down" ? "\u2193" : "\u2194";
-  const trendColor = trend === "up" ? "text-fizz-400" : trend === "down" ? "text-red-400" : "text-panel-400";
+  const trendArrow =
+    trend === "up" ? "\u2191" : trend === "down" ? "\u2193" : "\u2194";
+  const trendColor =
+    trend === "up"
+      ? "text-fizz-400"
+      : trend === "down"
+        ? "text-red-400"
+        : "text-text-secondary";
 
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-sm font-medium text-panel-200">FizzBuck Exchange Rate</h3>
-        <p className="text-xs text-panel-500">1 FB$ to USD — 5-second polling</p>
+        <h3 className="heading-section">FizzBuck Exchange Rate</h3>
+        <p className="text-xs text-text-muted">
+          1 FB$ to USD — 5-second polling
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-center">
-          <p className="text-3xl font-semibold text-panel-50 font-mono">
+          <p className="text-3xl font-semibold text-text-primary font-mono">
             ${rate.toFixed(6)}
           </p>
           <p className={`text-sm mt-1 ${trendColor}`}>
-            {trendArrow} {change24h >= 0 ? "+" : ""}{change24h.toFixed(2)}% (24h)
+            {trendArrow} {change24h >= 0 ? "+" : ""}
+            {change24h.toFixed(2)}% (24h)
           </p>
         </div>
 
-        <div className="flex justify-between text-xs text-panel-400">
+        <div className="flex justify-between text-xs text-text-secondary">
           <span>24h High: ${high24h.toFixed(6)}</span>
           <span>24h Low: ${low24h.toFixed(6)}</span>
         </div>
@@ -365,12 +402,18 @@ function ExchangeRateTicker({ exchangeRate }: { exchangeRate: FizzBuckExchangeRa
           <path
             d={pathD}
             fill="none"
-            stroke={trend === "up" ? "#4ade80" : trend === "down" ? "#f87171" : "#94a3b8"}
+            stroke={
+              trend === "up"
+                ? "#4ade80"
+                : trend === "down"
+                  ? "#f87171"
+                  : "#94a3b8"
+            }
             strokeWidth={1.5}
           />
         </svg>
 
-        <div className="flex items-center gap-2 text-xs text-panel-500">
+        <div className="flex items-center gap-2 text-xs text-text-muted">
           <span className="h-1.5 w-1.5 rounded-full bg-fizz-400 animate-pulse" />
           Live — refreshes every 5s
         </div>
@@ -387,15 +430,17 @@ function BudgetProgressBars({ budgets }: { budgets: BudgetStatus[] }) {
   return (
     <Card>
       <CardHeader>
-        <h3 className="text-sm font-medium text-panel-200">Budget Status</h3>
-        <p className="text-xs text-panel-500">
-          Current period budget utilization by category with end-of-period projections
+        <h3 className="heading-section">Budget Status</h3>
+        <p className="text-xs text-text-muted">
+          Current period budget utilization by category with end-of-period
+          projections
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {budgets.map((b) => {
           const ratio = b.allocated > 0 ? b.spent / b.allocated : 0;
-          const projectedRatio = b.allocated > 0 ? b.projectedSpend / b.allocated : 0;
+          const projectedRatio =
+            b.allocated > 0 ? b.projectedSpend / b.allocated : 0;
           const barWidth = Math.min(ratio * 100, 100);
           const projectedWidth = Math.min(projectedRatio * 100, 100);
 
@@ -403,16 +448,14 @@ function BudgetProgressBars({ budgets }: { budgets: BudgetStatus[] }) {
             <div key={b.category}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-panel-200">{b.label}</span>
-                  {b.overBudget && (
-                    <Badge variant="error">Over Budget</Badge>
-                  )}
+                  <span className="text-sm text-text-secondary">{b.label}</span>
+                  {b.overBudget && <Badge variant="error">Over Budget</Badge>}
                 </div>
-                <span className="text-xs text-panel-400 font-mono">
+                <span className="text-xs text-text-secondary font-mono">
                   {formatFB(b.spent)} / {formatFB(b.allocated)}
                 </span>
               </div>
-              <div className="relative h-3 bg-panel-700 rounded-full overflow-hidden">
+              <div className="relative h-3 bg-surface-overlay rounded-full overflow-hidden">
                 {/* Projected spend marker */}
                 {projectedRatio > ratio && (
                   <div
@@ -431,10 +474,12 @@ function BudgetProgressBars({ budgets }: { budgets: BudgetStatus[] }) {
                 )}
               </div>
               <div className="flex justify-between mt-0.5">
-                <span className="text-[10px] text-panel-500">
+                <span className="text-[10px] text-text-muted">
                   {(ratio * 100).toFixed(1)}% utilized
                 </span>
-                <span className={`text-[10px] ${b.overBudget ? "text-red-400" : "text-panel-500"}`}>
+                <span
+                  className={`text-[10px] ${b.overBudget ? "text-red-400" : "text-text-muted"}`}
+                >
                   Projected: {formatFB(b.projectedSpend)}
                 </span>
               </div>
@@ -469,12 +514,18 @@ function CostTrendChart({ data }: { data: DailyCostPoint[] }) {
 
   const points = data.map((d, i) => {
     const x = padding.left + (i / (data.length - 1)) * plotWidth;
-    const y = padding.top + plotHeight - ((d.totalCost - minCost) / costRange) * plotHeight;
+    const y =
+      padding.top +
+      plotHeight -
+      ((d.totalCost - minCost) / costRange) * plotHeight;
     return { x, y, data: d };
   });
 
   const linePath = `M ${points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" L ")}`;
-  const budgetY = padding.top + plotHeight - ((dailyBudget - minCost) / costRange) * plotHeight;
+  const budgetY =
+    padding.top +
+    plotHeight -
+    ((dailyBudget - minCost) / costRange) * plotHeight;
 
   // Y-axis ticks
   const yTicks = Array.from({ length: 5 }, (_, i) => {
@@ -489,13 +540,16 @@ function CostTrendChart({ data }: { data: DailyCostPoint[] }) {
   return (
     <Card className="flex-1">
       <CardHeader>
-        <h3 className="text-sm font-medium text-panel-200">30-Day Cost Trend</h3>
-        <p className="text-xs text-panel-500">
+        <h3 className="heading-section">30-Day Cost Trend</h3>
+        <p className="text-xs text-text-muted">
           Daily FizzBuck expenditure with budget target reference line
         </p>
       </CardHeader>
       <CardContent>
-        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-auto">
+        <svg
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          className="w-full h-auto"
+        >
           {/* Y-axis grid lines and labels */}
           {yTicks.map((t, i) => (
             <g key={i}>
@@ -511,9 +565,11 @@ function CostTrendChart({ data }: { data: DailyCostPoint[] }) {
                 x={padding.left - 8}
                 y={t.y + 3}
                 textAnchor="end"
-                className="fill-panel-500 text-[9px] font-mono"
+                className="fill-text-muted text-[9px] font-mono"
               >
-                {t.val >= 1000 ? `${(t.val / 1000).toFixed(1)}k` : t.val.toFixed(0)}
+                {t.val >= 1000
+                  ? `${(t.val / 1000).toFixed(1)}k`
+                  : t.val.toFixed(0)}
               </text>
             </g>
           ))}
@@ -538,12 +594,7 @@ function CostTrendChart({ data }: { data: DailyCostPoint[] }) {
           </text>
 
           {/* Cost line */}
-          <path
-            d={linePath}
-            fill="none"
-            stroke="#818cf8"
-            strokeWidth={1.5}
-          />
+          <path d={linePath} fill="none" stroke="#818cf8" strokeWidth={1.5} />
 
           {/* Data point dots */}
           {points.map((p, i) => (
@@ -567,7 +618,7 @@ function CostTrendChart({ data }: { data: DailyCostPoint[] }) {
                 x={x}
                 y={chartHeight - 8}
                 textAnchor="middle"
-                className="fill-panel-500 text-[8px] font-mono"
+                className="fill-text-muted text-[8px] font-mono"
               >
                 {d.date.slice(5)}
               </text>
@@ -598,8 +649,8 @@ function InvoiceGenerator({
   return (
     <Card className="flex-1">
       <CardHeader>
-        <h3 className="text-sm font-medium text-panel-200">Invoice Generator</h3>
-        <p className="text-xs text-panel-500">
+        <h3 className="heading-section">Invoice Generator</h3>
+        <p className="text-xs text-text-muted">
           Generate FizzBuck invoices with itemized subsystem cost attribution
         </p>
       </CardHeader>
@@ -609,7 +660,7 @@ function InvoiceGenerator({
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="h-10 rounded bg-panel-700 border border-panel-600 text-panel-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-fizzbuzz-500"
+            className="h-10 rounded bg-surface-overlay border border-border-default text-text-secondary text-sm px-3 focus:outline-none focus:ring-2 focus:ring-fizzbuzz-500"
           >
             {periods.map((p) => (
               <option key={p} value={p}>
@@ -629,16 +680,26 @@ function InvoiceGenerator({
 
         {/* Invoice Display */}
         {invoice && (
-          <div className="border border-panel-600 rounded-lg p-4 bg-panel-900 space-y-3">
+          <div className="border border-border-default rounded-lg p-4 bg-surface-base space-y-3">
             {/* Invoice Header */}
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-lg font-semibold text-panel-50 font-mono">
+                <p className="text-lg font-semibold text-text-primary font-mono">
                   {invoice.id}
                 </p>
-                <p className="text-xs text-panel-400">Period: {invoice.period}</p>
+                <p className="text-xs text-text-secondary">
+                  Period: {invoice.period}
+                </p>
               </div>
-              <Badge variant={invoice.status === "paid" ? "success" : invoice.status === "overdue" ? "error" : "info"}>
+              <Badge
+                variant={
+                  invoice.status === "paid"
+                    ? "success"
+                    : invoice.status === "overdue"
+                      ? "error"
+                      : "info"
+                }
+              >
                 {invoice.status.toUpperCase()}
               </Badge>
             </div>
@@ -647,7 +708,7 @@ function InvoiceGenerator({
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-panel-600 text-panel-400">
+                  <tr className="border-b border-border-default text-text-secondary">
                     <th className="text-left py-1.5 pr-2">Description</th>
                     <th className="text-right py-1.5 px-2">Qty</th>
                     <th className="text-right py-1.5 px-2">Unit Cost</th>
@@ -656,7 +717,10 @@ function InvoiceGenerator({
                 </thead>
                 <tbody>
                   {invoice.lines.map((line, i) => (
-                    <tr key={i} className="border-b border-panel-700/50 text-panel-300">
+                    <tr
+                      key={i}
+                      className="border-b border-border-subtle/50 text-text-secondary"
+                    >
                       <td className="py-1.5 pr-2">{line.description}</td>
                       <td className="text-right py-1.5 px-2 font-mono">
                         {line.quantity.toLocaleString()}
@@ -674,22 +738,22 @@ function InvoiceGenerator({
             </div>
 
             {/* Totals */}
-            <div className="border-t border-panel-600 pt-2 space-y-1">
-              <div className="flex justify-between text-xs text-panel-400">
+            <div className="border-t border-border-default pt-2 space-y-1">
+              <div className="flex justify-between text-xs text-text-secondary">
                 <span>Subtotal</span>
                 <span className="font-mono">{formatFB(invoice.subtotal)}</span>
               </div>
-              <div className="flex justify-between text-xs text-panel-400">
+              <div className="flex justify-between text-xs text-text-secondary">
                 <span>FBVAT (7.5%)</span>
                 <span className="font-mono">{formatFB(invoice.tax)}</span>
               </div>
-              <div className="flex justify-between text-sm font-semibold text-panel-50">
+              <div className="flex justify-between text-sm font-semibold text-text-primary">
                 <span>Grand Total</span>
                 <span className="font-mono">{formatFB(invoice.total)}</span>
               </div>
             </div>
 
-            <p className="text-[10px] text-panel-500">
+            <p className="text-[10px] text-text-muted">
               Issued: {new Date(invoice.issuedAt).toLocaleString()}
             </p>
           </div>
@@ -709,7 +773,9 @@ export default function FinOpsPage() {
   // State
   const [costBreakdown, setCostBreakdown] = useState<CostAllocation[]>([]);
   const [budgetStatuses, setBudgetStatuses] = useState<BudgetStatus[]>([]);
-  const [exchangeRate, setExchangeRate] = useState<FizzBuckExchangeRate | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<FizzBuckExchangeRate | null>(
+    null,
+  );
   const [costTrend, setCostTrend] = useState<DailyCostPoint[]>([]);
   const [costSummary, setCostSummary] = useState<CostSummary | null>(null);
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -779,12 +845,18 @@ export default function FinOpsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-panel-50">FinOps Billing Center</h1>
-          <p className="text-sm text-panel-400 mt-1">
-            FizzBuck cost governance, budget enforcement, and financial reporting
+          <h1 className="heading-page">FinOps Billing Center</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            FizzBuck cost governance, budget enforcement, and financial
+            reporting
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={loadData} disabled={loading}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={loadData}
+          disabled={loading}
+        >
           {loading ? "Refreshing..." : "Refresh"}
         </Button>
       </div>

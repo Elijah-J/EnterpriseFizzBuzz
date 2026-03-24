@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { DonutChart, HeatmapGrid, LineChart } from "@/components/charts";
 import { Button } from "@/components/ui/button";
-import { useDataProvider } from "@/lib/data-providers";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   ClassificationDistribution,
-  HeatmapData,
   EvaluationTrend,
+  HeatmapData,
 } from "@/lib/data-providers";
-import { DonutChart, HeatmapGrid, LineChart } from "@/components/charts";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -55,7 +57,9 @@ export default function AnalyticsPage() {
   const [end, setEnd] = useState(100);
 
   // Data state
-  const [distribution, setDistribution] = useState<ClassificationDistribution[] | null>(null);
+  const [distribution, setDistribution] = useState<
+    ClassificationDistribution[] | null
+  >(null);
   const [heatmap, setHeatmap] = useState<HeatmapData | null>(null);
   const [trend, setTrend] = useState<EvaluationTrend | null>(null);
   const [trendPeriod, setTrendPeriod] = useState<TrendPeriod>("24h");
@@ -137,15 +141,15 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-panel-50">
-          Analytics &amp; Intelligence
-        </h1>
-        <p className="mt-1 text-sm text-panel-400">
-          Statistical analysis of FizzBuzz classification distributions, divisibility patterns,
-          and evaluation pipeline throughput trends.
-        </p>
-      </div>
+      <Reveal>
+        <div>
+          <h1 className="heading-page">Analytics &amp; Intelligence</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Statistical analysis of FizzBuzz classification distributions,
+            divisibility patterns, and evaluation pipeline throughput trends.
+          </p>
+        </div>
+      </Reveal>
 
       {/* ----------------------------------------------------------------- */}
       {/* Range Selector                                                     */}
@@ -157,7 +161,7 @@ export default function AnalyticsPage() {
             <div>
               <label
                 htmlFor="analytics-start"
-                className="block text-xs font-medium text-panel-400 mb-1"
+                className="block text-xs font-medium text-text-secondary mb-1"
               >
                 Range Start
               </label>
@@ -168,9 +172,9 @@ export default function AnalyticsPage() {
                 max={10000}
                 value={start}
                 onChange={(e) => setStart(Number(e.target.value))}
-                className={`w-32 rounded border bg-panel-900 px-3 py-2 text-sm text-panel-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-panel-950 ${
+                className={`w-32 rounded border bg-surface-base px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-ground ${
                   startValid
-                    ? "border-panel-700 focus:ring-fizzbuzz-500"
+                    ? "border-border-subtle focus:ring-fizzbuzz-500"
                     : "border-red-600 focus:ring-red-500"
                 }`}
               />
@@ -185,7 +189,7 @@ export default function AnalyticsPage() {
             <div>
               <label
                 htmlFor="analytics-end"
-                className="block text-xs font-medium text-panel-400 mb-1"
+                className="block text-xs font-medium text-text-secondary mb-1"
               >
                 Range End
               </label>
@@ -196,9 +200,9 @@ export default function AnalyticsPage() {
                 max={10000}
                 value={end}
                 onChange={(e) => setEnd(Number(e.target.value))}
-                className={`w-32 rounded border bg-panel-900 px-3 py-2 text-sm text-panel-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-panel-950 ${
+                className={`w-32 rounded border bg-surface-base px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-ground ${
                   endValid
-                    ? "border-panel-700 focus:ring-fizzbuzz-500"
+                    ? "border-border-subtle focus:ring-fizzbuzz-500"
                     : "border-red-600 focus:ring-red-500"
                 }`}
               />
@@ -235,9 +239,7 @@ export default function AnalyticsPage() {
           {/* Donut Chart */}
           <Card className="lg:col-span-3">
             <CardHeader>
-              <h2 className="text-sm font-semibold text-panel-100">
-                Classification Distribution
-              </h2>
+              <h2 className="heading-section">Classification Distribution</h2>
             </CardHeader>
             <CardContent className="flex justify-center">
               <DonutChart
@@ -253,32 +255,30 @@ export default function AnalyticsPage() {
           {/* Distribution Statistics */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <h2 className="text-sm font-semibold text-panel-100">
-                Distribution Statistics
-              </h2>
+              <h2 className="heading-section">Distribution Statistics</h2>
             </CardHeader>
             <CardContent className="space-y-3">
               {distribution.map((d) => (
                 <div
                   key={d.classification}
-                  className="flex items-center justify-between rounded bg-panel-900 px-3 py-2"
+                  className="flex items-center justify-between rounded bg-surface-base px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
                     <span
                       className={`h-2.5 w-2.5 rounded-full ${CLASSIFICATION_COLORS[d.classification]}`}
                     />
-                    <span className="text-sm text-panel-200">
+                    <span className="text-sm text-text-secondary">
                       {CLASSIFICATION_LABELS[d.classification]}
                     </span>
                   </div>
                   <div className="flex items-center gap-4 text-sm font-mono">
-                    <span className="text-panel-100 w-12 text-right">
+                    <span className="text-text-primary w-12 text-right">
                       {d.count}
                     </span>
-                    <span className="text-panel-400 w-16 text-right">
+                    <span className="text-text-secondary w-16 text-right">
                       {(d.proportion * 100).toFixed(2)}%
                     </span>
-                    <span className="text-panel-500 w-12 text-right">
+                    <span className="text-text-muted w-12 text-right">
                       {d.fraction}
                     </span>
                   </div>
@@ -286,9 +286,10 @@ export default function AnalyticsPage() {
               ))}
 
               {/* Theoretical probabilities */}
-              <div className="mt-4 border-t border-panel-700 pt-3">
-                <p className="text-xs text-panel-500 leading-relaxed">
-                  Theoretical: Fizz 4/15 (26.67%) | Buzz 2/15 (13.33%) | FizzBuzz 1/15 (6.67%) | Number 8/15 (53.33%)
+              <div className="mt-4 border-t border-border-subtle pt-3">
+                <p className="text-xs text-text-muted leading-relaxed">
+                  Theoretical: Fizz 4/15 (26.67%) | Buzz 2/15 (13.33%) |
+                  FizzBuzz 1/15 (6.67%) | Number 8/15 (53.33%)
                 </p>
               </div>
             </CardContent>
@@ -302,9 +303,7 @@ export default function AnalyticsPage() {
       {heatmap && (
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Divisibility Heatmap
-            </h2>
+            <h2 className="heading-section">Divisibility Heatmap</h2>
           </CardHeader>
           <CardContent>
             <HeatmapGrid
@@ -322,9 +321,7 @@ export default function AnalyticsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-panel-100">
-              Evaluation Volume Trend
-            </h2>
+            <h2 className="heading-section">Evaluation Volume Trend</h2>
             <div className="flex gap-1">
               {TREND_PERIODS.map((period) => (
                 <button
@@ -333,7 +330,7 @@ export default function AnalyticsPage() {
                   className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
                     trendPeriod === period
                       ? "bg-fizzbuzz-600 text-white"
-                      : "bg-panel-700 text-panel-300 hover:bg-panel-600"
+                      : "bg-surface-overlay text-text-secondary hover:bg-surface-overlay"
                   }`}
                 >
                   {PERIOD_LABELS[period]}
@@ -352,15 +349,15 @@ export default function AnalyticsPage() {
                 label="Evaluation Volume"
                 height={300}
               />
-              <p className="mt-3 text-xs text-panel-500">
+              <p className="mt-3 text-xs text-text-muted">
                 Total evaluations in period:{" "}
-                <span className="font-mono text-panel-300">
+                <span className="font-mono text-text-secondary">
                   {trend.totalEvaluations.toLocaleString()}
                 </span>
               </p>
             </>
           ) : (
-            <div className="flex items-center justify-center h-[300px] text-xs text-panel-500">
+            <div className="flex items-center justify-center h-[300px] text-xs text-text-muted">
               Loading evaluation trend data...
             </div>
           )}

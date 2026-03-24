@@ -1,10 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
-import type { SLAStatus, SLAHistoryPoint, Incident } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
+import type {
+  Incident,
+  SLAHistoryPoint,
+  SLAStatus,
+} from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // On-call roster for escalation chain display
@@ -30,7 +36,10 @@ const ON_CALL_ROSTER = [
 // Severity badge mapping
 // ---------------------------------------------------------------------------
 
-const SEVERITY_VARIANT: Record<Incident["severity"], "error" | "warning" | "info" | "success"> = {
+const SEVERITY_VARIANT: Record<
+  Incident["severity"],
+  "error" | "warning" | "info" | "success"
+> = {
   P1: "error",
   P2: "warning",
   P3: "info",
@@ -75,12 +84,14 @@ function BurnDownChart({ data }: { data: SLAHistoryPoint[] }) {
   const areaPoints = `${firstX},${bottomY} ${points} ${lastX},${bottomY}`;
 
   // Time axis labels (first, middle, last)
-  const timeLabels = [data[0], data[Math.floor(data.length / 2)], data[data.length - 1]].map(
-    (p) => {
-      const d = new Date(p.timestamp);
-      return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-    },
-  );
+  const timeLabels = [
+    data[0],
+    data[Math.floor(data.length / 2)],
+    data[data.length - 1],
+  ].map((p) => {
+    const d = new Date(p.timestamp);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  });
 
   // Y-axis grid lines
   const yGridLines = [100, 75, 50, 25, 0].filter(
@@ -112,9 +123,7 @@ function BurnDownChart({ data }: { data: SLAHistoryPoint[] }) {
       {/* Y-axis grid lines */}
       {yGridLines.map((value) => {
         const y =
-          paddingY +
-          chartHeight -
-          ((value - yMin) / budgetRange) * chartHeight;
+          paddingY + chartHeight - ((value - yMin) / budgetRange) * chartHeight;
         return (
           <g key={value}>
             <line
@@ -122,7 +131,7 @@ function BurnDownChart({ data }: { data: SLAHistoryPoint[] }) {
               y1={y}
               x2={paddingX + chartWidth}
               y2={y}
-              stroke="var(--panel-700)"
+              stroke="var(--surface-overlay)"
               strokeWidth="1"
               strokeDasharray="4,4"
             />
@@ -131,7 +140,7 @@ function BurnDownChart({ data }: { data: SLAHistoryPoint[] }) {
               y={y + 3}
               textAnchor="end"
               className="text-[10px]"
-              fill="var(--panel-500)"
+              fill="var(--text-muted)"
             >
               {value}%
             </text>
@@ -141,8 +150,7 @@ function BurnDownChart({ data }: { data: SLAHistoryPoint[] }) {
 
       {/* Time axis labels */}
       {timeLabels.map((label, i) => {
-        const x =
-          paddingX + (i / (timeLabels.length - 1)) * chartWidth;
+        const x = paddingX + (i / (timeLabels.length - 1)) * chartWidth;
         return (
           <text
             key={`time-${i}`}
@@ -150,7 +158,7 @@ function BurnDownChart({ data }: { data: SLAHistoryPoint[] }) {
             y={height - 2}
             textAnchor="middle"
             className="text-[10px]"
-            fill="var(--panel-500)"
+            fill="var(--text-muted)"
           >
             {label}
           </text>
@@ -248,7 +256,7 @@ function SLOGauge({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--panel-700)"
+          stroke="var(--surface-overlay)"
           strokeWidth={strokeWidth}
         />
         {/* Filled arc */}
@@ -272,10 +280,10 @@ function SLOGauge({
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-lg font-mono font-bold"
-          fill="var(--panel-50)"
+          fill="var(--text-primary)"
         >
           {displayValue}
-          <tspan className="text-[10px]" fill="var(--panel-400)">
+          <tspan className="text-[10px]" fill="var(--text-secondary)">
             {unit}
           </tspan>
         </text>
@@ -286,12 +294,14 @@ function SLOGauge({
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-[9px]"
-          fill="var(--panel-500)"
+          fill="var(--text-muted)"
         >
-          target: {inverse ? "<" : ">"}{target}{unit}
+          target: {inverse ? "<" : ">"}
+          {target}
+          {unit}
         </text>
       </svg>
-      <span className="text-xs font-medium text-panel-300">{label}</span>
+      <span className="text-xs font-medium text-text-secondary">{label}</span>
     </div>
   );
 }
@@ -354,8 +364,8 @@ export default function SLADashboardPage() {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-panel-600 border-t-fizzbuzz-400 mb-3" />
-          <p className="text-sm text-panel-500">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-border-default border-t-fizzbuzz-400 mb-3" />
+          <p className="text-sm text-text-muted">
             Loading SLA compliance data...
           </p>
         </div>
@@ -379,15 +389,24 @@ export default function SLADashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page header */}
+      <Reveal>
+        <div>
+          <h1 className="heading-page">SLA Compliance Dashboard</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Service Level Agreement monitoring with error budget tracking,
+            availability metrics, and incident correlation.
+          </p>
+        </div>
+      </Reveal>
+
       {/* Error Budget Burn-Down */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-panel-100">
-              Error Budget Burn-Down
-            </h2>
+            <h2 className="heading-section">Error Budget Burn-Down</h2>
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-panel-500">Remaining:</span>
+              <span className="text-text-muted">Remaining:</span>
               <span
                 className={`font-mono font-semibold ${
                   sla.errorBudgetRemaining > 0.5
@@ -407,7 +426,7 @@ export default function SLADashboardPage() {
             <BurnDownChart data={slaHistory} />
           ) : (
             <div className="flex h-48 items-center justify-center">
-              <span className="text-xs text-panel-500">
+              <span className="text-xs text-text-muted">
                 Collecting burn-down telemetry...
               </span>
             </div>
@@ -458,9 +477,7 @@ export default function SLADashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-panel-100">
-                Incident Timeline
-              </h2>
+              <h2 className="heading-section">Incident Timeline</h2>
               <Badge variant={incidents.length > 0 ? "warning" : "success"}>
                 {incidents.length} incident{incidents.length !== 1 ? "s" : ""}
               </Badge>
@@ -469,14 +486,14 @@ export default function SLADashboardPage() {
           <CardContent>
             {incidents.length === 0 ? (
               <div className="flex h-32 items-center justify-center">
-                <span className="text-xs text-panel-500">
+                <span className="text-xs text-text-muted">
                   No incidents in the current reporting window.
                 </span>
               </div>
             ) : (
               <div className="relative space-y-0">
                 {/* Vertical timeline line */}
-                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-panel-700" />
+                <div className="absolute left-[7px] top-2 bottom-2 w-px bg-surface-overlay" />
 
                 {incidents.map((incident) => (
                   <div key={incident.id} className="relative flex gap-4 py-3">
@@ -500,20 +517,20 @@ export default function SLADashboardPage() {
                           <Badge variant={SEVERITY_VARIANT[incident.severity]}>
                             {incident.severity}
                           </Badge>
-                          <span className="text-xs text-panel-400">
+                          <span className="text-xs text-text-secondary">
                             {incident.id}
                           </span>
                         </div>
-                        <span className="shrink-0 text-[10px] text-panel-500 font-mono">
+                        <span className="shrink-0 text-[10px] text-text-muted font-mono">
                           {formatDuration(incident.durationMs)}
                         </span>
                       </div>
 
-                      <p className="mt-1 text-sm text-panel-200 leading-snug">
+                      <p className="mt-1 text-sm text-text-secondary leading-snug">
                         {incident.title}
                       </p>
 
-                      <div className="mt-1.5 flex items-center gap-3 text-[10px] text-panel-500">
+                      <div className="mt-1.5 flex items-center gap-3 text-[10px] text-text-muted">
                         <span>{formatTimestamp(incident.startedAt)}</span>
                         {incident.resolvedAt ? (
                           <span className="text-fizz-600">Resolved</span>
@@ -534,9 +551,7 @@ export default function SLADashboardPage() {
         {/* On-Call Roster — 1/3 width */}
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              On-Call Roster
-            </h2>
+            <h2 className="heading-section">On-Call Roster</h2>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -547,12 +562,12 @@ export default function SLADashboardPage() {
                     className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center ${
                       i === 0
                         ? "bg-fizzbuzz-900 border border-fizzbuzz-700"
-                        : "bg-panel-700"
+                        : "bg-surface-overlay"
                     }`}
                   >
                     <span
                       className={`text-xs font-medium ${
-                        i === 0 ? "text-fizzbuzz-300" : "text-panel-300"
+                        i === 0 ? "text-fizzbuzz-300" : "text-text-secondary"
                       }`}
                     >
                       {entry.name
@@ -567,22 +582,25 @@ export default function SLADashboardPage() {
                   <div className="min-w-0">
                     <p
                       className={`text-sm truncate ${
-                        i === 0 ? "text-panel-100 font-medium" : "text-panel-300"
+                        i === 0
+                          ? "text-text-primary font-medium"
+                          : "text-text-secondary"
                       }`}
                     >
                       {entry.name}
                     </p>
-                    <p className="text-[10px] text-panel-500">{entry.role}</p>
+                    <p className="text-[10px] text-text-muted">{entry.role}</p>
                   </div>
                 </div>
               ))}
             </div>
 
             {/* Rotation note */}
-            <div className="mt-6 rounded border border-panel-700 bg-panel-900 px-3 py-2">
-              <p className="text-[10px] text-panel-500">
-                Rotation schedule follows a 24-hour cycle aligned to UTC midnight.
-                Escalation SLA: P1 = 5 min, P2 = 15 min, P3 = 1 hour, P4 = next business day.
+            <div className="mt-6 rounded border border-border-subtle bg-surface-base px-3 py-2">
+              <p className="text-[10px] text-text-muted">
+                Rotation schedule follows a 24-hour cycle aligned to UTC
+                midnight. Escalation SLA: P1 = 5 min, P2 = 15 min, P3 = 1 hour,
+                P4 = next business day.
               </p>
             </div>
           </CardContent>

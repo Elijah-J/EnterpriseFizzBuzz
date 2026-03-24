@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useDataProvider } from "@/lib/data-providers";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   QuantumCircuit,
-  QuantumState,
   QuantumSimulationResult,
+  QuantumState,
 } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -18,15 +20,15 @@ const SHOT_PRESETS = [128, 256, 512, 1024, 4096, 8192] as const;
 
 /** Gate color assignments following the platform's quantum visualization palette. */
 const GATE_COLORS: Record<string, string> = {
-  H: "#38bdf8",    // sky-400
-  X: "#fb7185",    // rose-400
-  Z: "#a78bfa",    // violet-400
-  S: "#a78bfa",    // violet-400
-  T: "#a78bfa",    // violet-400
-  CNOT: "#34d399",  // emerald-400
-  CZ: "#34d399",   // emerald-400
-  SWAP: "#34d399",  // emerald-400
-  M: "#fbbf24",    // amber-400
+  H: "#38bdf8", // sky-400
+  X: "#fb7185", // rose-400
+  Z: "#a78bfa", // violet-400
+  S: "#a78bfa", // violet-400
+  T: "#a78bfa", // violet-400
+  CNOT: "#34d399", // emerald-400
+  CZ: "#34d399", // emerald-400
+  SWAP: "#34d399", // emerald-400
+  M: "#fbbf24", // amber-400
 };
 
 const GATE_TEXT_CLASSES: Record<string, string> = {
@@ -57,12 +59,12 @@ function CircuitDiagram({ circuit }: { circuit: QuantumCircuit }) {
   const maxStep = Math.max(...circuit.gates.map((g) => g.step), 0);
   const svgWidth = LEFT_MARGIN + (maxStep + 1) * STEP_X_SPACING + RIGHT_MARGIN;
   const svgHeight =
-    TOP_MARGIN +
-    circuit.numQubits * WIRE_Y_SPACING +
-    BOTTOM_MARGIN;
+    TOP_MARGIN + circuit.numQubits * WIRE_Y_SPACING + BOTTOM_MARGIN;
 
-  const wireY = (qubit: number) => TOP_MARGIN + qubit * WIRE_Y_SPACING + WIRE_Y_SPACING / 2;
-  const stepX = (step: number) => LEFT_MARGIN + step * STEP_X_SPACING + STEP_X_SPACING / 2;
+  const wireY = (qubit: number) =>
+    TOP_MARGIN + qubit * WIRE_Y_SPACING + WIRE_Y_SPACING / 2;
+  const stepX = (step: number) =>
+    LEFT_MARGIN + step * STEP_X_SPACING + STEP_X_SPACING / 2;
 
   return (
     <div className="overflow-x-auto">
@@ -269,9 +271,8 @@ function StateVectorChart({
     }));
   }, [state, maxDisplay]);
 
-  const hiddenCount = state.basisLabels.length > maxDisplay
-    ? state.basisLabels.length - 8
-    : 0;
+  const hiddenCount =
+    state.basisLabels.length > maxDisplay ? state.basisLabels.length - 8 : 0;
 
   const chartWidth = 500;
   const chartHeight = 200;
@@ -281,7 +282,10 @@ function StateVectorChart({
   const topPad = 10;
   const plotWidth = chartWidth - leftPad - 10;
   const plotHeight = chartHeight - bottomPad - topPad;
-  const barWidth = Math.max(8, (plotWidth - barPadding * displayData.length) / displayData.length);
+  const barWidth = Math.max(
+    8,
+    (plotWidth - barPadding * displayData.length) / displayData.length,
+  );
 
   return (
     <div className="relative">
@@ -300,7 +304,7 @@ function StateVectorChart({
                 x={leftPad - 6}
                 y={y + 3}
                 textAnchor="end"
-                className="fill-panel-500"
+                className="fill-text-muted"
                 fontSize={9}
               >
                 {v.toFixed(2)}
@@ -362,40 +366,43 @@ function StateVectorChart({
         })}
 
         {/* Tooltip */}
-        {hoveredIdx !== null && displayData[hoveredIdx] && (() => {
-          const d = displayData[hoveredIdx];
-          const tooltipX = leftPad + hoveredIdx * (barWidth + barPadding) + barWidth / 2;
-          const tooltipY = topPad - 2;
-          const amp = d.amplitude;
-          const text = `${amp.real >= 0 ? "" : "-"}${Math.abs(amp.real).toFixed(3)} ${amp.imag >= 0 ? "+" : "-"} ${Math.abs(amp.imag).toFixed(3)}i  P=${d.probability.toFixed(4)}`;
-          return (
-            <g>
-              <rect
-                x={Math.max(5, tooltipX - 90)}
-                y={tooltipY - 12}
-                width={180}
-                height={16}
-                rx={3}
-                fill="#0f172a"
-                stroke="#475569"
-                strokeWidth={0.5}
-              />
-              <text
-                x={Math.max(5, tooltipX - 90) + 90}
-                y={tooltipY}
-                textAnchor="middle"
-                className="fill-panel-200"
-                fontSize={8}
-                fontFamily="monospace"
-              >
-                {text}
-              </text>
-            </g>
-          );
-        })()}
+        {hoveredIdx !== null &&
+          displayData[hoveredIdx] &&
+          (() => {
+            const d = displayData[hoveredIdx];
+            const tooltipX =
+              leftPad + hoveredIdx * (barWidth + barPadding) + barWidth / 2;
+            const tooltipY = topPad - 2;
+            const amp = d.amplitude;
+            const text = `${amp.real >= 0 ? "" : "-"}${Math.abs(amp.real).toFixed(3)} ${amp.imag >= 0 ? "+" : "-"} ${Math.abs(amp.imag).toFixed(3)}i  P=${d.probability.toFixed(4)}`;
+            return (
+              <g>
+                <rect
+                  x={Math.max(5, tooltipX - 90)}
+                  y={tooltipY - 12}
+                  width={180}
+                  height={16}
+                  rx={3}
+                  fill="#0f172a"
+                  stroke="#475569"
+                  strokeWidth={0.5}
+                />
+                <text
+                  x={Math.max(5, tooltipX - 90) + 90}
+                  y={tooltipY}
+                  textAnchor="middle"
+                  className="fill-panel-200"
+                  fontSize={8}
+                  fontFamily="monospace"
+                >
+                  {text}
+                </text>
+              </g>
+            );
+          })()}
       </svg>
       {hiddenCount > 0 && (
-        <p className="text-xs text-panel-500 text-center mt-1">
+        <p className="text-xs text-text-muted text-center mt-1">
           ... and {hiddenCount} more basis states
         </p>
       )}
@@ -409,8 +416,7 @@ function StateVectorChart({
 
 function MeasurementHistogram({ result }: { result: QuantumSimulationResult }) {
   const sortedEntries = useMemo(() => {
-    return Object.entries(result.measurementCounts)
-      .sort((a, b) => b[1] - a[1]);
+    return Object.entries(result.measurementCounts).sort((a, b) => b[1] - a[1]);
   }, [result.measurementCounts]);
 
   const maxCount = sortedEntries.length > 0 ? sortedEntries[0][1] : 1;
@@ -425,7 +431,8 @@ function MeasurementHistogram({ result }: { result: QuantumSimulationResult }) {
   const barPadding = 3;
   const barWidth = Math.max(
     6,
-    (plotWidth - barPadding * sortedEntries.length) / Math.max(1, sortedEntries.length),
+    (plotWidth - barPadding * sortedEntries.length) /
+      Math.max(1, sortedEntries.length),
   );
 
   // States encoding divisibility by 3 or 5 (for coloring)
@@ -439,9 +446,11 @@ function MeasurementHistogram({ result }: { result: QuantumSimulationResult }) {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-2 text-xs text-panel-400">
+      <div className="flex items-center gap-4 mb-2 text-xs text-text-secondary">
         <span>Shots: {result.shotsExecuted.toLocaleString()}</span>
-        <span>Completed: {new Date(result.simulatedAt).toLocaleTimeString()}</span>
+        <span>
+          Completed: {new Date(result.simulatedAt).toLocaleTimeString()}
+        </span>
       </div>
       <svg
         width="100%"
@@ -459,7 +468,7 @@ function MeasurementHistogram({ result }: { result: QuantumSimulationResult }) {
                 x={leftPad - 6}
                 y={y + 3}
                 textAnchor="end"
-                className="fill-panel-500"
+                className="fill-text-muted"
                 fontSize={9}
               >
                 {val}
@@ -483,8 +492,8 @@ function MeasurementHistogram({ result }: { result: QuantumSimulationResult }) {
           const barHeight = (count / maxCount) * plotHeight;
           const y = topPad + plotHeight - barHeight;
           const fillColor = isDivisibilityState(label)
-            ? "#4ade80"   // fizz-400
-            : "#64748b";  // panel-500
+            ? "#4ade80" // fizz-400
+            : "#64748b"; // panel-500
           const pct = ((count / result.shotsExecuted) * 100).toFixed(1);
 
           return (
@@ -539,7 +548,7 @@ function AdvantageGauge({ result }: { result: QuantumSimulationResult }) {
 
   // Logarithmic mapping: 0.01x -> 0 degrees, 1x -> 90 degrees, 1000x -> 180 degrees
   const logMin = Math.log10(0.01); // -2
-  const logMax = Math.log10(1000);  // 3
+  const logMax = Math.log10(1000); // 3
   const logVal = Math.log10(Math.max(0.01, Math.min(1000, ratio)));
   const normalizedAngle = ((logVal - logMin) / (logMax - logMin)) * 180;
   const needleAngle = Math.max(0, Math.min(180, normalizedAngle));
@@ -564,10 +573,10 @@ function AdvantageGauge({ result }: { result: QuantumSimulationResult }) {
   // Color zones on the gauge
   // Green: < 1x (0-90 degrees), Yellow: 1-10x (90-126), Orange: 10-100x (126-162), Red: > 100x (162-180)
   const zones = [
-    { start: 0, end: 90, color: "#22c55e" },     // Green: quantum advantage
-    { start: 90, end: 126, color: "#eab308" },    // Yellow: 1-10x
-    { start: 126, end: 162, color: "#f97316" },    // Orange: 10-100x
-    { start: 162, end: 180, color: "#ef4444" },    // Red: > 100x
+    { start: 0, end: 90, color: "#22c55e" }, // Green: quantum advantage
+    { start: 90, end: 126, color: "#eab308" }, // Yellow: 1-10x
+    { start: 126, end: 162, color: "#f97316" }, // Orange: 10-100x
+    { start: 162, end: 180, color: "#ef4444" }, // Red: > 100x
   ];
 
   // Needle endpoint
@@ -624,7 +633,7 @@ function AdvantageGauge({ result }: { result: QuantumSimulationResult }) {
               x={lx}
               y={ly}
               textAnchor="middle"
-              className="fill-panel-500"
+              className="fill-text-muted"
               fontSize={8}
               fontFamily="monospace"
             >
@@ -667,7 +676,7 @@ function AdvantageGauge({ result }: { result: QuantumSimulationResult }) {
           {label}
         </text>
       </svg>
-      <p className="text-xs text-panel-500 mt-1">
+      <p className="text-xs text-text-muted mt-1">
         Quantum: {result.quantumTimeMs.toFixed(2)}ms | Classical:{" "}
         {result.classicalTimeMs.toFixed(3)}ms
       </p>
@@ -745,16 +754,16 @@ export default function QuantumWorkbenchPage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-panel-50">
-          Quantum Circuit Workbench
-        </h1>
-        <p className="text-sm text-panel-400 mt-1">
-          Interactive simulation interface for the quantum FizzBuzz evaluation
-          subsystem. Configure circuits, execute state-vector simulations, and
-          analyze measurement statistics.
-        </p>
-      </div>
+      <Reveal>
+        <div>
+          <h1 className="heading-page">Quantum Circuit Workbench</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            Interactive simulation interface for the quantum FizzBuzz evaluation
+            subsystem. Configure circuits, execute state-vector simulations, and
+            analyze measurement statistics.
+          </p>
+        </div>
+      </Reveal>
 
       {/* Panel 1: Circuit Selector and Controls */}
       <Card>
@@ -764,7 +773,7 @@ export default function QuantumWorkbenchPage() {
             <div className="flex items-center gap-2">
               <label
                 htmlFor="circuit-select"
-                className="text-xs text-panel-400 uppercase tracking-wide"
+                className="text-xs text-text-secondary uppercase tracking-wide"
               >
                 Circuit
               </label>
@@ -772,7 +781,7 @@ export default function QuantumWorkbenchPage() {
                 id="circuit-select"
                 value={selectedCircuitId}
                 onChange={(e) => setSelectedCircuitId(e.target.value)}
-                className="rounded bg-panel-900 border border-panel-600 px-3 py-1.5 text-sm text-panel-100 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                className="rounded bg-surface-base border border-border-default px-3 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
               >
                 {circuits.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -784,10 +793,10 @@ export default function QuantumWorkbenchPage() {
 
             {/* Shot count selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs text-panel-400 uppercase tracking-wide">
+              <span className="text-xs text-text-secondary uppercase tracking-wide">
                 Shots
               </span>
-              <div className="flex rounded border border-panel-600 overflow-hidden">
+              <div className="flex rounded border border-border-default overflow-hidden">
                 {SHOT_PRESETS.map((preset) => (
                   <button
                     key={preset}
@@ -795,7 +804,7 @@ export default function QuantumWorkbenchPage() {
                     className={`px-3 py-1.5 text-xs font-mono transition-colors ${
                       shots === preset
                         ? "bg-fizzbuzz-600 text-white"
-                        : "bg-panel-900 text-panel-300 hover:bg-panel-800"
+                        : "bg-surface-base text-text-secondary hover:bg-surface-raised"
                     }`}
                   >
                     {preset.toLocaleString()}
@@ -816,29 +825,31 @@ export default function QuantumWorkbenchPage() {
         </CardHeader>
         {selectedCircuit && (
           <CardContent>
-            <p className="text-sm text-panel-300 mb-2">
+            <p className="text-sm text-text-secondary mb-2">
               {selectedCircuit.description}
             </p>
-            <div className="flex gap-6 text-xs text-panel-500">
+            <div className="flex gap-6 text-xs text-text-muted">
               <span>
                 Qubits:{" "}
-                <span className="text-panel-200">
+                <span className="text-text-secondary">
                   {selectedCircuit.numQubits}
                 </span>
               </span>
               <span>
                 Gates:{" "}
-                <span className="text-panel-200">
+                <span className="text-text-secondary">
                   {selectedCircuit.gates.length}
                 </span>
               </span>
               <span>
                 Depth:{" "}
-                <span className="text-panel-200">{selectedCircuit.depth}</span>
+                <span className="text-text-secondary">
+                  {selectedCircuit.depth}
+                </span>
               </span>
               <span>
                 Classical Bits:{" "}
-                <span className="text-panel-200">
+                <span className="text-text-secondary">
                   {selectedCircuit.numClassicalBits}
                 </span>
               </span>
@@ -851,9 +862,7 @@ export default function QuantumWorkbenchPage() {
       {selectedCircuit && (
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-medium text-panel-200">
-              Circuit Diagram
-            </h2>
+            <h2 className="heading-section">Circuit Diagram</h2>
           </CardHeader>
           <CardContent>
             <CircuitDiagram circuit={selectedCircuit} />
@@ -866,13 +875,11 @@ export default function QuantumWorkbenchPage() {
         {/* Panel 3: State Vector Visualization */}
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-medium text-panel-200">
-              State Vector Probabilities
-            </h2>
+            <h2 className="heading-section">State Vector Probabilities</h2>
           </CardHeader>
           <CardContent>
             {isLoadingState && (
-              <p className="text-sm text-panel-500">
+              <p className="text-sm text-text-muted">
                 Computing state vector...
               </p>
             )}
@@ -880,7 +887,7 @@ export default function QuantumWorkbenchPage() {
               <StateVectorChart state={quantumState} />
             )}
             {!isLoadingState && !quantumState && (
-              <p className="text-sm text-panel-500">
+              <p className="text-sm text-text-muted">
                 Select a circuit to view its state vector.
               </p>
             )}
@@ -890,15 +897,13 @@ export default function QuantumWorkbenchPage() {
         {/* Panel 4: Measurement Histogram */}
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-medium text-panel-200">
-              Measurement Histogram
-            </h2>
+            <h2 className="heading-section">Measurement Histogram</h2>
           </CardHeader>
           <CardContent>
             {simulationResult ? (
               <MeasurementHistogram result={simulationResult} />
             ) : (
-              <p className="text-sm text-panel-500">
+              <p className="text-sm text-text-muted">
                 Execute a simulation to view measurement outcomes.
               </p>
             )}
@@ -911,7 +916,7 @@ export default function QuantumWorkbenchPage() {
         <div className="flex justify-center">
           <Card className="max-w-lg w-full">
             <CardHeader>
-              <h2 className="text-sm font-medium text-panel-200 text-center">
+              <h2 className="text-sm font-medium text-text-secondary text-center">
                 Quantum Advantage Ratio
               </h2>
             </CardHeader>

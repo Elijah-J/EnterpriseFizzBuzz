@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   ChaosExperiment,
   ChaosMetrics,
-  GameDayScenario,
   FaultType,
+  GameDayScenario,
 } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -18,24 +20,61 @@ import { Badge } from "@/components/ui/badge";
 const REFRESH_INTERVAL_MS = 15_000;
 
 /** Color mapping for fault type badges. */
-const FAULT_TYPE_COLORS: Record<FaultType, { bg: string; text: string; border: string; label: string }> = {
-  latency_injection: { bg: "bg-amber-950", text: "text-amber-400", border: "border-amber-800", label: "Latency Injection" },
-  error_injection: { bg: "bg-red-950", text: "text-red-400", border: "border-red-800", label: "Error Injection" },
-  resource_exhaustion: { bg: "bg-purple-950", text: "text-purple-400", border: "border-purple-800", label: "Resource Exhaustion" },
-  network_partition: { bg: "bg-blue-950", text: "text-blue-400", border: "border-blue-800", label: "Network Partition" },
-  cache_corruption: { bg: "bg-orange-950", text: "text-orange-400", border: "border-orange-800", label: "Cache Corruption" },
-  circuit_breaker_trip: { bg: "bg-rose-950", text: "text-rose-400", border: "border-rose-800", label: "Circuit Breaker Trip" },
+const FAULT_TYPE_COLORS: Record<
+  FaultType,
+  { bg: string; text: string; border: string; label: string }
+> = {
+  latency_injection: {
+    bg: "bg-amber-950",
+    text: "text-amber-400",
+    border: "border-amber-800",
+    label: "Latency Injection",
+  },
+  error_injection: {
+    bg: "bg-red-950",
+    text: "text-red-400",
+    border: "border-red-800",
+    label: "Error Injection",
+  },
+  resource_exhaustion: {
+    bg: "bg-purple-950",
+    text: "text-purple-400",
+    border: "border-purple-800",
+    label: "Resource Exhaustion",
+  },
+  network_partition: {
+    bg: "bg-blue-950",
+    text: "text-blue-400",
+    border: "border-blue-800",
+    label: "Network Partition",
+  },
+  cache_corruption: {
+    bg: "bg-orange-950",
+    text: "text-orange-400",
+    border: "border-orange-800",
+    label: "Cache Corruption",
+  },
+  circuit_breaker_trip: {
+    bg: "bg-rose-950",
+    text: "text-rose-400",
+    border: "border-rose-800",
+    label: "Circuit Breaker Trip",
+  },
 };
 
-const STATUS_VARIANT: Record<string, "success" | "warning" | "error" | "info"> = {
-  pending: "info",
-  running: "warning",
-  completed: "success",
-  failed: "error",
-  aborted: "error",
-};
+const STATUS_VARIANT: Record<string, "success" | "warning" | "error" | "info"> =
+  {
+    pending: "info",
+    running: "warning",
+    completed: "success",
+    failed: "error",
+    aborted: "error",
+  };
 
-const GAME_DAY_STATUS_VARIANT: Record<string, "success" | "warning" | "error" | "info"> = {
+const GAME_DAY_STATUS_VARIANT: Record<
+  string,
+  "success" | "warning" | "error" | "info"
+> = {
   scheduled: "info",
   "in-progress": "warning",
   completed: "success",
@@ -68,7 +107,10 @@ function formatRelativeTime(isoString: string): string {
 /** Renders a row of intensity dots (1-5) with filled/empty states. */
 function IntensityMeter({ intensity }: { intensity: number }) {
   return (
-    <div className="flex items-center gap-1" title={`Intensity: ${intensity}/5`}>
+    <div
+      className="flex items-center gap-1"
+      title={`Intensity: ${intensity}/5`}
+    >
       {Array.from({ length: 5 }, (_, i) => (
         <span
           key={i}
@@ -111,10 +153,12 @@ function ExperimentCard({
       <CardContent className="space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold text-panel-50 truncate">
+            <h3 className="text-sm font-semibold text-text-primary truncate">
               {experiment.name}
             </h3>
-            <p className="mt-0.5 text-xs text-panel-400">{experiment.targetSubsystem}</p>
+            <p className="mt-0.5 text-xs text-text-secondary">
+              {experiment.targetSubsystem}
+            </p>
           </div>
           <Badge variant={STATUS_VARIANT[experiment.status] ?? "info"}>
             {experiment.status}
@@ -126,12 +170,16 @@ function ExperimentCard({
           <IntensityMeter intensity={experiment.intensity} />
         </div>
 
-        <p className="text-xs text-panel-400 line-clamp-2">{experiment.description}</p>
+        <p className="text-xs text-text-secondary line-clamp-2">
+          {experiment.description}
+        </p>
 
         {experiment.results && isCompleted && (
-          <div className="flex items-center gap-4 text-xs text-panel-400 border-t border-panel-700 pt-2">
+          <div className="flex items-center gap-4 text-xs text-text-secondary border-t border-border-subtle pt-2">
             <span>Recovery: {formatMs(experiment.results.recoveryTimeMs)}</span>
-            <span>Error rate: {(experiment.results.peakErrorRate * 100).toFixed(1)}%</span>
+            <span>
+              Error rate: {(experiment.results.peakErrorRate * 100).toFixed(1)}%
+            </span>
           </div>
         )}
 
@@ -159,11 +207,12 @@ function ActiveExperimentPanel({
     return (
       <Card className="h-full">
         <CardHeader>
-          <h2 className="text-sm font-semibold text-panel-50">Active Experiment</h2>
+          <h2 className="heading-section">Active Experiment</h2>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-panel-500 text-center py-8">
-            No active experiments. Select an experiment from the catalog to begin fault injection.
+          <p className="text-xs text-text-muted text-center py-8">
+            No active experiments. Select an experiment from the catalog to
+            begin fault injection.
           </p>
         </CardContent>
       </Card>
@@ -172,7 +221,7 @@ function ActiveExperimentPanel({
 
   const progress = Math.min(
     100,
-    (elapsedSec / experiment.estimatedDurationSec) * 100
+    (elapsedSec / experiment.estimatedDurationSec) * 100,
   );
   const remaining = Math.max(0, experiment.estimatedDurationSec - elapsedSec);
 
@@ -180,10 +229,22 @@ function ActiveExperimentPanel({
   const eventTimeline = useMemo(() => {
     const events = [
       { offset: 0, label: "Fault injection initiated" },
-      { offset: Math.floor(experiment.estimatedDurationSec * 0.15), label: `${experiment.faultType.replace(/_/g, " ")} activated on ${experiment.targetSubsystem}` },
-      { offset: Math.floor(experiment.estimatedDurationSec * 0.35), label: "First error detected in evaluation pipeline" },
-      { offset: Math.floor(experiment.estimatedDurationSec * 0.6), label: "Circuit breaker state transition observed" },
-      { offset: Math.floor(experiment.estimatedDurationSec * 0.85), label: "Recovery procedures initiated" },
+      {
+        offset: Math.floor(experiment.estimatedDurationSec * 0.15),
+        label: `${experiment.faultType.replace(/_/g, " ")} activated on ${experiment.targetSubsystem}`,
+      },
+      {
+        offset: Math.floor(experiment.estimatedDurationSec * 0.35),
+        label: "First error detected in evaluation pipeline",
+      },
+      {
+        offset: Math.floor(experiment.estimatedDurationSec * 0.6),
+        label: "Circuit breaker state transition observed",
+      },
+      {
+        offset: Math.floor(experiment.estimatedDurationSec * 0.85),
+        label: "Recovery procedures initiated",
+      },
     ];
     return events.filter((e) => e.offset <= elapsedSec);
   }, [experiment, elapsedSec]);
@@ -199,52 +260,64 @@ function ActiveExperimentPanel({
     <Card className="h-full">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-panel-50">Active Experiment</h2>
+          <h2 className="heading-section">Active Experiment</h2>
           <Badge variant="warning">Running</Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-panel-50">{experiment.name}</h3>
-          <p className="text-xs text-panel-400">{experiment.targetSubsystem}</p>
+          <h3 className="heading-section">{experiment.name}</h3>
+          <p className="text-xs text-text-secondary">
+            {experiment.targetSubsystem}
+          </p>
         </div>
 
         {/* Progress bar */}
         <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-panel-400">
+          <div className="flex items-center justify-between text-xs text-text-secondary">
             <span>Progress</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="h-2 rounded-full bg-panel-700 overflow-hidden">
+          <div className="h-2 rounded-full bg-surface-overlay overflow-hidden">
             <div
               className="h-full rounded-full bg-amber-500 transition-all duration-1000"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-xs text-panel-500">~{Math.ceil(remaining)}s remaining</p>
+          <p className="text-xs text-text-muted">
+            ~{Math.ceil(remaining)}s remaining
+          </p>
         </div>
 
         {/* Live counters */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded bg-panel-900 p-2 text-center">
-            <p className="text-lg font-mono font-semibold text-panel-50">{affectedCount}</p>
-            <p className="text-xs text-panel-400">Affected</p>
+          <div className="rounded bg-surface-base p-2 text-center">
+            <p className="text-lg font-mono font-semibold text-text-primary">
+              {affectedCount}
+            </p>
+            <p className="text-xs text-text-secondary">Affected</p>
           </div>
-          <div className="rounded bg-panel-900 p-2 text-center">
-            <p className="text-lg font-mono font-semibold text-red-400">{errorCount}</p>
-            <p className="text-xs text-panel-400">Errors</p>
+          <div className="rounded bg-surface-base p-2 text-center">
+            <p className="text-lg font-mono font-semibold text-red-400">
+              {errorCount}
+            </p>
+            <p className="text-xs text-text-secondary">Errors</p>
           </div>
         </div>
 
         {/* Event timeline */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-panel-300">Event Timeline</p>
+          <p className="text-xs font-medium text-text-secondary">
+            Event Timeline
+          </p>
           <div className="space-y-1.5">
             {eventTimeline.map((event, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
                 <span className="mt-0.5 h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
-                <span className="text-panel-400">
-                  <span className="font-mono text-panel-500">+{event.offset}s</span>{" "}
+                <span className="text-text-secondary">
+                  <span className="font-mono text-text-muted">
+                    +{event.offset}s
+                  </span>{" "}
                   {event.label}
                 </span>
               </div>
@@ -282,10 +355,14 @@ function GameDayPanel({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-panel-500">{expanded ? "\u25BC" : "\u25B6"}</span>
+            <span className="text-xs text-text-muted">
+              {expanded ? "\u25BC" : "\u25B6"}
+            </span>
             <div>
-              <h3 className="text-sm font-semibold text-panel-50">{scenario.name}</h3>
-              <p className="text-xs text-panel-400 mt-0.5">{scenario.description}</p>
+              <h3 className="heading-section">{scenario.name}</h3>
+              <p className="text-xs text-text-secondary mt-0.5">
+                {scenario.description}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -302,7 +379,8 @@ function GameDayPanel({
             {scenarioExperiments.map((exp, idx) => {
               const isCurrentPhase = scenario.currentPhase === idx;
               const isCompletedPhase =
-                scenario.currentPhase !== undefined && idx < scenario.currentPhase;
+                scenario.currentPhase !== undefined &&
+                idx < scenario.currentPhase;
 
               return (
                 <div key={exp.id} className="flex items-center gap-1 shrink-0">
@@ -319,7 +397,7 @@ function GameDayPanel({
                         ? "border-amber-700 bg-amber-950 text-amber-400"
                         : isCompletedPhase
                           ? "border-fizz-700 bg-fizz-950 text-fizz-400"
-                          : "border-panel-600 bg-panel-900 text-panel-400"
+                          : "border-border-default bg-surface-base text-text-secondary"
                     }`}
                   >
                     <span className="font-mono mr-1">P{idx + 1}</span>
@@ -331,19 +409,23 @@ function GameDayPanel({
           </div>
 
           {/* Completed summary */}
-          {scenario.status === "completed" && scenario.startedAt && scenario.completedAt && (
-            <div className="flex items-center gap-4 text-xs text-panel-400 border-t border-panel-700 pt-3">
-              <span>
-                Duration:{" "}
-                {formatMs(
-                  new Date(scenario.completedAt).getTime() -
-                    new Date(scenario.startedAt).getTime()
-                )}
-              </span>
-              <span>Phases: {scenario.totalPhases}/{scenario.totalPhases} passed</span>
-              <Badge variant="success">Recovery Grade: A</Badge>
-            </div>
-          )}
+          {scenario.status === "completed" &&
+            scenario.startedAt &&
+            scenario.completedAt && (
+              <div className="flex items-center gap-4 text-xs text-text-secondary border-t border-border-subtle pt-3">
+                <span>
+                  Duration:{" "}
+                  {formatMs(
+                    new Date(scenario.completedAt).getTime() -
+                      new Date(scenario.startedAt).getTime(),
+                  )}
+                </span>
+                <span>
+                  Phases: {scenario.totalPhases}/{scenario.totalPhases} passed
+                </span>
+                <Badge variant="success">Recovery Grade: A</Badge>
+              </div>
+            )}
 
           <button
             onClick={() => onStart(scenario.id)}
@@ -374,7 +456,7 @@ function MttrChart({
   if (data.length === 0) {
     return (
       <div
-        className="flex items-center justify-center text-xs text-panel-500"
+        className="flex items-center justify-center text-xs text-text-muted"
         style={{ width, height }}
       >
         No MTTR data available
@@ -422,8 +504,16 @@ function MttrChart({
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--fizzbuzz-400)" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="var(--fizzbuzz-400)" stopOpacity="0.01" />
+          <stop
+            offset="0%"
+            stopColor="var(--fizzbuzz-400)"
+            stopOpacity="0.15"
+          />
+          <stop
+            offset="100%"
+            stopColor="var(--fizzbuzz-400)"
+            stopOpacity="0.01"
+          />
         </linearGradient>
       </defs>
 
@@ -435,7 +525,7 @@ function MttrChart({
           x2={width - margin.right}
           y1={toY(tick)}
           y2={toY(tick)}
-          stroke="var(--panel-700)"
+          stroke="var(--surface-overlay)"
           strokeWidth="0.5"
         />
       ))}
@@ -448,9 +538,11 @@ function MttrChart({
           y={toY(tick)}
           textAnchor="end"
           dominantBaseline="middle"
-          className="text-[10px] fill-panel-500"
+          className="text-[10px] fill-text-muted"
         >
-          {tick >= 1000 ? `${(tick / 1000).toFixed(1)}s` : `${Math.round(tick)}ms`}
+          {tick >= 1000
+            ? `${(tick / 1000).toFixed(1)}s`
+            : `${Math.round(tick)}ms`}
         </text>
       ))}
 
@@ -461,9 +553,13 @@ function MttrChart({
           x={toX(tick)}
           y={height - 6}
           textAnchor="middle"
-          className="text-[10px] fill-panel-500"
+          className="text-[10px] fill-text-muted"
         >
-          {new Date(tick).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}
+          {new Date(tick).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })}
         </text>
       ))}
 
@@ -525,7 +621,8 @@ export default function ChaosEngineeringPage() {
   const [experiments, setExperiments] = useState<ChaosExperiment[]>([]);
   const [metrics, setMetrics] = useState<ChaosMetrics | null>(null);
   const [scenarios, setScenarios] = useState<GameDayScenario[]>([]);
-  const [activeExperiment, setActiveExperiment] = useState<ChaosExperiment | null>(null);
+  const [activeExperiment, setActiveExperiment] =
+    useState<ChaosExperiment | null>(null);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -566,7 +663,9 @@ export default function ChaosEngineeringPage() {
 
         // Update the experiment status in the catalog
         setExperiments((prev) =>
-          prev.map((e) => (e.id === experimentId ? { ...e, status: "running" as const } : e))
+          prev.map((e) =>
+            e.id === experimentId ? { ...e, status: "running" as const } : e,
+          ),
         );
 
         // Progress timer — increments elapsed seconds
@@ -589,8 +688,8 @@ export default function ChaosEngineeringPage() {
                     results: running.results,
                     lastRunAt: running.lastRunAt,
                   }
-                : e
-            )
+                : e,
+            ),
           );
           setActiveExperiment(null);
           setElapsedSec(0);
@@ -599,7 +698,7 @@ export default function ChaosEngineeringPage() {
         // Fault injection failure is itself a form of chaos
       }
     },
-    [provider]
+    [provider],
   );
 
   // Handle Game Day start (runs first experiment in the scenario)
@@ -611,15 +710,20 @@ export default function ChaosEngineeringPage() {
       setScenarios((prev) =>
         prev.map((s) =>
           s.id === scenarioId
-            ? { ...s, status: "in-progress" as const, currentPhase: 0, startedAt: new Date().toISOString() }
-            : s
-        )
+            ? {
+                ...s,
+                status: "in-progress" as const,
+                currentPhase: 0,
+                startedAt: new Date().toISOString(),
+              }
+            : s,
+        ),
       );
 
       // Execute the first experiment in the scenario
       await handleInjectFault(scenario.experiments[0]);
     },
-    [scenarios, handleInjectFault]
+    [scenarios, handleInjectFault],
   );
 
   // Cleanup timers on unmount
@@ -634,7 +738,7 @@ export default function ChaosEngineeringPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-sm text-panel-400">
+      <div className="flex items-center justify-center h-64 text-sm text-text-secondary">
         Initializing chaos engineering control plane...
       </div>
     );
@@ -643,22 +747,24 @@ export default function ChaosEngineeringPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-lg font-semibold text-panel-50">
-          Chaos Engineering Control Plane
-        </h1>
-        <p className="mt-1 text-sm text-panel-400">
-          Fault injection experiments, Game Day scenarios, and resilience metrics
-          for the Enterprise FizzBuzz evaluation pipeline.
-        </p>
-      </div>
+      <Reveal>
+        <div>
+          <h1 className="heading-page">Chaos Engineering Control Plane</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Fault injection experiments, Game Day scenarios, and resilience
+            metrics for the Enterprise FizzBuzz evaluation pipeline.
+          </p>
+        </div>
+      </Reveal>
 
       {/* Section A: Metrics Summary Bar */}
       {metrics && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent>
-              <p className="text-xs text-panel-400 mb-1">Resilience Score</p>
+              <p className="text-xs text-text-secondary mb-1">
+                Resilience Score
+              </p>
               <p
                 className={`text-2xl font-mono font-bold ${
                   metrics.resilienceScore >= 80
@@ -670,17 +776,19 @@ export default function ChaosEngineeringPage() {
               >
                 {metrics.resilienceScore}
               </p>
-              <p className="text-xs text-panel-500 mt-1">out of 100</p>
+              <p className="text-xs text-text-muted mt-1">out of 100</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent>
-              <p className="text-xs text-panel-400 mb-1">Experiments Run</p>
-              <p className="text-2xl font-mono font-bold text-panel-50">
+              <p className="text-xs text-text-secondary mb-1">
+                Experiments Run
+              </p>
+              <p className="text-2xl font-mono font-bold text-text-primary">
                 {metrics.experimentsRun}
               </p>
               {metrics.lastExperimentAt && (
-                <p className="text-xs text-panel-500 mt-1">
+                <p className="text-xs text-text-muted mt-1">
                   Last run: {formatRelativeTime(metrics.lastExperimentAt)}
                 </p>
               )}
@@ -688,26 +796,32 @@ export default function ChaosEngineeringPage() {
           </Card>
           <Card>
             <CardContent>
-              <p className="text-xs text-panel-400 mb-1">Mean Time to Recovery</p>
-              <p className="text-2xl font-mono font-bold text-panel-50">
+              <p className="text-xs text-text-secondary mb-1">
+                Mean Time to Recovery
+              </p>
+              <p className="text-2xl font-mono font-bold text-text-primary">
                 {(metrics.meanTimeToRecovery / 1000).toFixed(1)}s
               </p>
-              <p className="text-xs text-panel-500 mt-1">
-                {metrics.meanTimeToRecovery < 5000 ? "\u2193 within SLA" : "\u2191 exceeds SLA target"}
+              <p className="text-xs text-text-muted mt-1">
+                {metrics.meanTimeToRecovery < 5000
+                  ? "\u2193 within SLA"
+                  : "\u2191 exceeds SLA target"}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent>
-              <p className="text-xs text-panel-400 mb-1">Active Faults</p>
+              <p className="text-xs text-text-secondary mb-1">Active Faults</p>
               <p
                 className={`text-2xl font-mono font-bold ${
-                  metrics.activeExperiments > 0 ? "text-amber-400" : "text-panel-50"
+                  metrics.activeExperiments > 0
+                    ? "text-amber-400"
+                    : "text-text-primary"
                 }`}
               >
                 {metrics.activeExperiments}
               </p>
-              <p className="text-xs text-panel-500 mt-1">
+              <p className="text-xs text-text-muted mt-1">
                 {metrics.faultsInjected} total faults injected
               </p>
             </CardContent>
@@ -719,9 +833,7 @@ export default function ChaosEngineeringPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Experiment Catalog (left 2/3) */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-sm font-semibold text-panel-300 uppercase tracking-wider">
-            Experiment Catalog
-          </h2>
+          <h2 className="heading-section">Experiment Catalog</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {experiments.map((exp) => (
               <ExperimentCard
@@ -736,7 +848,7 @@ export default function ChaosEngineeringPage() {
 
         {/* Active Experiment Panel (right 1/3) */}
         <div className="lg:col-span-1">
-          <h2 className="text-sm font-semibold text-panel-300 uppercase tracking-wider mb-4">
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-wider mb-4">
             Live Injection Monitor
           </h2>
           <ActiveExperimentPanel
@@ -748,9 +860,7 @@ export default function ChaosEngineeringPage() {
 
       {/* Section D: Game Day Scenarios */}
       <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-panel-300 uppercase tracking-wider">
-          Game Day Scenarios
-        </h2>
+        <h2 className="heading-section">Game Day Scenarios</h2>
         <div className="space-y-3">
           {scenarios.map((scenario) => (
             <GameDayPanel
@@ -767,7 +877,7 @@ export default function ChaosEngineeringPage() {
       {/* Section E: Recovery Metrics Chart */}
       {metrics && metrics.mttrHistory.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-sm font-semibold text-panel-300 uppercase tracking-wider">
+          <h2 className="heading-section">
             Recovery Metrics — MTTR Trend (24h)
           </h2>
           <Card>

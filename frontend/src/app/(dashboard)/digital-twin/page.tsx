@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
-  TwinState,
   TwinProjection,
+  TwinState,
   WhatIfOutcome,
 } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -38,20 +40,32 @@ const PREBUILT_SCENARIOS = [
   {
     id: "double-cache",
     name: "Double MESI Cache Capacity",
-    description: "Increases MESI cache capacity from 1024 to 2048 entries, reducing cache miss rate and expected evaluation latency.",
-    overrides: { "cache.capacity": 2048 } as Record<string, string | number | boolean>,
+    description:
+      "Increases MESI cache capacity from 1024 to 2048 entries, reducing cache miss rate and expected evaluation latency.",
+    overrides: { "cache.capacity": 2048 } as Record<
+      string,
+      string | number | boolean
+    >,
   },
   {
     id: "disable-blockchain",
     name: "Disable Blockchain Ledger",
-    description: "Removes blockchain-backed immutable audit trail, significantly reducing per-evaluation cost at the expense of audit integrity.",
-    overrides: { "blockchain.enabled": false } as Record<string, string | number | boolean>,
+    description:
+      "Removes blockchain-backed immutable audit trail, significantly reducing per-evaluation cost at the expense of audit integrity.",
+    overrides: { "blockchain.enabled": false } as Record<
+      string,
+      string | number | boolean
+    >,
   },
   {
     id: "quantum-strategy",
     name: "Switch to Quantum Strategy",
-    description: "Routes all evaluations through the quantum circuit simulator, trading classical determinism for potential quantum advantage.",
-    overrides: { "evaluation.strategy": "quantum" } as Record<string, string | number | boolean>,
+    description:
+      "Routes all evaluations through the quantum circuit simulator, trading classical determinism for potential quantum advantage.",
+    overrides: { "evaluation.strategy": "quantum" } as Record<
+      string,
+      string | number | boolean
+    >,
   },
 ] as const;
 
@@ -99,7 +113,9 @@ function driftDotColor(absDrift: number): string {
 }
 
 /** Sync status badge variant mapping. */
-function syncBadgeVariant(status: TwinState["syncStatus"]): "success" | "warning" | "error" {
+function syncBadgeVariant(
+  status: TwinState["syncStatus"],
+): "success" | "warning" | "error" {
   if (status === "synchronized") return "success";
   if (status === "drifting") return "warning";
   return "error";
@@ -132,14 +148,33 @@ function formatChange(value: number): { text: string; className: string } {
   const text = `${sign}${value.toFixed(1)}%`;
   // For latency, cost, failure rate: negative is good. For throughput: positive is good.
   // We handle per-metric inversion at the call site.
-  return { text, className: value < 0 ? "text-fizz-400" : value > 0 ? "text-red-400" : "text-panel-400" };
+  return {
+    text,
+    className:
+      value < 0
+        ? "text-fizz-400"
+        : value > 0
+          ? "text-red-400"
+          : "text-text-secondary",
+  };
 }
 
 /** Inverted change format (for throughput where positive is good). */
-function formatChangeInverted(value: number): { text: string; className: string } {
+function formatChangeInverted(value: number): {
+  text: string;
+  className: string;
+} {
   const sign = value > 0 ? "+" : "";
   const text = `${sign}${value.toFixed(1)}%`;
-  return { text, className: value > 0 ? "text-fizz-400" : value < 0 ? "text-red-400" : "text-panel-400" };
+  return {
+    text,
+    className:
+      value > 0
+        ? "text-fizz-400"
+        : value < 0
+          ? "text-red-400"
+          : "text-text-secondary",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -158,14 +193,22 @@ function FanChart({ projection }: { projection: TwinProjection }) {
     if (projection.points.length === 0) {
       return { minVal: 0, maxVal: 1, minTime: 0, maxTime: 1 };
     }
-    const allVals = projection.points.flatMap((p) => [p.ci90Lower, p.ci90Upper]);
+    const allVals = projection.points.flatMap((p) => [
+      p.ci90Lower,
+      p.ci90Upper,
+    ]);
     let lo = Math.min(...allVals);
     let hi = Math.max(...allVals);
     const padding = (hi - lo) * 0.1 || 1;
     lo = Math.max(0, lo - padding);
     hi = hi + padding;
     const times = projection.points.map((p) => p.timestamp);
-    return { minVal: lo, maxVal: hi, minTime: Math.min(...times), maxTime: Math.max(...times) };
+    return {
+      minVal: lo,
+      maxVal: hi,
+      minTime: Math.min(...times),
+      maxTime: Math.max(...times),
+    };
   }, [projection.points]);
 
   const toX = useCallback(
@@ -179,17 +222,28 @@ function FanChart({ projection }: { projection: TwinProjection }) {
   const toY = useCallback(
     (value: number) => {
       const range = maxVal - minVal || 1;
-      return CHART_MARGIN.top + plotHeight - ((value - minVal) / range) * plotHeight;
+      return (
+        CHART_MARGIN.top + plotHeight - ((value - minVal) / range) * plotHeight
+      );
     },
     [minVal, maxVal, plotHeight],
   );
 
-  const gradientId90 = useMemo(() => `fan-90-${Math.random().toString(36).slice(2, 8)}`, []);
-  const gradientId50 = useMemo(() => `fan-50-${Math.random().toString(36).slice(2, 8)}`, []);
+  const gradientId90 = useMemo(
+    () => `fan-90-${Math.random().toString(36).slice(2, 8)}`,
+    [],
+  );
+  const gradientId50 = useMemo(
+    () => `fan-50-${Math.random().toString(36).slice(2, 8)}`,
+    [],
+  );
 
   if (projection.points.length === 0) {
     return (
-      <div className="flex items-center justify-center text-xs text-panel-500" style={{ height: CHART_HEIGHT }}>
+      <div
+        className="flex items-center justify-center text-xs text-text-muted"
+        style={{ height: CHART_HEIGHT }}
+      >
         No projection data available
       </div>
     );
@@ -197,14 +251,32 @@ function FanChart({ projection }: { projection: TwinProjection }) {
 
   // Build polygon paths for CI bands
   const ci90Path = useMemo(() => {
-    const upper = projection.points.map((p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci90Upper).toFixed(1)}`).join(" ");
-    const lower = [...projection.points].reverse().map((p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci90Lower).toFixed(1)}`).join(" ");
+    const upper = projection.points
+      .map(
+        (p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci90Upper).toFixed(1)}`,
+      )
+      .join(" ");
+    const lower = [...projection.points]
+      .reverse()
+      .map(
+        (p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci90Lower).toFixed(1)}`,
+      )
+      .join(" ");
     return `${upper} ${lower}`;
   }, [projection.points, toX, toY]);
 
   const ci50Path = useMemo(() => {
-    const upper = projection.points.map((p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci50Upper).toFixed(1)}`).join(" ");
-    const lower = [...projection.points].reverse().map((p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci50Lower).toFixed(1)}`).join(" ");
+    const upper = projection.points
+      .map(
+        (p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci50Upper).toFixed(1)}`,
+      )
+      .join(" ");
+    const lower = [...projection.points]
+      .reverse()
+      .map(
+        (p) => `${toX(p.timestamp).toFixed(1)},${toY(p.ci50Lower).toFixed(1)}`,
+      )
+      .join(" ");
     return `${upper} ${lower}`;
   }, [projection.points, toX, toY]);
 
@@ -235,7 +307,11 @@ function FanChart({ projection }: { projection: TwinProjection }) {
 
   function formatXTime(ts: number): string {
     const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   }
 
   return (
@@ -248,12 +324,28 @@ function FanChart({ projection }: { projection: TwinProjection }) {
     >
       <defs>
         <linearGradient id={gradientId90} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--fizzbuzz-400)" stopOpacity="0.10" />
-          <stop offset="100%" stopColor="var(--fizzbuzz-400)" stopOpacity="0.05" />
+          <stop
+            offset="0%"
+            stopColor="var(--fizzbuzz-400)"
+            stopOpacity="0.10"
+          />
+          <stop
+            offset="100%"
+            stopColor="var(--fizzbuzz-400)"
+            stopOpacity="0.05"
+          />
         </linearGradient>
         <linearGradient id={gradientId50} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--fizzbuzz-400)" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="var(--fizzbuzz-400)" stopOpacity="0.15" />
+          <stop
+            offset="0%"
+            stopColor="var(--fizzbuzz-400)"
+            stopOpacity="0.25"
+          />
+          <stop
+            offset="100%"
+            stopColor="var(--fizzbuzz-400)"
+            stopOpacity="0.15"
+          />
         </linearGradient>
       </defs>
 
@@ -265,7 +357,7 @@ function FanChart({ projection }: { projection: TwinProjection }) {
           x2={CHART_WIDTH - CHART_MARGIN.right}
           y1={toY(tick)}
           y2={toY(tick)}
-          stroke="var(--panel-700)"
+          stroke="var(--surface-overlay)"
           strokeWidth="0.5"
         />
       ))}
@@ -278,7 +370,7 @@ function FanChart({ projection }: { projection: TwinProjection }) {
           y={toY(tick)}
           textAnchor="end"
           dominantBaseline="middle"
-          className="text-[10px] fill-panel-500"
+          className="text-[10px] fill-text-muted"
         >
           {formatYValue(tick)}
         </text>
@@ -291,7 +383,7 @@ function FanChart({ projection }: { projection: TwinProjection }) {
           x={toX(tick)}
           y={CHART_HEIGHT - 6}
           textAnchor="middle"
-          className="text-[10px] fill-panel-500"
+          className="text-[10px] fill-text-muted"
         >
           {formatXTime(tick)}
         </text>
@@ -353,7 +445,10 @@ export default function DigitalTwinPage() {
 
   const fetchProjection = useCallback(async () => {
     setProjectionLoading(true);
-    const result = await provider.runProjection(selectedMetric, selectedHorizon);
+    const result = await provider.runProjection(
+      selectedMetric,
+      selectedHorizon,
+    );
     setProjection(result);
     setProjectionLoading(false);
   }, [provider, selectedMetric, selectedHorizon]);
@@ -375,7 +470,10 @@ export default function DigitalTwinPage() {
   // -----------------------------------------------------------------------
 
   const handleRunScenario = useCallback(
-    async (overrides: Record<string, string | number | boolean>, scenarioName: string) => {
+    async (
+      overrides: Record<string, string | number | boolean>,
+      scenarioName: string,
+    ) => {
       setWhatIfLoading(true);
       const outcome = await provider.runWhatIfScenario(overrides);
       setWhatIfResult(outcome);
@@ -407,7 +505,10 @@ export default function DigitalTwinPage() {
 
   const addOverride = useCallback(() => {
     if (!newKey.trim()) return;
-    setCustomOverrides((prev) => [...prev, { key: newKey.trim(), value: newValue.trim() }]);
+    setCustomOverrides((prev) => [
+      ...prev,
+      { key: newKey.trim(), value: newValue.trim() },
+    ]);
     setNewKey("");
     setNewValue("");
   }, [newKey, newValue]);
@@ -423,14 +524,17 @@ export default function DigitalTwinPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-panel-50">Digital Twin Situation Room</h1>
-        <p className="text-sm text-panel-400 mt-1">
-          Real-time synchronized simulation model of the Enterprise FizzBuzz Platform.
-          Compare live telemetry against predicted state, run Monte Carlo projections,
-          and execute what-if scenarios for capacity planning.
-        </p>
-      </div>
+      <Reveal>
+        <div>
+          <h1 className="heading-page">Digital Twin Situation Room</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            Real-time synchronized simulation model of the Enterprise FizzBuzz
+            Platform. Compare live telemetry against predicted state, run Monte
+            Carlo projections, and execute what-if scenarios for capacity
+            planning.
+          </p>
+        </div>
+      </Reveal>
 
       {/* 4a. Twin Sync Status Bar */}
       {twinState && (
@@ -449,35 +553,46 @@ export default function DigitalTwinPage() {
                   }`}
                 />
                 <Badge variant={syncBadgeVariant(twinState.syncStatus)}>
-                  {twinState.syncStatus.charAt(0).toUpperCase() + twinState.syncStatus.slice(1)}
+                  {twinState.syncStatus.charAt(0).toUpperCase() +
+                    twinState.syncStatus.slice(1)}
                 </Badge>
               </div>
 
               {/* Aggregate drift */}
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-panel-500">Drift:</span>
-                <span className={`text-sm font-mono font-semibold ${driftColor(twinState.aggregateDriftFBDU / 0.47)}`}>
+                <span className="text-xs text-text-muted">Drift:</span>
+                <span
+                  className={`text-sm font-mono font-semibold ${driftColor(twinState.aggregateDriftFBDU / 0.47)}`}
+                >
                   {twinState.aggregateDriftFBDU.toFixed(2)} FBDUs
                 </span>
               </div>
 
               {/* Last sync */}
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-panel-500">Last sync:</span>
-                <span className="text-sm text-panel-300" title={twinState.lastSyncAt}>
+                <span className="text-xs text-text-muted">Last sync:</span>
+                <span
+                  className="text-sm text-text-secondary"
+                  title={twinState.lastSyncAt}
+                >
                   {formatRelativeTime(twinState.lastSyncAt)}
                 </span>
               </div>
 
               {/* Simulation count */}
               <div className="flex items-center gap-1.5">
-                <Badge variant="info">{twinState.simulationCount.toLocaleString()} simulations</Badge>
+                <Badge variant="info">
+                  {twinState.simulationCount.toLocaleString()} simulations
+                </Badge>
               </div>
 
               {/* Model built at */}
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-panel-500">Model built:</span>
-                <span className="text-sm text-panel-300" title={twinState.modelBuiltAt}>
+                <span className="text-xs text-text-muted">Model built:</span>
+                <span
+                  className="text-sm text-text-secondary"
+                  title={twinState.modelBuiltAt}
+                >
                   {formatRelativeTime(twinState.modelBuiltAt)}
                 </span>
               </div>
@@ -497,38 +612,53 @@ export default function DigitalTwinPage() {
                 return (
                   <div
                     key={subsystem.name}
-                    className="rounded-lg border border-panel-700 bg-panel-800/50 p-4"
+                    className="rounded-lg border border-border-subtle bg-surface-raised/50 p-4"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-medium text-panel-200 truncate" title={subsystem.name}>
+                      <span
+                        className="text-sm font-medium text-text-secondary truncate"
+                        title={subsystem.name}
+                      >
                         {subsystem.name}
                       </span>
-                      <Badge variant={subsystem.enabled ? "success" : "warning"}>
+                      <Badge
+                        variant={subsystem.enabled ? "success" : "warning"}
+                      >
                         {subsystem.enabled ? "On" : "Off"}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <div className="text-center flex-1">
-                        <div className="text-[10px] uppercase tracking-wider text-panel-500 mb-1">Live</div>
-                        <div className="text-lg font-mono font-semibold text-panel-100">
+                        <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">
+                          Live
+                        </div>
+                        <div className="text-lg font-mono font-semibold text-text-primary">
                           {subsystem.liveValue.toFixed(2)}
                         </div>
                       </div>
                       <div className="flex flex-col items-center px-2">
-                        <span className={`h-2 w-2 rounded-full ${driftDotColor(absDrift)}`} />
-                        <span className={`text-xs font-mono mt-0.5 ${driftColor(absDrift)}`}>
+                        <span
+                          className={`h-2 w-2 rounded-full ${driftDotColor(absDrift)}`}
+                        />
+                        <span
+                          className={`text-xs font-mono mt-0.5 ${driftColor(absDrift)}`}
+                        >
                           {subsystem.driftPercent > 0 ? "+" : ""}
                           {subsystem.driftPercent.toFixed(1)}%
                         </span>
                       </div>
                       <div className="text-center flex-1">
-                        <div className="text-[10px] uppercase tracking-wider text-panel-500 mb-1">Twin</div>
-                        <div className="text-lg font-mono font-semibold text-panel-100">
+                        <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">
+                          Twin
+                        </div>
+                        <div className="text-lg font-mono font-semibold text-text-primary">
                           {subsystem.twinValue.toFixed(2)}
                         </div>
                       </div>
                     </div>
-                    <div className="text-center text-[10px] text-panel-500 mt-2">{subsystem.unit}</div>
+                    <div className="text-center text-[10px] text-text-muted mt-2">
+                      {subsystem.unit}
+                    </div>
                   </div>
                 );
               })}
@@ -559,7 +689,9 @@ export default function DigitalTwinPage() {
               {HORIZON_OPTIONS.map((h) => (
                 <Button
                   key={h.seconds}
-                  variant={selectedHorizon === h.seconds ? "secondary" : "ghost"}
+                  variant={
+                    selectedHorizon === h.seconds ? "secondary" : "ghost"
+                  }
                   size="sm"
                   onClick={() => setSelectedHorizon(h.seconds)}
                 >
@@ -571,14 +703,17 @@ export default function DigitalTwinPage() {
 
           {/* Chart */}
           {projectionLoading ? (
-            <div className="flex items-center justify-center text-sm text-panel-500" style={{ height: CHART_HEIGHT }}>
+            <div
+              className="flex items-center justify-center text-sm text-text-muted"
+              style={{ height: CHART_HEIGHT }}
+            >
               Running Monte Carlo simulation...
             </div>
           ) : projection ? (
             <>
               <FanChart projection={projection} />
               {/* Legend */}
-              <div className="flex items-center gap-6 mt-3 text-xs text-panel-400">
+              <div className="flex items-center gap-6 mt-3 text-xs text-text-secondary">
                 <div className="flex items-center gap-1.5">
                   <span className="h-0.5 w-4 bg-fizzbuzz-400 rounded" />
                   <span>Mean</span>
@@ -594,20 +729,35 @@ export default function DigitalTwinPage() {
               </div>
               {/* Summary stats */}
               {projection.points.length > 0 && (
-                <div className="mt-4 p-3 rounded border border-panel-700 bg-panel-800/50">
-                  <p className="text-xs text-panel-500 mb-1">
-                    Projected {projection.metricLabel} at horizon ({HORIZON_OPTIONS.find((h) => h.seconds === selectedHorizon)?.label}):
+                <div className="mt-4 p-3 rounded border border-border-subtle bg-surface-raised/50">
+                  <p className="text-xs text-text-muted mb-1">
+                    Projected {projection.metricLabel} at horizon (
+                    {
+                      HORIZON_OPTIONS.find((h) => h.seconds === selectedHorizon)
+                        ?.label
+                    }
+                    ):
                   </p>
-                  <p className="text-sm font-mono text-panel-100">
-                    {projection.points[projection.points.length - 1].mean.toFixed(3)} {projection.unit}
-                    <span className="text-panel-500 ml-2">
-                      (90% CI: {projection.points[projection.points.length - 1].ci90Lower.toFixed(3)}
-                      {" "}&ndash;{" "}
-                      {projection.points[projection.points.length - 1].ci90Upper.toFixed(3)})
+                  <p className="text-sm font-mono text-text-primary">
+                    {projection.points[
+                      projection.points.length - 1
+                    ].mean.toFixed(3)}{" "}
+                    {projection.unit}
+                    <span className="text-text-muted ml-2">
+                      (90% CI:{" "}
+                      {projection.points[
+                        projection.points.length - 1
+                      ].ci90Lower.toFixed(3)}{" "}
+                      &ndash;{" "}
+                      {projection.points[
+                        projection.points.length - 1
+                      ].ci90Upper.toFixed(3)}
+                      )
                     </span>
                   </p>
-                  <p className="text-xs text-panel-500 mt-1">
-                    Based on {projection.simulationCount.toLocaleString()} Monte Carlo simulations
+                  <p className="text-xs text-text-muted mt-1">
+                    Based on {projection.simulationCount.toLocaleString()} Monte
+                    Carlo simulations
                   </p>
                 </div>
               )}
@@ -623,26 +773,34 @@ export default function DigitalTwinPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left panel: Scenario Builder */}
             <div>
-              <p className="text-xs text-panel-500 uppercase tracking-wider mb-3">Pre-built Scenarios</p>
+              <p className="text-xs text-text-muted uppercase tracking-wider mb-3">
+                Pre-built Scenarios
+              </p>
               <div className="space-y-2 mb-4">
                 {PREBUILT_SCENARIOS.map((scenario) => (
                   <button
                     key={scenario.id}
-                    className="w-full text-left rounded border border-panel-700 bg-panel-800/50 p-3 hover:bg-panel-700/50 transition-colors"
-                    onClick={() => handleRunScenario(scenario.overrides, scenario.name)}
+                    className="w-full text-left rounded border border-border-subtle bg-surface-raised/50 p-3 hover:bg-panel-700/50 transition-colors"
+                    onClick={() =>
+                      handleRunScenario(scenario.overrides, scenario.name)
+                    }
                     disabled={whatIfLoading}
                   >
-                    <div className="text-sm font-medium text-panel-200">{scenario.name}</div>
-                    <div className="text-xs text-panel-500 mt-0.5">{scenario.description}</div>
+                    <div className="heading-section">{scenario.name}</div>
+                    <div className="text-xs text-text-muted mt-0.5">
+                      {scenario.description}
+                    </div>
                   </button>
                 ))}
               </div>
 
-              <p className="text-xs text-panel-500 uppercase tracking-wider mb-3">Custom Overrides</p>
+              <p className="text-xs text-text-muted uppercase tracking-wider mb-3">
+                Custom Overrides
+              </p>
               <div className="space-y-2 mb-3">
                 {customOverrides.map((override, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-panel-300 bg-panel-800 rounded px-2 py-1 flex-1 truncate">
+                    <span className="text-xs font-mono text-text-secondary bg-surface-raised rounded px-2 py-1 flex-1 truncate">
                       {override.key} = {override.value}
                     </span>
                     <Button
@@ -661,14 +819,14 @@ export default function DigitalTwinPage() {
                   placeholder="Parameter key"
                   value={newKey}
                   onChange={(e) => setNewKey(e.target.value)}
-                  className="flex-1 rounded bg-panel-800 border border-panel-600 px-2 py-1.5 text-sm text-panel-100 placeholder:text-panel-600 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                  className="flex-1 rounded bg-surface-raised border border-border-default px-2 py-1.5 text-sm text-text-primary placeholder:text-panel-600 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
                 />
                 <input
                   type="text"
                   placeholder="Value"
                   value={newValue}
                   onChange={(e) => setNewValue(e.target.value)}
-                  className="flex-1 rounded bg-panel-800 border border-panel-600 px-2 py-1.5 text-sm text-panel-100 placeholder:text-panel-600 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                  className="flex-1 rounded bg-surface-raised border border-border-default px-2 py-1.5 text-sm text-text-primary placeholder:text-panel-600 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
                 />
                 <Button variant="secondary" size="sm" onClick={addOverride}>
                   Add
@@ -688,52 +846,82 @@ export default function DigitalTwinPage() {
 
             {/* Right panel: Projected Impact */}
             <div>
-              <p className="text-xs text-panel-500 uppercase tracking-wider mb-3">Projected Impact</p>
+              <p className="text-xs text-text-muted uppercase tracking-wider mb-3">
+                Projected Impact
+              </p>
               {whatIfResult ? (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded border border-panel-700 bg-panel-800/50 p-3">
-                    <div className="text-[10px] uppercase tracking-wider text-panel-500 mb-1">Latency</div>
-                    <div className="text-xl font-mono font-semibold text-panel-100">
-                      {whatIfResult.predictedLatencyMs.toFixed(1)}
-                      <span className="text-xs font-normal text-panel-500 ml-1">ms</span>
+                  <div className="rounded border border-border-subtle bg-surface-raised/50 p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">
+                      Latency
                     </div>
-                    <div className={`text-xs font-mono mt-1 ${formatChange(whatIfResult.latencyChangePercent).className}`}>
+                    <div className="text-xl font-mono font-semibold text-text-primary">
+                      {whatIfResult.predictedLatencyMs.toFixed(1)}
+                      <span className="text-xs font-normal text-text-muted ml-1">
+                        ms
+                      </span>
+                    </div>
+                    <div
+                      className={`text-xs font-mono mt-1 ${formatChange(whatIfResult.latencyChangePercent).className}`}
+                    >
                       {formatChange(whatIfResult.latencyChangePercent).text}
                     </div>
                   </div>
-                  <div className="rounded border border-panel-700 bg-panel-800/50 p-3">
-                    <div className="text-[10px] uppercase tracking-wider text-panel-500 mb-1">Cost</div>
-                    <div className="text-xl font-mono font-semibold text-panel-100">
-                      {whatIfResult.predictedCostFB.toFixed(3)}
-                      <span className="text-xs font-normal text-panel-500 ml-1">FB$</span>
+                  <div className="rounded border border-border-subtle bg-surface-raised/50 p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">
+                      Cost
                     </div>
-                    <div className={`text-xs font-mono mt-1 ${formatChange(whatIfResult.costChangePercent).className}`}>
+                    <div className="text-xl font-mono font-semibold text-text-primary">
+                      {whatIfResult.predictedCostFB.toFixed(3)}
+                      <span className="text-xs font-normal text-text-muted ml-1">
+                        FB$
+                      </span>
+                    </div>
+                    <div
+                      className={`text-xs font-mono mt-1 ${formatChange(whatIfResult.costChangePercent).className}`}
+                    >
                       {formatChange(whatIfResult.costChangePercent).text}
                     </div>
                   </div>
-                  <div className="rounded border border-panel-700 bg-panel-800/50 p-3">
-                    <div className="text-[10px] uppercase tracking-wider text-panel-500 mb-1">Failure Rate</div>
-                    <div className="text-xl font-mono font-semibold text-panel-100">
-                      {(whatIfResult.predictedFailureRate * 100).toFixed(2)}
-                      <span className="text-xs font-normal text-panel-500 ml-1">%</span>
+                  <div className="rounded border border-border-subtle bg-surface-raised/50 p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">
+                      Failure Rate
                     </div>
-                    <div className={`text-xs font-mono mt-1 ${formatChange(whatIfResult.failureRateChangePercent).className}`}>
+                    <div className="text-xl font-mono font-semibold text-text-primary">
+                      {(whatIfResult.predictedFailureRate * 100).toFixed(2)}
+                      <span className="text-xs font-normal text-text-muted ml-1">
+                        %
+                      </span>
+                    </div>
+                    <div
+                      className={`text-xs font-mono mt-1 ${formatChange(whatIfResult.failureRateChangePercent).className}`}
+                    >
                       {formatChange(whatIfResult.failureRateChangePercent).text}
                     </div>
                   </div>
-                  <div className="rounded border border-panel-700 bg-panel-800/50 p-3">
-                    <div className="text-[10px] uppercase tracking-wider text-panel-500 mb-1">Throughput</div>
-                    <div className="text-xl font-mono font-semibold text-panel-100">
-                      {whatIfResult.predictedThroughput.toLocaleString()}
-                      <span className="text-xs font-normal text-panel-500 ml-1">eval/s</span>
+                  <div className="rounded border border-border-subtle bg-surface-raised/50 p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-text-muted mb-1">
+                      Throughput
                     </div>
-                    <div className={`text-xs font-mono mt-1 ${formatChangeInverted(whatIfResult.throughputChangePercent).className}`}>
-                      {formatChangeInverted(whatIfResult.throughputChangePercent).text}
+                    <div className="text-xl font-mono font-semibold text-text-primary">
+                      {whatIfResult.predictedThroughput.toLocaleString()}
+                      <span className="text-xs font-normal text-text-muted ml-1">
+                        eval/s
+                      </span>
+                    </div>
+                    <div
+                      className={`text-xs font-mono mt-1 ${formatChangeInverted(whatIfResult.throughputChangePercent).className}`}
+                    >
+                      {
+                        formatChangeInverted(
+                          whatIfResult.throughputChangePercent,
+                        ).text
+                      }
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-48 text-sm text-panel-500 border border-dashed border-panel-700 rounded">
+                <div className="flex items-center justify-center h-48 text-sm text-text-muted border border-dashed border-border-subtle rounded">
                   Select or build a scenario to view projected impact
                 </div>
               )}
@@ -748,7 +936,11 @@ export default function DigitalTwinPage() {
           <div className="flex items-center justify-between w-full">
             <span>Scenario Comparison</span>
             {scenarioRows.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setScenarioRows([])}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setScenarioRows([])}
+              >
                 Clear
               </Button>
             )}
@@ -756,15 +948,15 @@ export default function DigitalTwinPage() {
         </CardHeader>
         <CardContent>
           {scenarioRows.length === 0 ? (
-            <div className="text-sm text-panel-500 text-center py-8">
-              Run what-if scenarios to populate the comparison table. Results accumulate
-              across the session for side-by-side analysis.
+            <div className="text-sm text-text-muted text-center py-8">
+              Run what-if scenarios to populate the comparison table. Results
+              accumulate across the session for side-by-side analysis.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-panel-700 text-left text-xs text-panel-500 uppercase tracking-wider">
+                  <tr className="border-b border-border-subtle text-left text-xs text-text-muted uppercase tracking-wider">
                     <th className="py-2 pr-4">Scenario</th>
                     <th className="py-2 pr-4">Latency (ms)</th>
                     <th className="py-2 pr-4">Cost (FB$)</th>
@@ -775,46 +967,73 @@ export default function DigitalTwinPage() {
                 </thead>
                 <tbody>
                   {/* Baseline row */}
-                  <tr className="border-b border-panel-800 text-panel-300">
-                    <td className="py-2 pr-4 font-medium text-panel-200">Baseline</td>
+                  <tr className="border-b border-panel-800 text-text-secondary">
+                    <td className="py-2 pr-4 font-medium text-text-secondary">
+                      Baseline
+                    </td>
                     <td className="py-2 pr-4 font-mono">12.4</td>
                     <td className="py-2 pr-4 font-mono">0.034</td>
                     <td className="py-2 pr-4 font-mono">0.02%</td>
                     <td className="py-2 pr-4 font-mono">1,247/s</td>
-                    <td className="py-2 text-panel-500">&mdash;</td>
+                    <td className="py-2 text-text-muted">&mdash;</td>
                   </tr>
                   {scenarioRows.map((row, index) => {
-                    const latencyFmt = formatChange(row.outcome.latencyChangePercent);
+                    const latencyFmt = formatChange(
+                      row.outcome.latencyChangePercent,
+                    );
                     const costFmt = formatChange(row.outcome.costChangePercent);
-                    const failureFmt = formatChange(row.outcome.failureRateChangePercent);
-                    const throughputFmt = formatChangeInverted(row.outcome.throughputChangePercent);
+                    const failureFmt = formatChange(
+                      row.outcome.failureRateChangePercent,
+                    );
+                    const throughputFmt = formatChangeInverted(
+                      row.outcome.throughputChangePercent,
+                    );
 
                     const assessmentVariant: "success" | "warning" | "error" =
-                      row.assessment === "Favorable" ? "success"
-                      : row.assessment === "Trade-off" ? "warning"
-                      : "error";
+                      row.assessment === "Favorable"
+                        ? "success"
+                        : row.assessment === "Trade-off"
+                          ? "warning"
+                          : "error";
 
                     return (
-                      <tr key={index} className="border-b border-panel-800 text-panel-300">
-                        <td className="py-2 pr-4 font-medium text-panel-200">{row.name}</td>
+                      <tr
+                        key={index}
+                        className="border-b border-panel-800 text-text-secondary"
+                      >
+                        <td className="py-2 pr-4 font-medium text-text-secondary">
+                          {row.name}
+                        </td>
                         <td className="py-2 pr-4 font-mono">
                           {row.outcome.predictedLatencyMs.toFixed(1)}{" "}
-                          <span className={`text-xs ${latencyFmt.className}`}>({latencyFmt.text})</span>
+                          <span className={`text-xs ${latencyFmt.className}`}>
+                            ({latencyFmt.text})
+                          </span>
                         </td>
                         <td className="py-2 pr-4 font-mono">
                           {row.outcome.predictedCostFB.toFixed(3)}{" "}
-                          <span className={`text-xs ${costFmt.className}`}>({costFmt.text})</span>
+                          <span className={`text-xs ${costFmt.className}`}>
+                            ({costFmt.text})
+                          </span>
                         </td>
                         <td className="py-2 pr-4 font-mono">
                           {(row.outcome.predictedFailureRate * 100).toFixed(2)}%{" "}
-                          <span className={`text-xs ${failureFmt.className}`}>({failureFmt.text})</span>
+                          <span className={`text-xs ${failureFmt.className}`}>
+                            ({failureFmt.text})
+                          </span>
                         </td>
                         <td className="py-2 pr-4 font-mono">
                           {row.outcome.predictedThroughput.toLocaleString()}/s{" "}
-                          <span className={`text-xs ${throughputFmt.className}`}>({throughputFmt.text})</span>
+                          <span
+                            className={`text-xs ${throughputFmt.className}`}
+                          >
+                            ({throughputFmt.text})
+                          </span>
                         </td>
                         <td className="py-2">
-                          <Badge variant={assessmentVariant}>{row.assessment}</Badge>
+                          <Badge variant={assessmentVariant}>
+                            {row.assessment}
+                          </Badge>
                         </td>
                       </tr>
                     );

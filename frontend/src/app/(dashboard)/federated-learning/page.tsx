@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useDataProvider } from "@/lib/data-providers";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   FLClient,
-  FLTrainingRound,
   FLModelState,
+  FLTrainingRound,
 } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -42,10 +44,28 @@ function ClientTopologyDiagram({
   };
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="min-w-full">
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="min-w-full"
+    >
       {/* Central aggregation server */}
-      <circle cx={cx} cy={cy} r={22} fill="#1e293b" stroke="#6366f1" strokeWidth={2.5} />
-      <text x={cx} y={cy + 1} textAnchor="middle" dominantBaseline="middle" className="fill-indigo-300 text-[10px] font-semibold">
+      <circle
+        cx={cx}
+        cy={cy}
+        r={22}
+        fill="#1e293b"
+        stroke="#6366f1"
+        strokeWidth={2.5}
+      />
+      <text
+        x={cx}
+        y={cy + 1}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="fill-indigo-300 text-[10px] font-semibold"
+      >
         AGG
       </text>
 
@@ -69,7 +89,14 @@ function ClientTopologyDiagram({
               strokeDasharray={client.status === "offline" ? "4,4" : undefined}
             />
             {/* Node circle */}
-            <circle cx={nx} cy={ny} r={16} fill="#1e293b" stroke={color} strokeWidth={2} />
+            <circle
+              cx={nx}
+              cy={ny}
+              r={16}
+              fill="#1e293b"
+              stroke={color}
+              strokeWidth={2}
+            />
             {/* Region label */}
             <text
               x={nx}
@@ -90,7 +117,12 @@ function ClientTopologyDiagram({
       {Object.entries(statusColor).map(([status, color], i) => (
         <g key={status} transform={`translate(10, ${height - 70 + i * 16})`}>
           <circle cx={5} cy={0} r={4} fill={color} />
-          <text x={14} y={1} dominantBaseline="middle" className="fill-panel-400 text-[10px]">
+          <text
+            x={14}
+            y={1}
+            dominantBaseline="middle"
+            className="fill-panel-400 text-[10px]"
+          >
             {status}
           </text>
         </g>
@@ -121,24 +153,61 @@ function PrivacyBudgetMeter({
   const barY = height / 2 - barHeight / 2;
 
   // Color transitions: green > 60%, amber 30-60%, red < 30%
-  const fillColor = fraction > 0.6 ? "#22c55e" : fraction > 0.3 ? "#f59e0b" : "#ef4444";
+  const fillColor =
+    fraction > 0.6 ? "#22c55e" : fraction > 0.3 ? "#f59e0b" : "#ef4444";
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="min-w-full">
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="min-w-full"
+    >
       {/* Label */}
-      <text x={barX - 4} y={barY - 6} textAnchor="end" className="fill-panel-400 text-[10px]">
+      <text
+        x={barX - 4}
+        y={barY - 6}
+        textAnchor="end"
+        className="fill-panel-400 text-[10px]"
+      >
         Budget
       </text>
       {/* Background track */}
-      <rect x={barX} y={barY} width={barWidth} height={barHeight} rx={4} fill="#1e293b" />
+      <rect
+        x={barX}
+        y={barY}
+        width={barWidth}
+        height={barHeight}
+        rx={4}
+        fill="#1e293b"
+      />
       {/* Filled portion */}
-      <rect x={barX} y={barY} width={barWidth * fraction} height={barHeight} rx={4} fill={fillColor} opacity={0.8} />
+      <rect
+        x={barX}
+        y={barY}
+        width={barWidth * fraction}
+        height={barHeight}
+        rx={4}
+        fill={fillColor}
+        opacity={0.8}
+      />
       {/* Epsilon labels */}
-      <text x={barX + barWidth + 6} y={barY + barHeight / 2 + 1} dominantBaseline="middle" className="fill-panel-300 text-[11px] font-mono">
+      <text
+        x={barX + barWidth + 6}
+        y={barY + barHeight / 2 + 1}
+        dominantBaseline="middle"
+        className="fill-panel-300 text-[11px] font-mono"
+      >
         {remaining.toFixed(1)} / {total.toFixed(1)}
       </text>
       {/* Unit label */}
-      <text x={barX + barWidth / 2} y={barY + barHeight / 2 + 1} textAnchor="middle" dominantBaseline="middle" className="fill-panel-950 text-[10px] font-semibold">
+      <text
+        x={barX + barWidth / 2}
+        y={barY + barHeight / 2 + 1}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="fill-panel-950 text-[10px] font-semibold"
+      >
         {(fraction * 100).toFixed(1)}% remaining
       </text>
     </svg>
@@ -169,7 +238,12 @@ function ConvergenceChart({
   if (rounds.length === 0) {
     return (
       <svg width={width} height={height} className="min-w-full">
-        <text x={width / 2} y={height / 2} textAnchor="middle" className="fill-panel-500 text-sm">
+        <text
+          x={width / 2}
+          y={height / 2}
+          textAnchor="middle"
+          className="fill-text-muted text-sm"
+        >
           No training data. Start a training round to begin.
         </text>
       </svg>
@@ -182,10 +256,17 @@ function ConvergenceChart({
   const toY = (val: number) => CONV_TOP + plotH * (1 - val);
 
   // Accuracy line
-  const accLine = rounds.map((r) => `${toX(r.roundNumber)},${toY(r.globalAccuracy)}`).join(" ");
+  const accLine = rounds
+    .map((r) => `${toX(r.roundNumber)},${toY(r.globalAccuracy)}`)
+    .join(" ");
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="min-w-full">
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="min-w-full"
+    >
       {/* Grid lines at 0.25 increments */}
       {[0, 0.25, 0.5, 0.75, 1.0].map((v) => (
         <g key={v}>
@@ -197,7 +278,13 @@ function ConvergenceChart({
             stroke="#334155"
             strokeWidth={0.5}
           />
-          <text x={CONV_LEFT - 6} y={toY(v)} textAnchor="end" dominantBaseline="middle" className="fill-panel-500 text-[10px]">
+          <text
+            x={CONV_LEFT - 6}
+            y={toY(v)}
+            textAnchor="end"
+            dominantBaseline="middle"
+            className="fill-text-muted text-[10px]"
+          >
             {v.toFixed(2)}
           </text>
         </g>
@@ -212,7 +299,7 @@ function ConvergenceChart({
             x={toX(r.roundNumber)}
             y={CONV_TOP + plotH + 16}
             textAnchor="middle"
-            className="fill-panel-500 text-[10px]"
+            className="fill-text-muted text-[10px]"
           >
             R{r.roundNumber}
           </text>
@@ -272,7 +359,12 @@ function WeightAggregationChart({
   if (!round) {
     return (
       <svg width={width} height={height} className="min-w-full">
-        <text x={width / 2} y={height / 2} textAnchor="middle" className="fill-panel-500 text-sm">
+        <text
+          x={width / 2}
+          y={height / 2}
+          textAnchor="middle"
+          className="fill-text-muted text-sm"
+        >
           Select a training round to view weight contributions.
         </text>
       </svg>
@@ -291,7 +383,12 @@ function WeightAggregationChart({
   const colors = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#06b6d4"];
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="min-w-full">
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="min-w-full"
+    >
       {entries.map(([clientId, weight], i) => {
         const client = clients.find((c) => c.id === clientId);
         const y = offsetY + i * (barHeight + gap);
@@ -310,9 +407,24 @@ function WeightAggregationChart({
               {client?.name ?? clientId}
             </text>
             {/* Background track */}
-            <rect x={labelWidth} y={y} width={maxBarWidth} height={barHeight} rx={3} fill="#1e293b" />
+            <rect
+              x={labelWidth}
+              y={y}
+              width={maxBarWidth}
+              height={barHeight}
+              rx={3}
+              fill="#1e293b"
+            />
             {/* Weight bar */}
-            <rect x={labelWidth} y={y} width={barW} height={barHeight} rx={3} fill={colors[i % colors.length]} opacity={0.8} />
+            <rect
+              x={labelWidth}
+              y={y}
+              width={barW}
+              height={barHeight}
+              rx={3}
+              fill={colors[i % colors.length]}
+              opacity={0.8}
+            />
             {/* Weight value */}
             <text
               x={labelWidth + barW + 6}
@@ -401,21 +513,23 @@ export default function FederatedLearningPage() {
       {/* Page header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-panel-50">
-            Federated Learning Training Center
-          </h1>
-          <p className="mt-1 text-sm text-panel-400">
-            Privacy-preserving distributed model training across geographically dispersed
-            FizzBuzz evaluation nodes. Each client trains on its local dataset without
-            sharing raw data, contributing only encrypted model deltas to the central
-            aggregation server.
+          <h1 className="heading-page">Federated Learning Training Center</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Privacy-preserving distributed model training across geographically
+            dispersed FizzBuzz evaluation nodes. Each client trains on its local
+            dataset without sharing raw data, contributing only encrypted model
+            deltas to the central aggregation server.
           </p>
         </div>
         <Button
           onClick={handleStartRound}
           disabled={isTraining || budgetExhausted}
         >
-          {isTraining ? "Training..." : budgetExhausted ? "Budget Exhausted" : "Start Training Round"}
+          {isTraining
+            ? "Training..."
+            : budgetExhausted
+              ? "Budget Exhausted"
+              : "Start Training Round"}
         </Button>
       </div>
 
@@ -424,7 +538,7 @@ export default function FederatedLearningPage() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs text-panel-400">Global Accuracy</p>
+              <p className="text-xs text-text-secondary">Global Accuracy</p>
               <p className="mt-1 text-xl font-bold text-fizz-400">
                 {(modelState.globalAccuracy * 100).toFixed(2)}%
               </p>
@@ -432,23 +546,24 @@ export default function FederatedLearningPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs text-panel-400">Training Rounds</p>
-              <p className="mt-1 text-xl font-bold text-panel-50">
+              <p className="text-xs text-text-secondary">Training Rounds</p>
+              <p className="mt-1 text-xl font-bold text-text-primary">
                 {modelState.totalRounds}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs text-panel-400">Convergence Rate</p>
-              <p className="mt-1 text-xl font-bold text-panel-50">
-                {modelState.convergenceRate > 0 ? "+" : ""}{(modelState.convergenceRate * 100).toFixed(3)}%/rd
+              <p className="text-xs text-text-secondary">Convergence Rate</p>
+              <p className="mt-1 text-xl font-bold text-text-primary">
+                {modelState.convergenceRate > 0 ? "+" : ""}
+                {(modelState.convergenceRate * 100).toFixed(3)}%/rd
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs text-panel-400">Weight Divergence</p>
+              <p className="text-xs text-text-secondary">Weight Divergence</p>
               <p className="mt-1 text-xl font-bold text-amber-400">
                 {(modelState.weightDivergence * 100).toFixed(1)}%
               </p>
@@ -456,21 +571,27 @@ export default function FederatedLearningPage() {
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs text-panel-400">Active Clients</p>
-              <p className="mt-1 text-xl font-bold text-panel-50">
-                {clients.filter((c) => c.status !== "offline").length} / {clients.length}
+              <p className="text-xs text-text-secondary">Active Clients</p>
+              <p className="mt-1 text-xl font-bold text-text-primary">
+                {clients.filter((c) => c.status !== "offline").length} /{" "}
+                {clients.length}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
-              <p className="text-xs text-panel-400">Privacy Budget</p>
-              <p className={`mt-1 text-xl font-bold ${
-                modelState.privacyBudgetRemaining / modelState.totalPrivacyBudget > 0.3
-                  ? "text-fizz-400"
-                  : "text-red-400"
-              }`}>
-                {modelState.privacyBudgetRemaining.toFixed(1)} / {modelState.totalPrivacyBudget.toFixed(1)}
+              <p className="text-xs text-text-secondary">Privacy Budget</p>
+              <p
+                className={`mt-1 text-xl font-bold ${
+                  modelState.privacyBudgetRemaining /
+                    modelState.totalPrivacyBudget >
+                  0.3
+                    ? "text-fizz-400"
+                    : "text-red-400"
+                }`}
+              >
+                {modelState.privacyBudgetRemaining.toFixed(1)} /{" "}
+                {modelState.totalPrivacyBudget.toFixed(1)}
               </p>
             </CardContent>
           </Card>
@@ -481,9 +602,7 @@ export default function FederatedLearningPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Client Topology
-            </h2>
+            <h2 className="heading-section">Client Topology</h2>
           </CardHeader>
           <CardContent>
             <ClientTopologyDiagram clients={clients} width={400} height={300} />
@@ -492,9 +611,7 @@ export default function FederatedLearningPage() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Differential Privacy Budget
-            </h2>
+            <h2 className="heading-section">Differential Privacy Budget</h2>
           </CardHeader>
           <CardContent>
             {modelState && (
@@ -505,10 +622,11 @@ export default function FederatedLearningPage() {
                 height={60}
               />
             )}
-            <p className="mt-3 text-xs text-panel-500">
-              The privacy budget tracks cumulative epsilon expenditure across all training
-              rounds. Once exhausted, no further training rounds may be initiated without
-              violating the differential privacy guarantee for modulo operations.
+            <p className="mt-3 text-xs text-text-muted">
+              The privacy budget tracks cumulative epsilon expenditure across
+              all training rounds. Once exhausted, no further training rounds
+              may be initiated without violating the differential privacy
+              guarantee for modulo operations.
             </p>
             {budgetExhausted && (
               <Badge variant="error" className="mt-2">
@@ -523,9 +641,7 @@ export default function FederatedLearningPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Training Convergence
-            </h2>
+            <h2 className="heading-section">Training Convergence</h2>
           </CardHeader>
           <CardContent>
             <ConvergenceChart rounds={history} width={500} height={280} />
@@ -535,12 +651,11 @@ export default function FederatedLearningPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-panel-100">
-                Weight Aggregation
-              </h2>
+              <h2 className="heading-section">Weight Aggregation</h2>
               {selectedRound && (
                 <Badge variant="info">
-                  Round {selectedRound.roundNumber} &middot; {selectedRound.aggregationMethod}
+                  Round {selectedRound.roundNumber} &middot;{" "}
+                  {selectedRound.aggregationMethod}
                 </Badge>
               )}
             </div>
@@ -559,15 +674,13 @@ export default function FederatedLearningPage() {
       {/* Client Table */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-panel-100">
-            Client Nodes
-          </h2>
+          <h2 className="heading-section">Client Nodes</h2>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-panel-700 text-left text-xs text-panel-400">
+                <tr className="border-b border-border-subtle text-left text-xs text-text-secondary">
                   <th className="pb-2 pr-4">Name</th>
                   <th className="pb-2 pr-4">Region</th>
                   <th className="pb-2 pr-4">Status</th>
@@ -579,8 +692,13 @@ export default function FederatedLearningPage() {
               </thead>
               <tbody>
                 {clients.map((client) => (
-                  <tr key={client.id} className="border-b border-panel-800 text-panel-200">
-                    <td className="py-2 pr-4 font-mono text-xs">{client.name}</td>
+                  <tr
+                    key={client.id}
+                    className="border-b border-panel-800 text-text-secondary"
+                  >
+                    <td className="py-2 pr-4 font-mono text-xs">
+                      {client.name}
+                    </td>
                     <td className="py-2 pr-4">{client.region}</td>
                     <td className="py-2 pr-4">
                       <Badge
@@ -620,15 +738,13 @@ export default function FederatedLearningPage() {
       {/* Training Round History */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-panel-100">
-            Training Round History
-          </h2>
+          <h2 className="heading-section">Training Round History</h2>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-panel-700 text-left text-xs text-panel-400">
+                <tr className="border-b border-border-subtle text-left text-xs text-text-secondary">
                   <th className="pb-2 pr-4">Round</th>
                   <th className="pb-2 pr-4">Participants</th>
                   <th className="pb-2 pr-4">Method</th>
@@ -642,7 +758,8 @@ export default function FederatedLearningPage() {
                   const actualIdx = history.length - 1 - displayIdx;
                   const isSelected =
                     selectedRoundIdx === actualIdx ||
-                    (selectedRoundIdx === null && actualIdx === history.length - 1);
+                    (selectedRoundIdx === null &&
+                      actualIdx === history.length - 1);
 
                   return (
                     <tr
@@ -650,11 +767,13 @@ export default function FederatedLearningPage() {
                       onClick={() => setSelectedRoundIdx(actualIdx)}
                       className={`cursor-pointer border-b border-panel-800 transition-colors ${
                         isSelected
-                          ? "bg-panel-800 text-panel-50"
-                          : "text-panel-200 hover:bg-panel-800/50"
+                          ? "bg-surface-raised text-text-primary"
+                          : "text-text-secondary hover:bg-surface-raised/50"
                       }`}
                     >
-                      <td className="py-2 pr-4 font-mono">{round.roundNumber}</td>
+                      <td className="py-2 pr-4 font-mono">
+                        {round.roundNumber}
+                      </td>
                       <td className="py-2 pr-4">
                         {round.participants.length} clients
                       </td>
