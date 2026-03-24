@@ -1,0 +1,25 @@
+# FizzSearch Full-Text Search Engine configuration
+# The platform generates data at every layer -- event sourcing journals,
+# audit trails, CDC streams, compliance records, evaluation results
+# with full metadata -- and none of it is searchable.  FizzSearch
+# provides inverted index construction, BM25 relevance scoring,
+# configurable analyzer pipelines including Klingon/Sindarin/Quenya
+# morphological stemmers, a boolean query model, phrase queries,
+# fuzzy matching, faceted search, aggregations, and near-real-time
+# search via segment-based architecture with tiered merge policies.
+fizzsearch:
+  enabled: false                          # Master switch -- opt-in via --fizzsearch
+  refresh_interval: 1.0                   # Near-real-time refresh interval (seconds)
+  max_result_window: 10000                # Maximum offset+limit for standard pagination
+  merge_policy: "tiered"                  # Segment merge policy (tiered, log)
+  similarity: "BM25"                      # Similarity model (BM25, BM25F)
+  bm25_k1: 1.2                           # BM25 term frequency saturation
+  bm25_b: 0.75                           # BM25 document length normalization
+  max_scroll_count: 500                   # Maximum concurrent scroll contexts
+  enable_highlight: true                  # Enable hit highlighting by default
+  index_evaluations: false                # Auto-index FizzBuzz evaluation results
+  index_audit: false                      # Auto-index audit trail entries
+  index_events: false                     # Auto-index event journal entries
+  index_metrics: false                    # Auto-index platform metrics
+  dashboard:
+    width: 72                             # ASCII dashboard width
