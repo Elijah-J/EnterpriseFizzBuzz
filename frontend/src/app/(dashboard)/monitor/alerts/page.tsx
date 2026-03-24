@@ -214,7 +214,7 @@ export default function AlertsPage() {
         {/* Severity filter — Tabs component */}
         <Tabs
           items={(["all", "critical", "warning", "info"] as const).map((sev) => ({
-            label: sev === "all" ? `All (${summary.total})` : `${sev.charAt(0).toUpperCase() + sev.slice(1)} (${summary.counts[sev === "all" ? "critical" : sev]})`,
+            label: sev === "all" ? `All (${summary.total})` : `${sev.charAt(0).toUpperCase() + sev.slice(1)} (${summary.counts[sev]})`,
             content: null as unknown as React.ReactNode,
           }))}
           activeIndex={(["all", "critical", "warning", "info"] as const).indexOf(severityFilter)}

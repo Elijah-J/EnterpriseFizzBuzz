@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Keyboard Navigation E2E Verification
@@ -8,10 +9,17 @@ import { test, expect } from '@playwright/test';
  * activation, scroll-to-top/bottom, and input field suppression.
  */
 
+let consoleErrors: string[] = [];
+
 test.describe('Keyboard Shortcuts', () => {
   test.beforeEach(async ({ page }) => {
+    consoleErrors = trackConsoleErrors(page);
     await page.goto('./');
     await page.waitForLoadState('networkidle');
+  });
+
+  test.afterEach(() => {
+    assertNoConsoleErrors(consoleErrors);
   });
 
   test('? key opens keyboard shortcut overlay', async ({ page }) => {

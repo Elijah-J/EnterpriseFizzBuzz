@@ -67,7 +67,4 @@ describe("CopyButton", () => {
     expect(screen.getByRole("button")).toHaveClass("ml-2");
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
 });

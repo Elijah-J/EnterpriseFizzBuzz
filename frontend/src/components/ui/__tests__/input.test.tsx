@@ -68,7 +68,7 @@ describe("Input", () => {
   });
 
   it("forwards ref to the input element", () => {
-    const ref = { current: null } as React.RefObject<HTMLInputElement>;
+    const ref = { current: null } as unknown as React.RefObject<HTMLInputElement>;
     render(<Input ref={ref} />);
     expect(ref.current).toBeInstanceOf(HTMLInputElement);
   });

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Executive Dashboard E2E Verification
@@ -8,10 +9,17 @@ import { test, expect } from '@playwright/test';
  * beyond skeleton loading states.
  */
 
+let consoleErrors: string[] = [];
+
 test.describe('Executive Dashboard', () => {
   test.beforeEach(async ({ page }) => {
+    consoleErrors = trackConsoleErrors(page);
     await page.goto('./');
     await page.waitForLoadState('networkidle');
+  });
+
+  test.afterEach(() => {
+    assertNoConsoleErrors(consoleErrors);
   });
 
   test('displays the Operations Center heading', async ({ page }) => {

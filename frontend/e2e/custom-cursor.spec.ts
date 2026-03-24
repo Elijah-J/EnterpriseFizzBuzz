@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Custom Cursor E2E Verification
@@ -7,6 +8,16 @@ import { test, expect } from '@playwright/test';
  * viewports without reduced motion, and automatic suppression on
  * touch devices and when the prefers-reduced-motion media query is active.
  */
+
+let consoleErrors: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = trackConsoleErrors(page);
+});
+
+test.afterEach(() => {
+  assertNoConsoleErrors(consoleErrors);
+});
 
 test.describe('Custom Cursor', () => {
   test('cursor container renders on desktop viewport', async ({ page }) => {

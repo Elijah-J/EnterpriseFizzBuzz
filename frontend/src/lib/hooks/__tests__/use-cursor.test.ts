@@ -51,7 +51,7 @@ describe("useCursor", () => {
     const { result } = renderHook(() => useCursor());
     expect(result.current.visible).toBe(false);
     // Cleanup
-    delete (window as Record<string, unknown>).ontouchstart;
+    delete (window as unknown as Record<string, unknown>).ontouchstart;
   });
 
   it("accepts custom lerp factor", () => {

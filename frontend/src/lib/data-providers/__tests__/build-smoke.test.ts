@@ -103,7 +103,7 @@ describe("Build smoke — data-providers barrel export", () => {
     ];
 
     for (const method of expectedMethods) {
-      expect(typeof (provider as Record<string, unknown>)[method]).toBe("function");
+      expect(typeof (provider as unknown as Record<string, unknown>)[method]).toBe("function");
     }
   });
 });

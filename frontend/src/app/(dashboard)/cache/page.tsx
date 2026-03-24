@@ -860,7 +860,7 @@ export default function CacheCoherencePage() {
       {/* KPI Summary */}
       <StatGroup
         items={[
-          { label: "Hit Ratio", value: `${(stats.hitRatio * 100).toFixed(1)}%`, trend: { direction: stats.hitRatio > 0.9 ? "up" as const : "down" as const, label: stats.hitRatio > 0.9 ? "Optimal" : "Below target" } },
+          { label: "Hit Ratio", value: `${(stats.hitRate * 100).toFixed(1)}%`, trend: { direction: stats.hitRate > 0.9 ? "up" as const : "down" as const, label: stats.hitRate > 0.9 ? "Optimal" : "Below target" } },
           { label: "Entries", value: String(stats.entries) },
           { label: "Evictions", value: String(stats.evictions) },
           { label: "Transitions", value: String(transitions.length) },

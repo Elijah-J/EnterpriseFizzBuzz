@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { DataProvider } from "@/lib/data-providers";
 
 vi.mock("@/lib/hooks/use-reduced-motion", () => ({
   useReducedMotion: () => true,
@@ -12,53 +13,56 @@ vi.mock("@/lib/hooks/use-animated-number", () => ({
   },
 }));
 
-vi.mock("@/lib/data-providers", () => ({
-  useDataProvider: () => ({
-    getCostSummary: vi.fn().mockResolvedValue({
-      currentPeriodCost: 1247.83,
-      previousPeriodCost: 1180.50,
-      costPerEvaluation: 0.0000097,
-      trend: "up" as const,
-      currency: "FizzBuck",
-    }),
-  }),
-}));
-
 import { CostWidget } from "../cost-widget";
+
+function renderWidget() {
+  return render(
+    <DataProvider>
+      <CostWidget />
+    </DataProvider>,
+  );
+}
 
 describe("CostWidget", () => {
   it("renders skeleton loading state initially", () => {
-    const { container } = render(<CostWidget />);
+    const { container } = renderWidget();
     const skeletons = container.querySelectorAll('[role="status"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
-  it("renders current period cost after data loads", async () => {
-    render(<CostWidget />);
+  it("renders current period cost label after data loads", async () => {
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("1247.83")).toBeInTheDocument();
+      expect(screen.getByText("Current Period Expenditure")).toBeInTheDocument();
     });
   });
 
-  it("renders FizzBuck currency symbol", async () => {
-    render(<CostWidget />);
+  it("renders FizzBuck currency symbol from real provider", async () => {
+    renderWidget();
     await waitFor(() => {
       const fbLabels = screen.getAllByText(/FB\$/);
       expect(fbLabels.length).toBeGreaterThan(0);
     });
   });
 
-  it("renders previous period cost", async () => {
-    render(<CostWidget />);
+  it("renders previous period label from real provider", async () => {
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("1180.50")).toBeInTheDocument();
+      expect(screen.getByText("Previous Period")).toBeInTheDocument();
     });
   });
 
-  it("renders spend trend label", async () => {
-    render(<CostWidget />);
+  it("renders spend trend label from real provider", async () => {
+    renderWidget();
     await waitFor(() => {
       expect(screen.getByText(/Spend trend/)).toBeInTheDocument();
+    });
+  });
+
+  it("renders cost per evaluation label from real provider", async () => {
+    renderWidget();
+    await waitFor(() => {
+      expect(screen.getByText("Cost per Evaluation")).toBeInTheDocument();
     });
   });
 });

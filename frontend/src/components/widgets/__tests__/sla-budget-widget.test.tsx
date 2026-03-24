@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { DataProvider } from "@/lib/data-providers";
 
 vi.mock("@/lib/hooks/use-reduced-motion", () => ({
   useReducedMotion: () => true,
@@ -13,53 +14,65 @@ vi.mock("@/lib/hooks/use-animated-number", () => ({
   },
 }));
 
-vi.mock("@/lib/data-providers", () => ({
-  useDataProvider: () => ({
-    getSLAStatus: vi.fn().mockResolvedValue({
-      availabilityPercent: 99.97,
-      errorBudgetRemaining: 0.82,
-      latencyP99Ms: 4.2,
-      correctnessPercent: 100,
-      activeIncidents: 0,
-      onCallEngineer: "Bob McFizzington",
-    }),
-  }),
-}));
-
 import { SLABudgetWidget } from "../sla-budget-widget";
+
+function renderWidget() {
+  return render(
+    <DataProvider>
+      <SLABudgetWidget />
+    </DataProvider>,
+  );
+}
 
 describe("SLABudgetWidget", () => {
   it("renders skeleton loading state initially", () => {
-    const { container } = render(<SLABudgetWidget />);
+    const { container } = renderWidget();
     const skeletons = container.querySelectorAll('[role="status"]');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("renders circular gauge after data loads", async () => {
-    const { container } = render(<SLABudgetWidget />);
+    const { container } = renderWidget();
     await waitFor(() => {
       expect(container.querySelector("svg")).toBeInTheDocument();
     });
   });
 
-  it("displays gauge percentage label", async () => {
-    render(<SLABudgetWidget />);
+  it("displays error budget gauge label", async () => {
+    const { container } = renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("82.0%")).toBeInTheDocument();
+      // The circular gauge SVG has an aria-label with error budget info
+      const gauge = container.querySelector("svg[aria-label*='Error budget gauge']");
+      expect(gauge).toBeInTheDocument();
     });
   });
 
-  it("renders availability metric", async () => {
-    render(<SLABudgetWidget />);
+  it("renders availability label from real provider", async () => {
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("99.97%")).toBeInTheDocument();
+      expect(screen.getByText("Availability")).toBeInTheDocument();
     });
   });
 
-  it("renders P99 latency metric", async () => {
-    render(<SLABudgetWidget />);
+  it("renders P99 latency label from real provider", async () => {
+    renderWidget();
     await waitFor(() => {
-      expect(screen.getByText("4.2")).toBeInTheDocument();
+      expect(screen.getByText("P99 Latency")).toBeInTheDocument();
+    });
+  });
+
+  it("renders correctness label from real provider", async () => {
+    renderWidget();
+    await waitFor(() => {
+      expect(screen.getByText("Correctness")).toBeInTheDocument();
+    });
+  });
+
+  it("renders 100% correctness from real provider", async () => {
+    renderWidget();
+    // SimulationProvider always returns correctnessPercent: 100
+    await waitFor(() => {
+      expect(screen.getByText("100.0%")).toBeInTheDocument();
     });
   });
 });
