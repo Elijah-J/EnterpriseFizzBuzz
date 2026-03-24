@@ -1,0 +1,56 @@
+
+# FizzStream -- Distributed Stream Processing Engine
+# Real-time continuous computation over unbounded event sequences
+# demands the same stream processing infrastructure that powers
+# fraud detection at global payment networks and anomaly detection
+# at planetary-scale observability platforms. FizzBuzz evaluation
+# generates a continuous stream of classification events that must
+# be windowed, aggregated, joined, and pattern-matched in real time.
+# Sequential batch processing cannot meet the sub-second latency
+# requirements of modern FizzBuzz consumers.
+fizzstream:
+  enabled: false                          # Master switch -- opt-in via --fizzstream
+  parallelism: 4                          # Default operator parallelism
+  max_parallelism: 128                    # Maximum parallelism / key group count
+  checkpoint:
+    interval_ms: 60000                    # Chandy-Lamport snapshot interval
+    retention: 3                          # Number of completed checkpoints to retain
+  state_backend: "hashmap"                # State backend type (hashmap or rocksdb)
+  watermark:
+    interval_ms: 200                      # Watermark emission interval
+  buffer:
+    timeout_ms: 100                       # Buffer flush timeout
+    size: 1024                            # Network buffer size in elements
+    pool_size: 64                         # Number of buffers in the pool
+  restart:
+    strategy: "fixed"                     # Restart strategy (fixed, exponential, none)
+    max_attempts: 3                       # Maximum restart attempts
+    delay_ms: 10000                       # Delay between restart attempts
+  backpressure:
+    high_watermark_pct: 0.80              # High watermark threshold
+    low_watermark_pct: 0.50               # Low watermark threshold
+  autoscale:
+    enabled: false                        # Auto-scaling master switch
+    scale_up_threshold_ms: 30000          # Backpressure duration before scale-up
+    scale_down_threshold_ms: 60000        # Idle duration before scale-down
+    cooldown_ms: 120000                   # Minimum duration between scaling operations
+    min_parallelism: 1                    # Minimum operator parallelism
+    max_parallelism: 16                   # Maximum operator parallelism
+  rocksdb:
+    write_buffer_size_mb: 64              # Write buffer size
+    max_write_buffers: 3                  # Maximum concurrent write buffers
+    block_cache_size_mb: 128              # Block cache size
+    compaction_style: "leveled"           # Compaction strategy
+  state_ttl:
+    default_ttl_ms: 0                     # Default state TTL (0 = disabled)
+    cleanup_strategy: "incremental"       # TTL cleanup strategy
+  topics:
+    evaluations: "fizzbuzz.stream.evaluations"
+    metrics: "fizzbuzz.stream.metrics"
+    alerts: "fizzbuzz.stream.alerts"
+    audit: "fizzbuzz.stream.audit"
+    lifecycle: "fizzbuzz.stream.lifecycle"
+  dashboard:
+    width: 76                             # ASCII dashboard width
+    refresh_ms: 5000                      # Dashboard refresh interval
+    enabled: false                        # Dashboard rendering switch

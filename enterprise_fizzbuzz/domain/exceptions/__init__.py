@@ -123,6 +123,7 @@ from enterprise_fizzbuzz.domain.exceptions.fizzborrow import *  # noqa: F401,F40
 from enterprise_fizzbuzz.domain.exceptions.fizzpolicy import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzadmit import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzlsp import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzsearch import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
