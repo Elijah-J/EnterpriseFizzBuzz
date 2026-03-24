@@ -6,6 +6,20 @@ All notable changes to the Enterprise FizzBuzz Platform are documented in this f
 
 ## [Unreleased]
 ### Added
+- FizzNS: Linux namespace isolation engine implementing all seven namespace types (PID, NET, MNT, UTS, IPC, USER, CGROUP) as first-class primitives with clone(2)/unshare(2)/setns(2) semantics, hierarchical nesting, reference counting, and garbage collection
+- PIDNamespace with isolated PID allocation tables, init process (PID 1) semantics, orphan adoption, SIGKILL-on-init-exit, and hierarchical visibility
+- NETNamespace with per-namespace network interfaces, routing tables, socket bindings, loopback auto-creation, and virtual ethernet (veth) pair support
+- MNTNamespace with copy-on-create mount tables, mount/umount operations, pivot_root semantics, and mount propagation flags
+- UTSNamespace with per-namespace hostname and domainname isolation
+- IPCNamespace with isolated shared memory segments, semaphore sets, and message queues
+- USERNamespace with UID/GID mapping tables, capability bounding sets, and rootless container semantics
+- CGROUPNamespace with cgroup hierarchy virtualization and visibility filtering
+- NamespaceManager singleton with global namespace registry, lifecycle management, reference counting, garbage collection, and ASCII hierarchy rendering
+- FizzNSDashboard with namespace counts, process mapping, and hierarchy tree visualization
+- FizzNSMiddleware at priority 106, injecting namespace isolation context into each evaluation
+- 18 new exception classes (EFP-NS00 through EFP-NS17) for namespace isolation failure modes
+- 17 new EventType entries for namespace lifecycle event tracking
+- 5 new CLI flags: `--fizzns`, `--fizzns-list`, `--fizzns-inspect`, `--fizzns-hierarchy`, `--fizzns-type`
 - FizzBob: NASA-TLX cognitive load modeling engine for operator Bob McFizzington, with circadian rhythm modeling (Borbely two-process model), six-dimensional workload assessment, alert fatigue tracking, burnout projection, and operator overload protection
 - NasaTLXEngine, CircadianModel, AlertFatigueTracker, BurnoutDetector, OverloadController, CognitiveLoadOrchestrator, BobMiddleware, and BobDashboard components
 - 9 new exception classes (EFP-BOB0 through EFP-BOB8) for operator modeling failure modes

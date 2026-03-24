@@ -750,6 +750,25 @@ class EventType(Enum):
     ORG_REPORTING_CHAIN_TRACED = auto()
     ORG_DASHBOARD_RENDERED = auto()
 
+    # FizzNS: Linux Namespace Isolation Engine events
+    NS_NAMESPACE_CREATED = auto()
+    NS_NAMESPACE_DESTROYED = auto()
+    NS_PROCESS_ENTERED = auto()
+    NS_PROCESS_LEFT = auto()
+    NS_PID_ALLOCATED = auto()
+    NS_INIT_PROCESS_SET = auto()
+    NS_INIT_PROCESS_EXITED = auto()
+    NS_NET_INTERFACE_CREATED = auto()
+    NS_MNT_TABLE_COPIED = auto()
+    NS_PIVOT_ROOT_EXECUTED = auto()
+    NS_HOSTNAME_SET = auto()
+    NS_IPC_NAMESPACE_SCOPED = auto()
+    NS_UID_MAPPED = auto()
+    NS_CGROUP_VIRTUALIZED = auto()
+    NS_HIERARCHY_RENDERED = auto()
+    NS_DASHBOARD_RENDERED = auto()
+    NS_EVALUATION_PROCESSED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

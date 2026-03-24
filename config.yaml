@@ -1990,6 +1990,13 @@ fizz_org:
   dashboard:
     width: 72                             # ASCII dashboard width
 
+fizzns:
+  enabled: false                          # Master switch — opt-in via --fizzns
+  default_hostname: fizzbuzz-container    # Default hostname for new UTS namespaces
+  default_domainname: enterprise.local    # Default domain name for new UTS namespaces
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizz_pager:
   enabled: false                          # Master switch — opt-in via --pager
   default_severity: P3                    # Default incident severity (P1-P5)

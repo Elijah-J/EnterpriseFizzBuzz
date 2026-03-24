@@ -1311,6 +1311,13 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --org-department DEPT     Display detailed information for a specific department: mission statement, positions, headcount target vs actual, budget allocation, and assigned subsystems
 --org-committees          Display all 6 governance committees with membership (Bob), meeting frequency, quorum status, and cumulative weekly meeting hours (12)
 --org-reporting-chain ROLE  Trace the reporting chain from any role to the top of the hierarchy, displaying each position, incumbent (Bob), and department at every level
+
+# FizzNS -- Linux Namespace Isolation
+--fizzns                    Enable the FizzNS Linux namespace isolation engine, creating isolated PID, NET, MNT, UTS, IPC, USER, and CGROUP namespaces for each container execution context
+--fizzns-list               List all active namespaces in the global namespace registry, displaying namespace ID, type, state, reference count, member process count, and parent namespace
+--fizzns-inspect NS_ID      Inspect a specific namespace by ID, showing full details including member processes, child namespaces, reference count, creation timestamp, and type-specific state (PID table, mount entries, network interfaces, UID mappings, etc.)
+--fizzns-hierarchy           Render an ASCII tree of the namespace hierarchy, showing parent-child nesting relationships across all seven namespace types with reference counts and process membership at each level
+--fizzns-type TYPE           Filter namespace operations by type (PID, NET, MNT, UTS, IPC, USER, CGROUP), restricting --fizzns-list and --fizzns-hierarchy output to namespaces of the specified type
 ```
 
 ## Environment Variables

@@ -480,6 +480,13 @@ from enterprise_fizzbuzz.infrastructure.fizzorg import (
     OrgMiddleware,
     create_org_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzns import (
+    FizzNSDashboard,
+    FizzNSMiddleware,
+    NamespaceManager,
+    NamespaceType,
+    create_fizzns_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3535,6 +3542,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="Trace the reporting chain from a position to the root (e.g., 'On-Call Engineer')",
+    )
+
+    # FizzNS — Linux Namespace Isolation Engine
+    parser.add_argument(
+        "--fizzns",
+        action="store_true",
+        help="Enable FizzNS: Linux namespace isolation engine with PID, NET, MNT, UTS, IPC, USER, and CGROUP namespace types",
+    )
+    parser.add_argument(
+        "--fizzns-list",
+        action="store_true",
+        help="Display a listing of all active FizzNS namespaces after execution",
+    )
+    parser.add_argument(
+        "--fizzns-inspect",
+        type=str,
+        default=None,
+        help="Inspect a specific FizzNS namespace by ID (e.g., 'ns-pid-root')",
+    )
+    parser.add_argument(
+        "--fizzns-hierarchy",
+        action="store_true",
+        help="Display the FizzNS namespace hierarchy tree after execution",
+    )
+    parser.add_argument(
+        "--fizzns-type",
+        type=str,
+        default=None,
+        help="Filter FizzNS output by namespace type (PID, NET, MNT, UTS, IPC, USER, CGROUP)",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -7752,6 +7788,33 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzNS — Linux Namespace Isolation Engine (priority 106)
+    # ----------------------------------------------------------------
+    ns_manager = None
+    ns_middleware_instance = None
+
+    if args.fizzns or args.fizzns_list or args.fizzns_inspect or args.fizzns_hierarchy:
+        ns_manager, ns_middleware_instance = create_fizzns_subsystem(
+            default_hostname=config.fizzns_default_hostname,
+            default_domainname=config.fizzns_default_domainname,
+            enable_dashboard=args.fizzns_list,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(ns_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZNS: LINUX NAMESPACE ISOLATION ENGINE                |\n"
+                f"  | Hostname: {config.fizzns_default_hostname:<20}                |\n"
+                "  | Types: PID, NET, MNT, UTS, IPC, USER, CGROUP          |\n"
+                "  | Root Namespaces: 7 | clone/unshare/setns supported    |\n"
+                "  | Hierarchical nesting, ref counting, GC                 |\n"
+                "  | Containers require isolation. FizzNS provides it.      |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11078,6 +11141,39 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(org_middleware_instance.render_reporting_chain(args.org_reporting_chain))
     elif args.org_reporting_chain and org_middleware_instance is None:
         print("\n  FizzOrg not enabled. Use --org to enable.\n")
+
+    # FizzNS List (post-execution)
+    if args.fizzns_list and ns_middleware_instance is not None:
+        ns_type_filter = None
+        if args.fizzns_type:
+            try:
+                ns_type_filter = NamespaceType[args.fizzns_type.upper()]
+            except KeyError:
+                print(f"\n  Unknown namespace type: {args.fizzns_type}\n")
+        print()
+        print(ns_middleware_instance.list_namespaces(ns_type=ns_type_filter))
+    elif args.fizzns_list and ns_middleware_instance is None:
+        print("\n  FizzNS not enabled. Use --fizzns to enable.\n")
+
+    # FizzNS Inspect (post-execution)
+    if args.fizzns_inspect and ns_middleware_instance is not None:
+        print()
+        print(ns_middleware_instance.inspect_namespace(args.fizzns_inspect))
+    elif args.fizzns_inspect and ns_middleware_instance is None:
+        print("\n  FizzNS not enabled. Use --fizzns to enable.\n")
+
+    # FizzNS Hierarchy (post-execution)
+    if args.fizzns_hierarchy and ns_middleware_instance is not None:
+        ns_type_filter = None
+        if args.fizzns_type:
+            try:
+                ns_type_filter = NamespaceType[args.fizzns_type.upper()]
+            except KeyError:
+                print(f"\n  Unknown namespace type: {args.fizzns_type}\n")
+        print()
+        print(ns_middleware_instance.render_hierarchy(ns_type=ns_type_filter))
+    elif args.fizzns_hierarchy and ns_middleware_instance is None:
+        print("\n  FizzNS not enabled. Use --fizzns to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

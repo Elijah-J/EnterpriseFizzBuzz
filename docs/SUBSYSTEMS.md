@@ -5075,3 +5075,98 @@ The `OrgDashboard` renders an ASCII display with:
 | Test count | 250+ |
 
 FizzOrg transforms the platform's implicit organizational reality -- "Bob does everything" -- into an explicit, auditable, governance-compliant organizational model with departments, reporting relationships, RACI assignments, headcount plans, and committee structures. The model is technically complete. Every governance framework requirement is satisfied. Every reporting line is documented. Every committee has quorum rules. The org chart is the loneliest tree in enterprise software.
+
+---
+
+## FizzNS Linux Namespace Isolation Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/fizzns.py`
+
+FizzNS is a comprehensive Linux namespace isolation engine implementing all seven namespace types defined by the Linux kernel as first-class primitives. The engine follows the semantics of `clone(2)`, `unshare(2)`, and `setns(2)` system calls, providing the foundational isolation layer that transforms FizzKube's pods from decorated Python dataclass instances into genuinely isolated execution environments. Without namespace isolation, a container is indistinguishable from a process. FizzNS provides the distinction.
+
+### Namespace Type System
+
+The `NamespaceType` enum defines seven namespace types, each mapping to the corresponding `CLONE_NEW*` flag:
+
+| Type | Clone Flag | Isolates |
+|------|-----------|----------|
+| PID | CLONE_NEWPID | Process ID space |
+| NET | CLONE_NEWNET | Network stack (interfaces, routing, sockets) |
+| MNT | CLONE_NEWNS | Mount table |
+| UTS | CLONE_NEWUTS | Hostname and domain name |
+| IPC | CLONE_NEWIPC | System V IPC and POSIX message queues |
+| USER | CLONE_NEWUSER | UID/GID mapping and capabilities |
+| CGROUP | CLONE_NEWCGROUP | Cgroup hierarchy view |
+
+The `NamespaceState` enum tracks lifecycle: `ACTIVE`, `DESTROYING`, `DESTROYED`.
+
+The `Namespace` abstract base class defines the common interface: `ns_id` (unique identifier), `ns_type` (NamespaceType), `parent` (enclosing namespace or None for root), `children` (nested namespaces), `ref_count` (process and bind-mount references), `state`, `created_at` timestamp, and abstract methods `isolate()`, `enter()`, `leave()`, `destroy()`.
+
+The `NamespaceSet` is a frozen collection of namespace instances (one per type) that collectively defines a container's isolation boundary.
+
+### PID Namespace
+
+The `PIDNamespace` maintains an isolated process ID allocation table starting from PID 1. The first process in a new PID namespace becomes the init process (PID 1). PID 1 adopts orphaned processes within the namespace. If PID 1 exits, all remaining processes in the namespace receive SIGKILL. PIDs are visible hierarchically: a parent PID namespace can see child PIDs (mapped to the parent's PID space), but child namespaces cannot see parent PIDs. PID translation maps between namespace-relative and host-relative PIDs.
+
+### NET Namespace
+
+The `NETNamespace` provides an isolated network stack. Each network namespace starts with only a loopback interface. Additional interfaces, routing table entries, and socket bindings are namespace-scoped. Connectivity between namespaces requires virtual ethernet (veth) pairs -- paired network interfaces where one end resides in each namespace, providing a point-to-point link. Two processes in different NET namespaces can both bind to port 80 without conflict.
+
+### MNT Namespace
+
+The `MNTNamespace` isolates the mount table. At creation time, the mount table is copied from the parent namespace. Subsequent `mount()` and `umount()` operations within the namespace are invisible to the parent. The `pivot_root()` operation replaces the namespace's root filesystem -- the mechanism containers use to switch from the host root to the container's rootfs. Mount propagation flags control whether mount events propagate between parent and child namespaces.
+
+### UTS Namespace
+
+The `UTSNamespace` isolates hostname and domain name. Each UTS namespace maintains its own `hostname` and `domainname` values. Containers can set their hostname via `sethostname()` without affecting the host or other containers.
+
+### IPC Namespace
+
+The `IPCNamespace` isolates System V IPC objects (shared memory segments, semaphore sets, message queues). Each IPC namespace has its own IPC identifier space. Objects created in one IPC namespace are invisible to processes in other IPC namespaces.
+
+### USER Namespace
+
+The `USERNamespace` maps UIDs and GIDs between the namespace and its parent. A process can be root (UID 0) inside a USER namespace while being an unprivileged user on the host. The mapping is defined by `uid_map` and `gid_map` entries. Capability bounding sets are namespace-scoped: a process gains full capabilities inside its USER namespace but retains only mapped capabilities in the parent namespace. USER namespaces are the foundation of rootless containers.
+
+### CGROUP Namespace
+
+The `CGROUPNamespace` virtualizes the cgroup hierarchy so that a process in a CGROUP namespace sees its own cgroup as the root. This prevents containers from discovering or manipulating the host's cgroup tree.
+
+### Namespace Manager
+
+The `NamespaceManager` is a singleton managing the global namespace registry. It provides three operations following Linux system call semantics:
+
+- **`clone()`**: Create a new child process in new namespaces (creates namespace + enters it)
+- **`unshare()`**: Move the calling process into a new namespace (creates namespace, moves caller)
+- **`setns()`**: Move the calling process into an existing namespace (enters existing namespace)
+
+The manager tracks reference counts for all namespaces and garbage-collects namespaces whose reference count drops to zero. Root namespaces (one per type) are created at initialization and cannot be destroyed. The manager provides namespace-to-process mapping and renders ASCII hierarchy trees showing the nesting structure across all namespace types.
+
+### FizzNS Dashboard
+
+The `FizzNSDashboard` renders an ASCII display with:
+
+- Namespace counts by type (7 types, active/total)
+- Process-to-namespace mapping table
+- Hierarchical nesting tree with reference counts
+- Namespace state distribution
+
+### FizzNS Middleware
+
+The `FizzNSMiddleware` integrates into the middleware pipeline at priority 106, after OrgMiddleware (105). Namespace isolation logically follows organizational hierarchy: the org chart determines who owns the container, and FizzNS determines what the container can see. The middleware injects namespace metadata into each evaluation's processing context.
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| Namespace types | 7 (PID, NET, MNT, UTS, IPC, USER, CGROUP) |
+| Namespace states | 3 (ACTIVE, DESTROYING, DESTROYED) |
+| Clone flags | 7 (CLONE_NEWPID through CLONE_NEWCGROUP) |
+| System call semantics | 3 (clone, unshare, setns) |
+| Middleware priority | 106 |
+| Custom exceptions | 18 (EFP-NS00 through EFP-NS17) |
+| EventType entries | 17 |
+| CLI flags | 5 (`--fizzns`, `--fizzns-list`, `--fizzns-inspect`, `--fizzns-hierarchy`, `--fizzns-type`) |
+| Test count | ~400 |
+
+FizzNS provides the isolation primitives that every container runtime depends on. Docker, containerd, CRI-O, Podman, and LXC all use Linux namespaces as their primary isolation mechanism. The OCI runtime specification (v1.0.2, Section 4) requires namespace configuration in `config.json`. A container runtime without namespace support is not a container runtime -- it is a process launcher with metadata. FizzNS closes the gap between what FizzKube promises and what the runtime delivers.
