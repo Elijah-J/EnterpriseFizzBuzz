@@ -769,6 +769,26 @@ class EventType(Enum):
     NS_DASHBOARD_RENDERED = auto()
     NS_EVALUATION_PROCESSED = auto()
 
+    # FizzCgroup: Control Group Resource Accounting & Limiting events
+    CG_CGROUP_CREATED = auto()
+    CG_CGROUP_REMOVED = auto()
+    CG_PROCESS_ATTACHED = auto()
+    CG_PROCESS_MIGRATED = auto()
+    CG_CPU_THROTTLED = auto()
+    CG_CPU_UNTHROTTLED = auto()
+    CG_MEMORY_CHARGED = auto()
+    CG_MEMORY_RELEASED = auto()
+    CG_MEMORY_OOM_TRIGGERED = auto()
+    CG_MEMORY_OOM_KILLED = auto()
+    CG_IO_THROTTLED = auto()
+    CG_IO_CHARGED = auto()
+    CG_PIDS_LIMIT_REACHED = auto()
+    CG_PIDS_FORK_DENIED = auto()
+    CG_RESOURCE_REPORT_GENERATED = auto()
+    CG_HIERARCHY_RENDERED = auto()
+    CG_DASHBOARD_RENDERED = auto()
+    CG_EVALUATION_PROCESSED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

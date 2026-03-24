@@ -487,6 +487,13 @@ from enterprise_fizzbuzz.infrastructure.fizzns import (
     NamespaceType,
     create_fizzns_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzcgroup import (
+    CgroupManager,
+    FizzCgroupDashboard,
+    FizzCgroupMiddleware,
+    ResourceAccountant,
+    create_fizzcgroup_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3571,6 +3578,35 @@ def build_argument_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="Filter FizzNS output by namespace type (PID, NET, MNT, UTS, IPC, USER, CGROUP)",
+    )
+
+    # FizzCgroup — Control Group Resource Accounting & Limiting
+    parser.add_argument(
+        "--fizzcgroup",
+        action="store_true",
+        help="Enable FizzCgroup: cgroup v2 resource accounting with CPU, memory, I/O, and PIDs controllers",
+    )
+    parser.add_argument(
+        "--fizzcgroup-tree",
+        action="store_true",
+        help="Display the cgroup hierarchy tree after execution",
+    )
+    parser.add_argument(
+        "--fizzcgroup-stats",
+        type=str,
+        default=None,
+        help="Display resource statistics for a specific cgroup path (e.g., '/')",
+    )
+    parser.add_argument(
+        "--fizzcgroup-limit",
+        type=str,
+        default=None,
+        help="Set resource limits (format: path:controller:param=value)",
+    )
+    parser.add_argument(
+        "--fizzcgroup-top",
+        action="store_true",
+        help="Display top-style resource usage by cgroup after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -7815,6 +7851,36 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzCgroup — Control Group Resource Accounting (priority 107)
+    # ----------------------------------------------------------------
+    cg_manager = None
+    cg_middleware_instance = None
+
+    if args.fizzcgroup or args.fizzcgroup_tree or args.fizzcgroup_stats or args.fizzcgroup_top:
+        cg_manager, cg_middleware_instance = create_fizzcgroup_subsystem(
+            oom_policy=config.fizzcgroup_oom_policy,
+            default_cpu_weight=config.fizzcgroup_default_cpu_weight,
+            default_memory_max=config.fizzcgroup_default_memory_max,
+            default_pids_max=config.fizzcgroup_default_pids_max,
+            dashboard_width=config.fizzcgroup_dashboard_width,
+            enable_dashboard=args.fizzcgroup_tree,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(cg_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZCGROUP: CONTROL GROUP RESOURCE ACCOUNTING           |\n"
+                f"  | OOM Policy: {config.fizzcgroup_oom_policy:<18}                |\n"
+                "  | Controllers: CPU, MEMORY, IO, PIDS                    |\n"
+                "  | Unified v2 hierarchy with subtree_control             |\n"
+                "  | CFS bandwidth, memory limits, I/O throttling          |\n"
+                "  | Resource limits without enforcement are suggestions.  |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11174,6 +11240,27 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(ns_middleware_instance.render_hierarchy(ns_type=ns_type_filter))
     elif args.fizzns_hierarchy and ns_middleware_instance is None:
         print("\n  FizzNS not enabled. Use --fizzns to enable.\n")
+
+    # FizzCgroup Tree (post-execution)
+    if args.fizzcgroup_tree and cg_middleware_instance is not None:
+        print()
+        print(cg_middleware_instance.render_tree())
+    elif args.fizzcgroup_tree and cg_middleware_instance is None:
+        print("\n  FizzCgroup not enabled. Use --fizzcgroup to enable.\n")
+
+    # FizzCgroup Stats (post-execution)
+    if args.fizzcgroup_stats and cg_middleware_instance is not None:
+        print()
+        print(cg_middleware_instance.render_stats(args.fizzcgroup_stats))
+    elif args.fizzcgroup_stats and cg_middleware_instance is None:
+        print("\n  FizzCgroup not enabled. Use --fizzcgroup to enable.\n")
+
+    # FizzCgroup Top (post-execution)
+    if args.fizzcgroup_top and cg_middleware_instance is not None:
+        print()
+        print(cg_middleware_instance.render_top())
+    elif args.fizzcgroup_top and cg_middleware_instance is None:
+        print("\n  FizzCgroup not enabled. Use --fizzcgroup to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

@@ -53,6 +53,7 @@ Operated and maintained by **Bob McFizzington**, Senior Principal Staff FizzBuzz
 - **Operator Succession Planning** with bus factor analysis (deterministically 1), Platform Continuity Readiness Score (97.3 -- operationally excellent, organizationally fragile), skills matrix cataloging 108 modules across 12 categories, knowledge gap detection, a hiring pipeline with 7 recommendations (all approved by Bob, none acted upon), and knowledge transfer tracking (0 sessions completed, 108 modules pending) -- because key-person dependency is the highest-severity risk in the platform's risk register, and the platform has had no system for managing it until now
 - **360-Degree Performance Review** with OKR-based goal tracking (5 objectives, 10 key results, 78% aggregate completion), self-assessment with pre-populated competency ratings, 360-degree multi-rater feedback from 4 perspectives (all Bob), a calibration committee of 3 Bobs voting unanimously, forced distribution applied to a population of 1, and compensation benchmarking across 14 concurrent roles producing the McFizzington Compensation Equity Index (classified: REQUIRES_IMMEDIATE_ATTENTION) -- because every employee deserves a formal performance review, even when they are the only employee, the only reviewer, and the only member of the calibration committee
 - **Organizational Hierarchy Engine** with 10 departments, 14 positions in a 4-level reporting tree (all occupied by Bob McFizzington), a RACI matrix mapping 106 subsystems to 14 roles (1,484 cells, 106 Sole Operator Exception conflicts), headcount planning (1 of 42 target = 2.4% staffed, 41 open positions), 6 governance committees (all chaired by Bob, all attended by Bob, 12 hours/week of meetings), and ASCII org chart visualization -- because COBIT 2019 requires a formal organizational structure with defined roles and reporting lines, and the platform has never formally documented that "Bob does everything" is not a metaphor but an organizational fact
+- **Control Group Resource Accounting** with cgroups v2 unified hierarchy, CPU controller with CFS bandwidth throttling (quota/period) and relative shares, memory controller with four-threshold limits (max/high/low/min) and recursive accounting, per-cgroup OOM killer with three victim selection policies, I/O controller with per-device bandwidth throttling, PIDs controller with fork gating, and ResourceAccountant feeding actual cgroup metrics to FizzKube's HPA and SLA monitoring -- because resource limits without enforcement are suggestions, and suggestions do not prevent outages
 - **Linux Namespace Isolation Engine** implementing all seven Linux namespace types (PID, NET, MNT, UTS, IPC, USER, CGROUP) with `clone(2)`/`unshare(2)`/`setns(2)` semantics, hierarchical nesting, reference counting, and garbage collection -- because FizzKube has been orchestrating containers since Round 5, but those containers were Python dataclass instances sharing every resource with the host, and namespace isolation is the kernel primitive that separates a container from a process
 - **Microkernel IPC** with Mach-style port rights, capability delegation, and a kernel scheduler -- because subsystems communicating through function calls would be a single point of failure
 - **Garbage Collector** implementing tri-color mark-sweep-compact with generational collection for the FizzBuzz managed object heap
@@ -64,7 +65,7 @@ Operated and maintained by **Bob McFizzington**, Senior Principal Staff FizzBuzz
 - **Compliance Framework** enforcing SOX segregation of duties, GDPR right-to-erasure, and HIPAA minimum necessary access simultaneously -- creating THE COMPLIANCE PARADOX, where GDPR demands deletion of records that SOX requires to be immutable and the blockchain physically cannot remove, a regulatory Catch-22 that has driven Bob McFizzington's stress level beyond the theoretical maximum
 - **SLA Monitoring** with burn-rate alerting and an on-call rotation algorithm that uses modulo arithmetic to select the current engineer from a team of one, which means the rotation is both technically correct and existentially cruel (it's always Bob)
 
-All implementations are technically faithful. The MESI cache coherence matches the real protocol. The neural network trains with actual backpropagation. The blockchain mines real blocks. The protein folder minimizes real energy functions. See [Subsystems](docs/SUBSYSTEMS.md) for the full 110-module breakdown.
+All implementations are technically faithful. The MESI cache coherence matches the real protocol. The neural network trains with actual backpropagation. The blockchain mines real blocks. The protein folder minimizes real energy functions. See [Subsystems](docs/SUBSYSTEMS.md) for the full 111-module breakdown.
 
 ### Quick Stats
 
@@ -74,8 +75,8 @@ All implementations are technically faithful. The MESI cache coherence matches t
 | Files | 289 |
 | Test Count | 11,400+ |
 | Custom Exceptions | 608 |
-| Infrastructure Modules | 110 |
-| CLI Flags | 310+ |
+| Infrastructure Modules | 111 |
+| CLI Flags | 315+ |
 | Locales | 7 (English, German, French, Japanese, Klingon, Sindarin, Quenya) |
 | Design Patterns | 100+ |
 | ASCII Dashboards | 90+ |
@@ -103,7 +104,7 @@ python main.py --strategy machine_learning --range 1 20 --debug
 python main.py --circuit-breaker --circuit-status --verbose
 ```
 
-See [CLI Reference](docs/CLI_REFERENCE.md) for all 305+ flags and hundreds of example commands.
+See [CLI Reference](docs/CLI_REFERENCE.md) for all 315+ flags and hundreds of example commands.
 
 ## Documentation
 

@@ -61,6 +61,8 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzSuccession Operator Succession Planning Architecture](#fizzsuccession-operator-succession-planning-architecture)
 - [FizzPerf Operator Performance Review Architecture](#fizzperf-operator-performance-review-architecture)
 - [FizzOrg Organizational Hierarchy Architecture](#fizzorg-organizational-hierarchy-architecture)
+- [FizzNS Linux Namespace Isolation Architecture](#fizzns-linux-namespace-isolation-architecture)
+- [FizzCgroup Control Group Resource Accounting Architecture](#fizzcgroup-control-group-resource-accounting-architecture)
 
 ---
 
@@ -5170,3 +5172,114 @@ The `FizzNSMiddleware` integrates into the middleware pipeline at priority 106, 
 | Test count | ~400 |
 
 FizzNS provides the isolation primitives that every container runtime depends on. Docker, containerd, CRI-O, Podman, and LXC all use Linux namespaces as their primary isolation mechanism. The OCI runtime specification (v1.0.2, Section 4) requires namespace configuration in `config.json`. A container runtime without namespace support is not a container runtime -- it is a process launcher with metadata. FizzNS closes the gap between what FizzKube promises and what the runtime delivers.
+
+---
+
+## FizzCgroup Control Group Resource Accounting Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/fizzcgroup.py`
+
+FizzCgroup is a complete cgroups v2 resource accounting and limiting engine following the Linux kernel's unified hierarchy model. Control groups (cgroups) are the resource enforcement mechanism used by every container runtime to impose hard boundaries on CPU, memory, I/O, and process count. Without cgroups, FizzKube's resource declarations are advisory metadata -- a type system without a runtime. FizzCgroup provides the runtime.
+
+### Unified Hierarchy
+
+The cgroup tree follows the v2 "unified hierarchy" model: a single rooted tree where each node can have multiple controllers attached, replacing the v1 model of separate per-controller hierarchies. Nodes are identified by slash-separated paths (e.g., `/fizzkube/pod-abc/container-main`).
+
+```
+/  (root cgroup)
+├── /fizzkube
+│   ├── /fizzkube/pod-abc
+│   │   ├── /fizzkube/pod-abc/container-main  [CPU: 500m, MEM: 256Mi]
+│   │   └── /fizzkube/pod-abc/container-sidecar  [CPU: 100m, MEM: 64Mi]
+│   └── /fizzkube/pod-def
+│       └── /fizzkube/pod-def/container-main  [CPU: 1000m, MEM: 512Mi]
+└── /system
+    └── /system/middleware  [CPU: 200m, MEM: 128Mi]
+```
+
+The `CgroupNode` dataclass represents each node with `cgroup_id`, `name`, `path`, `parent`, `children`, `controllers` (set of enabled controller types), `processes` (attached process IDs), and `subtree_control` (controllers delegated to children). The `CgroupHierarchy` manages tree operations: `create(path)`, `remove(path)`, `attach(process, path)`, `migrate(process, from_path, to_path)`. Removal requires that the cgroup has no children and no attached processes. The root cgroup (`/`) always exists and cannot be removed.
+
+Controller delegation follows the v2 model: a controller must be enabled in a parent's `subtree_control` before any child can use it. This prevents leaf cgroups from enabling controllers that their ancestors have not authorized.
+
+### CPU Controller
+
+The `CPUController` implements two complementary CPU limiting mechanisms:
+
+| Mechanism | Interface | Description |
+|-----------|-----------|-------------|
+| CPU shares | `cpu.weight` (1-10000) | Relative weight for proportional CPU time under contention |
+| CPU bandwidth | `cpu.max` (quota/period) | Absolute limit: microseconds of CPU time per period |
+
+A `cpu.weight` of 200 gives a cgroup twice the CPU time of a cgroup with weight 100 when both compete for the same core. Non-contended cgroups can exceed their weight allocation. CPU bandwidth provides hard limits: a quota of 50000 per period of 100000 restricts the cgroup to 50% of one CPU core.
+
+CPU accounting tracks `usage_usec` (total CPU time consumed), `user_usec` (user-mode time), `system_usec` (kernel-mode time), `nr_periods` (elapsed periods), `nr_throttled` (periods where the cgroup was throttled), and `throttled_usec` (total time spent throttled). Throttled processes are placed in a throttled runqueue until the next period begins.
+
+### Memory Controller
+
+The `MemoryController` tracks and limits memory usage with four configurable thresholds:
+
+| Threshold | Behavior |
+|-----------|----------|
+| `memory.max` | Hard limit -- allocations beyond this trigger OOM |
+| `memory.high` | Throttle threshold -- processes are slowed to encourage reclaim |
+| `memory.low` | Best-effort protection -- memory below this is protected from reclaim |
+| `memory.min` | Hard protection -- memory below this is never reclaimed |
+
+Accounting tracks `current` (total usage), `rss` (anonymous memory), `cache` (page cache), `swap` (swap usage), and `kernel` (kernel memory). Accounting is recursive: a parent cgroup's usage includes all descendants.
+
+### OOM Killer
+
+The `OOMKiller` is triggered when a cgroup's memory usage reaches `memory.max` and cannot be reduced by reclaim. It operates within cgroup scope -- only processes in the offending cgroup are considered, never spilling to the host or other cgroups. Three victim selection policies are supported:
+
+| Policy | Selection Criterion |
+|--------|-------------------|
+| `KILL_LARGEST` | Process consuming the most memory |
+| `KILL_OLDEST` | Longest-running process in the cgroup |
+| `KILL_LOWEST_PRIORITY` | Process with the lowest scheduling priority |
+
+An `oom_score` heuristic considers memory usage, process age, and priority. OOM events are recorded in the cgroup's event log and propagated to FizzPager for incident alerting.
+
+### I/O Controller
+
+The `IOController` throttles block device I/O with per-device bandwidth limits specified as `rbps` (read bytes/sec), `wbps` (write bytes/sec), `riops` (read ops/sec), and `wiops` (write ops/sec). Weight-based proportional allocation (`io.weight`, 1-10000) distributes I/O bandwidth under contention. Accounting tracks per-device `rbytes`, `wbytes`, `rios`, and `wios`.
+
+### PIDs Controller
+
+The `PIDsController` limits the number of processes (including threads) in a cgroup via `pids.max`. This prevents fork bombs from exhausting the host's PID table. `pids.current` tracks the current count. Attempts to exceed the limit fail with EAGAIN.
+
+### Resource Accountant
+
+The `ResourceAccountant` reads all controller metrics for a cgroup and produces a `ResourceReport` summarizing CPU utilization (percentage of quota), memory utilization (percentage of limit), I/O throughput, and process count. Reports feed two integrations:
+
+- **FizzKube HPA**: the Horizontal Pod Autoscaler's metrics source reads from `ResourceAccountant` instead of simulated values, enabling autoscaling decisions based on actual cgroup-reported utilization
+- **SLA Monitoring**: cgroup resource metrics are exposed as SLIs, enabling error budgets defined against cgroup utilization thresholds
+
+### FizzCgroup Dashboard
+
+The `FizzCgroupDashboard` renders an ASCII display with:
+
+- Cgroup hierarchy tree with attached controllers and process counts
+- Per-controller resource utilization bars (CPU quota %, memory limit %)
+- OOM event log with victim process, policy used, and timestamp
+- Throttle state indicators (RUNNING / THROTTLED) per cgroup
+
+### FizzCgroup Middleware
+
+The `FizzCgroupMiddleware` integrates into the middleware pipeline at priority 107, after FizzNSMiddleware (106). Resource accounting logically follows namespace isolation: FizzNS determines what the container can see, and FizzCgroup determines how much of it the container can use. The middleware charges each evaluation's CPU time and memory allocation to the cgroup of the executing container.
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| Controller types | 4 (CPU, Memory, IO, PIDs) |
+| Cgroup states | 3 (ACTIVE, DRAINING, REMOVED) |
+| OOM policies | 3 (KILL_LARGEST, KILL_OLDEST, KILL_LOWEST_PRIORITY) |
+| Throttle states | 2 (RUNNING, THROTTLED) |
+| Memory thresholds | 4 (max, high, low, min) |
+| Middleware priority | 107 |
+| Custom exceptions | 19 (EFP-CG00 through EFP-CG18) |
+| EventType entries | 18 |
+| CLI flags | 5 (`--fizzcgroup`, `--fizzcgroup-tree`, `--fizzcgroup-stats`, `--fizzcgroup-limit`, `--fizzcgroup-top`) |
+| Test count | ~400 |
+
+FizzCgroup transforms FizzKube's resource specifications from advisory metadata into hard guarantees. A pod that declares `resources.limits.cpu: "500m"` now receives a CFS bandwidth quota of 50000 microseconds per 100000-microsecond period. A pod that declares `resources.limits.memory: "256Mi"` now has a `memory.max` of 268435456 bytes. Resource limits without enforcement are suggestions. Suggestions do not prevent outages. Cgroups do.

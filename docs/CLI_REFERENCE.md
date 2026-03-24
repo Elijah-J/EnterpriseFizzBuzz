@@ -1318,6 +1318,13 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --fizzns-inspect NS_ID      Inspect a specific namespace by ID, showing full details including member processes, child namespaces, reference count, creation timestamp, and type-specific state (PID table, mount entries, network interfaces, UID mappings, etc.)
 --fizzns-hierarchy           Render an ASCII tree of the namespace hierarchy, showing parent-child nesting relationships across all seven namespace types with reference counts and process membership at each level
 --fizzns-type TYPE           Filter namespace operations by type (PID, NET, MNT, UTS, IPC, USER, CGROUP), restricting --fizzns-list and --fizzns-hierarchy output to namespaces of the specified type
+
+# FizzCgroup -- Control Group Resource Accounting & Limiting
+--fizzcgroup                 Enable the FizzCgroup cgroups v2 resource accounting engine, attaching CPU, memory, I/O, and PIDs controllers to each container's cgroup node with enforcement of resource limits declared in FizzKube PodSpecs
+--fizzcgroup-tree            Display the cgroup unified hierarchy as an ASCII tree, showing cgroup paths, attached controllers, process counts, and subtree_control delegation at each level
+--fizzcgroup-stats PATH      Display resource statistics for a specific cgroup path, including CPU usage/throttling, memory current/max/high/low, I/O bytes read/written per device, PIDs current/max, and OOM event history
+--fizzcgroup-limit PATH:CTRL:PARAM=VALUE  Set a resource limit on a cgroup: CPU (cpu.max, cpu.weight), Memory (memory.max, memory.high, memory.low), IO (io.max, io.weight), PIDs (pids.max). Example: --fizzcgroup-limit /fizzkube/pod-1:memory:max=268435456
+--fizzcgroup-top             Display real-time resource usage across all cgroups, sorted by CPU or memory utilization, with throttle state indicators and OOM kill counts -- the cgroup equivalent of the Unix top command
 ```
 
 ## Environment Variables
