@@ -1,0 +1,25 @@
+fizzlambda:
+  enabled: false                              # Master switch — opt-in via --fizzlambda
+  mode: container                             # Evaluation routing: container, serverless, hybrid
+  max_total_environments: 1000                # Global warm pool capacity
+  max_environments_per_function: 100          # Per-function warm pool cap
+  idle_timeout: 300.0                         # Idle eviction timeout in seconds (5 min)
+  max_burst_concurrency: 500                  # Simultaneous cold starts on burst
+  account_concurrency_limit: 1000             # Account-wide concurrent execution cap
+  default_memory_mb: 256                      # Default function memory allocation
+  default_timeout: 30                         # Default function timeout in seconds
+  default_ephemeral_storage_mb: 512           # Default /tmp overlay capacity
+  max_retry_attempts: 2                       # Default retry count for failed invocations
+  retry_delay_seconds: 60                     # Base retry delay (exponential backoff)
+  snapshot_enabled: true                      # Enable snapshot-and-restore cold start optimization
+  predictive_prewarming: true                 # Enable time-series predictive pre-warming
+  layer_cache_size_mb: 10240                  # Extracted layer cache capacity (10 GB)
+  max_recycling_invocations: 10000            # Recycle environment after N invocations
+  max_recycling_lifetime: 14400.0             # Recycle environment after N seconds (4 hrs)
+  queue_depth_limit: 100000                   # Async invocation queue depth per function
+  queue_age_limit: 21600.0                    # Discard queued events older than 6 hours
+  dlq_alert_threshold: 100                    # Alert when DLQ message count exceeds this
+  dlq_age_alert_seconds: 86400               # Alert when oldest DLQ message exceeds 24 hours
+  version_retention_days: 30                  # GC unreferenced versions older than this
+  dashboard:
+    width: 72                                 # ASCII dashboard width
