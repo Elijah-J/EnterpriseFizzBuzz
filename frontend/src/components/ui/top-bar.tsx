@@ -62,7 +62,7 @@ export function TopBar({ breadcrumbs, trailing, onSearchClick }: TopBarProps) {
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              aria-hidden="true"
+              aria-hidden={true}
             >
               <circle cx="6" cy="6" r="4.5" />
               <path d="M9.5 9.5 13 13" />

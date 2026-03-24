@@ -250,6 +250,19 @@
   }
 }
 
+/**
+ * Slide-in animation for mobile navigation drawer. Translates from
+ * fully off-screen left to resting position over 200ms.
+ */
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 @keyframes shimmer {
   0% {
     background-position: -200% 0;
