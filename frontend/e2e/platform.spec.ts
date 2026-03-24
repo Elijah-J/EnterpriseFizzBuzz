@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Platform Pages E2E Verification
@@ -7,6 +8,16 @@ import { test, expect } from '@playwright/test';
  * Blockchain, Analytics, Configuration, Audit Log, Chaos Engineering,
  * and Digital Twin.
  */
+
+let consoleErrors: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = trackConsoleErrors(page);
+});
+
+test.afterEach(() => {
+  assertNoConsoleErrors(consoleErrors);
+});
 
 test.describe('Cache Coherence Page', () => {
   test('renders page heading and content', async ({ page }) => {

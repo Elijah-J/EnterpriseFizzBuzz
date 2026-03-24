@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Easter Egg E2E Verification
@@ -7,6 +8,16 @@ import { test, expect } from '@playwright/test';
  * confetti burst, the logo quintuple-click about panel, and the 404
  * resource location failure interface with its ambient FizzBuzz sequence.
  */
+
+let consoleErrors: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = trackConsoleErrors(page);
+});
+
+test.afterEach(() => {
+  assertNoConsoleErrors(consoleErrors);
+});
 
 test.describe('Konami Code', () => {
   test.beforeEach(async ({ page }) => {

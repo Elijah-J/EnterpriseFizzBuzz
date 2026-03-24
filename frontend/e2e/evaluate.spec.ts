@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Evaluation Console E2E Verification
@@ -8,10 +9,17 @@ import { test, expect } from '@playwright/test';
  * switching, and copy functionality.
  */
 
+let consoleErrors: string[] = [];
+
 test.describe('Evaluation Console', () => {
   test.beforeEach(async ({ page }) => {
+    consoleErrors = trackConsoleErrors(page);
     await page.goto('./evaluate');
     await page.waitForLoadState('networkidle');
+  });
+
+  test.afterEach(() => {
+    assertNoConsoleErrors(consoleErrors);
   });
 
   test('displays page heading', async ({ page }) => {

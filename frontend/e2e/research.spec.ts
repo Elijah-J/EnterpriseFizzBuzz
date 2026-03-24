@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Research Pages E2E Verification
@@ -6,6 +7,16 @@ import { test, expect } from '@playwright/test';
  * Validates the research route group: Quantum Workbench, Evolution
  * Observatory, Federated Learning, and Archaeological Recovery.
  */
+
+let consoleErrors: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = trackConsoleErrors(page);
+});
+
+test.afterEach(() => {
+  assertNoConsoleErrors(consoleErrors);
+});
 
 test.describe('Quantum Workbench Page', () => {
   test('renders page heading', async ({ page }) => {

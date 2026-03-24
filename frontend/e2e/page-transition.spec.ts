@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Page Transition E2E Verification
@@ -25,10 +26,7 @@ const PAGE_ROUTES: { href: string; headingPattern: RegExp }[] = [
   { href: './analytics', headingPattern: /Analytics/ },
   { href: './configuration', headingPattern: /Configuration/ },
   { href: './audit', headingPattern: /Audit/ },
-  // Chaos page excluded from heading test — has a long-running async data load
-  // that prevents the h1 from rendering within the standard test timeout.
-  // Page content is verified separately in the platform E2E suite.
-  // { href: './chaos', headingPattern: /Chaos/ },
+  { href: './chaos', headingPattern: /Chaos/ },
   { href: './digital-twin', headingPattern: /Digital Twin/ },
   { href: './finops', headingPattern: /FinOps/ },
   { href: './quantum', headingPattern: /Quantum/ },
@@ -36,6 +34,16 @@ const PAGE_ROUTES: { href: string; headingPattern: RegExp }[] = [
   { href: './federated-learning', headingPattern: /Federated Learning/ },
   { href: './archaeology', headingPattern: /Archaeolog/ },
 ];
+
+let consoleErrors: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = trackConsoleErrors(page);
+});
+
+test.afterEach(() => {
+  assertNoConsoleErrors(consoleErrors);
+});
 
 test.describe('Page Transition Integrity', () => {
   for (const route of PAGE_ROUTES) {

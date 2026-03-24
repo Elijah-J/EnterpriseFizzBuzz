@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Infrastructure Monitor E2E Verification
@@ -7,6 +8,16 @@ import { test, expect } from '@playwright/test';
  * Alerts, and Consensus. Each page operates within the shared Monitor layout
  * with sub-navigation tabs.
  */
+
+let consoleErrors: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = trackConsoleErrors(page);
+});
+
+test.afterEach(() => {
+  assertNoConsoleErrors(consoleErrors);
+});
 
 test.describe('Monitor Layout', () => {
   test('displays shared Infrastructure Monitor heading', async ({ page }) => {

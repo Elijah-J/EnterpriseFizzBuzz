@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — Navigation Subsystem E2E Verification
@@ -36,6 +37,16 @@ const NAV_ITEMS = [
 
 /** Section headers in the sidebar navigation hierarchy. */
 const NAV_SECTIONS = ['Operations', 'Monitor', 'Platform', 'Finance', 'Research'];
+
+let consoleErrors: string[] = [];
+
+test.beforeEach(async ({ page }) => {
+  consoleErrors = trackConsoleErrors(page);
+});
+
+test.afterEach(() => {
+  assertNoConsoleErrors(consoleErrors);
+});
 
 test.describe('Sidebar Navigation', () => {
   test.beforeEach(async ({ page }) => {

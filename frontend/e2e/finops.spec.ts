@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { trackConsoleErrors, assertNoConsoleErrors } from './helpers';
 
 /**
  * Enterprise FizzBuzz Platform — FinOps Dashboard E2E Verification
@@ -7,10 +8,17 @@ import { test, expect } from '@playwright/test';
  * and core FinOps dashboard elements.
  */
 
+let consoleErrors: string[] = [];
+
 test.describe('FinOps Dashboard Page', () => {
   test.beforeEach(async ({ page }) => {
+    consoleErrors = trackConsoleErrors(page);
     await page.goto('./finops');
     await page.waitForLoadState('networkidle');
+  });
+
+  test.afterEach(() => {
+    assertNoConsoleErrors(consoleErrors);
   });
 
   test('renders page heading', async ({ page }) => {
