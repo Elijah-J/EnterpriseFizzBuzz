@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Run all tests (~17,100 tests, ~5min)
+# Run all tests (~19,900 tests, ~5min)
 python -m pytest tests/
 
 # Run a single test file
@@ -32,11 +32,11 @@ Clean Architecture with three layers. The **Dependency Rule** is enforced by AST
 
 - **Domain** (`domain/`): Models, enums, exceptions (600+ custom exception classes), and abstract interfaces (`IRule`, `IRuleEngine`, `IMiddleware`, `IFormatter`, `IEventBus`). Zero outward dependencies.
 - **Application** (`application/`): `FizzBuzzServiceBuilder` (fluent builder), rule factories (Standard/Configurable/Caching), and hexagonal ports (`StrategyPort`, `AbstractUnitOfWork`, `AbstractRepository`).
-- **Infrastructure** (`infrastructure/`): 124 modules implementing enterprise subsystems — rule engines, formatters, middleware pipeline, observers, DI container, cache (MESI coherence), service mesh, blockchain, auth (RBAC + HMAC tokens), i18n (7 locales inc. Klingon/Sindarin/Quenya), event sourcing/CQRS, chaos engineering, feature flags, SLA monitoring, metrics, webhooks, hot-reload (Raft consensus), rate limiting, compliance (SOX/GDPR/HIPAA), three persistence backends (in-memory, SQLite, filesystem), bytecode VM, query optimizer, digital twin, archaeological recovery, ML engine, genetic algorithm, graph database, secrets vault, OS kernel, cross-compiler, FizzLang DSL, Paxos consensus, quantum simulator, federated learning, dependent type system, FizzKube container orchestrator, package manager, FizzSQL query engine, debug adapter protocol, IP office, distributed locks, CDC, billing/monetization, JIT compiler, capability security, OpenTelemetry tracing, write-ahead intent log, CRDTs, memory allocator, columnar storage, MapReduce, model checker, reverse proxy, ray tracer, protein folding, TCP/IP stack, audio synthesizer, virtual file system, version control, ELF binary generator, database replication, Z notation specs, process migration, flame graph generator, theorem prover, GPU shader compiler, smart contracts, DNS server, spreadsheet engine, regex engine, spatial database, clock sync (NTP/PTP), CPU pipeline simulator, x86 bootloader, video codec, TeX typesetter, garbage collector, microkernel IPC, operator succession planning, operator performance review, organizational hierarchy, Linux namespace isolation, cgroup resource accounting, OCI container runtime, copy-on-write union filesystem, OCI image registry, container network interface, container daemon, official container image catalog, container-native deployment pipeline, multi-container application orchestration, CRI-integrated orchestrator upgrade, container-native chaos engineering, container observability and diagnostics.
+- **Infrastructure** (`infrastructure/`): 137 modules implementing enterprise subsystems — rule engines, formatters, middleware pipeline, observers, DI container, cache (MESI coherence), service mesh, blockchain, auth (RBAC + HMAC tokens), i18n (7 locales inc. Klingon/Sindarin/Quenya), event sourcing/CQRS, chaos engineering, feature flags, SLA monitoring, metrics, webhooks, hot-reload (Raft consensus), rate limiting, compliance (SOX/GDPR/HIPAA), three persistence backends (in-memory, SQLite, filesystem), bytecode VM, query optimizer, digital twin, archaeological recovery, ML engine, genetic algorithm, graph database, secrets vault, OS kernel, cross-compiler, FizzLang DSL, Paxos consensus, quantum simulator, federated learning, dependent type system, FizzKube container orchestrator, package manager, FizzSQL query engine, debug adapter protocol, IP office, distributed locks, CDC, billing/monetization, JIT compiler, capability security, OpenTelemetry tracing, write-ahead intent log, CRDTs, memory allocator, columnar storage, MapReduce, model checker, reverse proxy, ray tracer, protein folding, TCP/IP stack, audio synthesizer, virtual file system, version control, ELF binary generator, database replication, Z notation specs, process migration, flame graph generator, theorem prover, GPU shader compiler, smart contracts, DNS server, spreadsheet engine, regex engine, spatial database, clock sync (NTP/PTP), CPU pipeline simulator, x86 bootloader, video codec, TeX typesetter, garbage collector, microkernel IPC, operator succession planning, operator performance review, organizational hierarchy, Linux namespace isolation, cgroup resource accounting, OCI container runtime, copy-on-write union filesystem, OCI image registry, container network interface, container daemon, official container image catalog, container-native deployment pipeline, multi-container application orchestration, CRI-integrated orchestrator upgrade, container-native chaos engineering, container observability and diagnostics.
 
 ### Wiring
 
-`__main__.py` is the composition root — it parses 509+ CLI flags, builds `ConfigurationManager` (singleton), and manually wires all subsystems via `FizzBuzzServiceBuilder`. A separate IoC container (`container.py`) exists with auto-wiring and Kahn's cycle detection but isn't used by the main entry point.
+`__main__.py` is the composition root — it parses 712+ CLI flags, builds `ConfigurationManager` (singleton), and manually wires all subsystems via `FizzBuzzServiceBuilder`. A separate IoC container (`container.py`) exists with auto-wiring and Kahn's cycle detection but isn't used by the main entry point.
 
 ### Configuration precedence (highest wins)
 
@@ -59,14 +59,14 @@ Root-level `.py` files are re-export stubs (e.g., `cache.py` re-exports from `en
 
 | Metric | Value |
 |--------|-------|
-| Lines of Code | ~413,000+ |
-| Python Files | 346 |
-| Test Count | ~17,100+ |
-| Custom Exceptions | 608+ |
-| Infrastructure Modules | 124 |
-| CLI Flags | 509+ |
-| Commits | 203+ |
-| Brainstorm Rounds Completed | 17 (Round 16 COMPLETE — all 7 of 7 done, Round 17 COMPLETE — all 6 of 6 done) |
+| Lines of Code | ~508,000+ |
+| Python Files | 839 |
+| Test Count | ~19,900+ |
+| Custom Exceptions | 1,350+ |
+| Infrastructure Modules | 137 |
+| CLI Flags | 712+ |
+| Commits | 317+ |
+| Brainstorm Rounds Completed | 18 (Round 17 COMPLETE — all 6 of 6 done, Round 18 COMPLETE — all 12 of 12 done) |
 
 ### Autonomous Orchestration
 
