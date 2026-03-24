@@ -5913,3 +5913,269 @@ GC runs periodically (configurable interval) and respects a grace period for in-
 | Test count | ~350 |
 
 FizzContainerd completes the container stack. The full hierarchy is now: FizzKube (orchestrator) -> CRI -> FizzContainerd (high-level daemon) -> FizzOCI (low-level runtime) -> FizzNS (namespaces) + FizzCgroup (resource limits) + FizzOverlay (filesystem) + FizzCNI (networking) + FizzRegistry (image distribution). Every layer in the standard container stack is populated. FizzKube's containers are no longer Python dataclass instances -- they are OCI-compliant, namespace-isolated, cgroup-limited, overlay-mounted, registry-pulled, network-connected, shim-managed containers.
+
+---
+
+## FizzImage Official Container Image Catalog Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzimage.py`
+
+The Official Container Image Catalog manages every container image that the Enterprise FizzBuzz Platform publishes. The catalog maintains five image classes: base images (the minimal Python + domain-layer foundation), evaluation images (application-layer profiles for each evaluation mode), subsystem images (one per infrastructure module, with AST-derived dependency analysis), init container images (pre-flight configuration, schema migration, and secret injection), and sidecar images (logging, metrics, tracing, and service mesh proxy).
+
+Each image is built from a FizzFile definition (the platform's Dockerfile equivalent), scanned for vulnerabilities against a simulated CVE database, assigned a semantic version, and published as a multi-architecture OCI image index supporting linux/amd64, linux/arm64, and the platform's native bytecode VM architecture. The catalog enforces the Clean Architecture dependency rule at the image level: the base image contains only the domain layer, evaluation images add the application layer, and subsystem images add individual infrastructure modules. AST-based import analysis ensures each subsystem image includes only its transitive dependency closure.
+
+### Key Components
+
+- **ImageCatalog** -- Central registry maintaining all image specifications, manifests, and version metadata
+- **BaseImageBuilder** -- Constructs the minimal domain-layer foundation image
+- **EvalImageBuilder** -- Constructs evaluation images with application-layer profiles
+- **SubsystemImageGenerator** -- Generates one image per infrastructure module using AST-based import analysis
+- **InitContainerBuilder** -- Builds init container images for pre-flight tasks
+- **SidecarImageBuilder** -- Builds sidecar images for logging, metrics, tracing, and service mesh
+- **MultiArchBuilder** -- Constructs multi-architecture OCI image indices (amd64, arm64, bytecode VM)
+- **CatalogScanner** -- Vulnerability scanning against a simulated CVE database with severity classification
+- **ImageVersioner** -- Semantic versioning with automatic bump detection
+- **FizzImageDashboard** -- ASCII dashboard rendering image catalog statistics
+- **FizzImageMiddleware** -- Middleware pipeline integration at evaluation time
+
+### Dependencies
+
+Domain layer (FizzBuzzError, IMiddleware, FizzBuzzResult, ProcessingContext). No infrastructure-layer dependencies -- the catalog is a standalone image management subsystem.
+
+### FizzImage Statistics
+
+| Spec | Value |
+|------|-------|
+| Image classes | 5 (base, evaluation, subsystem, init, sidecar) |
+| Architectures | 3 (linux/amd64, linux/arm64, bytecode VM) |
+| Version scheme | Semantic versioning (major.minor.patch) |
+| Scan severity levels | 4 (CRITICAL, HIGH, MEDIUM, LOW) |
+| OCI compliance | Image Specification + Distribution Specification |
+| Middleware priority | 113 |
+| Custom exceptions | 21 (EFP-IMG00 through EFP-IMG20) |
+| CLI flags | 7 (`--fizzimage`, `--fizzimage-catalog`, `--fizzimage-build`, `--fizzimage-build-all`, `--fizzimage-inspect`, `--fizzimage-deps`, `--fizzimage-scan`) |
+| Test count | ~246 |
+
+---
+
+## FizzDeploy Container-Native Deployment Pipeline Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzdeploy.py`
+
+A complete CI/CD deployment pipeline inspired by Argo CD and Spinnaker, implementing the full deployment lifecycle: build, scan, sign, push, deploy, validate, and rollback. The pipeline supports four deployment strategies -- rolling update (incremental pod replacement with configurable surge and unavailability), blue-green (parallel environments with instant traffic switch), canary (gradual traffic shifting with automated regression analysis), and recreate (terminate all, start all) -- for zero-downtime version rollouts of containerized FizzBuzz subsystems.
+
+Declarative YAML deployment manifests define the desired state. A GitOps reconciliation loop continuously compares actual cluster state against declared state, applying corrections when drift is detected. FizzBob cognitive load gating ensures that deployments do not proceed when the sole operator's cognitive load exceeds safe operational thresholds.
+
+### Key Components
+
+- **PipelineExecutor** -- Orchestrates multi-stage pipeline execution with retry policies
+- **Pipeline** / **PipelineStage** / **PipelineStep** -- Three-level pipeline structure with configurable stage sequencing
+- **RollingUpdateStrategy** -- Incremental pod replacement with configurable surge and unavailability limits
+- **BlueGreenStrategy** -- Parallel environment management with instant traffic switching
+- **CanaryStrategy** -- Gradual traffic shifting with automated regression analysis
+- **RecreateStrategy** -- Full teardown and recreation deployment
+- **ManifestParser** -- YAML deployment manifest parsing and schema validation
+- **GitOpsReconciler** -- Continuous reconciliation loop comparing declared vs. actual state
+- **RollbackManager** -- Revision history management with strategy-aware rollback execution
+- **DeploymentGate** -- Pre-deployment validation including cognitive load gating
+- **DeployDashboard** -- ASCII dashboard for pipeline status, revision history, and drift reports
+- **FizzDeployMiddleware** -- Middleware pipeline integration enriching evaluations with deployment metadata
+
+### Dependencies
+
+Domain layer (FizzBuzzError, IMiddleware, FizzBuzzResult, ProcessingContext). Integrates with FizzBob for cognitive load gating.
+
+### FizzDeploy Statistics
+
+| Spec | Value |
+|------|-------|
+| Deployment strategies | 4 (rolling, blue-green, canary, recreate) |
+| Pipeline levels | 3 (pipeline, stage, step) |
+| GitOps modes | 2 (auto-sync, manual sync) |
+| Manifest format | Declarative YAML |
+| Cognitive load gating | NASA-TLX threshold with emergency bypass |
+| Revision history | Configurable depth with pruning |
+| Middleware priority | 114 |
+| Custom exceptions | 22 (EFP-DPL00 through EFP-DPL21) |
+| CLI flags | 9 (`--fizzdeploy`, `--fizzdeploy-apply`, `--fizzdeploy-status`, `--fizzdeploy-rollback`, `--fizzdeploy-pipeline`, `--fizzdeploy-strategy`, `--fizzdeploy-gitops-sync`, `--fizzdeploy-emergency`, `--fizzdeploy-dry-run`) |
+| Test count | ~428 |
+
+---
+
+## FizzCompose Multi-Container Application Orchestration Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzcompose.py`
+
+A Docker Compose-style declarative multi-service application orchestrator that manages the full lifecycle of containerized FizzBuzz service groups. The engine parses fizzbuzz-compose.yaml definitions, resolves inter-service dependencies via Kahn's algorithm topological sort, provisions compose-scoped networks and volumes, enforces restart policies, and executes health-check-gated startup sequences.
+
+The platform decomposes 116 infrastructure modules into 12 logical service groups (core, data, cache, network, security, observability, compute, devtools, platform, enterprise, ops, exotic), each deployable as an independent containerized service. The dependency graph ensures services start in the correct order. Lifecycle commands mirror Docker Compose: up, down, restart, scale, logs, ps, exec, and top.
+
+### Key Components
+
+- **ComposeEngine** -- Core orchestrator managing service lifecycle, dependency resolution, and state transitions
+- **ComposeParser** -- Compose file parsing with variable interpolation (${VARIABLE:-default} syntax)
+- **DependencyResolver** -- Kahn's algorithm topological sort with three dependency conditions (service_started, service_healthy, service_completed_successfully)
+- **HealthCheckGate** -- Health-check-gated startup sequencing for dependent services
+- **ComposeNetworkManager** -- Compose-scoped network provisioning via FizzCNI
+- **ComposeVolumeManager** -- Compose-scoped volume provisioning via FizzOverlay
+- **RestartPolicyEngine** -- Restart policy enforcement with configurable max attempts and windows
+- **ComposeServiceGroup** -- Logical grouping of infrastructure modules into deployable service groups
+- **ComposeDashboard** -- ASCII dashboard for service status, dependency graph, and resource utilization
+- **FizzComposeMiddleware** -- Middleware pipeline integration for compose topology resolution
+
+### Dependencies
+
+Domain layer (IMiddleware, FizzBuzzResult, ProcessingContext). Integrates with FizzCNI for networking and FizzOverlay for volumes.
+
+### FizzCompose Statistics
+
+| Spec | Value |
+|------|-------|
+| Service groups | 12 (core, data, cache, network, security, observability, compute, devtools, platform, enterprise, ops, exotic) |
+| Lifecycle commands | 8 (up, down, restart, scale, logs, ps, exec, top) |
+| Dependency conditions | 3 (service_started, service_healthy, service_completed_successfully) |
+| Compose file version | 3.8 |
+| Variable interpolation | ${VARIABLE:-default} syntax |
+| Restart policies | 4 (no, always, on-failure, unless-stopped) |
+| Dependency resolution | Kahn's algorithm with cycle detection |
+| Middleware priority | 115 |
+| Custom exceptions | 21 (EFP-CMP00 through EFP-CMP20) |
+| CLI flags | 10 (`--fizzcompose`, `--fizzcompose-up`, `--fizzcompose-down`, `--fizzcompose-ps`, `--fizzcompose-logs`, `--fizzcompose-scale`, `--fizzcompose-restart`, `--fizzcompose-exec`, `--fizzcompose-top`, `--fizzcompose-config`) |
+| Test count | ~80 |
+
+---
+
+## FizzKubeV2 Container-Aware Orchestrator Upgrade Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzkubev2.py`
+
+Upgrades the FizzKube container orchestrator from a scheduling simulator into a complete container orchestrator by integrating with the Round 16 container runtime stack via the Container Runtime Interface (CRI). The CRI-integrated KubeletV2 pulls images via ImagePuller, creates pod sandboxes, runs init containers in sequence via InitContainerRunner, injects sidecar containers via SidecarInjector, starts application containers, executes readiness/liveness/startup probes via ProbeRunner, manages container restarts with exponential backoff, handles graceful pod termination, and provisions volumes via VolumeManager.
+
+FizzKubeV2 connects FizzKube to FizzContainerd. Where FizzKube's original kubelet instantiated Python dataclasses, KubeletV2 performs actual image pulls, sandbox creation, init container execution, sidecar injection, probe registration, and volume provisioning through the CRI.
+
+### Key Components
+
+- **KubeletV2** -- CRI-integrated kubelet coordinating the full pod lifecycle
+- **ImagePuller** -- Image pull with three policies (Always, IfNotPresent, Never), progress tracking, and exponential backoff
+- **InitContainerRunner** -- Sequential init container execution with retry and timeout support
+- **SidecarInjector** -- Sidecar container injection with configurable injection policies
+- **ProbeRunner** -- Readiness, liveness, and startup probe execution with HTTP, TCP, and exec probe types
+- **VolumeManager** -- Volume provisioning for emptyDir, PVC, configMap, and secret volume types
+- **PodV2** / **PodV2Spec** -- Extended pod model with init containers, sidecars, probes, and volumes
+- **_CRIStub** -- CRI client stub for FizzContainerd interaction
+- **KubeV2Dashboard** -- ASCII dashboard for pod status, image pulls, probe results, and volume mounts
+- **FizzKubeV2Middleware** -- Middleware wrapping each evaluation in a full pod lifecycle
+
+### Dependencies
+
+Domain layer (IMiddleware, FizzBuzzResult, ProcessingContext). Integrates with FizzContainerd via CRI for container operations.
+
+### FizzKubeV2 Statistics
+
+| Spec | Value |
+|------|-------|
+| Image pull policies | 3 (Always, IfNotPresent, Never) |
+| Probe categories | 3 (readiness, liveness, startup) |
+| Probe types | 3 (HTTP, TCP, exec) |
+| Volume types | 4 (emptyDir, PVC, configMap, secret) |
+| Restart policy | Exponential backoff with configurable base, multiplier, and cap |
+| Termination grace period | 30s default |
+| Init container retries | 3 default |
+| Sidecar policies | 3 (Always, OnDemand, Never) |
+| Middleware priority | 116 |
+| Custom exceptions | 21 (EFP-KV200 through EFP-KV220) |
+| CLI flags | 8 (`--fizzkubev2`, `--fizzkubev2-pods`, `--fizzkubev2-describe-pod`, `--fizzkubev2-logs`, `--fizzkubev2-exec`, `--fizzkubev2-images`, `--fizzkubev2-events`, `--fizzkubev2-probe-status`) |
+| Test count | ~498 |
+
+---
+
+## FizzContainerChaos Container-Native Chaos Engineering Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzcontainerchaos.py`
+
+A container-infrastructure-level chaos engineering system inspired by Chaos Mesh and LitmusChaos, providing fault injection at the namespace, cgroup, overlay, CNI, and container runtime layers. Eight fault injection types target the container stack: container kill, network partition, CPU stress, memory pressure, disk fill, image pull failure, DNS failure, and network latency. A game day orchestrator composes multiple fault injections into coordinated chaos scenarios with defined hypotheses, steady-state metrics, blast radius limits, and automatic abort conditions.
+
+The platform's existing chaos engineering subsystem (chaos.py) targets the application layer -- rule failures, middleware timeouts, cache corruption. FizzContainerChaos targets the infrastructure layer: containers dying, networks partitioning, resources exhausting, images failing to pull, DNS failing to resolve.
+
+### Key Components
+
+- **ChaosExecutor** -- Core executor managing experiment lifecycle (create, start, inject, observe, complete/abort)
+- **FaultRegistry** -- Registry of available fault types with configurable parameters
+- **ContainerKillFault** / **NetworkPartitionFault** / **CPUStressFault** / **MemoryPressureFault** / **DiskFillFault** / **ImagePullFailureFault** / **DNSFailureFault** / **NetworkLatencyFault** -- Eight fault injection implementations targeting container infrastructure layers
+- **GameDayOrchestrator** -- Coordinates multi-experiment chaos scenarios with hypotheses and blast radius limits
+- **PredefinedGameDays** -- Four predefined game day scenarios (container_restart, network_partition, resource_exhaustion, full_outage)
+- **TargetResolver** -- Resolves target containers via label selectors or container IDs
+- **SteadyStateProbe** -- Monitors steady-state metrics during fault injection
+- **BlastRadiusCalculator** -- Calculates and enforces blast radius limits across experiments
+- **ChaosGate** -- FizzBob cognitive load gating for chaos experiment safety
+- **ContainerChaosDashboard** -- ASCII dashboard for experiment status, fault visualization, and game day progress
+- **FizzContainerChaosMiddleware** -- Middleware annotating evaluations with active chaos experiment information
+
+### Dependencies
+
+Domain layer (FizzBuzzError, IMiddleware, FizzBuzzResult, ProcessingContext). Integrates with FizzContainerd, FizzCgroup, FizzCNI, FizzOverlay, and FizzBob.
+
+### FizzContainerChaos Statistics
+
+| Spec | Value |
+|------|-------|
+| Fault types | 8 (container kill, network partition, CPU stress, memory pressure, disk fill, image pull failure, DNS failure, network latency) |
+| Predefined game days | 4 (container_restart, network_partition, resource_exhaustion, full_outage) |
+| Experiment phases | 5 (created, running, injecting, observing, completed/aborted) |
+| Blast radius scopes | 3 (container, service, namespace) |
+| Cognitive load gating | NASA-TLX threshold via FizzBob |
+| Steady-state monitoring | Configurable metric probes with tolerance thresholds |
+| Abort conditions | Configurable automatic abort on safety violations |
+| Middleware priority | 117 |
+| Custom exceptions | 24 (EFP-CCH00 through EFP-CCH23) |
+| CLI flags | 8 (`--fizzcontainerchaos`, `--fizzcontainerchaos-run`, `--fizzcontainerchaos-gameday`, `--fizzcontainerchaos-status`, `--fizzcontainerchaos-abort`, `--fizzcontainerchaos-report`, `--fizzcontainerchaos-list-faults`, `--fizzcontainerchaos-blast-radius`) |
+| Test count | ~117 |
+
+---
+
+## FizzContainerOps Container Observability & Diagnostics Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzcontainerops.py`
+
+A comprehensive container observability and diagnostics system providing five capabilities: structured log aggregation with inverted index and full-text search DSL, per-container cgroup metrics collection with time-series ring buffers and configurable alerting thresholds, distributed tracing across container boundaries with cgroup-trace correlation, interactive container diagnostics (exec, overlay diff, process trees, cgroup flame graphs), and an ASCII dashboard with box-drawing characters and ANSI color codes for terminal-native fleet health visualization.
+
+The system bridges the gap between application-level observability (FizzOTel, FizzFlame, FizzSLI, FizzCorr) and container infrastructure observability. When a FizzBuzz evaluation fails, the operator needs to determine whether the failure originates in the application layer, the container runtime, or the orchestration layer.
+
+### Key Components
+
+- **ContainerLogCollector** -- Structured log aggregation from container stdout/stderr streams
+- **LogIndex** -- Inverted index with per-term posting lists, field indexes, and time-based partitions
+- **LogQuery** -- Full-text search DSL supporting AND, OR, NOT operators, field:value matching, wildcards, and time ranges
+- **ContainerMetricsCollector** -- Per-container cgroup metrics scraping (CPU, memory, I/O, PID, network)
+- **MetricsStore** -- Time-series ring buffers with per-container per-metric storage
+- **MetricsAlert** -- Configurable alerting thresholds with sliding window evaluation
+- **ContainerTraceExtender** -- Distributed tracing annotations with container boundary spans and cgroup correlation
+- **TraceDashboard** -- Trace visualization with container infrastructure annotations
+- **ContainerExec** -- Interactive command execution inside running containers via CRI
+- **OverlayDiff** -- Overlay filesystem change detection comparing writable vs. read-only layers
+- **ContainerProcessTree** -- PID namespace process tree construction with cgroup resource annotations
+- **CgroupFlameGraph** -- Cgroup-scoped CPU flame graph generation via FizzFlame
+- **ContainerDashboard** -- ASCII fleet health dashboard with box-drawing characters and ANSI color codes
+- **FizzContainerOpsMiddleware** -- Middleware attaching container observability metadata to evaluations
+
+### Dependencies
+
+Domain layer (FizzBuzzError, IMiddleware, FizzBuzzResult, ProcessingContext). Integrates with FizzContainerd, FizzCgroup, FizzNS, FizzOverlay, FizzOTel, and FizzFlame.
+
+### FizzContainerOps Statistics
+
+| Spec | Value |
+|------|-------|
+| Observability pillars | 3 (logs, metrics, traces) |
+| Diagnostic tools | 4 (exec, overlay diff, process tree, flame graph) |
+| Log query DSL operators | 3 (AND, OR, NOT) |
+| Log query features | 4 (field:value, wildcards, time ranges, boolean operators) |
+| Metric types | 5 (CPU, memory, I/O, PID, network) |
+| Alert severity levels | 4 (critical, high, medium, low) |
+| Dashboard panels | 6 (fleet health, service status, resource utilization, events, alerts, topology) |
+| Middleware priority | 118 |
+| Custom exceptions | 20 (EFP-COP00 through EFP-COP19) |
+| CLI flags | 12 (`--fizzcontainerops`, `--fizzcontainerops-logs`, `--fizzcontainerops-logs-query`, `--fizzcontainerops-metrics`, `--fizzcontainerops-metrics-top`, `--fizzcontainerops-trace`, `--fizzcontainerops-exec`, `--fizzcontainerops-diff`, `--fizzcontainerops-pstree`, `--fizzcontainerops-flamegraph`, `--fizzcontainerops-dashboard`, `--fizzcontainerops-alerts`) |
+| Test count | ~244 |
+
+Round 17 extends the container platform beyond runtime into the operational domain. Containers can now be cataloged, deployed, composed, orchestrated with full CRI integration, chaos-tested at the infrastructure layer, and observed through a unified diagnostics dashboard. The container stack is no longer merely functional -- it is operable.

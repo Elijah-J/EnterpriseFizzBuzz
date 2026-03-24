@@ -31,6 +31,12 @@ This document is the authoritative reference for every configuration surface in 
    - [ml](#ml)
    - [di](#di)
    - [observers](#observers)
+   - [fizzimage](#fizzimage)
+   - [fizzdeploy](#fizzdeploy)
+   - [fizzcompose](#fizzcompose)
+   - [fizzkubev2](#fizzkubev2)
+   - [fizzcontainerchaos](#fizzcontainerchaos)
+   - [fizzcontainerops](#fizzcontainerops)
 3. [Feature Flag Schema](#feature-flag-schema)
 4. [The .fizztranslation File Format](#the-fizztranslation-file-format)
 
@@ -364,6 +370,120 @@ Controls the event bus observer subsystem.
 | `observers.statistics_observer.enabled` | bool | `true` | -- |
 
 No environment variable overrides.
+
+### fizzimage
+
+Official Container Image Catalog for the containerized Enterprise FizzBuzz Platform.
+
+| Key | Type | Default | CLI Flag |
+|---|---|---|---|
+| `fizzimage.enabled` | bool | `false` | `--fizzimage` |
+| `fizzimage.catalog_capacity` | int | `500` | -- |
+| `fizzimage.scan_on_build` | bool | `true` | -- |
+| `fizzimage.block_critical` | bool | `true` | -- |
+| `fizzimage.default_platform` | string | `"linux/amd64"` | -- |
+| `fizzimage.version_bump` | string | `"patch"` | -- |
+| `fizzimage.multi_arch` | bool | `true` | -- |
+
+**Valid version bumps:** `major`, `minor`, `patch`.
+
+Additional CLI flags: `--fizzimage-catalog` (display catalog), `--fizzimage-build IMAGE` (build specific image), `--fizzimage-build-all` (build all images), `--fizzimage-inspect IMAGE` (inspect image), `--fizzimage-deps IMAGE` (show dependency graph), `--fizzimage-scan` (scan all images). No environment variable overrides.
+
+### fizzdeploy
+
+Container-native deployment pipeline with four strategies, GitOps reconciliation, and cognitive load gating.
+
+| Key | Type | Default | CLI Flag |
+|---|---|---|---|
+| `fizzdeploy.enabled` | bool | `false` | `--fizzdeploy` |
+| `fizzdeploy.default_strategy` | string | `"rolling"` | `--fizzdeploy-strategy STRATEGY` |
+| `fizzdeploy.revision_history_limit` | int | `10` | -- |
+| `fizzdeploy.gitops_sync_interval` | float | `30.0` | -- |
+| `fizzdeploy.cognitive_load_threshold` | float | `70.0` | -- |
+| `fizzdeploy.pipeline_timeout` | float | `300.0` | -- |
+| `fizzdeploy.rollback_on_failure` | bool | `true` | -- |
+| `fizzdeploy.canary_analysis_interval` | float | `10.0` | -- |
+| `fizzdeploy.rolling_max_surge` | int | `1` | -- |
+
+**Valid strategies:** `rolling`, `bluegreen`, `canary`, `recreate`.
+
+Additional CLI flags: `--fizzdeploy-apply MANIFEST` (apply manifest), `--fizzdeploy-status DEPLOYMENT` (show status), `--fizzdeploy-rollback DEPLOYMENT REVISION` (rollback), `--fizzdeploy-pipeline DEPLOYMENT` (show pipeline), `--fizzdeploy-gitops-sync` (manual sync), `--fizzdeploy-emergency` (bypass cognitive load gate), `--fizzdeploy-dry-run` (preview changes). No environment variable overrides.
+
+### fizzcompose
+
+Multi-container application orchestration with Docker Compose-style lifecycle management.
+
+| Key | Type | Default | CLI Flag |
+|---|---|---|---|
+| `fizzcompose.enabled` | bool | `false` | `--fizzcompose` |
+| `fizzcompose.file` | string | `"fizzbuzz-compose.yaml"` | -- |
+| `fizzcompose.project_name` | string | `"enterprise-fizzbuzz"` | -- |
+| `fizzcompose.health_check_timeout` | float | `60.0` | -- |
+| `fizzcompose.restart_max_attempts` | int | `3` | -- |
+| `fizzcompose.restart_window` | float | `300.0` | -- |
+| `fizzcompose.default_network_driver` | string | `"bridge"` | -- |
+| `fizzcompose.stop_grace_period` | float | `10.0` | -- |
+| `fizzcompose.scale_limit` | int | `10` | -- |
+
+Additional CLI flags: `--fizzcompose-up` (start services), `--fizzcompose-down` (stop services), `--fizzcompose-ps` (list services), `--fizzcompose-logs SERVICE` (stream logs), `--fizzcompose-scale SERVICE=REPLICAS` (scale), `--fizzcompose-restart SERVICE` (restart), `--fizzcompose-exec SERVICE COMMAND` (exec), `--fizzcompose-top SERVICE` (processes), `--fizzcompose-config` (validate). No environment variable overrides.
+
+### fizzkubev2
+
+CRI-integrated orchestrator upgrade with image pulls, init containers, sidecars, probes, and volumes.
+
+| Key | Type | Default | CLI Flag |
+|---|---|---|---|
+| `fizzkubev2.enabled` | bool | `false` | `--fizzkubev2` |
+| `fizzkubev2.default_image_pull_policy` | string | `"IfNotPresent"` | -- |
+| `fizzkubev2.termination_grace_period` | float | `30.0` | -- |
+| `fizzkubev2.restart_backoff_base` | float | `10.0` | -- |
+| `fizzkubev2.restart_backoff_cap` | float | `300.0` | -- |
+| `fizzkubev2.restart_backoff_multiplier` | float | `2.0` | -- |
+| `fizzkubev2.probe_initial_delay` | float | `0.0` | -- |
+| `fizzkubev2.probe_period` | float | `10.0` | -- |
+| `fizzkubev2.probe_timeout` | float | `1.0` | -- |
+| `fizzkubev2.probe_success_threshold` | int | `1` | -- |
+| `fizzkubev2.probe_failure_threshold` | int | `3` | -- |
+| `fizzkubev2.max_init_container_retries` | int | `3` | -- |
+
+**Valid image pull policies:** `Always`, `IfNotPresent`, `Never`.
+
+Additional CLI flags: `--fizzkubev2-pods` (list pods), `--fizzkubev2-describe-pod POD` (describe pod), `--fizzkubev2-logs POD CONTAINER` (stream logs), `--fizzkubev2-exec POD CONTAINER COMMAND` (exec), `--fizzkubev2-images` (list images), `--fizzkubev2-events` (list events), `--fizzkubev2-probe-status POD` (probe results). No environment variable overrides.
+
+### fizzcontainerchaos
+
+Container-native chaos engineering with fault injection, game days, and cognitive load gating.
+
+| Key | Type | Default | CLI Flag |
+|---|---|---|---|
+| `fizzcontainerchaos.enabled` | bool | `false` | `--fizzcontainerchaos` |
+| `fizzcontainerchaos.blast_radius_limit` | float | `0.5` | -- |
+| `fizzcontainerchaos.cognitive_load_threshold` | float | `60.0` | -- |
+| `fizzcontainerchaos.default_duration` | float | `30.0` | -- |
+| `fizzcontainerchaos.steady_state_tolerance` | float | `0.1` | -- |
+| `fizzcontainerchaos.abort_on_violation` | bool | `true` | -- |
+| `fizzcontainerchaos.fault_removal_timeout` | float | `10.0` | -- |
+
+**Available fault types:** `container_kill`, `network_partition`, `cpu_stress`, `memory_pressure`, `disk_fill`, `image_pull_failure`, `dns_failure`, `network_latency`.
+
+Additional CLI flags: `--fizzcontainerchaos-run EXPERIMENT` (run experiment), `--fizzcontainerchaos-gameday GAMEDAY` (run game day), `--fizzcontainerchaos-status` (show status), `--fizzcontainerchaos-abort EXPERIMENT_ID` (abort), `--fizzcontainerchaos-report EXPERIMENT_ID` (report), `--fizzcontainerchaos-list-faults` (list faults), `--fizzcontainerchaos-blast-radius` (show blast radius). No environment variable overrides.
+
+### fizzcontainerops
+
+Container observability and diagnostics with log aggregation, metrics, tracing, diagnostics, and dashboard.
+
+| Key | Type | Default | CLI Flag |
+|---|---|---|---|
+| `fizzcontainerops.enabled` | bool | `false` | `--fizzcontainerops` |
+| `fizzcontainerops.log_retention_hours` | float | `24.0` | -- |
+| `fizzcontainerops.metrics_scrape_interval` | float | `15.0` | -- |
+| `fizzcontainerops.metrics_ring_buffer_size` | int | `1000` | -- |
+| `fizzcontainerops.alert_evaluation_interval` | float | `30.0` | -- |
+| `fizzcontainerops.exec_timeout` | float | `30.0` | -- |
+| `fizzcontainerops.dashboard_refresh_interval` | float | `5.0` | -- |
+| `fizzcontainerops.trace_correlation_window` | float | `60.0` | -- |
+
+Additional CLI flags: `--fizzcontainerops-logs SERVICE` (query logs), `--fizzcontainerops-logs-query QUERY` (search logs), `--fizzcontainerops-metrics CONTAINER` (show metrics), `--fizzcontainerops-metrics-top` (resource ranking), `--fizzcontainerops-trace TRACE_ID` (show trace), `--fizzcontainerops-exec CONTAINER COMMAND` (exec), `--fizzcontainerops-diff CONTAINER` (overlay diff), `--fizzcontainerops-pstree CONTAINER` (process tree), `--fizzcontainerops-flamegraph CONTAINER` (flame graph), `--fizzcontainerops-dashboard` (fleet dashboard), `--fizzcontainerops-alerts` (alert rules). No environment variable overrides.
 
 ---
 

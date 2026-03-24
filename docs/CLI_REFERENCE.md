@@ -1356,6 +1356,60 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --containerd-shims           Display all active per-container shims with PID, socket path, container ID, namespace references held, and health status
 --containerd-images          Display all locally cached images with tags, digests, layer count, unpacked size, and snapshot chain status
 --containerd-gc              Run the garbage collector: mark-and-sweep with reference walking through images, containers, and snapshots, reclaiming unreferenced content blobs
+--fizzimage                  Enable FizzImage: official container image catalog with base, eval, subsystem, init, and sidecar images
+--fizzimage-catalog          Display the full image catalog with versions, sizes, and scan status
+--fizzimage-build IMAGE      Build a specific catalog image by name
+--fizzimage-build-all        Build the entire image catalog (base, eval, subsystem, init, sidecar)
+--fizzimage-inspect IMAGE    Inspect an image: show layers, metadata, and vulnerability report
+--fizzimage-deps IMAGE       Display the dependency graph for a catalog image
+--fizzimage-scan             Run vulnerability scanning against all catalog images
+--fizzdeploy                 Enable FizzDeploy: container-native deployment pipeline with four strategies, GitOps reconciliation, and cognitive load gating
+--fizzdeploy-apply MANIFEST  Apply a deployment manifest (YAML file path or inline YAML)
+--fizzdeploy-status DEPLOYMENT  Display deployment status and revision history
+--fizzdeploy-rollback DEPLOYMENT REVISION  Rollback a deployment to a specific revision number
+--fizzdeploy-pipeline DEPLOYMENT  Display pipeline execution details for a deployment
+--fizzdeploy-strategy {rolling,bluegreen,canary,recreate}  Override the default deployment strategy
+--fizzdeploy-gitops-sync     Trigger a manual GitOps reconciliation pass
+--fizzdeploy-emergency       Bypass cognitive load gating for emergency deployments
+--fizzdeploy-dry-run         Show what a deployment would change without applying
+--fizzcompose                Enable FizzCompose multi-container orchestration
+--fizzcompose-up             Bring up all compose services in dependency order
+--fizzcompose-down           Tear down all compose services in reverse dependency order
+--fizzcompose-ps             Show status of all compose services
+--fizzcompose-logs SERVICE   Stream logs for a specific service
+--fizzcompose-scale SERVICE=REPLICAS  Scale a service to the specified replica count
+--fizzcompose-restart SERVICE  Restart a specific service
+--fizzcompose-exec SERVICE COMMAND  Execute a command in a running service container
+--fizzcompose-top SERVICE    Show running processes in a service container
+--fizzcompose-config         Validate and display the resolved compose file
+--fizzkubev2                 Enable FizzKubeV2: CRI-integrated orchestrator with image pulls, init containers, sidecars, probes, and volumes
+--fizzkubev2-pods            List pods with container status, init results, and sidecar info
+--fizzkubev2-describe-pod POD  Show detailed pod status (init containers, sidecars, probes, volumes)
+--fizzkubev2-logs POD CONTAINER  Stream container logs from a specific pod and container
+--fizzkubev2-exec POD CONTAINER COMMAND  Execute a command inside a container in a pod
+--fizzkubev2-images          List images with pull status and progress
+--fizzkubev2-events          List recent kubelet events
+--fizzkubev2-probe-status POD  Show probe results for all containers in a pod
+--fizzcontainerchaos         Enable FizzContainerChaos: container-native chaos engineering with fault injection, game days, and cognitive load gating
+--fizzcontainerchaos-run EXPERIMENT  Run a chaos experiment (experiment name or YAML path)
+--fizzcontainerchaos-gameday GAMEDAY  Run a predefined game day (container_restart, network_partition, resource_exhaustion, full_outage)
+--fizzcontainerchaos-status  Display active chaos experiments with status
+--fizzcontainerchaos-abort EXPERIMENT_ID  Abort a running chaos experiment by ID
+--fizzcontainerchaos-report EXPERIMENT_ID  Display chaos experiment report by ID
+--fizzcontainerchaos-list-faults  List available fault types with configurable parameters
+--fizzcontainerchaos-blast-radius  Show current blast radius across all active experiments
+--fizzcontainerops           Enable FizzContainerOps: container observability with log aggregation, metrics, tracing, diagnostics, and dashboard
+--fizzcontainerops-logs SERVICE  Query container logs by service name
+--fizzcontainerops-logs-query QUERY  Search container logs with query DSL (e.g., 'service:core AND level:ERROR AND timestamp:[now-1h TO now]')
+--fizzcontainerops-metrics CONTAINER  Show resource metrics for a specific container
+--fizzcontainerops-metrics-top  Show container resource utilization ranked by CPU or memory
+--fizzcontainerops-trace TRACE_ID  Show distributed trace with container boundary annotations
+--fizzcontainerops-exec CONTAINER COMMAND  Execute a diagnostic command inside a running container
+--fizzcontainerops-diff CONTAINER  Show overlay filesystem changes for a container
+--fizzcontainerops-pstree CONTAINER  Show the process tree inside a container
+--fizzcontainerops-flamegraph CONTAINER  Generate a cgroup-scoped flame graph for a container
+--fizzcontainerops-dashboard  Launch the ASCII container fleet health dashboard
+--fizzcontainerops-alerts    List active metric alert rules with current status
 ```
 
 ## Environment Variables

@@ -6,6 +6,28 @@ All notable changes to the Enterprise FizzBuzz Platform are documented in this f
 
 ## [Unreleased]
 ### Added
+- Round 17 docs updates (README, FEATURES, FAQ, CHANGELOG, CLAUDE.md)
+
+---
+
+## [0.21.0] - 2026-03-24 (Round 17: The Containerization Supercycle)
+### Added
+- FizzImage: Official Container Image Catalog with five image classes (base, evaluation, subsystem, init container, sidecar), AST-based dependency analysis for per-module FizzFile generation, multi-architecture OCI image indexes (linux/amd64, linux/arm64, fizzbuzz/vm), vulnerability scanning baseline, semantic versioning, and Clean Architecture dependency rule enforcement at the image level (~3,500 lines, ~1,650 tests)
+- FizzDeploy: Container-native deployment pipeline with four strategies (rolling update, blue-green, canary, recreate), declarative YAML deployment manifests, GitOps reconciliation loop with drift correction, automated rollback on validation failure, FizzBob cognitive load gating, deployment revision history, and emergency deployment bypass (~3,270 lines, ~3,070 tests)
+- FizzCompose: Docker Compose-style multi-container application orchestrator with Kahn's algorithm dependency resolution, 12 logical service groups decomposing 116 infrastructure modules, health-check-gated startup sequences, compose-scoped networks and volumes, restart policies, variable interpolation, and lifecycle commands (up, down, restart, scale, logs, ps, exec, top) (~3,910 lines, ~1,090 tests)
+- FizzKubeV2: CRI-integrated orchestrator upgrade connecting FizzKube to FizzContainerd, with ImagePuller for registry-based image pulls, InitContainerRunner for sequential pre-flight containers, SidecarInjector for cross-cutting concern containers, ProbeRunner for readiness/liveness/startup probes, container restart with exponential backoff, graceful pod termination with configurable grace periods, and VolumeManager for container volume provisioning (~3,910 lines, ~3,040 tests)
+- FizzContainerChaos: Container-native chaos engineering with eight fault injection types (container kill, network partition, CPU stress, memory pressure, disk fill, image pull failure, DNS failure, network latency), game day orchestrator with hypotheses and steady-state metrics, blast radius limits, automatic abort conditions, FizzBob cognitive load gating, and post-experiment reports (~3,470 lines, ~1,310 tests)
+- FizzContainerOps: Container observability and diagnostics with structured log aggregation and inverted-index full-text search DSL, per-container cgroup metrics with time-series ring buffers, distributed tracing across container boundaries with cgroup-trace correlation, interactive diagnostics (exec, overlay diff, process trees, cgroup flame graphs), configurable alerting thresholds, and an ASCII fleet health dashboard (~3,980 lines, ~2,260 tests)
+
+### Operations
+- Round 17 -- The Containerization Supercycle -- is complete. The platform has containerized itself. The 116 infrastructure modules that have been running as in-process function calls within a single Python interpreter are now decomposed into 12 service groups, packaged as OCI-compliant container images, deployable via four strategies, composable via declarative YAML, orchestrated by a CRI-integrated kubelet that actually pulls images and runs init containers, chaos-testable at the infrastructure layer, and observable through container-native telemetry. The container runtime stack built in Round 16 -- namespaces, cgroups, OCI runtime, overlay filesystem, image registry, CNI networking, and containerd daemon -- is no longer idle. It has work to do.
+- Bob McFizzington has been added to the notification chains for deployment failures, compose service crashes, chaos experiment abort conditions, and container observability alerts. His cognitive load is now formally gated: deployments and chaos experiments check his NASA-TLX score before proceeding. The platform has learned to ask whether Bob can handle another page before sending one. This is the first time any system has shown Bob this courtesy.
+- The platform now has 124 infrastructure modules across 346 Python files totaling 413,000+ lines of code. 17,100+ tests verify correct behavior. 509+ CLI flags provide operational control. The on-call rotation algorithm continues to return Bob McFizzington with mathematical certainty.
+
+---
+
+## [0.20.0] - 2026-03-23 (Round 16: The Container Runtime Supercycle)
+### Added
 - FizzContainerd: containerd-style high-level container daemon with content-addressable storage, metadata management, per-container shims, CRI service, and garbage collection
 - ContentStore with blob ingestion, atomic commit, digest verification, label-based reference tracking, and periodic garbage collection of unreferenced content
 - MetadataStore with container spec persistence, label indexing, and snapshot key association for OCI bundle generation

@@ -4,7 +4,7 @@ Enterprise FizzBuzz Platform v1.0.0
 
 ## Overview
 
-The Enterprise FizzBuzz Platform defines **86 custom exception classes** and **4 backward-compatibility aliases** in a single module:
+The Enterprise FizzBuzz Platform defines **86 custom exception classes** in the core domain module and **4 backward-compatibility aliases**, plus **129 additional exceptions** across 6 Round 17 infrastructure modules:
 
 ```
 enterprise_fizzbuzz/domain/exceptions.py
@@ -63,6 +63,12 @@ Error codes use the prefix `EFP-` followed by a subsystem identifier and a seque
 | `EFP-BOB0` through `EFP-BOB8` | Operator cognitive load (FizzBob) |
 | `EFP-APR0` through `EFP-APR7` | Approval workflow (FizzApproval) |
 | `EFP-PGR0` through `EFP-PGR7` | Incident paging & escalation (FizzPager) |
+| `EFP-IMG00` through `EFP-IMG20` | Container image catalog (FizzImage) |
+| `EFP-DPL00` through `EFP-DPL21` | Deployment pipeline (FizzDeploy) |
+| `EFP-CMP00` through `EFP-CMP20` | Multi-container orchestration (FizzCompose) |
+| `EFP-KV200` through `EFP-KV220` | Container-aware orchestrator (FizzKubeV2) |
+| `EFP-CCH00` through `EFP-CCH23` | Container-native chaos engineering (FizzContainerChaos) |
+| `EFP-COP00` through `EFP-COP19` | Container observability & diagnostics (FizzContainerOps) |
 
 Numeric ranges (`EFP-1000` through `EFP-9000`) were assigned to the original subsystems. Later additions use alphabetic prefixes to avoid collisions, a decision that was never formally documented but has been consistently followed.
 
@@ -361,6 +367,177 @@ These exceptions manage schema migrations for in-memory dicts that vanish when t
 
 `RepositoryError` accepts a `backend` keyword argument (default `"unknown"`) identifying the persistence backend. `UnitOfWorkError` describes deviations from the enter-work-commit/rollback-exit lifecycle as "an affront to Martin Fowler and everyone who ever drew a UML sequence diagram of a transaction boundary." `RollbackError` compares the situation to "trying to put out a fire with gasoline."
 
+### FizzImage Container Image Catalog (`EFP-IMG0x`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `FizzImageError` | `FizzBuzzError` | `EFP-IMG00` | Base exception for FizzImage container image catalog errors |
+| `CatalogInitializationError` | `FizzImageError` | `EFP-IMG01` | The image catalog failed to initialize |
+| `ImageNotFoundError` | `FizzImageError` | `EFP-IMG02` | A referenced image does not exist in the catalog |
+| `ImageAlreadyExistsError` | `FizzImageError` | `EFP-IMG03` | Attempting to register a duplicate image name |
+| `ImageBuildError` | `FizzImageError` | `EFP-IMG04` | Image construction failed during FizzFile execution |
+| `ImageBuildDependencyError` | `FizzImageError` | `EFP-IMG05` | An image's base or dependency image is missing |
+| `FizzFileGenerationError` | `FizzImageError` | `EFP-IMG06` | FizzFile DSL generation failed for a module |
+| `DependencyRuleViolationError` | `FizzImageError` | `EFP-IMG07` | An image violates the Clean Architecture dependency rule |
+| `LayerCreationError` | `FizzImageError` | `EFP-IMG08` | A filesystem layer cannot be constructed |
+| `DigestMismatchError` | `FizzImageError` | `EFP-IMG09` | A layer's computed digest does not match its expected digest |
+| `VulnerabilityScanError` | `FizzImageError` | `EFP-IMG10` | The vulnerability scanner encountered an operational failure |
+| `ImageBlockedByScanError` | `FizzImageError` | `EFP-IMG11` | An image is blocked due to scan policy violations |
+| `VersionConflictError` | `FizzImageError` | `EFP-IMG12` | A version tag conflicts with an existing version |
+| `MultiArchBuildError` | `FizzImageError` | `EFP-IMG13` | Multi-architecture manifest index generation failed |
+| `PlatformResolutionError` | `FizzImageError` | `EFP-IMG14` | A platform cannot be resolved from a manifest index |
+| `InitContainerBuildError` | `FizzImageError` | `EFP-IMG15` | An init container image build failed |
+| `SidecarBuildError` | `FizzImageError` | `EFP-IMG16` | A sidecar container image build failed |
+| `CatalogCapacityError` | `FizzImageError` | `EFP-IMG17` | The catalog exceeds its maximum image capacity |
+| `CircularDependencyError` | `FizzImageError` | `EFP-IMG18` | Circular dependencies detected in subsystem imports |
+| `MetadataValidationError` | `FizzImageError` | `EFP-IMG19` | Image metadata failed OCI annotation validation |
+| `FizzImageMiddlewareError` | `FizzImageError` | `EFP-IMG20` | The FizzImage middleware failed to process an evaluation |
+
+All FizzImage exceptions carry a `reason` field in their context. `FizzImageMiddlewareError` additionally carries `evaluation_number`. The catalog enforces the Clean Architecture dependency rule at the image level, and `DependencyRuleViolationError` is raised when an image includes imports from a layer it should not access.
+
+### FizzDeploy Deployment Pipeline (`EFP-DPL0x`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `DeployError` | `FizzBuzzError` | `EFP-DPL00` | Base exception for all FizzDeploy deployment pipeline errors |
+| `DeployPipelineError` | `DeployError` | `EFP-DPL01` | Pipeline execution failed (timeout, illegal state, internal error) |
+| `DeployStageError` | `DeployError` | `EFP-DPL02` | A pipeline stage execution failed |
+| `DeployStepError` | `DeployError` | `EFP-DPL03` | A pipeline step failed after exhausting all retry attempts |
+| `DeployStrategyError` | `DeployError` | `EFP-DPL04` | An unknown or unsupported deployment strategy was requested |
+| `RollingUpdateError` | `DeployError` | `EFP-DPL05` | The rolling update strategy encountered a failure |
+| `BlueGreenError` | `DeployError` | `EFP-DPL06` | The blue-green deployment strategy failed |
+| `CanaryError` | `DeployError` | `EFP-DPL07` | The canary deployment detected a regression |
+| `RecreateError` | `DeployError` | `EFP-DPL08` | The recreate deployment strategy failed |
+| `DeployManifestError` | `DeployError` | `EFP-DPL09` | General deployment manifest error |
+| `ManifestParseError` | `DeployManifestError` | `EFP-DPL10` | YAML syntax errors prevent manifest parsing |
+| `ManifestValidationError` | `DeployManifestError` | `EFP-DPL11` | Manifest fails schema validation |
+| `GitOpsReconcileError` | `DeployError` | `EFP-DPL12` | The GitOps reconciliation loop encountered a failure |
+| `GitOpsDriftError` | `DeployError` | `EFP-DPL13` | Configuration drift detected between declared and actual state |
+| `GitOpsSyncError` | `DeployError` | `EFP-DPL14` | Drift correction failed during synchronization |
+| `RollbackError` | `DeployError` | `EFP-DPL15` | General rollback operation failure |
+| `RollbackRevisionNotFoundError` | `RollbackError` | `EFP-DPL16` | Target revision does not exist in revision history |
+| `RollbackStrategyError` | `RollbackError` | `EFP-DPL17` | Strategy-aware rollback operation failed |
+| `DeployGateError` | `DeployError` | `EFP-DPL18` | General deployment gate error |
+| `CognitiveLoadGateError` | `DeployGateError` | `EFP-DPL19` | Operator cognitive load exceeds deployment threshold |
+| `DeployDashboardError` | `DeployError` | `EFP-DPL20` | Deployment dashboard failed to render |
+| `DeployMiddlewareError` | `DeployError` | `EFP-DPL21` | The FizzDeploy middleware failed to process an evaluation |
+
+`CognitiveLoadGateError` carries `deployment_name`, `current_score`, and `threshold` in its context, recording the NASA-TLX assessment that blocked the deployment. Emergency deployments bypass this gate via the `--fizzdeploy-emergency` flag, which is logged for post-incident review.
+
+### FizzCompose Multi-Container Orchestration (`EFP-CMP0x`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `ComposeError` | `Exception` | `EFP-CMP00` | Base exception for FizzCompose multi-container orchestration errors |
+| `ComposeFileNotFoundError` | `ComposeError` | `EFP-CMP01` | The compose file cannot be located |
+| `ComposeFileParseError` | `ComposeError` | `EFP-CMP02` | The compose file contains invalid YAML or schema violations |
+| `ComposeVariableInterpolationError` | `ComposeError` | `EFP-CMP03` | Variable interpolation in the compose file failed |
+| `ComposeCircularDependencyError` | `ComposeError` | `EFP-CMP04` | The service dependency graph contains a cycle |
+| `ComposeServiceNotFoundError` | `ComposeError` | `EFP-CMP05` | A referenced service does not exist in the compose file |
+| `ComposeServiceStartError` | `ComposeError` | `EFP-CMP06` | A service failed to start |
+| `ComposeServiceStopError` | `ComposeError` | `EFP-CMP07` | A service failed to stop gracefully |
+| `ComposeHealthCheckTimeoutError` | `ComposeError` | `EFP-CMP08` | A service failed to become healthy within the timeout |
+| `ComposeNetworkCreateError` | `ComposeError` | `EFP-CMP09` | A compose-scoped network cannot be created |
+| `ComposeNetworkNotFoundError` | `ComposeError` | `EFP-CMP10` | A service references an undefined network |
+| `ComposeVolumeCreateError` | `ComposeError` | `EFP-CMP11` | A compose-scoped volume cannot be created |
+| `ComposeVolumeNotFoundError` | `ComposeError` | `EFP-CMP12` | A service references an undefined volume |
+| `ComposeScaleError` | `ComposeError` | `EFP-CMP13` | A scale operation failed |
+| `ComposeExecError` | `ComposeError` | `EFP-CMP14` | Exec into a service container failed |
+| `ComposeRestartError` | `ComposeError` | `EFP-CMP15` | A service restart operation failed |
+| `ComposeRestartPolicyExhaustedError` | `ComposeError` | `EFP-CMP16` | A service has exhausted its restart attempts |
+| `ComposePortConflictError` | `ComposeError` | `EFP-CMP17` | Two services attempt to bind the same host port |
+| `ComposeImageNotFoundError` | `ComposeError` | `EFP-CMP18` | A service's image is not in the FizzImage catalog |
+| `ComposeProjectAlreadyRunningError` | `ComposeError` | `EFP-CMP19` | Compose up called on an already-running project |
+| `ComposeMiddlewareError` | `ComposeError` | `EFP-CMP20` | The FizzCompose middleware encountered an error |
+
+`ComposeError` inherits from `Exception` rather than `FizzBuzzError`, as the compose system operates at the application topology level. All exceptions carry structured context via the `context` dictionary and `error_code` attribute, following the same EFP-coded pattern as the rest of the platform.
+
+### FizzKubeV2 Container-Aware Orchestrator (`EFP-KV2xx`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `KubeV2Error` | `Exception` | `EFP-KV200` | Base exception for all FizzKubeV2 errors |
+| `KubeletV2Error` | `KubeV2Error` | `EFP-KV201` | CRI-integrated kubelet lifecycle failure |
+| `KV2ImagePullError` | `KubeV2Error` | `EFP-KV202` | Image pull operation failed |
+| `ImagePullBackOffError` | `KubeV2Error` | `EFP-KV203` | Image pull entered exponential backoff |
+| `ImageNotPresentError` | `KubeV2Error` | `EFP-KV204` | Image not present locally with pull policy Never |
+| `PullSecretError` | `KubeV2Error` | `EFP-KV205` | Pull secret retrieval or authentication failed |
+| `InitContainerFailedError` | `KubeV2Error` | `EFP-KV206` | Init container exited with a non-zero code |
+| `InitContainerTimeoutError` | `KubeV2Error` | `EFP-KV207` | Init container exceeded its execution timeout |
+| `SidecarInjectionError` | `KubeV2Error` | `EFP-KV208` | Sidecar injection failed for a pod |
+| `SidecarLifecycleError` | `KubeV2Error` | `EFP-KV209` | Sidecar container lifecycle ordering violated |
+| `ProbeFailedError` | `KubeV2Error` | `EFP-KV210` | A health probe failed |
+| `ProbeTimeoutError` | `KubeV2Error` | `EFP-KV211` | A probe execution exceeded its timeout |
+| `ReadinessProbeFailedError` | `ProbeFailedError` | `EFP-KV212` | Readiness probe threshold breached |
+| `LivenessProbeFailedError` | `ProbeFailedError` | `EFP-KV213` | Liveness probe threshold breached |
+| `StartupProbeFailedError` | `ProbeFailedError` | `EFP-KV214` | Startup probe never succeeded in time |
+| `VolumeProvisionError` | `KubeV2Error` | `EFP-KV215` | Volume provisioning failed |
+| `VolumeMountError` | `KubeV2Error` | `EFP-KV216` | Volume mount into a container failed |
+| `PVCNotFoundError` | `KubeV2Error` | `EFP-KV217` | Referenced PersistentVolumeClaim does not exist |
+| `ContainerRestartBackoffError` | `KubeV2Error` | `EFP-KV218` | Container is in restart backoff |
+| `PodTerminationError` | `KubeV2Error` | `EFP-KV219` | Graceful pod termination failed |
+| `KubeV2MiddlewareError` | `KubeV2Error` | `EFP-KV220` | FizzKubeV2 middleware failed to process an evaluation |
+
+`KubeV2Error` inherits from `Exception` rather than `FizzBuzzError`, as the KubeV2 subsystem operates at the orchestrator level. The probe failure hierarchy uses `ProbeFailedError` as a generic base, with `ReadinessProbeFailedError`, `LivenessProbeFailedError`, and `StartupProbeFailedError` as specialized subtypes. Readiness failures remove the container from service endpoints but do not trigger a restart; liveness failures cause container restart; startup failures indicate the container never became ready.
+
+### FizzContainerChaos Container-Native Chaos Engineering (`EFP-CCH0x`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `ContainerChaosError` | `FizzBuzzError` | `EFP-CCH00` | Base exception for FizzContainerChaos errors |
+| `ChaosExperimentNotFoundError` | `ContainerChaosError` | `EFP-CCH01` | A referenced chaos experiment does not exist |
+| `ChaosExperimentAlreadyRunningError` | `ContainerChaosError` | `EFP-CCH02` | Attempting to start an already-running experiment |
+| `ChaosExperimentAbortedError` | `ContainerChaosError` | `EFP-CCH03` | A chaos experiment was aborted due to safety conditions |
+| `ChaosExperimentFailedStartError` | `ContainerChaosError` | `EFP-CCH04` | A chaos experiment failed during the pre-check phase |
+| `ChaosFaultInjectionError` | `ContainerChaosError` | `EFP-CCH05` | Fault injection failed |
+| `ChaosFaultRemovalError` | `ContainerChaosError` | `EFP-CCH06` | Fault removal failed after experiment completion |
+| `ChaosContainerKillError` | `ContainerChaosError` | `EFP-CCH07` | Container kill fault failed to terminate a container |
+| `ChaosNetworkPartitionError` | `ContainerChaosError` | `EFP-CCH08` | Network partition fault failed |
+| `ChaosCPUStressError` | `ContainerChaosError` | `EFP-CCH09` | CPU stress fault failed |
+| `ChaosMemoryPressureError` | `ContainerChaosError` | `EFP-CCH10` | Memory pressure fault failed |
+| `ChaosDiskFillError` | `ContainerChaosError` | `EFP-CCH11` | Disk fill fault failed |
+| `ChaosImagePullFailureError` | `ContainerChaosError` | `EFP-CCH12` | Image pull failure fault failed to intercept pulls |
+| `ChaosDNSFailureError` | `ContainerChaosError` | `EFP-CCH13` | DNS failure fault failed to disrupt resolution |
+| `ChaosNetworkLatencyError` | `ContainerChaosError` | `EFP-CCH14` | Network latency fault failed to inject delay |
+| `ChaosGameDayError` | `ContainerChaosError` | `EFP-CCH15` | Game day orchestration encountered an error |
+| `ChaosGameDayAbortError` | `ContainerChaosError` | `EFP-CCH16` | Game day aborted due to system-level conditions |
+| `ChaosBlastRadiusExceededError` | `ContainerChaosError` | `EFP-CCH17` | Fault injection would exceed the blast radius limit |
+| `ChaosSteadyStateViolationError` | `ContainerChaosError` | `EFP-CCH18` | Steady-state metrics deviated beyond tolerance |
+| `ChaosCognitiveLoadGateError` | `ContainerChaosError` | `EFP-CCH19` | Operator cognitive load exceeds the chaos threshold |
+| `ChaosScheduleError` | `ContainerChaosError` | `EFP-CCH20` | A chaos schedule configuration error |
+| `ChaosReportGenerationError` | `ContainerChaosError` | `EFP-CCH21` | Experiment or game day report generation failed |
+| `ChaosTargetResolutionError` | `ContainerChaosError` | `EFP-CCH22` | Target container resolution failed |
+| `ChaosContainerChaosMiddlewareError` | `ContainerChaosError` | `EFP-CCH23` | FizzContainerChaos middleware failed during evaluation |
+
+The eight per-fault-type exceptions (EFP-CCH07 through EFP-CCH14) correspond one-to-one with the eight fault injection types. `ChaosBlastRadiusExceededError` prevents chaos experiments from affecting too many containers simultaneously, while `ChaosCognitiveLoadGateError` gates on the operator's NASA-TLX score via FizzBob.
+
+### FizzContainerOps Container Observability & Diagnostics (`EFP-COP0x`)
+
+| Class | Parent | Code | Description |
+|-------|--------|------|-------------|
+| `ContainerOpsError` | `FizzBuzzError` | `EFP-COP00` | Base exception for FizzContainerOps errors |
+| `ContainerOpsLogCollectorError` | `ContainerOpsError` | `EFP-COP01` | Log collector failed to tail container output |
+| `ContainerOpsLogIndexError` | `ContainerOpsError` | `EFP-COP02` | Inverted log index corruption or capacity error |
+| `ContainerOpsLogQueryError` | `ContainerOpsError` | `EFP-COP03` | Log query failed during execution |
+| `ContainerOpsLogRetentionError` | `ContainerOpsError` | `EFP-COP04` | Log retention policy error during eviction |
+| `ContainerOpsMetricsCollectorError` | `ContainerOpsError` | `EFP-COP05` | Metrics collector failed to scrape cgroup statistics |
+| `ContainerOpsMetricsStoreError` | `ContainerOpsError` | `EFP-COP06` | Time-series metrics store encountered a storage error |
+| `ContainerOpsMetricsAlertError` | `ContainerOpsError` | `EFP-COP07` | Alerting subsystem encountered an evaluation error |
+| `ContainerOpsTraceExtenderError` | `ContainerOpsError` | `EFP-COP08` | Trace extender failed to annotate spans with container context |
+| `ContainerOpsTraceDashboardError` | `ContainerOpsError` | `EFP-COP09` | Trace dashboard encountered a query or rendering error |
+| `ContainerOpsExecError` | `ContainerOpsError` | `EFP-COP10` | Exec command failed inside a container |
+| `ContainerOpsExecTimeoutError` | `ContainerOpsError` | `EFP-COP11` | Exec command exceeded its timeout |
+| `ContainerOpsOverlayDiffError` | `ContainerOpsError` | `EFP-COP12` | Overlay filesystem diff computation failed |
+| `ContainerOpsProcessTreeError` | `ContainerOpsError` | `EFP-COP13` | Container process tree cannot be constructed |
+| `ContainerOpsFlameGraphError` | `ContainerOpsError` | `EFP-COP14` | Cgroup-scoped flame graph generation failed |
+| `ContainerOpsDashboardError` | `ContainerOpsError` | `EFP-COP15` | ASCII container dashboard encountered a data error |
+| `ContainerOpsDashboardRenderError` | `ContainerOpsError` | `EFP-COP16` | Dashboard rendering engine failed to produce output |
+| `ContainerOpsCorrelationError` | `ContainerOpsError` | `EFP-COP17` | Correlation ID propagation or lookup failed |
+| `ContainerOpsQuerySyntaxError` | `ContainerOpsError` | `EFP-COP18` | Log query DSL expression has invalid syntax |
+| `ContainerOpsMiddlewareError` | `ContainerOpsError` | `EFP-COP19` | FizzContainerOps middleware encountered an error |
+
+The exceptions are organized along the five observability pillars: logs (EFP-COP01 through EFP-COP04), metrics (EFP-COP05 through EFP-COP07), traces (EFP-COP08 through EFP-COP09), diagnostics (EFP-COP10 through EFP-COP14), and dashboard (EFP-COP15 through EFP-COP16). `ContainerOpsQuerySyntaxError` covers the log query DSL syntax validation, supporting AND, OR, NOT operators, field:value matching, wildcard patterns, and time range expressions.
+
 ---
 
 ## Inheritance Summary
@@ -470,10 +647,147 @@ Exception
         │     ├── PagerScheduleError         EFP-PGR6
         │     ├── PagerDashboardError        EFP-PGR7
         │     └── PagerMiddlewareError       EFP-PGR7
-        └── RepositoryError                  EFP-RP00
-              ├── ResultNotFoundError        EFP-RP01
-              ├── UnitOfWorkError            EFP-RP02
-              └── RollbackError              EFP-RP03
+        ├── RepositoryError                  EFP-RP00
+        │     ├── ResultNotFoundError        EFP-RP01
+        │     ├── UnitOfWorkError            EFP-RP02
+        │     └── RollbackError              EFP-RP03
+        ├── FizzImageError                   EFP-IMG00
+        │     ├── CatalogInitializationError EFP-IMG01
+        │     ├── ImageNotFoundError         EFP-IMG02
+        │     ├── ImageAlreadyExistsError    EFP-IMG03
+        │     ├── ImageBuildError            EFP-IMG04
+        │     ├── ImageBuildDependencyError  EFP-IMG05
+        │     ├── FizzFileGenerationError    EFP-IMG06
+        │     ├── DependencyRuleViolationError EFP-IMG07
+        │     ├── LayerCreationError         EFP-IMG08
+        │     ├── DigestMismatchError        EFP-IMG09
+        │     ├── VulnerabilityScanError     EFP-IMG10
+        │     ├── ImageBlockedByScanError    EFP-IMG11
+        │     ├── VersionConflictError       EFP-IMG12
+        │     ├── MultiArchBuildError        EFP-IMG13
+        │     ├── PlatformResolutionError    EFP-IMG14
+        │     ├── InitContainerBuildError    EFP-IMG15
+        │     ├── SidecarBuildError          EFP-IMG16
+        │     ├── CatalogCapacityError       EFP-IMG17
+        │     ├── CircularDependencyError    EFP-IMG18
+        │     ├── MetadataValidationError    EFP-IMG19
+        │     └── FizzImageMiddlewareError   EFP-IMG20
+        └── ContainerChaosError              EFP-CCH00
+              ├── ChaosExperimentNotFoundError EFP-CCH01
+              ├── ChaosExperimentAlreadyRunningError EFP-CCH02
+              ├── ChaosExperimentAbortedError EFP-CCH03
+              ├── ChaosExperimentFailedStartError EFP-CCH04
+              ├── ChaosFaultInjectionError   EFP-CCH05
+              ├── ChaosFaultRemovalError     EFP-CCH06
+              ├── ChaosContainerKillError    EFP-CCH07
+              ├── ChaosNetworkPartitionError EFP-CCH08
+              ├── ChaosCPUStressError        EFP-CCH09
+              ├── ChaosMemoryPressureError   EFP-CCH10
+              ├── ChaosDiskFillError         EFP-CCH11
+              ├── ChaosImagePullFailureError EFP-CCH12
+              ├── ChaosDNSFailureError       EFP-CCH13
+              ├── ChaosNetworkLatencyError   EFP-CCH14
+              ├── ChaosGameDayError          EFP-CCH15
+              ├── ChaosGameDayAbortError     EFP-CCH16
+              ├── ChaosBlastRadiusExceededError EFP-CCH17
+              ├── ChaosSteadyStateViolationError EFP-CCH18
+              ├── ChaosCognitiveLoadGateError EFP-CCH19
+              ├── ChaosScheduleError         EFP-CCH20
+              ├── ChaosReportGenerationError EFP-CCH21
+              ├── ChaosTargetResolutionError EFP-CCH22
+              └── ChaosContainerChaosMiddlewareError EFP-CCH23
+
+Exception
+  └── ComposeError                             EFP-CMP00
+        ├── ComposeFileNotFoundError           EFP-CMP01
+        ├── ComposeFileParseError              EFP-CMP02
+        ├── ComposeVariableInterpolationError  EFP-CMP03
+        ├── ComposeCircularDependencyError     EFP-CMP04
+        ├── ComposeServiceNotFoundError        EFP-CMP05
+        ├── ComposeServiceStartError           EFP-CMP06
+        ├── ComposeServiceStopError            EFP-CMP07
+        ├── ComposeHealthCheckTimeoutError     EFP-CMP08
+        ├── ComposeNetworkCreateError          EFP-CMP09
+        ├── ComposeNetworkNotFoundError        EFP-CMP10
+        ├── ComposeVolumeCreateError           EFP-CMP11
+        ├── ComposeVolumeNotFoundError         EFP-CMP12
+        ├── ComposeScaleError                  EFP-CMP13
+        ├── ComposeExecError                   EFP-CMP14
+        ├── ComposeRestartError                EFP-CMP15
+        ├── ComposeRestartPolicyExhaustedError EFP-CMP16
+        ├── ComposePortConflictError           EFP-CMP17
+        ├── ComposeImageNotFoundError          EFP-CMP18
+        ├── ComposeProjectAlreadyRunningError  EFP-CMP19
+        └── ComposeMiddlewareError             EFP-CMP20
+
+Exception
+  └── KubeV2Error                              EFP-KV200
+        ├── KubeletV2Error                     EFP-KV201
+        ├── KV2ImagePullError                  EFP-KV202
+        ├── ImagePullBackOffError              EFP-KV203
+        ├── ImageNotPresentError               EFP-KV204
+        ├── PullSecretError                    EFP-KV205
+        ├── InitContainerFailedError           EFP-KV206
+        ├── InitContainerTimeoutError          EFP-KV207
+        ├── SidecarInjectionError              EFP-KV208
+        ├── SidecarLifecycleError              EFP-KV209
+        ├── ProbeFailedError                   EFP-KV210
+        │     ├── ReadinessProbeFailedError    EFP-KV212
+        │     ├── LivenessProbeFailedError     EFP-KV213
+        │     └── StartupProbeFailedError      EFP-KV214
+        ├── ProbeTimeoutError                  EFP-KV211
+        ├── VolumeProvisionError               EFP-KV215
+        ├── VolumeMountError                   EFP-KV216
+        ├── PVCNotFoundError                   EFP-KV217
+        ├── ContainerRestartBackoffError       EFP-KV218
+        ├── PodTerminationError                EFP-KV219
+        └── KubeV2MiddlewareError              EFP-KV220
+
+Exception
+  └── DeployError                              EFP-DPL00
+        ├── DeployPipelineError                EFP-DPL01
+        ├── DeployStageError                   EFP-DPL02
+        ├── DeployStepError                    EFP-DPL03
+        ├── DeployStrategyError                EFP-DPL04
+        ├── RollingUpdateError                 EFP-DPL05
+        ├── BlueGreenError                     EFP-DPL06
+        ├── CanaryError                        EFP-DPL07
+        ├── RecreateError                      EFP-DPL08
+        ├── DeployManifestError                EFP-DPL09
+        │     ├── ManifestParseError           EFP-DPL10
+        │     └── ManifestValidationError      EFP-DPL11
+        ├── GitOpsReconcileError               EFP-DPL12
+        ├── GitOpsDriftError                   EFP-DPL13
+        ├── GitOpsSyncError                    EFP-DPL14
+        ├── RollbackError                      EFP-DPL15
+        │     ├── RollbackRevisionNotFoundError EFP-DPL16
+        │     └── RollbackStrategyError        EFP-DPL17
+        ├── DeployGateError                    EFP-DPL18
+        │     └── CognitiveLoadGateError       EFP-DPL19
+        ├── DeployDashboardError               EFP-DPL20
+        └── DeployMiddlewareError              EFP-DPL21
+
+Exception
+  └── ContainerOpsError                        EFP-COP00
+        ├── ContainerOpsLogCollectorError      EFP-COP01
+        ├── ContainerOpsLogIndexError          EFP-COP02
+        ├── ContainerOpsLogQueryError          EFP-COP03
+        ├── ContainerOpsLogRetentionError      EFP-COP04
+        ├── ContainerOpsMetricsCollectorError  EFP-COP05
+        ├── ContainerOpsMetricsStoreError      EFP-COP06
+        ├── ContainerOpsMetricsAlertError      EFP-COP07
+        ├── ContainerOpsTraceExtenderError     EFP-COP08
+        ├── ContainerOpsTraceDashboardError    EFP-COP09
+        ├── ContainerOpsExecError              EFP-COP10
+        ├── ContainerOpsExecTimeoutError       EFP-COP11
+        ├── ContainerOpsOverlayDiffError       EFP-COP12
+        ├── ContainerOpsProcessTreeError       EFP-COP13
+        ├── ContainerOpsFlameGraphError        EFP-COP14
+        ├── ContainerOpsDashboardError         EFP-COP15
+        ├── ContainerOpsDashboardRenderError   EFP-COP16
+        ├── ContainerOpsCorrelationError       EFP-COP17
+        ├── ContainerOpsQuerySyntaxError       EFP-COP18
+        └── ContainerOpsMiddlewareError        EFP-COP19
 ```
 
 ## Aliases
