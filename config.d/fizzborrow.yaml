@@ -1,0 +1,27 @@
+# FizzBorrow Ownership & Borrow Checker configuration
+#
+# FizzLang has a type system that proves divisibility theorems but
+# cannot prevent use-after-move. The dependent type system constructs
+# witnesses that 15 is FizzBuzz. It cannot construct a witness that
+# a variable has not been moved. The borrow checker closes this
+# soundness gap by enforcing Rust's ownership discipline: values
+# have exactly one owner, borrows are tracked through NLL region
+# inference, and the drop checker ensures deterministic cleanup.
+# The evaluation of n % 3 == 0 is not merely correct but provably
+# memory-safe.
+fizzborrow:
+  enabled: false                           # Master switch — opt-in via --fizzborrow
+  nll_enabled: true                        # Non-lexical lifetimes (disable for lexical analysis)
+  two_phase_enabled: true                  # Two-phase borrows (reservation + activation)
+  strict_mode: false                       # Require explicit lifetime annotations (no elision)
+  max_inference_iterations: 100            # Fixed-point iteration limit for region inference
+  max_liveness_iterations: 50              # Iteration limit for liveness dataflow analysis
+  max_mir_temporaries: 1000                # Maximum MIR temporary variables
+  max_borrow_depth: 64                     # Maximum reborrow chain depth
+  dump_mir: false                          # Dump MIR to stderr before borrow analysis
+  dump_regions: false                      # Dump solved lifetime regions after NLL
+  dump_borrows: false                      # Dump active borrow set at each MIR statement
+  dump_drops: false                        # Dump computed drop order for each scope
+  show_variance: false                     # Display variance table for all types
+  dashboard:
+    width: 72                              # ASCII dashboard width

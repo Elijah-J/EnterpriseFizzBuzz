@@ -71,5 +71,13 @@ import enterprise_fizzbuzz.domain.events._distributed_locks  # noqa: F401
 import enterprise_fizzbuzz.domain.events._misc  # noqa: F401
 import enterprise_fizzbuzz.domain.events._containers  # noqa: F401
 import enterprise_fizzbuzz.domain.events._fizzlife  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzmvcc  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzlambda  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzwasm  # noqa: F401
+import enterprise_fizzbuzz.domain.events._fizzs3  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzstream  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzborrow  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzpolicy  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzadmit  # noqa: F401
 
 __all__ = ["EventType", "_EventValue"]
