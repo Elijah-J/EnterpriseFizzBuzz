@@ -62,12 +62,12 @@ const donutSegments = [
 
 const heatmapData = {
   cells: [
-    { number: 1, divisor: 3, divisible: false },
-    { number: 1, divisor: 5, divisible: false },
-    { number: 3, divisor: 3, divisible: true },
-    { number: 3, divisor: 5, divisible: false },
-    { number: 5, divisor: 3, divisible: false },
-    { number: 5, divisor: 5, divisible: true },
+    { number: 1, divisor: 3, divisible: false, remainder: 1 },
+    { number: 1, divisor: 5, divisible: false, remainder: 1 },
+    { number: 3, divisor: 3, divisible: true, remainder: 0 },
+    { number: 3, divisor: 5, divisible: false, remainder: 3 },
+    { number: 5, divisor: 3, divisible: false, remainder: 2 },
+    { number: 5, divisor: 5, divisible: true, remainder: 0 },
   ],
   numbers: [1, 3, 5],
   divisors: [3, 5],

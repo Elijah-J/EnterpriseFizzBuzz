@@ -477,7 +477,6 @@ describe("SimulationProvider — full coverage", () => {
         crossoverRate: 0.7,
         mutationRate: 0.1,
         elitismCount: 2,
-        tournamentSize: 3,
       });
       expect(history.isComplete).toBe(true);
       expect(history.generations.length).toBe(3);
@@ -498,7 +497,6 @@ describe("SimulationProvider — full coverage", () => {
         crossoverRate: 0.7,
         mutationRate: 0.1,
         elitismCount: 1,
-        tournamentSize: 2,
       });
       const history = await provider.getEvolutionHistory();
       expect(history).not.toBeNull();
