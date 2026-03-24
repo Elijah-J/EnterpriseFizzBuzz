@@ -1,7 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Wordmark } from "@/components/brand";
+import { Topographic } from "@/components/backgrounds";
+import { PageTransition } from "@/components/transitions";
 import { Breadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
 import { MobileDrawer } from "./mobile-drawer";
@@ -19,10 +22,26 @@ interface LayoutShellProps {
  * command palette visibility, mobile drawer toggling — to keep the root
  * RootLayout as a server component for optimal static export performance.
  */
+/**
+ * Derives a deterministic numeric seed from a route pathname.
+ * Each page in the platform receives a unique topographic terrain
+ * background based on its URL path, ensuring visual differentiation
+ * without runtime randomness.
+ */
+function hashPathname(path: string): number {
+  let hash = 5381;
+  for (let i = 0; i < path.length; i++) {
+    hash = ((hash << 5) + hash + path.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
 export function LayoutShell({ children }: LayoutShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const pathname = usePathname();
+  const topoSeed = useMemo(() => hashPathname(pathname), [pathname]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
@@ -125,7 +144,13 @@ export function LayoutShell({ children }: LayoutShellProps) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="relative flex-1 overflow-y-auto p-6">
+          {/* Generative topographic background — route-seeded terrain */}
+          <div className="generative-bg">
+            <Topographic seed={topoSeed} density={12} opacity={0.04} />
+          </div>
+          <PageTransition>{children}</PageTransition>
+        </main>
       </div>
 
       {/* Overlays */}
