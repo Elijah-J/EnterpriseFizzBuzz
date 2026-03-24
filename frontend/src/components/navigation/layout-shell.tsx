@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/brand";
 import { Topographic } from "@/components/backgrounds";
+import { Confetti, type ConfettiHandle } from "@/components/delight/confetti";
 import { PageTransition } from "@/components/transitions";
 import { CustomCursor } from "@/components/ui/custom-cursor";
 import { KeyboardShortcutOverlay } from "@/components/ui/keyboard-shortcut-overlay";
 import { LiveIndicator } from "@/components/ui/live-indicator";
 import { useKeyboardNavigation } from "@/lib/hooks/use-keyboard-navigation";
+import { useKonami } from "@/lib/hooks/use-konami";
 import { Breadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
 import { MobileDrawer } from "./mobile-drawer";
@@ -50,6 +52,19 @@ export function LayoutShell({ children }: LayoutShellProps) {
   const [isDataStale, setIsDataStale] = useState(false);
   const pathname = usePathname();
   const topoSeed = useMemo(() => hashPathname(pathname), [pathname]);
+
+  // Konami code detection and confetti burst
+  const { activated: konamiActivated } = useKonami();
+  const confettiRef = useRef<ConfettiHandle>(null);
+  const [konamiFlash, setKonamiFlash] = useState(false);
+
+  useEffect(() => {
+    if (konamiActivated) {
+      confettiRef.current?.fire();
+      setKonamiFlash(true);
+      setTimeout(() => setKonamiFlash(false), 200);
+    }
+  }, [konamiActivated]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
@@ -104,6 +119,17 @@ export function LayoutShell({ children }: LayoutShellProps) {
 
   return (
     <>
+      {/* Confetti overlay for Konami code activation */}
+      <Confetti ref={confettiRef} />
+
+      {/* Konami activation flash — 200ms amber border pulse */}
+      {konamiFlash && (
+        <div
+          className="fixed inset-0 z-[9998] pointer-events-none border-4 border-accent rounded-lg"
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar — desktop only */}
       <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
 

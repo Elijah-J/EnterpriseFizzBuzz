@@ -10,6 +10,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
+import { Confetti, type ConfettiHandle } from "@/components/delight/confetti";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -100,6 +101,7 @@ export default function EvaluateConsolePage() {
   const [evalStage, setEvalStage] = useState<string>("");
   const [evalProgress, setEvalProgress] = useState(0);
   const stageTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiRef = useRef<ConfettiHandle>(null);
 
   // Validation
   const startValid = Number.isInteger(start) && start >= 1 && start <= 10_000;
@@ -137,6 +139,9 @@ export default function EvaluateConsolePage() {
       await new Promise((resolve) => setTimeout(resolve, 150));
       setEvalStage("Complete");
       setEvalProgress(100);
+
+      // Trigger completion acknowledgment visualization
+      confettiRef.current?.fire();
 
       // Animate results appearing one by one via CSS — we just need to
       // increment visibleCount on a timer so CSS transitions can fire.

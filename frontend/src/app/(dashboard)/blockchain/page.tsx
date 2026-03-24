@@ -5,10 +5,8 @@ import { Sparkline } from "@/components/charts/sparkline";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CopyButton } from "@/components/ui/copy-button";
-import { Pagination } from "@/components/ui/pagination";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Timeline } from "@/components/ui/timeline";
 import type {
   Block,
   BlockchainStats,

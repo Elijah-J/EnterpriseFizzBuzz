@@ -3,11 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { CopyButton } from "@/components/ui/copy-button";
 import { Reveal } from "@/components/ui/reveal";
-import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs } from "@/components/ui/tabs";
 import type {
   QuantumCircuit,
   QuantumSimulationResult,
