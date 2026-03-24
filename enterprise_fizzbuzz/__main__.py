@@ -540,6 +540,10 @@ from enterprise_fizzbuzz.infrastructure.fizzcontainerchaos import (
     PredefinedGameDays,
     create_fizzcontainerchaos_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzcontainerops import (
+    FizzContainerOpsMiddleware,
+    create_fizzcontainerops_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3893,6 +3897,88 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzcontainerchaos-blast-radius",
         action="store_true",
         help="Show current blast radius across all active experiments",
+    )
+
+    # FizzContainerOps — Container Observability & Diagnostics
+    parser.add_argument(
+        "--fizzcontainerops",
+        action="store_true",
+        default=False,
+        help="Enable FizzContainerOps: container observability with log aggregation, metrics, tracing, diagnostics, and dashboard",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-logs",
+        type=str,
+        default=None,
+        metavar="SERVICE",
+        help="Query container logs by service name",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-logs-query",
+        type=str,
+        default=None,
+        metavar="QUERY",
+        help="Search container logs with query DSL (e.g., 'service:core AND level:ERROR AND timestamp:[now-1h TO now]')",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-metrics",
+        type=str,
+        default=None,
+        metavar="CONTAINER",
+        help="Show resource metrics for a specific container",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-metrics-top",
+        action="store_true",
+        default=False,
+        help="Show container resource utilization ranked by CPU or memory",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-trace",
+        type=str,
+        default=None,
+        metavar="TRACE_ID",
+        help="Show distributed trace with container boundary annotations",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-exec",
+        nargs=2,
+        default=None,
+        metavar=("CONTAINER", "COMMAND"),
+        help="Execute a diagnostic command inside a running container",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-diff",
+        type=str,
+        default=None,
+        metavar="CONTAINER",
+        help="Show overlay filesystem changes for a container",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-pstree",
+        type=str,
+        default=None,
+        metavar="CONTAINER",
+        help="Show the process tree inside a container",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-flamegraph",
+        type=str,
+        default=None,
+        metavar="CONTAINER",
+        help="Generate a cgroup-scoped flame graph for a container",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-dashboard",
+        action="store_true",
+        default=False,
+        help="Launch the ASCII container fleet health dashboard",
+    )
+    parser.add_argument(
+        "--fizzcontainerops-alerts",
+        action="store_true",
+        default=False,
+        help="List active metric alert rules with current status",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8397,6 +8483,45 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzContainerOps: Container Observability & Diagnostics
+    # ----------------------------------------------------------------
+    containerops_middleware_instance = None
+
+    if (args.fizzcontainerops or args.fizzcontainerops_logs or
+            args.fizzcontainerops_logs_query or args.fizzcontainerops_metrics or
+            args.fizzcontainerops_metrics_top or args.fizzcontainerops_trace or
+            args.fizzcontainerops_exec or args.fizzcontainerops_diff or
+            args.fizzcontainerops_pstree or args.fizzcontainerops_flamegraph or
+            args.fizzcontainerops_dashboard or args.fizzcontainerops_alerts):
+        (containerops_middleware_instance,) = create_fizzcontainerops_subsystem(
+            log_retention_hours=config.fizzcontainerops_log_retention_hours,
+            max_log_entries=config.fizzcontainerops_max_log_entries,
+            scrape_interval=config.fizzcontainerops_scrape_interval,
+            metrics_buffer_size=config.fizzcontainerops_metrics_buffer_size,
+            alert_evaluation_interval=config.fizzcontainerops_alert_evaluation_interval,
+            exec_timeout=config.fizzcontainerops_exec_timeout,
+            flamegraph_sample_count=config.fizzcontainerops_flamegraph_samples,
+            dashboard_width=config.fizzcontainerops_dashboard_width,
+            enable_dashboard=args.fizzcontainerops_dashboard,
+            use_color=config.fizzcontainerops_use_color,
+            event_bus=event_bus if 'event_bus' in dir() else None,
+        )
+        builder.with_middleware(containerops_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "\n"
+                "  +----------------------------------------------------------+\n"
+                "  | FIZZCONTAINEROPS: CONTAINER OBSERVABILITY & DIAGNOSTICS  |\n"
+                "  +----------------------------------------------------------+\n"
+                f"  | Log Retention: {config.fizzcontainerops_log_retention_hours}h           Scrape Interval: {config.fizzcontainerops_scrape_interval}s     |\n"
+                f"  | Buffer Size: {config.fizzcontainerops_metrics_buffer_size:<10} Alert Interval: {config.fizzcontainerops_alert_evaluation_interval}s      |\n"
+                "  | Logs, metrics, traces, exec, diff, pstree, flamegraph   |\n"
+                "  | cAdvisor-style metrics, Fluentd-style logs              |\n"
+                "  +----------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -12011,6 +12136,74 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.fizzcontainerchaos_abort and chaos_executor_instance is not None:
         chaos_executor_instance.abort_experiment(args.fizzcontainerchaos_abort)
         print(f"\n  Experiment {args.fizzcontainerchaos_abort} aborted.\n")
+
+    # FizzContainerOps post-execution rendering
+    if args.fizzcontainerops_logs and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_logs(args.fizzcontainerops_logs))
+    elif args.fizzcontainerops_logs and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_logs_query and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_logs_query(args.fizzcontainerops_logs_query))
+    elif args.fizzcontainerops_logs_query and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_metrics and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_metrics(args.fizzcontainerops_metrics))
+    elif args.fizzcontainerops_metrics and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_metrics_top and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_metrics_top())
+    elif args.fizzcontainerops_metrics_top and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_trace and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_trace(args.fizzcontainerops_trace))
+    elif args.fizzcontainerops_trace and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_exec and containerops_middleware_instance is not None:
+        container_id, command = args.fizzcontainerops_exec
+        print()
+        print(containerops_middleware_instance.render_exec(container_id, command))
+    elif args.fizzcontainerops_exec and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_diff and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_diff(args.fizzcontainerops_diff))
+    elif args.fizzcontainerops_diff and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_pstree and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_pstree(args.fizzcontainerops_pstree))
+    elif args.fizzcontainerops_pstree and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_flamegraph and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_flamegraph(args.fizzcontainerops_flamegraph))
+    elif args.fizzcontainerops_flamegraph and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_dashboard and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_dashboard())
+    elif args.fizzcontainerops_dashboard and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    if args.fizzcontainerops_alerts and containerops_middleware_instance is not None:
+        print()
+        print(containerops_middleware_instance.render_alerts())
+    elif args.fizzcontainerops_alerts and containerops_middleware_instance is None:
+        print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:
