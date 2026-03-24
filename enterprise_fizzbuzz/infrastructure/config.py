@@ -7282,6 +7282,132 @@ class ConfigurationManager(metaclass=_SingletonMeta):
         self._ensure_loaded()
         return int(self._raw_config.get("fizzcontainerops", {}).get("log_context_lines", 3))
 
+    @property
+    def fizzcompose_enabled(self) -> bool:
+        """Whether the FizzCompose subsystem is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzcompose", {}).get("enabled", False)
+
+    @property
+    def fizzcompose_file_path(self) -> str:
+        """Path to the compose file."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzcompose", {}).get("file_path", "fizzbuzz-compose.yaml")
+
+    @property
+    def fizzcompose_project_name(self) -> str:
+        """Compose project name."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzcompose", {}).get("project_name", "fizzbuzz")
+
+    @property
+    def fizzcompose_health_check_interval(self) -> float:
+        """Interval between health check polls in seconds."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzcompose", {}).get("health_check", {}).get("interval", 2.0))
+
+    @property
+    def fizzcompose_health_check_timeout(self) -> float:
+        """Timeout for dependency health check gates in seconds."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzcompose", {}).get("health_check", {}).get("timeout", 60.0))
+
+    @property
+    def fizzcompose_restart_delay(self) -> float:
+        """Delay between restart attempts in seconds."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzcompose", {}).get("restart", {}).get("delay", 5.0))
+
+    @property
+    def fizzcompose_restart_max_attempts(self) -> int:
+        """Maximum restart attempts."""
+        self._ensure_loaded()
+        return int(self._raw_config.get("fizzcompose", {}).get("restart", {}).get("max_attempts", 5))
+
+    @property
+    def fizzcompose_restart_window(self) -> float:
+        """Restart attempt counter reset window in seconds."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzcompose", {}).get("restart", {}).get("window", 120.0))
+
+    @property
+    def fizzcompose_scale_max(self) -> int:
+        """Maximum replica count per service."""
+        self._ensure_loaded()
+        return int(self._raw_config.get("fizzcompose", {}).get("scale", {}).get("max_replicas", 10))
+
+    @property
+    def fizzcompose_log_tail_lines(self) -> int:
+        """Default number of log lines to display."""
+        self._ensure_loaded()
+        return int(self._raw_config.get("fizzcompose", {}).get("log", {}).get("tail_lines", 100))
+
+    @property
+    def fizzcompose_dashboard_width(self) -> int:
+        """ASCII dashboard width for FizzCompose."""
+        self._ensure_loaded()
+        return int(self._raw_config.get("fizzcompose", {}).get("dashboard", {}).get("width", 76))
+
+    @property
+    def fizzdeploy_enabled(self) -> bool:
+        """Whether the FizzDeploy deployment pipeline is enabled."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdeploy", {}).get("enabled", False)
+
+    @property
+    def fizzdeploy_default_strategy(self) -> str:
+        """Default deployment strategy."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdeploy", {}).get("default_strategy", "rolling_update")
+
+    @property
+    def fizzdeploy_pipeline_timeout(self) -> float:
+        """Pipeline execution timeout in seconds."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzdeploy", {}).get("pipeline_timeout", 600.0))
+
+    @property
+    def fizzdeploy_reconcile_interval(self) -> float:
+        """GitOps reconciliation loop interval in seconds."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzdeploy", {}).get("reconcile_interval", 30.0))
+
+    @property
+    def fizzdeploy_sync_strategy(self) -> str:
+        """Default GitOps sync strategy."""
+        self._ensure_loaded()
+        return self._raw_config.get("fizzdeploy", {}).get("sync_strategy", "auto")
+
+    @property
+    def fizzdeploy_revision_history_depth(self) -> int:
+        """Maximum deployment revisions retained per deployment."""
+        self._ensure_loaded()
+        return int(self._raw_config.get("fizzdeploy", {}).get("revision_history_depth", 10))
+
+    @property
+    def fizzdeploy_cognitive_load_threshold(self) -> float:
+        """NASA-TLX cognitive load threshold for deployment gating."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzdeploy", {}).get("cognitive_load_threshold", 70.0))
+
+    @property
+    def fizzdeploy_max_surge(self) -> float:
+        """Default max surge for rolling update strategy (fraction 0.0-1.0)."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzdeploy", {}).get("rolling_update", {}).get("max_surge", 0.25))
+
+    @property
+    def fizzdeploy_max_unavailable(self) -> float:
+        """Default max unavailable for rolling update strategy (fraction 0.0-1.0)."""
+        self._ensure_loaded()
+        return float(self._raw_config.get("fizzdeploy", {}).get("rolling_update", {}).get("max_unavailable", 0.25))
+
+    @property
+    def fizzdeploy_dashboard_width(self) -> int:
+        """Width of the FizzDeploy ASCII dashboard."""
+        self._ensure_loaded()
+        return int(self._raw_config.get("fizzdeploy", {}).get("dashboard", {}).get("width", 72))
+
     def get_raw(self, key: str, default: Any = None) -> Any:
         """Get a raw configuration value by dot-separated key path."""
         self._ensure_loaded()

@@ -544,6 +544,21 @@ from enterprise_fizzbuzz.infrastructure.fizzcontainerops import (
     FizzContainerOpsMiddleware,
     create_fizzcontainerops_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzdeploy import (
+    PipelineExecutor,
+    GitOpsReconciler,
+    RollbackManager,
+    DeploymentGate,
+    ManifestParser,
+    DeployDashboard,
+    FizzDeployMiddleware,
+    create_fizzdeploy_subsystem,
+)
+from enterprise_fizzbuzz.infrastructure.fizzcompose import (
+    ComposeEngine,
+    FizzComposeMiddleware,
+    create_fizzcompose_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3979,6 +3994,125 @@ def build_argument_parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help="List active metric alert rules with current status",
+    )
+
+    # FizzDeploy — Container-Native Deployment Pipeline
+    parser.add_argument(
+        "--fizzdeploy",
+        action="store_true",
+        help="Enable FizzDeploy: container-native deployment pipeline with four strategies, GitOps reconciliation, and cognitive load gating",
+    )
+    parser.add_argument(
+        "--fizzdeploy-apply",
+        type=str,
+        default=None,
+        metavar="MANIFEST",
+        help="Apply a deployment manifest (YAML file path or inline YAML)",
+    )
+    parser.add_argument(
+        "--fizzdeploy-status",
+        type=str,
+        default=None,
+        metavar="DEPLOYMENT",
+        help="Display deployment status and revision history",
+    )
+    parser.add_argument(
+        "--fizzdeploy-rollback",
+        nargs=2,
+        default=None,
+        metavar=("DEPLOYMENT", "REVISION"),
+        help="Rollback a deployment to a specific revision number",
+    )
+    parser.add_argument(
+        "--fizzdeploy-pipeline",
+        type=str,
+        default=None,
+        metavar="DEPLOYMENT",
+        help="Display pipeline execution details for a deployment",
+    )
+    parser.add_argument(
+        "--fizzdeploy-strategy",
+        type=str,
+        default=None,
+        choices=["rolling", "bluegreen", "canary", "recreate"],
+        help="Override the default deployment strategy",
+    )
+    parser.add_argument(
+        "--fizzdeploy-gitops-sync",
+        action="store_true",
+        help="Trigger a manual GitOps reconciliation pass",
+    )
+    parser.add_argument(
+        "--fizzdeploy-emergency",
+        action="store_true",
+        help="Bypass cognitive load gating for emergency deployments",
+    )
+    parser.add_argument(
+        "--fizzdeploy-dry-run",
+        action="store_true",
+        help="Show what a deployment would change without applying",
+    )
+
+    # FizzCompose — Multi-Container Application Orchestration
+    parser.add_argument(
+        "--fizzcompose",
+        action="store_true",
+        help="Enable FizzCompose multi-container orchestration",
+    )
+    parser.add_argument(
+        "--fizzcompose-up",
+        action="store_true",
+        help="Bring up all compose services in dependency order",
+    )
+    parser.add_argument(
+        "--fizzcompose-down",
+        action="store_true",
+        help="Tear down all compose services in reverse dependency order",
+    )
+    parser.add_argument(
+        "--fizzcompose-ps",
+        action="store_true",
+        help="Show status of all compose services",
+    )
+    parser.add_argument(
+        "--fizzcompose-logs",
+        type=str,
+        default=None,
+        metavar="SERVICE",
+        help="Stream logs for a specific service",
+    )
+    parser.add_argument(
+        "--fizzcompose-scale",
+        type=str,
+        default=None,
+        metavar="SERVICE=REPLICAS",
+        help="Scale a service to the specified replica count",
+    )
+    parser.add_argument(
+        "--fizzcompose-restart",
+        type=str,
+        default=None,
+        metavar="SERVICE",
+        help="Restart a specific service",
+    )
+    parser.add_argument(
+        "--fizzcompose-exec",
+        nargs=2,
+        default=None,
+        metavar=("SERVICE", "COMMAND"),
+        help="Execute a command in a running service container",
+    )
+    parser.add_argument(
+        "--fizzcompose-top",
+        type=str,
+        default=None,
+        metavar="SERVICE",
+        help="Show running processes in a service container",
+    )
+    parser.add_argument(
+        "--fizzcompose-config",
+        action="store_true",
+        help="Validate and display the resolved compose file",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8522,6 +8656,80 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +----------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzDeploy: Container-Native Deployment Pipeline
+    # ----------------------------------------------------------------
+    deploy_middleware_instance = None
+    deploy_executor_instance = None
+
+    if args.fizzdeploy or args.fizzdeploy_apply or args.fizzdeploy_status or args.fizzdeploy_rollback or args.fizzdeploy_pipeline or args.fizzdeploy_gitops_sync or args.fizzdeploy_dry_run:
+        deploy_executor_instance, deploy_middleware_instance = create_fizzdeploy_subsystem(
+            default_strategy=config.fizzdeploy_default_strategy,
+            pipeline_timeout=config.fizzdeploy_pipeline_timeout,
+            reconcile_interval=config.fizzdeploy_reconcile_interval,
+            sync_strategy=config.fizzdeploy_sync_strategy,
+            revision_history_depth=config.fizzdeploy_revision_history_depth,
+            cognitive_load_threshold=config.fizzdeploy_cognitive_load_threshold,
+            max_surge=config.fizzdeploy_max_surge,
+            max_unavailable=config.fizzdeploy_max_unavailable,
+            dashboard_width=config.fizzdeploy_dashboard_width,
+            enable_dashboard=args.fizzdeploy_status is not None,
+            event_bus=event_bus if 'event_bus' in dir() else None,
+        )
+        builder.with_middleware(deploy_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "\n"
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZDEPLOY: CONTAINER-NATIVE DEPLOYMENT PIPELINE        |\n"
+                f"  | Strategy: {config.fizzdeploy_default_strategy:<46}|\n"
+                f"  | Reconcile: {config.fizzdeploy_reconcile_interval:.0f}s{' ':>4} Revisions: {config.fizzdeploy_revision_history_depth:<16}|\n"
+                "  | Rolling update, blue-green, canary, recreate            |\n"
+                "  | GitOps reconciliation, cognitive load gating             |\n"
+                "  | Argo CD / Spinnaker architecture                        |\n"
+                "  +---------------------------------------------------------+"
+            )
+
+    # ----------------------------------------------------------------
+    # FizzCompose: Multi-Container Application Orchestration
+    # ----------------------------------------------------------------
+    compose_middleware_instance = None
+    compose_engine_instance = None
+
+    if (args.fizzcompose or args.fizzcompose_up or args.fizzcompose_down or
+            args.fizzcompose_ps or args.fizzcompose_logs or args.fizzcompose_scale or
+            args.fizzcompose_restart or args.fizzcompose_exec or args.fizzcompose_top or
+            args.fizzcompose_config):
+        compose_engine_instance, compose_middleware_instance = create_fizzcompose_subsystem(
+            compose_file_path=config.fizzcompose_file_path,
+            project_name=config.fizzcompose_project_name,
+            health_check_interval=config.fizzcompose_health_check_interval,
+            health_check_timeout=config.fizzcompose_health_check_timeout,
+            restart_delay=config.fizzcompose_restart_delay,
+            restart_max_attempts=config.fizzcompose_restart_max_attempts,
+            restart_window=config.fizzcompose_restart_window,
+            scale_max=config.fizzcompose_scale_max,
+            log_tail_lines=config.fizzcompose_log_tail_lines,
+            dashboard_width=config.fizzcompose_dashboard_width,
+            enable_dashboard=args.fizzcompose_ps,
+            event_bus=event_bus if 'event_bus' in dir() else None,
+        )
+        builder.with_middleware(compose_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "\n"
+                "  +----------------------------------------------------------+\n"
+                "  | FIZZCOMPOSE: MULTI-CONTAINER APPLICATION ORCHESTRATION   |\n"
+                "  +----------------------------------------------------------+\n"
+                f"  | Project: {config.fizzcompose_project_name:<48}|\n"
+                f"  | Services: 12 groups    Health Interval: {config.fizzcompose_health_check_interval:.0f}s             |\n"
+                "  | Kahn's algorithm topological sort, restart policies      |\n"
+                "  | Docker Compose Specification v3.8 architecture           |\n"
+                "  +----------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -12204,6 +12412,63 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(containerops_middleware_instance.render_alerts())
     elif args.fizzcontainerops_alerts and containerops_middleware_instance is None:
         print("\n  FizzContainerOps not enabled. Use --fizzcontainerops to enable.\n")
+
+    # FizzDeploy Status (post-execution)
+    if args.fizzdeploy_status and deploy_middleware_instance is not None:
+        print()
+        print(deploy_middleware_instance.render_revisions(args.fizzdeploy_status))
+    elif args.fizzdeploy_status and deploy_middleware_instance is None:
+        print("\n  FizzDeploy not enabled. Use --fizzdeploy to enable.\n")
+
+    # FizzDeploy Pipeline (post-execution)
+    if args.fizzdeploy_pipeline and deploy_middleware_instance is not None:
+        print()
+        print(deploy_middleware_instance.render_pipeline(args.fizzdeploy_pipeline))
+    elif args.fizzdeploy_pipeline and deploy_middleware_instance is None:
+        print("\n  FizzDeploy not enabled. Use --fizzdeploy to enable.\n")
+
+    # FizzDeploy GitOps Sync (post-execution)
+    if args.fizzdeploy_gitops_sync and deploy_middleware_instance is not None:
+        print()
+        print(deploy_middleware_instance.render_drift())
+    elif args.fizzdeploy_gitops_sync and deploy_middleware_instance is None:
+        print("\n  FizzDeploy not enabled. Use --fizzdeploy to enable.\n")
+
+    # FizzCompose Dashboard (post-execution)
+    if args.fizzcompose_ps and compose_middleware_instance is not None:
+        print()
+        print(compose_middleware_instance.render_dashboard())
+    elif args.fizzcompose_ps and compose_middleware_instance is None:
+        print("\n  FizzCompose not enabled. Use --fizzcompose to enable.\n")
+
+    # FizzCompose Logs (post-execution)
+    if args.fizzcompose_logs and compose_engine_instance is not None:
+        print()
+        print(compose_engine_instance.logs(args.fizzcompose_logs))
+    elif args.fizzcompose_logs and compose_engine_instance is None:
+        print("\n  FizzCompose not enabled. Use --fizzcompose to enable.\n")
+
+    # FizzCompose Config (post-execution)
+    if args.fizzcompose_config and compose_engine_instance is not None:
+        print()
+        print(compose_engine_instance.config())
+    elif args.fizzcompose_config and compose_engine_instance is None:
+        print("\n  FizzCompose not enabled. Use --fizzcompose to enable.\n")
+
+    # FizzCompose Top (post-execution)
+    if args.fizzcompose_top and compose_engine_instance is not None:
+        print()
+        print(compose_engine_instance.top(args.fizzcompose_top))
+    elif args.fizzcompose_top and compose_engine_instance is None:
+        print("\n  FizzCompose not enabled. Use --fizzcompose to enable.\n")
+
+    # FizzCompose Exec (post-execution)
+    if args.fizzcompose_exec and compose_engine_instance is not None:
+        service_name, command = args.fizzcompose_exec
+        print()
+        print(compose_engine_instance.exec(service_name, command))
+    elif args.fizzcompose_exec and compose_engine_instance is None:
+        print("\n  FizzCompose not enabled. Use --fizzcompose to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

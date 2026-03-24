@@ -934,6 +934,45 @@ class EventType(Enum):
     CONTAINER_OPS_FLAMEGRAPH_GENERATED = auto()
     CONTAINER_OPS_DASHBOARD_RENDERED = auto()
 
+    # FizzDeploy — Container-Native Deployment Pipeline events
+    DEPLOY_PIPELINE_STARTED = auto()
+    DEPLOY_PIPELINE_COMPLETED = auto()
+    DEPLOY_PIPELINE_FAILED = auto()
+    DEPLOY_STAGE_STARTED = auto()
+    DEPLOY_STAGE_COMPLETED = auto()
+    DEPLOY_STAGE_FAILED = auto()
+    DEPLOY_ROLLING_UPDATE_BATCH = auto()
+    DEPLOY_ROLLING_UPDATE_PAUSED = auto()
+    DEPLOY_BLUE_GREEN_SWITCHED = auto()
+    DEPLOY_BLUE_GREEN_ABORTED = auto()
+    DEPLOY_CANARY_STEP_ADVANCED = auto()
+    DEPLOY_CANARY_REGRESSION = auto()
+    DEPLOY_RECREATE_COMPLETED = auto()
+    DEPLOY_GITOPS_DRIFT_DETECTED = auto()
+    DEPLOY_GITOPS_SYNC_APPLIED = auto()
+    DEPLOY_ROLLBACK_EXECUTED = auto()
+    DEPLOY_GATE_BLOCKED = auto()
+    DEPLOY_GATE_PASSED = auto()
+    DEPLOY_GATE_EMERGENCY_BYPASS = auto()
+    DEPLOY_DASHBOARD_RENDERED = auto()
+
+    # FizzCompose: Multi-Container Application Orchestration events
+    COMPOSE_UP_STARTED = auto()
+    COMPOSE_UP_COMPLETED = auto()
+    COMPOSE_DOWN_STARTED = auto()
+    COMPOSE_DOWN_COMPLETED = auto()
+    COMPOSE_SERVICE_STARTING = auto()
+    COMPOSE_SERVICE_STARTED = auto()
+    COMPOSE_SERVICE_HEALTHY = auto()
+    COMPOSE_SERVICE_UNHEALTHY = auto()
+    COMPOSE_SERVICE_STOPPED = auto()
+    COMPOSE_SERVICE_RESTARTED = auto()
+    COMPOSE_SERVICE_SCALED = auto()
+    COMPOSE_DEPENDENCY_RESOLVED = auto()
+    COMPOSE_NETWORK_CREATED = auto()
+    COMPOSE_VOLUME_CREATED = auto()
+    COMPOSE_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.
