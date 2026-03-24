@@ -188,19 +188,27 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {!collapsed && (
               <p className="heading-section px-2 mb-1">{section.label}</p>
             )}
-            <ul className="space-y-0.5">
+            <ul className="relative space-y-0.5">
               {section.items.map((item) => {
                 const active = isActive(item.href);
                 const Icon = item.icon;
                 const linkContent = (
                   <Link
                     href={item.href}
-                    className={`flex items-center gap-3 rounded px-2 py-1.5 text-sm transition-colors duration-150 ${
+                    className={`relative flex items-center gap-3 rounded px-2 py-1.5 text-sm transition-all duration-200 ${
                       active
-                        ? "bg-surface-raised text-text-primary border-l-2 border-l-[var(--accent)] -ml-0.5 pl-[calc(0.5rem+2px)]"
+                        ? "bg-surface-raised text-text-primary"
                         : "text-text-secondary hover:bg-surface-raised"
                     } ${collapsed ? "justify-center" : ""}`}
                   >
+                    {/* Active indicator bar — slides into position via CSS transition */}
+                    <span
+                      className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full transition-all duration-200"
+                      style={{
+                        backgroundColor: active ? "var(--accent)" : "transparent",
+                        transform: active ? "scaleY(1)" : "scaleY(0)",
+                      }}
+                    />
                     <Icon className="shrink-0" />
                     {!collapsed && (
                       <span className="truncate">{item.label}</span>

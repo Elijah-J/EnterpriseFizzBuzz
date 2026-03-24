@@ -112,7 +112,7 @@ export function HealthMatrixWidget() {
               title={`${subsystem.name}: ${subsystem.status} (${subsystem.responseTimeMs}ms)`}
             >
               <span
-                className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[subsystem.status]}`}
+                className={`h-2 w-2 shrink-0 rounded-full transition-colors duration-300 ${STATUS_DOT[subsystem.status]}`}
               />
               <span className="text-[11px] text-text-secondary truncate">
                 {subsystem.name}
