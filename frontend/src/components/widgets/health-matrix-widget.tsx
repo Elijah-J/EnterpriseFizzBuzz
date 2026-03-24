@@ -1,26 +1,28 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { SubsystemHealth } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 /**
  * Status-to-color mapping for health indicator dots. Colors correspond
- * to the platform's severity taxonomy: green for nominal, amber for
- * degraded, red for outage, gray for unknown/unreachable.
+ * to the platform's severity taxonomy using desaturated domain tones:
+ * green for nominal, amber for degraded, red for outage, stone for unknown.
  */
 const STATUS_DOT: Record<SubsystemHealth["status"], string> = {
   up: "bg-fizz-400",
-  degraded: "bg-amber-400",
-  down: "bg-red-500",
-  unknown: "bg-panel-500",
+  degraded: "bg-[var(--accent)]",
+  down: "bg-[var(--status-error)]",
+  unknown: "bg-text-muted",
 };
 
 const STATUS_TEXT: Record<SubsystemHealth["status"], string> = {
   up: "text-fizz-400",
-  degraded: "text-amber-400",
-  down: "text-red-400",
-  unknown: "text-panel-500",
+  degraded: "text-[var(--accent)]",
+  down: "text-[var(--status-error)]",
+  unknown: "text-text-muted",
 };
 
 /**
@@ -39,6 +41,9 @@ const STATUS_PRIORITY: Record<SubsystemHealth["status"], number> = {
  * health indicators. Subsystems with degraded or down status are sorted
  * to the top for immediate operator awareness. Auto-refreshes every
  * 5 seconds.
+ *
+ * Loading state uses a skeleton grid that matches the final layout
+ * dimensions, preventing content shift on data arrival.
  */
 export function HealthMatrixWidget() {
   const provider = useDataProvider();
@@ -46,9 +51,9 @@ export function HealthMatrixWidget() {
 
   const refresh = useCallback(async () => {
     const data = await provider.getSystemHealth();
-    // Sort: critical statuses first, then alphabetical within tier
     data.sort((a, b) => {
-      const priorityDiff = STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
+      const priorityDiff =
+        STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status];
       if (priorityDiff !== 0) return priorityDiff;
       return a.name.localeCompare(b.name);
     });
@@ -63,8 +68,17 @@ export function HealthMatrixWidget() {
 
   if (health.length === 0) {
     return (
-      <div className="flex h-40 items-center justify-center">
-        <span className="text-xs text-panel-500">Probing subsystem health...</span>
+      <div className="space-y-3">
+        <div className="flex gap-3">
+          <Skeleton variant="text" width="4rem" />
+          <Skeleton variant="text" width="6rem" />
+        </div>
+        <div className="grid grid-cols-2 gap-1.5">
+          {Array.from({ length: 8 }, (_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton placeholders with fixed count
+            <Skeleton key={i} variant="rect" height="2rem" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -79,36 +93,39 @@ export function HealthMatrixWidget() {
       <div className="flex items-center gap-3 text-xs">
         <span className="text-fizz-400">{upCount} up</span>
         {degradedCount > 0 && (
-          <span className="text-amber-400">{degradedCount} degraded</span>
+          <span className="text-[var(--accent)]">{degradedCount} degraded</span>
         )}
         {downCount > 0 && (
-          <span className="text-red-400">{downCount} down</span>
+          <span className="text-[var(--status-error)]">{downCount} down</span>
         )}
-        <span className="ml-auto text-panel-500">{health.length} subsystems</span>
+        <span className="ml-auto text-text-muted">
+          {health.length} subsystems
+        </span>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-2 gap-1.5">
-        {health.map((subsystem) => (
-          <div
-            key={subsystem.name}
-            className="flex items-center gap-2 rounded px-2 py-1.5 bg-panel-900 border border-panel-700"
-            title={`${subsystem.name}: ${subsystem.status} (${subsystem.responseTimeMs}ms)`}
-          >
-            <span
-              className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[subsystem.status]} ${
-                subsystem.status === "down" ? "animate-pulse" : ""
-              }`}
-            />
-            <span className="text-[11px] text-panel-300 truncate">
-              {subsystem.name}
-            </span>
-            {subsystem.status !== "down" && (
-              <span className={`ml-auto text-[10px] font-mono ${STATUS_TEXT[subsystem.status]}`}>
-                {subsystem.responseTimeMs.toFixed(1)}ms
+        {health.map((subsystem, index) => (
+          <Reveal key={subsystem.name} delay={index * 20}>
+            <div
+              className="flex items-center gap-2 rounded px-2 py-1.5 bg-surface-base border border-border-subtle"
+              title={`${subsystem.name}: ${subsystem.status} (${subsystem.responseTimeMs}ms)`}
+            >
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[subsystem.status]}`}
+              />
+              <span className="text-[11px] text-text-secondary truncate">
+                {subsystem.name}
               </span>
-            )}
-          </div>
+              {subsystem.status !== "down" && (
+                <span
+                  className={`ml-auto text-[10px] font-mono ${STATUS_TEXT[subsystem.status]}`}
+                >
+                  {subsystem.responseTimeMs.toFixed(1)}ms
+                </span>
+              )}
+            </div>
+          </Reveal>
         ))}
       </div>
     </div>

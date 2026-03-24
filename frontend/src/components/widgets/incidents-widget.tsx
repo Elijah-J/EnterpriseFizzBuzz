@@ -1,14 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Badge } from "@/components/ui/badge";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { SLAStatus } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 /**
  * Incidents Widget — Displays active incident count with severity
  * classification and the current on-call engineer. Shares the SLA
  * data feed to avoid redundant polling. Auto-refreshes every 3 seconds.
+ *
+ * Incident detail sections use Reveal entrance animations to
+ * communicate state transitions when new incidents appear.
  */
 export function IncidentsWidget() {
   const provider = useDataProvider();
@@ -27,8 +33,13 @@ export function IncidentsWidget() {
 
   if (!sla) {
     return (
-      <div className="flex h-24 items-center justify-center">
-        <span className="text-xs text-panel-500">Loading incident feed...</span>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton variant="rect" width="8rem" height="3rem" />
+          <Skeleton variant="rect" width="5rem" height="1.5rem" />
+        </div>
+        <Skeleton variant="rect" height="3rem" />
+        <Skeleton variant="rect" height="2.5rem" />
       </div>
     );
   }
@@ -40,10 +51,11 @@ export function IncidentsWidget() {
       {/* Incident count */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-panel-500">Active Incidents</p>
-          <p className={`text-3xl font-mono font-bold ${hasIncidents ? "text-red-400" : "text-fizz-400"}`}>
-            {sla.activeIncidents}
-          </p>
+          <p className="data-label">Active Incidents</p>
+          <AnimatedNumber
+            value={sla.activeIncidents}
+            className={`data-value text-3xl ${hasIncidents ? "text-[var(--status-error)]" : "text-fizz-400"}`}
+          />
         </div>
         <Badge variant={hasIncidents ? "error" : "success"}>
           {hasIncidents ? "SEV-3" : "ALL CLEAR"}
@@ -52,25 +64,34 @@ export function IncidentsWidget() {
 
       {/* Incident detail (if active) */}
       {hasIncidents && (
-        <div className="rounded border border-red-900 bg-red-950/30 px-3 py-2">
-          <p className="text-xs text-red-400 font-medium">
-            Blockchain block propagation latency exceeding threshold
-          </p>
-          <p className="text-[10px] text-red-500/80 mt-1">
-            Duration: {Math.floor(Math.random() * 12) + 3}m &middot; Impact: Low
-          </p>
-        </div>
+        <Reveal delay={50}>
+          <div className="rounded border border-[var(--status-error)]/20 bg-[var(--status-error)]/5 px-3 py-2">
+            <p className="text-xs text-[var(--status-error)] font-medium">
+              Blockchain block propagation latency exceeding threshold
+            </p>
+            <p className="text-[10px] text-[var(--status-error)]/60 mt-1">
+              Duration: {Math.floor(Math.random() * 12) + 3}m &middot; Impact:
+              Low
+            </p>
+          </div>
+        </Reveal>
       )}
 
       {/* On-call */}
-      <div className="flex items-center justify-between border-t border-panel-700 pt-3">
+      <div className="flex items-center justify-between border-t border-border-subtle pt-3">
         <div>
-          <p className="text-[10px] text-panel-500 uppercase tracking-wider">On-Call Engineer</p>
-          <p className="text-sm text-panel-200 mt-0.5">{sla.onCallEngineer}</p>
+          <p className="heading-section text-[10px]">On-Call Engineer</p>
+          <p className="text-sm text-text-secondary mt-0.5">
+            {sla.onCallEngineer}
+          </p>
         </div>
-        <div className="h-8 w-8 rounded-full bg-panel-700 flex items-center justify-center">
-          <span className="text-xs font-medium text-panel-300">
-            {sla.onCallEngineer.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+        <div className="h-8 w-8 rounded-full bg-surface-overlay flex items-center justify-center">
+          <span className="text-xs font-medium text-text-muted">
+            {sla.onCallEngineer
+              .split(" ")
+              .map((w) => w[0])
+              .join("")
+              .slice(0, 2)}
           </span>
         </div>
       </div>

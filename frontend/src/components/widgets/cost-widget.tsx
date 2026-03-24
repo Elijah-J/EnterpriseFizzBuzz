@@ -1,24 +1,36 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { AnimatedNumber } from "@/components/ui/animated-number";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { CostSummary } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 /**
  * Trend arrow indicators for FinOps cost direction. Upward trends
- * are flagged in red (increased spend), downward in green (savings),
- * and stable in neutral gray.
+ * are flagged in the error domain color (increased spend), downward
+ * in the success domain color (savings), and stable in muted tone.
  */
-const TREND_CONFIG: Record<CostSummary["trend"], { arrow: string; color: string; label: string }> = {
-  up: { arrow: "\u2191", color: "text-red-400", label: "increase" },
+const TREND_CONFIG: Record<
+  CostSummary["trend"],
+  { arrow: string; color: string; label: string }
+> = {
+  up: {
+    arrow: "\u2191",
+    color: "text-[var(--status-error)]",
+    label: "increase",
+  },
   down: { arrow: "\u2193", color: "text-fizz-400", label: "decrease" },
-  stable: { arrow: "\u2192", color: "text-panel-400", label: "stable" },
+  stable: { arrow: "\u2192", color: "text-text-muted", label: "stable" },
 };
 
 /**
  * Cost Widget — FizzBuck expenditure summary for the current billing
  * period. Shows total spend, trend direction vs. previous period, and
  * per-evaluation unit cost. Auto-refreshes every 5 seconds.
+ *
+ * All monetary values use AnimatedNumber with currency formatting
+ * for smooth transitions during data refreshes.
  */
 export function CostWidget() {
   const provider = useDataProvider();
@@ -37,27 +49,38 @@ export function CostWidget() {
 
   if (!cost) {
     return (
-      <div className="flex h-24 items-center justify-center">
-        <span className="text-xs text-panel-500">Calculating expenditure...</span>
+      <div className="space-y-4">
+        <Skeleton variant="rect" height="3rem" />
+        <div className="grid grid-cols-2 gap-3">
+          <Skeleton variant="rect" height="2.5rem" />
+          <Skeleton variant="rect" height="2.5rem" />
+        </div>
+        <Skeleton variant="text" width="60%" />
       </div>
     );
   }
 
   const trend = TREND_CONFIG[cost.trend];
   const delta = Math.abs(cost.currentPeriodCost - cost.previousPeriodCost);
-  const deltaPercent = cost.previousPeriodCost > 0
-    ? ((delta / cost.previousPeriodCost) * 100).toFixed(1)
-    : "0.0";
+  const deltaPercent =
+    cost.previousPeriodCost > 0
+      ? ((delta / cost.previousPeriodCost) * 100).toFixed(1)
+      : "0.0";
 
   return (
     <div className="space-y-4">
       {/* Primary cost figure */}
       <div>
-        <p className="text-xs text-panel-500">Current Period Expenditure</p>
+        <p className="data-label">Current Period Expenditure</p>
         <div className="flex items-baseline gap-2 mt-1">
           <span className="text-2xl font-mono font-bold text-fizzbuzz-gold">
-            FB$ {cost.currentPeriodCost.toFixed(2)}
+            FB${" "}
           </span>
+          <AnimatedNumber
+            value={cost.currentPeriodCost}
+            decimals={2}
+            className="data-value text-2xl text-fizzbuzz-gold"
+          />
           <span className={`text-sm font-mono ${trend.color}`}>
             {trend.arrow} {deltaPercent}%
           </span>
@@ -67,16 +90,26 @@ export function CostWidget() {
       {/* Details */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <p className="text-[10px] text-panel-500">Previous Period</p>
-          <p className="text-sm font-mono text-panel-300">
-            FB$ {cost.previousPeriodCost.toFixed(2)}
-          </p>
+          <p className="data-label text-[10px]">Previous Period</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-mono text-text-secondary">FB$ </span>
+            <AnimatedNumber
+              value={cost.previousPeriodCost}
+              decimals={2}
+              className="text-sm font-mono text-text-secondary"
+            />
+          </div>
         </div>
         <div>
-          <p className="text-[10px] text-panel-500">Cost per Evaluation</p>
-          <p className="text-sm font-mono text-panel-300">
-            FB$ {cost.costPerEvaluation.toFixed(7)}
-          </p>
+          <p className="data-label text-[10px]">Cost per Evaluation</p>
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-mono text-text-secondary">FB$ </span>
+            <AnimatedNumber
+              value={cost.costPerEvaluation}
+              decimals={7}
+              className="text-sm font-mono text-text-secondary"
+            />
+          </div>
         </div>
       </div>
 
