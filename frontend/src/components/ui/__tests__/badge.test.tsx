@@ -12,36 +12,32 @@ describe("Badge", () => {
     render(<Badge>Info</Badge>);
     const badge = screen.getByText("Info");
 
-    expect(badge).toHaveClass("bg-buzz-950");
+    expect(badge).toHaveClass("bg-buzz-400/15");
     expect(badge).toHaveClass("text-buzz-400");
-    expect(badge).toHaveClass("border-buzz-800");
   });
 
   it("applies success variant classes", () => {
     render(<Badge variant="success">Healthy</Badge>);
     const badge = screen.getByText("Healthy");
 
-    expect(badge).toHaveClass("bg-fizz-950");
+    expect(badge).toHaveClass("bg-fizz-400/15");
     expect(badge).toHaveClass("text-fizz-400");
-    expect(badge).toHaveClass("border-fizz-800");
   });
 
   it("applies warning variant classes", () => {
     render(<Badge variant="warning">Degraded</Badge>);
     const badge = screen.getByText("Degraded");
 
-    expect(badge).toHaveClass("bg-amber-950");
-    expect(badge).toHaveClass("text-amber-400");
-    expect(badge).toHaveClass("border-amber-800");
+    expect(badge).toHaveClass("bg-[var(--accent)]/15");
+    expect(badge).toHaveClass("text-[var(--accent)]");
   });
 
   it("applies error variant classes", () => {
     render(<Badge variant="error">Critical</Badge>);
     const badge = screen.getByText("Critical");
 
-    expect(badge).toHaveClass("bg-red-950");
-    expect(badge).toHaveClass("text-red-400");
-    expect(badge).toHaveClass("border-red-800");
+    expect(badge).toHaveClass("bg-[var(--status-error)]/15");
+    expect(badge).toHaveClass("text-[var(--status-error)]");
   });
 
   it("renders as a span element", () => {
@@ -58,7 +54,6 @@ describe("Badge", () => {
     expect(badge).toHaveClass("inline-flex");
     expect(badge).toHaveClass("items-center");
     expect(badge).toHaveClass("rounded-full");
-    expect(badge).toHaveClass("border");
     expect(badge).toHaveClass("text-xs");
     expect(badge).toHaveClass("font-medium");
   });
@@ -68,7 +63,6 @@ describe("Badge", () => {
     const badge = screen.getByText("Custom");
 
     expect(badge).toHaveClass("ml-2");
-    // Base classes should still be present
     expect(badge).toHaveClass("inline-flex");
   });
 
