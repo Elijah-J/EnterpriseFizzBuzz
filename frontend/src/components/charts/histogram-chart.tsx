@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { ChartTooltip } from "./chart-tooltip";
 
 /**
  * Histogram bar chart with staggered entrance animation, warm gradients,
@@ -64,6 +65,24 @@ export function HistogramChart({
   const [animationProgress, setAnimationProgress] = useState(
     prefersReduced ? 1 : 0,
   );
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+  const handleBarMouseEnter = useCallback(
+    (index: number, e: React.MouseEvent) => {
+      setHoveredBar(index);
+      setTooltipPos({ x: e.clientX, y: e.clientY });
+    },
+    [],
+  );
+
+  const handleBarMouseMove = useCallback((e: React.MouseEvent) => {
+    setTooltipPos({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const handleBarMouseLeave = useCallback(() => {
+    setHoveredBar(null);
+  }, []);
   const gradientId = useMemo(
     () => `histogram-bar-${Math.random().toString(36).slice(2, 8)}`,
     [],
@@ -155,6 +174,7 @@ export function HistogramChart({
   ];
 
   return (
+    <>
     <svg
       width="100%"
       height={height}
@@ -190,6 +210,9 @@ export function HistogramChart({
         const bw = Math.max(0, barWidth - 2);
         const cornerRadius = Math.min(3, bw / 2);
 
+        const isHovered = hoveredBar === i;
+        const isDimmed = hoveredBar !== null && !isHovered;
+
         return (
           <rect
             key={`bucket-${i}`}
@@ -199,6 +222,14 @@ export function HistogramChart({
             height={barHeight}
             fill={`url(#${gradientId})`}
             rx={cornerRadius}
+            opacity={isDimmed ? 0.6 : 1}
+            stroke={isHovered ? "var(--accent)" : "transparent"}
+            strokeWidth={isHovered ? 1.5 : 0}
+            className="transition-opacity duration-150"
+            style={{ cursor: "pointer" }}
+            onMouseEnter={(e) => handleBarMouseEnter(i, e)}
+            onMouseMove={handleBarMouseMove}
+            onMouseLeave={handleBarMouseLeave}
           />
         );
       })}
@@ -261,5 +292,29 @@ export function HistogramChart({
         </text>
       ))}
     </svg>
+    {hoveredBar !== null && (
+      <ChartTooltip
+        x={tooltipPos.x}
+        y={tooltipPos.y}
+        visible
+        content={
+          <div>
+            <div className="text-[10px] text-text-secondary font-sans">
+              Bucket {hoveredBar + 1} of {buckets.length}
+            </div>
+            <div className="text-[11px] text-text-primary font-mono font-semibold">
+              {buckets[hoveredBar]} sample{buckets[hoveredBar] !== 1 ? "s" : ""}
+            </div>
+            <div className="text-[10px] text-text-muted font-sans">
+              Range: {formatValue(minVal + hoveredBar * ((maxVal - minVal) / buckets.length))}
+              {" "}&ndash;{" "}
+              {formatValue(minVal + (hoveredBar + 1) * ((maxVal - minVal) / buckets.length))}
+              {unit ? ` ${unit}` : ""}
+            </div>
+          </div>
+        }
+      />
+    )}
+    </>
   );
 }

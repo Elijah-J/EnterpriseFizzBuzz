@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { ZoomBrush } from "./zoom-brush";
 
 /**
  * Full-featured SVG line chart with catmull-rom spline interpolation,
@@ -30,6 +31,8 @@ interface LineChartProps {
   unit?: string;
   /** Metric name displayed in the tooltip header. */
   label?: string;
+  /** When true, renders a draggable zoom brush at the bottom of the chart. */
+  zoomable?: boolean;
 }
 
 /** Formats a timestamp for the X-axis. Shows HH:MM:SS for sub-hour ranges. */
@@ -130,15 +133,38 @@ export function LineChart({
   color = "var(--fizzbuzz-400)",
   unit = "",
   label = "",
+  zoomable = false,
 }: LineChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [zoomRange, setZoomRange] = useState<[number, number] | null>(null);
+
+  const handleZoom = useCallback(
+    (start: number, end: number) => {
+      const startIdx = Math.floor(start * (data.length - 1));
+      const endIdx = Math.ceil(end * (data.length - 1));
+      if (endIdx > startIdx) {
+        setZoomRange([startIdx, endIdx]);
+      }
+    },
+    [data.length],
+  );
+
+  const handleZoomReset = useCallback(() => {
+    setZoomRange(null);
+  }, []);
+
+  // Apply zoom filter to data
+  const visibleData = useMemo(() => {
+    if (!zoomRange) return data;
+    return data.slice(zoomRange[0], zoomRange[1] + 1);
+  }, [data, zoomRange]);
 
   const plotWidth = width - MARGIN.left - MARGIN.right;
   const plotHeight = height - MARGIN.top - MARGIN.bottom;
 
   const { minVal, maxVal, minTime, maxTime, yTicks, xTicks } = useMemo(() => {
-    if (data.length === 0) {
+    if (visibleData.length === 0) {
       return {
         minVal: 0,
         maxVal: 1,
@@ -149,8 +175,8 @@ export function LineChart({
       };
     }
 
-    const values = data.map((d) => d.value);
-    const times = data.map((d) => d.timestamp);
+    const values = visibleData.map((d) => d.value);
+    const times = visibleData.map((d) => d.timestamp);
     let lo = Math.min(...values);
     let hi = Math.max(...values);
 
@@ -177,7 +203,7 @@ export function LineChart({
       yTicks: yt,
       xTicks: xt,
     };
-  }, [data]);
+  }, [visibleData]);
 
   const toX = useCallback(
     (timestamp: number) => {
@@ -196,8 +222,8 @@ export function LineChart({
   );
 
   const dataPoints = useMemo(
-    () => data.map((d) => ({ x: toX(d.timestamp), y: toY(d.value) })),
-    [data, toX, toY],
+    () => visibleData.map((d) => ({ x: toX(d.timestamp), y: toY(d.value) })),
+    [visibleData, toX, toY],
   );
 
   const curvePath = useMemo(() => catmullRomPath(dataPoints), [dataPoints]);
@@ -217,22 +243,22 @@ export function LineChart({
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {
-      if (data.length === 0 || !svgRef.current) return;
+      if (visibleData.length === 0 || !svgRef.current) return;
       const rect = svgRef.current.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const relX = mouseX - MARGIN.left;
       const fraction = relX / plotWidth;
-      const idx = Math.round(fraction * (data.length - 1));
-      setHoverIndex(Math.max(0, Math.min(data.length - 1, idx)));
+      const idx = Math.round(fraction * (visibleData.length - 1));
+      setHoverIndex(Math.max(0, Math.min(visibleData.length - 1, idx)));
     },
-    [data, plotWidth],
+    [visibleData, plotWidth],
   );
 
   const handleMouseLeave = useCallback(() => {
     setHoverIndex(null);
   }, []);
 
-  if (data.length === 0) {
+  if (visibleData.length === 0) {
     return (
       <div
         className="flex items-center justify-center text-xs text-text-muted"
@@ -243,7 +269,7 @@ export function LineChart({
     );
   }
 
-  const hoverPoint = hoverIndex !== null ? data[hoverIndex] : null;
+  const hoverPoint = hoverIndex !== null ? visibleData[hoverIndex] : null;
 
   return (
     <svg
@@ -379,6 +405,18 @@ export function LineChart({
             {formatValue(hoverPoint.value)} {unit}
           </text>
         </>
+      )}
+
+      {/* Zoom brush — drag-to-select time range */}
+      {zoomable && (
+        <ZoomBrush
+          width={plotWidth}
+          y={MARGIN.top + plotHeight - 20}
+          height={20}
+          marginLeft={MARGIN.left}
+          onZoom={handleZoom}
+          onReset={handleZoomReset}
+        />
       )}
     </svg>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
+import { ChartLegend, type ChartLegendItem } from "./chart-legend";
 
 /**
  * SVG donut chart with sweep-from-zero entrance animation and
@@ -83,8 +84,13 @@ export function DonutChart({
   centerSubLabel,
 }: DonutChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [explodedIndex, setExplodedIndex] = useState<number | null>(null);
   const [animationProgress, setAnimationProgress] = useState(0);
   const prefersReduced = useReducedMotion();
+
+  const handleSegmentClick = useCallback((index: number) => {
+    setExplodedIndex((prev) => (prev === index ? null : index));
+  }, []);
 
   const cx = size / 2;
   const cy = size / 2;
@@ -178,6 +184,7 @@ export function DonutChart({
     hoveredIndex !== null ? arcs.find((a) => a.index === hoveredIndex) : null;
 
   return (
+    <>
     <svg
       width="100%"
       height={size}
@@ -187,22 +194,31 @@ export function DonutChart({
       role="img"
       aria-label="Donut chart showing proportional distribution"
     >
-      {/* Arc segments — desaturated domain colors */}
-      {arcs.map((arc) => (
-        <path
-          key={arc.index}
-          d={arc.path}
-          fill={arc.segment.color}
-          opacity={
-            hoveredIndex !== null && arc.index !== hoveredIndex ? 0.5 : 0.85
-          }
-          className="transition-opacity duration-200"
-          onMouseEnter={() => setHoveredIndex(arc.index)}
-          onMouseLeave={() => setHoveredIndex(null)}
-          aria-label={arc.segment.label}
-          style={{ cursor: "pointer" }}
-        />
-      ))}
+      {/* Arc segments — desaturated domain colors with explode-on-click */}
+      {arcs.map((arc) => {
+        const isExploded = explodedIndex === arc.index;
+        const explodeOffset = isExploded ? 8 : 0;
+        const tx = explodeOffset * Math.cos(arc.midAngle);
+        const ty = explodeOffset * Math.sin(arc.midAngle);
+
+        return (
+          <path
+            key={arc.index}
+            d={arc.path}
+            fill={arc.segment.color}
+            opacity={
+              hoveredIndex !== null && arc.index !== hoveredIndex ? 0.5 : 0.85
+            }
+            className="transition-[opacity,transform] duration-200"
+            transform={`translate(${tx.toFixed(1)}, ${ty.toFixed(1)})`}
+            onMouseEnter={() => setHoveredIndex(arc.index)}
+            onMouseLeave={() => setHoveredIndex(null)}
+            onClick={() => handleSegmentClick(arc.index)}
+            aria-label={arc.segment.label}
+            style={{ cursor: "pointer" }}
+          />
+        );
+      })}
 
       {/* Center text */}
       {centerLabel && (
@@ -287,5 +303,23 @@ export function DonutChart({
           );
         })()}
     </svg>
+
+    {/* Legend below chart */}
+    <div className="mt-3 flex justify-center">
+      <ChartLegend
+        items={segments.map((s, i): ChartLegendItem => ({
+          key: String(i),
+          label: s.label,
+          color: s.color,
+          active: true,
+        }))}
+        orientation="horizontal"
+        highlightedKey={hoveredIndex !== null ? String(hoveredIndex) : null}
+        onHighlight={(key) =>
+          setHoveredIndex(key !== null ? Number(key) : null)
+        }
+      />
+    </div>
+    </>
   );
 }

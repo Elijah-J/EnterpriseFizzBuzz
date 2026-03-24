@@ -205,6 +205,19 @@ export function HeatmapGrid({
                 const isHovered =
                   hoveredCell?.number === num &&
                   hoveredCell?.divisor === divisor;
+                const isInRowOrCol =
+                  hoveredCell !== null &&
+                  !isHovered &&
+                  (hoveredCell.number === num || hoveredCell.divisor === divisor);
+                const isDimmed =
+                  hoveredCell !== null && !isHovered && !isInRowOrCol;
+
+                // Apply dimming to cells not in the hovered row/column
+                const effectiveOpacity = isDimmed
+                  ? cellOpacity * 0.4
+                  : isInRowOrCol
+                    ? cellOpacity * 0.85
+                    : cellOpacity;
 
                 return (
                   <rect
@@ -215,7 +228,7 @@ export function HeatmapGrid({
                     height={cellSize}
                     rx={2}
                     fill={getCellColor(divisor, cell.divisible)}
-                    opacity={cellOpacity}
+                    opacity={effectiveOpacity}
                     stroke={isHovered ? "var(--accent)" : "transparent"}
                     strokeWidth={isHovered ? 1.5 : 0}
                     onMouseEnter={() =>
