@@ -37,10 +37,11 @@ export function PageTransition({ children }: PageTransitionProps) {
   const prevPathname = useRef(pathname);
   const containerRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<"idle" | "exit" | "enter">("idle");
+  const [supportsViewTransitions, setSupportsViewTransitions] = useState(false);
 
-  const supportsViewTransitions =
-    typeof document !== "undefined" &&
-    "startViewTransition" in document;
+  useEffect(() => {
+    setSupportsViewTransitions("startViewTransition" in document);
+  }, []);
 
   const triggerFallbackTransition = useCallback(() => {
     if (reducedMotion) return;
