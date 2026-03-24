@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Reveal } from "@/components/ui/reveal";
+import { StatGroup } from "@/components/ui/stat-group";
 import { SplitText } from "@/components/typography";
 import { ConsensusWidget } from "@/components/widgets/consensus-widget";
 import { CostWidget } from "@/components/widgets/cost-widget";
@@ -45,6 +46,22 @@ export default function ExecutiveDashboard() {
               automatically.
             </p>
           </div>
+        </Reveal>
+
+        {/* Executive KPI Summary — four key performance indicators
+            providing at-a-glance operational awareness above the detailed
+            bento grid. Values are static summaries; each widget below
+            contains the real-time telemetry feed. */}
+        <Reveal delay={25}>
+          <StatGroup
+            items={[
+              { label: "Uptime", value: "99.97%", trend: { direction: "up", label: "+0.02% vs prior window" } },
+              { label: "Eval Throughput", value: "12.4K/s", trend: { direction: "up", label: "+8.1% p/p" } },
+              { label: "P99 Latency", value: "42ms", trend: { direction: "down", label: "-3ms" } },
+              { label: "Open Incidents", value: "2", trend: { direction: "neutral", label: "No change" } },
+            ]}
+            className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+          />
         </Reveal>
 
         {/* Asymmetric bento grid */}

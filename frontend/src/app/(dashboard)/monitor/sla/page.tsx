@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatGroup } from "@/components/ui/stat-group";
 import type {
   Incident,
   SLAHistoryPoint,
@@ -399,6 +400,17 @@ export default function SLADashboardPage() {
           </p>
         </div>
       </Reveal>
+
+      {/* SLO Summary KPIs */}
+      <StatGroup
+        items={[
+          { label: "Availability", value: `${sla.availabilityPercent.toFixed(2)}%`, trend: { direction: sla.availabilityPercent >= 99.95 ? "up" as const : "down" as const, label: `Target 99.95%` } },
+          { label: "Latency P99", value: `${sla.latencyP99Ms.toFixed(1)}ms`, trend: { direction: sla.latencyP99Ms <= 100 ? "up" as const : "down" as const, label: `Target <100ms` } },
+          { label: "Correctness", value: `${sla.correctnessPercent.toFixed(2)}%`, trend: { direction: sla.correctnessPercent >= 100 ? "up" as const : "neutral" as const, label: `Target 100%` } },
+          { label: "Error Budget", value: `${(sla.errorBudgetRemaining * 100).toFixed(1)}%`, trend: { direction: sla.errorBudgetRemaining > 0.5 ? "up" as const : "down" as const, label: `${sla.errorBudgetRemaining > 0.5 ? "Healthy" : "Critical"}` } },
+        ]}
+        className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+      />
 
       {/* Error Budget Burn-Down */}
       <Card>

@@ -9,9 +9,12 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatGroup } from "@/components/ui/stat-group";
+import { Tabs } from "@/components/ui/tabs";
 import type { EvaluationSession, FizzBuzzResult } from "@/lib/data-providers";
 import { useDataProvider } from "@/lib/data-providers";
 import {
@@ -414,35 +417,57 @@ export default function EvaluateConsolePage() {
       )}
 
       {/* ----------------------------------------------------------------- */}
-      {/* Output Format Viewer                                               */}
+      {/* Evaluation Summary                                                 */}
+      {/* ----------------------------------------------------------------- */}
+      {session && analytics && (
+        <Reveal>
+          <StatGroup
+            items={[
+              { label: "Total", value: String(analytics.total) },
+              { label: "Fizz", value: String(analytics.fizz), trend: { direction: "neutral", label: `${((analytics.fizz / analytics.total) * 100).toFixed(1)}%` } },
+              { label: "Buzz", value: String(analytics.buzz), trend: { direction: "neutral", label: `${((analytics.buzz / analytics.total) * 100).toFixed(1)}%` } },
+              { label: "FizzBuzz", value: String(analytics.fizzbuzz), trend: { direction: "neutral", label: `${((analytics.fizzbuzz / analytics.total) * 100).toFixed(1)}%` } },
+              { label: "Number", value: String(analytics.number), trend: { direction: "neutral", label: `${((analytics.number / analytics.total) * 100).toFixed(1)}%` } },
+            ]}
+            className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+          />
+        </Reveal>
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* Output Format Viewer — Tabs component for format switching         */}
       {/* ----------------------------------------------------------------- */}
       {session && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="heading-section">Output Format Viewer</h2>
-              <div className="flex gap-1">
-                {(Object.keys(FORMAT_LABELS) as OutputFormat[]).map((fmt) => (
-                  <button
-                    key={fmt}
-                    type="button"
-                    onClick={() => setOutputFormat(fmt)}
-                    className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                      outputFormat === fmt
-                        ? "bg-fizzbuzz-600 text-white"
-                        : "bg-surface-overlay text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
-                    }`}
-                  >
-                    {FORMAT_LABELS[fmt]}
-                  </button>
-                ))}
-              </div>
+              <CopyButton text={formattedOutput} />
             </div>
           </CardHeader>
           <CardContent>
-            <pre className="max-h-96 overflow-auto rounded border border-border-subtle bg-surface-base p-4 text-xs font-mono text-text-secondary leading-relaxed">
-              {formattedOutput}
-            </pre>
+            <Tabs
+              items={(Object.keys(FORMAT_LABELS) as OutputFormat[]).map((fmt) => ({
+                label: FORMAT_LABELS[fmt],
+                content: (
+                  <pre className="max-h-96 overflow-auto rounded border border-border-subtle bg-surface-base p-4 text-xs font-mono text-text-secondary leading-relaxed">
+                    {fmt === outputFormat
+                      ? formattedOutput
+                      : (() => {
+                          const formatters: Record<OutputFormat, (r: FizzBuzzResult[]) => string> = {
+                            plain: formatPlain,
+                            json: formatJSON,
+                            xml: formatXML,
+                            csv: formatCSV,
+                          };
+                          return formatters[fmt](session.results);
+                        })()}
+                  </pre>
+                ),
+              }))}
+              activeIndex={(Object.keys(FORMAT_LABELS) as OutputFormat[]).indexOf(outputFormat)}
+              onChange={(idx) => setOutputFormat((Object.keys(FORMAT_LABELS) as OutputFormat[])[idx])}
+            />
           </CardContent>
         </Card>
       )}
