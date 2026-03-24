@@ -507,7 +507,63 @@
   overflow: hidden;
 }
 
+/* ----------------------------------------------------------------
+ * Custom Scrollbar
+ *
+ * Branded scrollbar using the warm stone surface system. The narrow
+ * 8px track integrates with the surface-ground background, while the
+ * rounded thumb uses surface-overlay for subtle visibility. Hover
+ * state elevates to text-muted for clear interactive feedback.
+ *
+ * Firefox receives equivalent treatment via the scrollbar-color
+ * shorthand property.
+ * ---------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-ground);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-overlay);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ----------------------------------------------------------------
+ * Custom Cursor System
+ *
+ * When the custom cursor overlay is active (non-touch, non-reduced-motion),
+ * the native cursor is hidden to prevent visual doubling. Touch devices
+ * and reduced-motion contexts retain the platform default cursor.
+ * ---------------------------------------------------------------- */
+
+.custom-cursor-container ~ *,
+.custom-cursor-container ~ * * {
+  cursor: none !important;
+}
+
+@media (pointer: coarse) {
+  .custom-cursor-container ~ *,
+  .custom-cursor-container ~ * * {
+    cursor: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .custom-cursor-container {
+    display: none;
+  }
+}
+
 body {
   background: var(--surface-ground);
   color: var(--text-primary);
+  scrollbar-color: var(--surface-overlay) var(--surface-ground);
 }

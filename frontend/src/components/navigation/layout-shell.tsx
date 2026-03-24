@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/brand";
 import { Topographic } from "@/components/backgrounds";
 import { PageTransition } from "@/components/transitions";
+import { CustomCursor } from "@/components/ui/custom-cursor";
 import { KeyboardShortcutOverlay } from "@/components/ui/keyboard-shortcut-overlay";
 import { useKeyboardNavigation } from "@/lib/hooks/use-keyboard-navigation";
 import { Breadcrumbs } from "./breadcrumbs";
@@ -183,6 +184,9 @@ export function LayoutShell({ children }: LayoutShellProps) {
         open={shortcutOverlayOpen}
         onClose={() => setShortcutOverlayOpen(false)}
       />
+
+      {/* Custom cursor — warm amber tracking dot with interactive morphing */}
+      <CustomCursor />
     </>
   );
 }

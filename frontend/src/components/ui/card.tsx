@@ -23,6 +23,10 @@ const variantStyles: Record<CardVariant, string> = {
  * - `elevated`: Overlay surface with stronger border for modal-adjacent contexts
  * - `featured`: Amber left-border accent for primary KPI and hero metrics
  *
+ * Interactive cards (those with `onClick` or rendered as links) receive a
+ * subtle 1px upward lift on hover, providing tactile feedback that
+ * communicates clickability without relying solely on cursor changes.
+ *
  * A grain overlay at 2% opacity is applied to all variants, providing the
  * editorial texture quality that distinguishes the Warm Precision design
  * language from flat digital rendering.
@@ -33,9 +37,15 @@ export function Card({
   children,
   ...props
 }: CardProps) {
+  const isInteractive = !!props.onClick || !!props.onKeyDown || !!props.tabIndex;
+  const hoverClass = isInteractive
+    ? "hover:-translate-y-[1px] transition-[colors,transform] duration-200"
+    : "transition-colors";
+
   return (
     <div
-      className={`relative rounded-lg border transition-colors overflow-hidden ${variantStyles[variant]} ${className}`}
+      className={`relative rounded-lg border overflow-hidden ${hoverClass} ${variantStyles[variant]} ${className}`}
+      {...(isInteractive ? { "data-cursor": "pointer" } : {})}
       {...props}
     >
       {/* Grain overlay — editorial texture at imperceptible opacity */}
