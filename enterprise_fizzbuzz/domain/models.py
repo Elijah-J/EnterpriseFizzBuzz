@@ -737,6 +737,19 @@ class EventType(Enum):
     PERF_NO_DIRECT_REPORTS = auto()
     PERF_DASHBOARD_RENDERED = auto()
 
+    # FizzOrg: Organizational Hierarchy & Reporting Structure events
+    ORG_EVALUATION_PROCESSED = auto()
+    ORG_HIERARCHY_BUILT = auto()
+    ORG_RACI_MATRIX_GENERATED = auto()
+    ORG_RACI_CONFLICT_DETECTED = auto()
+    ORG_HEADCOUNT_REPORT_GENERATED = auto()
+    ORG_HIRING_PLAN_GENERATED = auto()
+    ORG_COMMITTEE_QUORUM_ACHIEVED = auto()
+    ORG_COMMITTEE_QUORUM_FAILED = auto()
+    ORG_CHART_RENDERED = auto()
+    ORG_REPORTING_CHAIN_TRACED = auto()
+    ORG_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

@@ -60,6 +60,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzPager Incident Paging & Escalation Architecture](#fizzpager-incident-paging--escalation-architecture)
 - [FizzSuccession Operator Succession Planning Architecture](#fizzsuccession-operator-succession-planning-architecture)
 - [FizzPerf Operator Performance Review Architecture](#fizzperf-operator-performance-review-architecture)
+- [FizzOrg Organizational Hierarchy Architecture](#fizzorg-organizational-hierarchy-architecture)
 
 ---
 
@@ -4947,3 +4948,130 @@ The `PerfDashboard` renders an ASCII display with:
 | Test count | 285 |
 
 FizzPerf ensures that the platform's sole operator receives a formal, documented, multi-perspective performance review -- feedback that he writes, reviews, calibrates, and approves himself, through a process that is technically complete, procedurally sound, and existentially solitary. Every employee deserves a performance review, even if they are the only employee.
+
+---
+
+## FizzOrg Organizational Hierarchy Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/fizzorg.py`
+
+FizzOrg is a comprehensive organizational hierarchy and reporting structure engine that formally models the Enterprise FizzBuzz Platform's organizational structure as a tree of departments, positions, and reporting relationships. The engine follows enterprise HRIS organizational management patterns (Workday, SAP SuccessFactors), the RACI matrix methodology (Responsible, Accountable, Consulted, Informed), and the COBIT 2019 governance framework. Bob McFizzington occupies every node.
+
+### Department Registry
+
+The `DepartmentRegistry` manages 10 departments, each with a mission statement, budget allocation, headcount target, and department head:
+
+| Department | Head | Target Headcount | Actual | Staffing % |
+|-----------|------|-----------------|--------|-----------|
+| Engineering | Bob McFizzington | 8 | 1 | 12.5% |
+| Compliance & Risk | Bob McFizzington | 3 | 1 | 33.3% |
+| Finance | Bob McFizzington | 3 | 1 | 33.3% |
+| Security | Bob McFizzington | 4 | 1 | 25.0% |
+| Operations | Bob McFizzington | 5 | 1 | 20.0% |
+| Architecture | Bob McFizzington | 3 | 1 | 33.3% |
+| Quality Assurance | Bob McFizzington | 4 | 1 | 25.0% |
+| Research | Bob McFizzington | 3 | 1 | 33.3% |
+| Executive Office | Bob McFizzington | 5 | 1 | 20.0% |
+| Human Resources | Bob McFizzington | 4 | 1 | 25.0% |
+
+Aggregate staffing: 1 of 42 (2.4%). Every department head column contains the same name. This is not a rendering error.
+
+### Position Hierarchy
+
+The `PositionHierarchy` arranges 14 positions in a 4-level reporting tree:
+
+```
+Level 1: Managing Director (Bob McFizzington)
+├── Level 2: VP of Engineering (Bob McFizzington)
+│   ├── Level 3: Director of SRE (Bob McFizzington)
+│   │   └── Level 4: Senior Principal Staff FizzBuzz Reliability Engineer II (Bob McFizzington)
+│   └── Level 3: Director of QA (Bob McFizzington)
+│       └── Level 4: Test Suite Owner (Bob McFizzington)
+├── Level 2: VP of Operations (Bob McFizzington)
+│   ├── Level 3: Director of Infrastructure (Bob McFizzington)
+│   │   └── Level 4: Systems Administrator (Bob McFizzington)
+│   └── Level 3: Incident Commander (Bob McFizzington)
+├── Level 2: Chief Compliance Officer (Bob McFizzington)
+│   └── Level 3: SOX Certifier (Bob McFizzington)
+├── Level 2: Chief Pricing Officer (Bob McFizzington)
+└── Level 2: Director of Security (Bob McFizzington)
+    └── Level 3: Secrets Vault Custodian (Bob McFizzington)
+```
+
+When Bob (as Test Suite Owner) escalates an issue, it traverses Director of QA, VP of Engineering, and Managing Director -- arriving at Bob at every stop. The escalation terminates at Managing Director, who reports to the Board of Directors, which does not exist.
+
+### RACI Matrix
+
+The `RACIMatrix` maps all 106 infrastructure modules to 14 roles in a 1,484-cell responsibility assignment grid. Each cell is assigned one of four values: Responsible (does the work), Accountable (owns the outcome), Consulted (provides input), or Informed (notified of the outcome). RACI theory requires that each row has exactly one Accountable party and at least one Responsible party. The engine validates these constraints on every row.
+
+Since all 14 roles are held by the same person, the matrix flags 106 Sole Operator Exception conflicts -- one per subsystem -- where the Responsible and Accountable parties are the same individual. Each conflict is logged, annotated with the Sole Operator Exception, and included in the quarterly compliance report. The RACI coverage report identifies subsystems with no assigned Accountable party; currently all 106 subsystems have Bob as the Accountable party. If a new subsystem is added without updating the RACI matrix, the engine generates a `SubsystemOrphanedEvent` and assigns Bob as the default.
+
+### Headcount Planner
+
+The `HeadcountPlanner` reports organizational staffing status:
+
+- **Current state**: 10 departments, 14 positions, 1 employee. Aggregate staffing: 2.4% of target
+- **Open positions**: 41 across all departments
+- **Staffing status**: CRITICALLY_UNDERSTAFFED (below 25% aggregate)
+- **Hiring plan**: prioritized list of 41 recommended hires, generated quarterly, ordered by FizzSuccession risk scores and RACI coverage gaps
+- **Hiring activity**: zero hires made since the organization's founding
+
+The hiring plan has been approved by Bob McFizzington (Hiring Committee Chair) every quarter. The Hiring Committee (membership: Bob) has reviewed and endorsed every recommendation. No requisitions have been opened.
+
+### Committee Manager
+
+The `CommitteeManager` governs 6 standing committees:
+
+| Committee | Chair | Members | Frequency | Hours/Week |
+|-----------|-------|---------|-----------|-----------|
+| Architecture Review Board | Bob | Bob | Biweekly | 2.0 |
+| Change Advisory Board | Bob | Bob | Weekly | 2.0 |
+| Compliance Committee | Bob | Bob | Monthly | 2.0 |
+| Pricing Committee | Bob | Bob | Quarterly | 1.0 |
+| Incident Review Board | Bob | Bob | Biweekly | 3.0 |
+| Hiring Committee | Bob | Bob | Monthly | 2.0 |
+
+Total committee meeting hours per week: 12.0. Quorum requirement for each committee: 50% of membership (minimum 1). Quorum is always achieved when Bob attends and structurally impossible when he does not. Meeting conflicts are impossible because all attendees share the same calendar.
+
+### Org Chart Renderer
+
+The `OrgChartRenderer` produces ASCII tree visualizations of the organizational hierarchy. Each node displays the position title, the incumbent name, and the department affiliation. The tree renders with box-drawing characters and indentation reflecting the 4-level hierarchy depth. The visual effect is an organizational chart where every node displays "Bob McFizzington" -- a technically correct representation of the platform's organizational reality.
+
+### Org Middleware
+
+The `OrgMiddleware` integrates into the middleware pipeline at priority 105, after PerfMiddleware (100). Organizational hierarchy logically follows performance review: the org chart contextualizes the review by showing which positions the reviewed employee holds (all of them). The middleware injects organizational metadata into each evaluation's processing context, including department count, position count, staffing percentage, RACI coverage status, and committee quorum state.
+
+### Org Dashboard
+
+The `OrgDashboard` renders an ASCII display with:
+
+- Department summary table (10 departments, staffing ratios)
+- Position hierarchy tree (4 levels, 14 positions)
+- RACI coverage gauge (106/106 subsystems assigned)
+- Headcount utilization bar (2.4% of target)
+- Committee schedule (6 committees, quorum status)
+- Staffing alert classification (CRITICALLY_UNDERSTAFFED)
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| Departments | 10 |
+| Positions | 14 |
+| Hierarchy levels | 4 |
+| Incumbent | Bob McFizzington (all positions) |
+| RACI matrix dimensions | 106 x 14 |
+| SOE conflicts | 106 |
+| Target headcount | 42 |
+| Actual headcount | 1 |
+| Staffing percentage | 2.4% |
+| Open positions | 41 |
+| Committees | 6 |
+| Weekly meeting hours | 12.0 |
+| Middleware priority | 105 |
+| Custom exceptions | 10 (EFP-ORG0 through EFP-ORG9) |
+| EventType entries | 11 |
+| CLI flags | 7 (`--org`, `--org-chart`, `--org-raci-matrix`, `--org-headcount-report`, `--org-department`, `--org-committees`, `--org-reporting-chain`) |
+| Test count | 250+ |
+
+FizzOrg transforms the platform's implicit organizational reality -- "Bob does everything" -- into an explicit, auditable, governance-compliant organizational model with departments, reporting relationships, RACI assignments, headcount plans, and committee structures. The model is technically complete. Every governance framework requirement is satisfied. Every reporting line is documented. Every committee has quorum rules. The org chart is the loneliest tree in enterprise software.

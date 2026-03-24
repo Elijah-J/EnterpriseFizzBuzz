@@ -474,6 +474,12 @@ from enterprise_fizzbuzz.infrastructure.fizzperf import (
     PerfMiddleware,
     create_perf_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzorg import (
+    OrgDashboard,
+    OrgEngine,
+    OrgMiddleware,
+    create_org_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3490,6 +3496,45 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--perf-compensation",
         action="store_true",
         help="Display the FizzPerf compensation benchmark report after execution",
+    )
+
+    # FizzOrg — Organizational Hierarchy & Reporting Structure Engine
+    parser.add_argument(
+        "--org",
+        action="store_true",
+        help="Enable FizzOrg: organizational hierarchy engine with departments, positions, RACI matrix, headcount planning, and governance committees",
+    )
+    parser.add_argument(
+        "--org-chart",
+        action="store_true",
+        help="Display the FizzOrg ASCII organizational chart after execution",
+    )
+    parser.add_argument(
+        "--org-raci-matrix",
+        action="store_true",
+        help="Display the FizzOrg RACI matrix summary after execution",
+    )
+    parser.add_argument(
+        "--org-headcount-report",
+        action="store_true",
+        help="Display the FizzOrg headcount report and hiring plan after execution",
+    )
+    parser.add_argument(
+        "--org-department",
+        type=str,
+        default=None,
+        help="Display positions for a specific department (e.g., Engineering, Operations)",
+    )
+    parser.add_argument(
+        "--org-committees",
+        action="store_true",
+        help="Display the FizzOrg governance committee status report after execution",
+    )
+    parser.add_argument(
+        "--org-reporting-chain",
+        type=str,
+        default=None,
+        help="Trace the reporting chain from a position to the root (e.g., 'On-Call Engineer')",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -7680,6 +7725,33 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzOrg — Organizational Hierarchy & Reporting Structure (priority 105)
+    # ----------------------------------------------------------------
+    org_engine = None
+    org_middleware_instance = None
+
+    if args.org or args.org_chart or args.org_raci_matrix or args.org_headcount_report or args.org_department or args.org_committees or args.org_reporting_chain:
+        org_engine, org_middleware_instance = create_org_subsystem(
+            operator=config.org_operator,
+            target_headcount=config.org_target_headcount,
+            enable_dashboard=args.org_chart,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(org_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZORG: ORGANIZATIONAL HIERARCHY ENGINE                |\n"
+                f"  | Operator: {config.org_operator:<20}                 |\n"
+                "  | Departments: 10 | Positions: 14 | Committees: 6       |\n"
+                "  | RACI Matrix: 106x14 | Conflicts: 106 (SOE applied)    |\n"
+                "  | Staffing: 1/42 (2.4%) | Open Positions: 41            |\n"
+                "  | Because every platform needs an org chart.             |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -10954,6 +11026,58 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(perf_middleware_instance.render_compensation_report())
     elif args.perf_compensation and perf_middleware_instance is None:
         print("\n  FizzPerf not enabled. Use --perf to enable.\n")
+
+    # FizzOrg Chart (post-execution)
+    if args.org_chart and org_middleware_instance is not None:
+        print()
+        print(org_middleware_instance.render_org_chart())
+    elif args.org_chart and org_middleware_instance is None:
+        print("\n  FizzOrg not enabled. Use --org to enable.\n")
+
+    # FizzOrg RACI Matrix (post-execution)
+    if args.org_raci_matrix and org_middleware_instance is not None:
+        print()
+        print(org_middleware_instance.render_raci_summary())
+    elif args.org_raci_matrix and org_middleware_instance is None:
+        print("\n  FizzOrg not enabled. Use --org to enable.\n")
+
+    # FizzOrg Headcount Report (post-execution)
+    if args.org_headcount_report and org_middleware_instance is not None:
+        print()
+        print(org_middleware_instance.render_headcount_report())
+    elif args.org_headcount_report and org_middleware_instance is None:
+        print("\n  FizzOrg not enabled. Use --org to enable.\n")
+
+    # FizzOrg Department View (post-execution)
+    if args.org_department and org_middleware_instance is not None:
+        print()
+        from enterprise_fizzbuzz.infrastructure.fizzorg import DepartmentRegistry, DepartmentType
+        dept = None
+        for dt in DepartmentType:
+            name = DepartmentRegistry.DEPARTMENT_NAMES.get(dt, "")
+            if name.lower() == args.org_department.lower() or dt.value == args.org_department.lower():
+                dept = dt
+                break
+        if dept:
+            print(org_middleware_instance.engine.chart_renderer.render_department_view(dept))
+        else:
+            print(f"\n  Department not found: {args.org_department}\n")
+    elif args.org_department and org_middleware_instance is None:
+        print("\n  FizzOrg not enabled. Use --org to enable.\n")
+
+    # FizzOrg Committees (post-execution)
+    if args.org_committees and org_middleware_instance is not None:
+        print()
+        print(org_middleware_instance.render_committees_report())
+    elif args.org_committees and org_middleware_instance is None:
+        print("\n  FizzOrg not enabled. Use --org to enable.\n")
+
+    # FizzOrg Reporting Chain (post-execution)
+    if args.org_reporting_chain and org_middleware_instance is not None:
+        print()
+        print(org_middleware_instance.render_reporting_chain(args.org_reporting_chain))
+    elif args.org_reporting_chain and org_middleware_instance is None:
+        print("\n  FizzOrg not enabled. Use --org to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

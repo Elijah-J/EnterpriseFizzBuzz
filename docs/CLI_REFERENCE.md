@@ -1304,6 +1304,13 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --perf-okr-progress       Display Bob McFizzington's OKR progress report with 5 objectives, 10 key results, completion percentages auto-populated from operational metrics, and at-risk goal identification
 --perf-review-report      Generate a comprehensive performance review report including self-assessment, 360-degree feedback aggregation, calibration committee decision, final rating, and development plan
 --perf-compensation       Display the compensation benchmarking report with 14-role composite market rate, McFizzington Compensation Equity Index, and compensation alert classification
+--org                     Enable the FizzOrg Organizational Hierarchy Engine: 10 departments, 14 positions in a 4-level hierarchy, RACI matrix, headcount planning, committee governance, and org chart visualization with Bob McFizzington at every node
+--org-chart               Display the ASCII org chart tree with all 14 positions, department affiliations, incumbent names (all Bob McFizzington), and reporting relationships across 4 hierarchy levels
+--org-raci-matrix         Display the 106x14 RACI responsibility assignment matrix mapping all infrastructure modules to organizational roles, with Sole Operator Exception annotations on every row
+--org-headcount-report    Generate the headcount planning report with per-department staffing ratios, aggregate utilization (2.4%), 41 open positions, and quarterly hiring plan recommendations
+--org-department DEPT     Display detailed information for a specific department: mission statement, positions, headcount target vs actual, budget allocation, and assigned subsystems
+--org-committees          Display all 6 governance committees with membership (Bob), meeting frequency, quorum status, and cumulative weekly meeting hours (12)
+--org-reporting-chain ROLE  Trace the reporting chain from any role to the top of the hierarchy, displaying each position, incumbent (Bob), and department at every level
 ```
 
 ## Environment Variables

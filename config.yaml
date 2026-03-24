@@ -1983,6 +1983,13 @@ fizz_perf:
   dashboard:
     width: 72                             # ASCII dashboard width
 
+fizz_org:
+  enabled: false                          # Master switch — opt-in via --org
+  operator: Bob McFizzington              # The sole employee populating every position
+  target_headcount: 42                    # Organizational headcount target
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizz_pager:
   enabled: false                          # Master switch — opt-in via --pager
   default_severity: P3                    # Default incident severity (P1-P5)
