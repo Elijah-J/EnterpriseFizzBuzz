@@ -1,0 +1,28 @@
+
+fizzsystemd:
+  enabled: false                              # Master switch -- opt-in via --fizzsystemd
+  unit_dir: "/etc/fizzsystemd/"               # Unit file directory
+  default_target: "fizzbuzz.target"           # Default boot target
+  log_level: "info"                           # Journal minimum priority: emerg, alert, crit, err, warning, notice, info, debug
+  log_target: "journal"                       # Log destination: journal, console, journal+console
+  watchdog_sec: 0.0                           # Default watchdog timeout (0 = disabled)
+  default_restart_policy: "no"                # Default restart policy for services
+  crash_shell: false                          # Drop to emergency target on startup failure
+  confirm_spawn: false                        # Prompt before starting each service
+  show_status: false                          # Display startup progress on console
+  dump_core: false                            # Enable core dump collection
+  inhibit_delay_max_sec: 5.0                  # Maximum inhibitor lock delay
+  journal:
+    max_size: 134217728                       # Maximum journal size (128 MB)
+    max_retention_sec: 2592000.0              # Maximum retention (30 days)
+    seal: false                               # Forward-secure sealing
+    seal_interval_sec: 900.0                  # Seal interval (15 minutes)
+    rate_limit_interval_sec: 30.0             # Per-unit rate limit interval
+    rate_limit_burst: 10000                   # Per-unit rate limit burst
+  slices:
+    system_cpu_weight: 100                    # system.slice CPU weight
+    user_cpu_weight: 100                      # user.slice CPU weight
+    fizzbuzz_cpu_weight: 200                  # fizzbuzz.slice CPU weight
+    machine_cpu_weight: 100                   # machine.slice CPU weight
+  dashboard:
+    width: 76                                 # ASCII dashboard width

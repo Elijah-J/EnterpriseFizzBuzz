@@ -1,0 +1,27 @@
+"""FizzSystemd service manager and init system events."""
+
+from enterprise_fizzbuzz.domain.events._registry import EventType
+
+EventType.register("SYD_UNIT_LOADED")
+EventType.register("SYD_UNIT_UNLOADED")
+EventType.register("SYD_UNIT_STARTED")
+EventType.register("SYD_UNIT_STOPPED")
+EventType.register("SYD_UNIT_FAILED")
+EventType.register("SYD_UNIT_RESTARTED")
+EventType.register("SYD_UNIT_RELOADED")
+EventType.register("SYD_JOB_STARTED")
+EventType.register("SYD_JOB_COMPLETED")
+EventType.register("SYD_JOB_FAILED")
+EventType.register("SYD_JOB_TIMEOUT")
+EventType.register("SYD_SOCKET_ACTIVATED")
+EventType.register("SYD_TIMER_ELAPSED")
+EventType.register("SYD_WATCHDOG_TIMEOUT")
+EventType.register("SYD_JOURNAL_ENTRY_WRITTEN")
+EventType.register("SYD_JOURNAL_SEALED")
+EventType.register("SYD_INHIBITOR_ACQUIRED")
+EventType.register("SYD_INHIBITOR_RELEASED")
+EventType.register("SYD_BOOT_COMPLETED")
+EventType.register("SYD_SHUTDOWN_INITIATED")
+EventType.register("SYD_CGROUP_DELEGATED")
+EventType.register("SYD_DASHBOARD_RENDERED")
+EventType.register("SYD_EVALUATION_PROCESSED")
