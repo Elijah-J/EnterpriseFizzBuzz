@@ -1,0 +1,14 @@
+
+fizzadmit:
+  enabled: false
+  admission_timeout: 10.0
+  finalizer_timeout: 300.0
+  reconcile_max_concurrent: 1
+  reconcile_backoff_base: 5.0
+  reconcile_backoff_cap: 300.0
+  leader_election_lease: 15.0
+  enable_default_image_rules: true
+  default_security_profile: "BASELINE"
+  dashboard_width: 80
+  max_audit_records: 10000
+  work_queue_max_depth: 1000

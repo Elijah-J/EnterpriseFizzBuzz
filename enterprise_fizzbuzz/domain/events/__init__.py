@@ -79,5 +79,6 @@ import enterprise_fizzbuzz.domain.events.fizzstream  # noqa: F401
 import enterprise_fizzbuzz.domain.events.fizzborrow  # noqa: F401
 import enterprise_fizzbuzz.domain.events.fizzpolicy  # noqa: F401
 import enterprise_fizzbuzz.domain.events.fizzadmit  # noqa: F401
+import enterprise_fizzbuzz.domain.events.fizzlsp  # noqa: F401
 
 __all__ = ["EventType", "_EventValue"]

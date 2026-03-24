@@ -41,20 +41,24 @@ from .mixins.fizzcompose import FizzcomposeConfigMixin
 from .mixins.fizzcontainerchaos import FizzcontainerchaosConfigMixin
 from .mixins.fizzcontainerd import FizzcontainerdConfigMixin
 from .mixins.fizzcontainerops import FizzcontaineropsConfigMixin
+from .mixins.fizzadmit import FizzadmitConfigMixin
 from .mixins.fizzdap import FizzdapConfigMixin
 from .mixins.fizzdeploy import FizzdeployConfigMixin
 from .mixins.fizzimage import FizzimageConfigMixin
 from .mixins.fizzkube import FizzkubeConfigMixin
 from .mixins.fizzkubev2 import Fizzkubev2ConfigMixin
 from .mixins.fizzlang import FizzlangConfigMixin
+from .mixins.fizzlsp import FizzlspConfigMixin
 from .mixins.fizzlife import FizzlifeConfigMixin
 from .mixins.fizznet import FizznetConfigMixin
+from .mixins.fizzpolicy import FizzpolicyConfigMixin
 from .mixins.fizzns import FizznsConfigMixin
 from .mixins.fizzoci import FizzociConfigMixin
 from .mixins.fizzoverlay import FizzoverlayConfigMixin
 from .mixins.fizzpm import FizzpmConfigMixin
 from .mixins.fizzregistry import FizzregistryConfigMixin
 from .mixins.fizzsql import FizzsqlConfigMixin
+from .mixins.fizzstream import FizzstreamConfigMixin
 from .mixins.fizzwal import FizzwalConfigMixin
 from .mixins.flame import FlameConfigMixin
 from .mixins.formal_verification import FormalVerificationConfigMixin
@@ -159,20 +163,24 @@ class ConfigurationManager(
     FizzcontainerchaosConfigMixin,
     FizzcontainerdConfigMixin,
     FizzcontaineropsConfigMixin,
+    FizzadmitConfigMixin,
     FizzdapConfigMixin,
     FizzdeployConfigMixin,
     FizzimageConfigMixin,
     FizzkubeConfigMixin,
     Fizzkubev2ConfigMixin,
     FizzlangConfigMixin,
+    FizzlspConfigMixin,
     FizzlifeConfigMixin,
     FizznetConfigMixin,
+    FizzpolicyConfigMixin,
     FizznsConfigMixin,
     FizzociConfigMixin,
     FizzoverlayConfigMixin,
     FizzpmConfigMixin,
     FizzregistryConfigMixin,
     FizzsqlConfigMixin,
+    FizzstreamConfigMixin,
     FizzwalConfigMixin,
     FlameConfigMixin,
     FormalVerificationConfigMixin,
