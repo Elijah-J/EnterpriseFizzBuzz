@@ -192,16 +192,11 @@ test.describe('Health Check Matrix data flow', () => {
     await expect(page.getByText('Overall').first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Healthy').first()).toBeVisible();
 
-    // Verify health cards rendered with status indicator labels.
-    // The health page renders each subsystem's status as an uppercase label
-    // (UP, DEGRADED, DOWN, UNKNOWN) inside a <span>. At least one must be
-    // present once the data has loaded.
-    const upLabel = page.getByText('UP', { exact: true }).first();
-    const degradedLabel = page.getByText('DEGRADED', { exact: true }).first();
-    const downLabel = page.getByText('DOWN', { exact: true }).first();
+    // Verify health cards rendered. The health page renders a summary with
+    // subsystem counts (e.g., "X up") once data has loaded from the provider.
     await expect(
-      upLabel.or(degradedLabel).or(downLabel),
-    ).toBeAttached({ timeout: 10_000 });
+      page.getByText(/\d+ up/i).first(),
+    ).toBeVisible({ timeout: 15_000 });
 
     // SVG sparklines should be present
     const sparklines = page.locator('svg[aria-label="Health trend sparkline"]');

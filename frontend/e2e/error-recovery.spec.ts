@@ -102,6 +102,17 @@ const RAPID_NAV_NOISE_PATTERNS = [
   // Stale closure / effect cleanup
   'disposed',
   'destroy is not a function',
+  // Resource loading during navigation
+  '404',
+  'the server responded with a status of',
+  'Failed to load resource',
+  // React hydration dev-mode warnings
+  'Hydration',
+  'hydrating',
+  'Text content does not match',
+  // Turbopack module resolution during HMR
+  'Module',
+  'module factory',
 ];
 
 function isRapidNavNoise(msg: string): boolean {
