@@ -2178,6 +2178,20 @@ fizzcompose:
     subnet: "172.28.0.0/16"
     gateway: "172.28.0.1"
 
+fizzkubev2:
+  enabled: false
+  default_pull_policy: "IfNotPresent"
+  probe_initial_delay: 0.0
+  probe_period: 10.0
+  probe_failure_threshold: 3
+  termination_grace_period: 30.0
+  restart_backoff_base: 10.0
+  restart_backoff_cap: 300.0
+  inject_sidecars: true
+  storage_pool_bytes: 10485760
+  max_init_retries: 3
+  dashboard_width: 72
+
 # Observer configuration
 observers:
   console_observer:

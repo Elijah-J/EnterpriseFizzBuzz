@@ -559,6 +559,11 @@ from enterprise_fizzbuzz.infrastructure.fizzcompose import (
     FizzComposeMiddleware,
     create_fizzcompose_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzkubev2 import (
+    KubeletV2,
+    FizzKubeV2Middleware,
+    create_fizzkubev2_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -4113,6 +4118,56 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzcompose-config",
         action="store_true",
         help="Validate and display the resolved compose file",
+    )
+
+    # FizzKubeV2 — Container-Aware Orchestrator Upgrade
+    parser.add_argument(
+        "--fizzkubev2",
+        action="store_true",
+        help="Enable FizzKubeV2: CRI-integrated orchestrator with image pulls, init containers, sidecars, probes, and volumes",
+    )
+    parser.add_argument(
+        "--fizzkubev2-pods",
+        action="store_true",
+        help="List pods with container status, init results, and sidecar info",
+    )
+    parser.add_argument(
+        "--fizzkubev2-describe-pod",
+        type=str,
+        default=None,
+        metavar="POD",
+        help="Show detailed pod status (init containers, sidecars, probes, volumes)",
+    )
+    parser.add_argument(
+        "--fizzkubev2-logs",
+        nargs=2,
+        default=None,
+        metavar=("POD", "CONTAINER"),
+        help="Stream container logs from a specific pod and container",
+    )
+    parser.add_argument(
+        "--fizzkubev2-exec",
+        nargs=3,
+        default=None,
+        metavar=("POD", "CONTAINER", "COMMAND"),
+        help="Execute a command inside a container in a pod",
+    )
+    parser.add_argument(
+        "--fizzkubev2-images",
+        action="store_true",
+        help="List images with pull status and progress",
+    )
+    parser.add_argument(
+        "--fizzkubev2-events",
+        action="store_true",
+        help="List recent kubelet events",
+    )
+    parser.add_argument(
+        "--fizzkubev2-probe-status",
+        type=str,
+        default=None,
+        metavar="POD",
+        help="Show probe results for all containers in a pod",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8730,6 +8785,45 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +----------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzKubeV2: Container-Aware Orchestrator Upgrade
+    # ----------------------------------------------------------------
+    kubev2_middleware_instance = None
+
+    if (args.fizzkubev2 or args.fizzkubev2_pods or args.fizzkubev2_describe_pod or
+            args.fizzkubev2_logs or args.fizzkubev2_exec or args.fizzkubev2_images or
+            args.fizzkubev2_events or args.fizzkubev2_probe_status):
+        kubev2_kubelet, kubev2_middleware_instance = create_fizzkubev2_subsystem(
+            default_pull_policy=config.fizzkubev2_default_pull_policy,
+            probe_initial_delay=config.fizzkubev2_probe_initial_delay,
+            probe_period=config.fizzkubev2_probe_period,
+            probe_failure_threshold=config.fizzkubev2_probe_failure_threshold,
+            termination_grace_period=config.fizzkubev2_termination_grace_period,
+            restart_backoff_base=config.fizzkubev2_restart_backoff_base,
+            restart_backoff_cap=config.fizzkubev2_restart_backoff_cap,
+            inject_sidecars=config.fizzkubev2_inject_sidecars,
+            storage_pool_bytes=config.fizzkubev2_storage_pool_bytes,
+            max_init_retries=config.fizzkubev2_max_init_retries,
+            dashboard_width=config.fizzkubev2_dashboard_width,
+            enable_dashboard=args.fizzkubev2_pods,
+            event_bus=event_bus if 'event_bus' in dir() else None,
+        )
+        builder.with_middleware(kubev2_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "\n"
+                "  +----------------------------------------------------------+\n"
+                "  | FIZZKUBEV2: CONTAINER-AWARE ORCHESTRATOR UPGRADE         |\n"
+                "  +----------------------------------------------------------+\n"
+                f"  | Pull Policy: {config.fizzkubev2_default_pull_policy:<44}|\n"
+                f"  | Grace Period: {config.fizzkubev2_termination_grace_period:.0f}s         Probe Period: {config.fizzkubev2_probe_period:.0f}s          |\n"
+                "  | CRI image pulls, init containers, sidecar injection      |\n"
+                "  | Readiness/liveness/startup probes, volume management     |\n"
+                "  | Kubernetes kubelet v1.29 architecture                    |\n"
+                "  +----------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -12469,6 +12563,41 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(compose_engine_instance.exec(service_name, command))
     elif args.fizzcompose_exec and compose_engine_instance is None:
         print("\n  FizzCompose not enabled. Use --fizzcompose to enable.\n")
+
+    # FizzKubeV2 Pods (post-execution)
+    if args.fizzkubev2_pods and kubev2_middleware_instance is not None:
+        print()
+        print(kubev2_middleware_instance.render_pods())
+    elif args.fizzkubev2_pods and kubev2_middleware_instance is None:
+        print("\n  FizzKubeV2 not enabled. Use --fizzkubev2 to enable.\n")
+
+    # FizzKubeV2 Describe Pod (post-execution)
+    if args.fizzkubev2_describe_pod and kubev2_middleware_instance is not None:
+        print()
+        print(kubev2_middleware_instance.render_pod_detail(args.fizzkubev2_describe_pod))
+    elif args.fizzkubev2_describe_pod and kubev2_middleware_instance is None:
+        print("\n  FizzKubeV2 not enabled. Use --fizzkubev2 to enable.\n")
+
+    # FizzKubeV2 Images (post-execution)
+    if args.fizzkubev2_images and kubev2_middleware_instance is not None:
+        print()
+        print(kubev2_middleware_instance.render_images())
+    elif args.fizzkubev2_images and kubev2_middleware_instance is None:
+        print("\n  FizzKubeV2 not enabled. Use --fizzkubev2 to enable.\n")
+
+    # FizzKubeV2 Events (post-execution)
+    if args.fizzkubev2_events and kubev2_middleware_instance is not None:
+        print()
+        print(kubev2_middleware_instance.render_events())
+    elif args.fizzkubev2_events and kubev2_middleware_instance is None:
+        print("\n  FizzKubeV2 not enabled. Use --fizzkubev2 to enable.\n")
+
+    # FizzKubeV2 Probe Status (post-execution)
+    if args.fizzkubev2_probe_status and kubev2_middleware_instance is not None:
+        print()
+        print(kubev2_middleware_instance.render_probes())
+    elif args.fizzkubev2_probe_status and kubev2_middleware_instance is None:
+        print("\n  FizzKubeV2 not enabled. Use --fizzkubev2 to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

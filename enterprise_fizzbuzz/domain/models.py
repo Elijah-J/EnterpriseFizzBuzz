@@ -973,6 +973,35 @@ class EventType(Enum):
     COMPOSE_VOLUME_CREATED = auto()
     COMPOSE_DASHBOARD_RENDERED = auto()
 
+    # FizzKubeV2 Container-Aware Orchestrator events
+    KUBEV2_POD_CREATED = auto()
+    KUBEV2_POD_SCHEDULED = auto()
+    KUBEV2_POD_RUNNING = auto()
+    KUBEV2_POD_SUCCEEDED = auto()
+    KUBEV2_POD_FAILED = auto()
+    KUBEV2_POD_TERMINATING = auto()
+    KUBEV2_IMAGE_PULL_STARTED = auto()
+    KUBEV2_IMAGE_PULLED = auto()
+    KUBEV2_IMAGE_PULL_FAILED = auto()
+    KUBEV2_IMAGE_PULL_STALLED = auto()
+    KUBEV2_INIT_STARTED = auto()
+    KUBEV2_INIT_COMPLETED = auto()
+    KUBEV2_INIT_FAILED = auto()
+    KUBEV2_SIDECAR_INJECTED = auto()
+    KUBEV2_SIDECAR_SKIPPED = auto()
+    KUBEV2_PROBE_EXECUTED = auto()
+    KUBEV2_PROBE_SUCCEEDED = auto()
+    KUBEV2_PROBE_FAILED = auto()
+    KUBEV2_READINESS_CHANGED = auto()
+    KUBEV2_LIVENESS_FAILED = auto()
+    KUBEV2_VOLUME_PROVISIONED = auto()
+    KUBEV2_VOLUME_MOUNTED = auto()
+    KUBEV2_VOLUME_CLEANED = auto()
+    KUBEV2_PVC_BOUND = auto()
+    KUBEV2_CONTAINER_STARTED = auto()
+    KUBEV2_CONTAINER_RESTARTED = auto()
+    KUBEV2_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.
