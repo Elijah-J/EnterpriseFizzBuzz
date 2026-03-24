@@ -789,6 +789,25 @@ class EventType(Enum):
     CG_DASHBOARD_RENDERED = auto()
     CG_EVALUATION_PROCESSED = auto()
 
+    # FizzOCI: OCI-Compliant Container Runtime events
+    OCI_CONTAINER_CREATING = auto()
+    OCI_CONTAINER_CREATED = auto()
+    OCI_CONTAINER_STARTED = auto()
+    OCI_CONTAINER_KILLED = auto()
+    OCI_CONTAINER_STOPPED = auto()
+    OCI_CONTAINER_DELETED = auto()
+    OCI_STATE_QUERIED = auto()
+    OCI_NAMESPACE_SETUP = auto()
+    OCI_CGROUP_CONFIGURED = auto()
+    OCI_ROOTFS_PREPARED = auto()
+    OCI_MOUNT_PROCESSED = auto()
+    OCI_SECCOMP_APPLIED = auto()
+    OCI_HOOK_EXECUTED = auto()
+    OCI_RLIMIT_APPLIED = auto()
+    OCI_CAPABILITY_DROPPED = auto()
+    OCI_SPEC_GENERATED = auto()
+    OCI_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

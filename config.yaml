@@ -2007,6 +2007,14 @@ fizzcgroup:
   dashboard:
     width: 72                             # ASCII dashboard width
 
+fizzoci:
+  enabled: false                          # Master switch — opt-in via --fizzoci
+  default_seccomp_profile: default        # Seccomp profile: default, strict, unconfined
+  default_hook_timeout: 30.0              # Default lifecycle hook timeout in seconds
+  max_containers: 256                     # Maximum concurrent containers
+  dashboard:
+    width: 72                             # ASCII dashboard width
+
 fizz_pager:
   enabled: false                          # Master switch — opt-in via --pager
   default_severity: P3                    # Default incident severity (P1-P5)

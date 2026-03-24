@@ -63,6 +63,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzOrg Organizational Hierarchy Architecture](#fizzorg-organizational-hierarchy-architecture)
 - [FizzNS Linux Namespace Isolation Architecture](#fizzns-linux-namespace-isolation-architecture)
 - [FizzCgroup Control Group Resource Accounting Architecture](#fizzcgroup-control-group-resource-accounting-architecture)
+- [FizzOCI OCI-Compliant Container Runtime Architecture](#fizzoci-oci-compliant-container-runtime-architecture)
 
 ---
 
@@ -5283,3 +5284,147 @@ The `FizzCgroupMiddleware` integrates into the middleware pipeline at priority 1
 | Test count | ~400 |
 
 FizzCgroup transforms FizzKube's resource specifications from advisory metadata into hard guarantees. A pod that declares `resources.limits.cpu: "500m"` now receives a CFS bandwidth quota of 50000 microseconds per 100000-microsecond period. A pod that declares `resources.limits.memory: "256Mi"` now has a `memory.max` of 268435456 bytes. Resource limits without enforcement are suggestions. Suggestions do not prevent outages. Cgroups do.
+
+---
+
+## FizzOCI OCI-Compliant Container Runtime Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/fizzoci.py`
+
+FizzOCI is an OCI-compliant low-level container runtime implementing the OCI runtime specification (v1.0.2) -- the platform's equivalent of runc. The OCI runtime spec defines the standard interface between container managers (containerd, CRI-O) and low-level runtimes that create containers. FizzOCI composes FizzNS namespace isolation and FizzCgroup resource limiting into full containers according to this specification.
+
+### Container Lifecycle State Machine
+
+The OCI specification defines four container states and validated transitions between them:
+
+```
+                    create(bundle)
+                         |
+                         v
+                   +-----------+
+                   | CREATING  |
+                   +-----------+
+                         |
+                         | (namespaces, cgroups, rootfs, mounts,
+                         |  seccomp, createRuntime/createContainer hooks)
+                         v
+                   +-----------+
+                   |  CREATED  |
+                   +-----------+
+                         |
+                         | start(id) -- startContainer hook, exec entrypoint
+                         v
+                   +-----------+
+                   |  RUNNING  |
+                   +-----------+
+                         |
+                         | kill(id, signal) -- process exits
+                         v
+                   +-----------+
+                   |  STOPPED  |
+                   +-----------+
+                         |
+                         | delete(id) -- cleanup, poststop hooks
+                         v
+                      (removed)
+```
+
+The `OCIContainer` dataclass tracks `container_id`, `state` (OCIState), `pid`, `bundle_path`, `config` (parsed OCIConfig), `namespace_set` (from FizzNS), `cgroup_path` (FizzCgroup node), `created_at`, `started_at`, `stopped_at`, `exit_code`, and `annotations`. State transitions are validated -- attempting to `start` a container in RUNNING state raises `OCIStateTransitionError`.
+
+### OCI Configuration
+
+The `OCIConfig` dataclass models the complete OCI runtime spec `config.json`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `oci_version` | string | Semantic version (e.g., "1.0.2") |
+| `root` | `OCIRoot` | Root filesystem path and readonly flag |
+| `mounts` | list[`MountSpec`] | Mount destination, type, source, options |
+| `process` | `ContainerProcess` | Entrypoint args, env, cwd, user, capabilities, rlimits |
+| `hostname` | string | UTS namespace hostname |
+| `linux` | `LinuxConfig` | Namespaces, cgroup_path, resources, seccomp, devices |
+| `hooks` | `ContainerHooks` | Six lifecycle hook points |
+| `annotations` | dict | Arbitrary key-value metadata |
+
+Schema validation reports detailed errors for missing required fields, type mismatches, and constraint violations.
+
+### Seccomp Profiles
+
+The `SeccompEngine` validates and evaluates syscall filter profiles using Linux seccomp-bpf semantics. Each profile specifies a `default_action` and a list of rules matching syscall names with optional argument conditions.
+
+| Profile | Default Action | Description |
+|---------|---------------|-------------|
+| `DEFAULT` | SCMP_ACT_ALLOW | Permissive -- blocks dangerous syscalls (reboot, kexec_load, mount) |
+| `STRICT` | SCMP_ACT_ERRNO | Minimal -- allows only read/write/exit/sigreturn and FizzBuzz syscalls |
+| `UNCONFINED` | SCMP_ACT_ALLOW | No filtering -- all syscalls permitted |
+
+Eight seccomp actions are supported: SCMP_ACT_KILL, SCMP_ACT_KILL_PROCESS, SCMP_ACT_TRAP, SCMP_ACT_ERRNO, SCMP_ACT_TRACE, SCMP_ACT_ALLOW, SCMP_ACT_LOG, SCMP_ACT_NOTIFY. Seven comparison operators enable argument-level filtering.
+
+### Lifecycle Hooks
+
+The `HookExecutor` runs six hook points defined by the OCI spec:
+
+| Hook | Execution Context | Timing |
+|------|------------------|--------|
+| `prestart` | Runtime namespace | Deprecated but supported for compatibility |
+| `createRuntime` | Runtime namespace | After container creation, before pivot_root |
+| `createContainer` | Runtime namespace | After pivot_root, before user process |
+| `startContainer` | Container namespace | Before starting user process |
+| `poststart` | Runtime namespace | After user process starts |
+| `poststop` | Runtime namespace | After container stops, before delete completes |
+
+Each hook specifies a path, args, env, and timeout. Hooks exceeding their timeout raise `HookTimeoutError`.
+
+### Container Creation Procedure
+
+The `ContainerCreator` orchestrates the full creation sequence:
+
+1. Parse and validate OCI config.json
+2. Create namespaces via FizzNS (per `linux.namespaces`)
+3. Create cgroup node via FizzCgroup (per `linux.cgroup_path`)
+4. Configure cgroup resource limits (per `linux.resources`)
+5. Prepare root filesystem (per `root`)
+6. Process mounts (per `mounts`)
+7. Mask specified paths and apply readonly paths
+8. Apply device allowlist
+9. Configure seccomp profile (per `linux.seccomp`)
+10. Execute `createRuntime` and `createContainer` hooks
+11. Create container process in new namespaces
+
+FizzNS and FizzCgroup integration is optional -- the runtime degrades gracefully if either subsystem is unavailable, logging the degradation without failing container creation.
+
+### OCI Runtime Manager
+
+The `OCIRuntime` implements the five OCI operations as a clean interface. It maintains a registry of active containers indexed by `container_id`. All operations are thread-safe for concurrent container management. Container lifecycle transitions emit events to the platform's event bus.
+
+### FizzOCI Dashboard
+
+The `OCIDashboard` renders an ASCII display with:
+
+- Container state table (ID, state, PID, bundle, uptime)
+- Lifecycle event log with timestamps and state transitions
+- Seccomp profile summary with rule counts and denied syscall log
+- Hook execution timeline with duration and exit codes
+
+### FizzOCI Middleware
+
+The `OCIRuntimeMiddleware` integrates into the middleware pipeline at priority 108, after FizzCgroupMiddleware (107). When a FizzBuzz evaluation is requested in a containerized context, the middleware ensures the evaluation runs inside a properly configured OCI container with the correct namespace isolation, resource limits, and seccomp profile applied.
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| OCI states | 4 (CREATING, CREATED, RUNNING, STOPPED) |
+| OCI operations | 5 (create, start, kill, delete, state) |
+| Seccomp actions | 8 |
+| Seccomp operators | 7 |
+| Predefined profiles | 3 (DEFAULT, STRICT, UNCONFINED) |
+| Lifecycle hooks | 6 (prestart, createRuntime, createContainer, startContainer, poststart, poststop) |
+| Mount propagation modes | 6 |
+| Middleware priority | 108 |
+| Custom exceptions | 20 (EFP-OCI0 through EFP-OCI19) |
+| EventType entries | 17 |
+| CLI flags | 5 (`--fizzoci`, `--fizzoci-list`, `--fizzoci-state`, `--fizzoci-spec`, `--fizzoci-lifecycle`) |
+| Test count | ~350 |
+
+FizzOCI is the layer that composes raw kernel primitives into containers. FizzNS provides isolation. FizzCgroup provides resource enforcement. FizzOCI binds them together according to the OCI runtime specification -- the industry-standard contract that every container manager expects its low-level runtime to implement. Without FizzOCI, the platform has isolation and resource limits but no standard interface for creating containers from them. With FizzOCI, a higher-level daemon can call `create`, `start`, `kill`, `delete`, and `state` with the same semantics as runc, crun, or youki. The container stack now has its low-level runtime.

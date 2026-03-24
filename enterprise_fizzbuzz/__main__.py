@@ -494,6 +494,12 @@ from enterprise_fizzbuzz.infrastructure.fizzcgroup import (
     ResourceAccountant,
     create_fizzcgroup_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzoci import (
+    OCIDashboard,
+    OCIRuntime,
+    OCIRuntimeMiddleware,
+    create_fizzoci_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3607,6 +3613,34 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--fizzcgroup-top",
         action="store_true",
         help="Display top-style resource usage by cgroup after execution",
+    )
+
+    # FizzOCI — OCI-Compliant Container Runtime
+    parser.add_argument(
+        "--fizzoci",
+        action="store_true",
+        help="Enable FizzOCI: OCI-compliant container runtime with full lifecycle management, seccomp profiles, and hooks",
+    )
+    parser.add_argument(
+        "--fizzoci-list",
+        action="store_true",
+        help="Display list of all containers after execution",
+    )
+    parser.add_argument(
+        "--fizzoci-state",
+        type=str,
+        default=None,
+        help="Display state of a specific container by ID",
+    )
+    parser.add_argument(
+        "--fizzoci-spec",
+        action="store_true",
+        help="Generate and display the default OCI runtime spec",
+    )
+    parser.add_argument(
+        "--fizzoci-lifecycle",
+        action="store_true",
+        help="Display the container lifecycle event log after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -7881,6 +7915,37 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzOCI — OCI-Compliant Container Runtime (priority 108)
+    # ----------------------------------------------------------------
+    oci_runtime = None
+    oci_middleware_instance = None
+
+    if args.fizzoci or args.fizzoci_list or args.fizzoci_state or args.fizzoci_spec or args.fizzoci_lifecycle:
+        oci_runtime, oci_middleware_instance = create_fizzoci_subsystem(
+            default_seccomp_profile=config.fizzoci_default_seccomp_profile,
+            default_hook_timeout=config.fizzoci_default_hook_timeout,
+            max_containers=config.fizzoci_max_containers,
+            dashboard_width=config.fizzoci_dashboard_width,
+            enable_dashboard=args.fizzoci_list,
+            namespace_manager=ns_manager,
+            cgroup_manager=cg_manager,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(oci_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZOCI: OCI-COMPLIANT CONTAINER RUNTIME               |\n"
+                f"  | Seccomp: {config.fizzoci_default_seccomp_profile:<20}                |\n"
+                "  | OCI Runtime Spec v1.0.2 | 5 operations supported      |\n"
+                "  | create, start, kill, delete, state                     |\n"
+                "  | Lifecycle hooks, capabilities, rlimits, mounts         |\n"
+                "  | The containers FizzKube has been waiting for.          |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11261,6 +11326,34 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(cg_middleware_instance.render_top())
     elif args.fizzcgroup_top and cg_middleware_instance is None:
         print("\n  FizzCgroup not enabled. Use --fizzcgroup to enable.\n")
+
+    # FizzOCI List (post-execution)
+    if args.fizzoci_list and oci_middleware_instance is not None:
+        print()
+        print(oci_middleware_instance.render_container_list())
+    elif args.fizzoci_list and oci_middleware_instance is None:
+        print("\n  FizzOCI not enabled. Use --fizzoci to enable.\n")
+
+    # FizzOCI State (post-execution)
+    if args.fizzoci_state and oci_middleware_instance is not None:
+        print()
+        print(oci_middleware_instance.render_container_state(args.fizzoci_state))
+    elif args.fizzoci_state and oci_middleware_instance is None:
+        print("\n  FizzOCI not enabled. Use --fizzoci to enable.\n")
+
+    # FizzOCI Spec (post-execution)
+    if args.fizzoci_spec and oci_middleware_instance is not None:
+        print()
+        print(oci_middleware_instance.render_default_spec())
+    elif args.fizzoci_spec and oci_middleware_instance is None:
+        print("\n  FizzOCI not enabled. Use --fizzoci to enable.\n")
+
+    # FizzOCI Lifecycle (post-execution)
+    if args.fizzoci_lifecycle and oci_middleware_instance is not None:
+        print()
+        print(oci_middleware_instance.render_lifecycle())
+    elif args.fizzoci_lifecycle and oci_middleware_instance is None:
+        print("\n  FizzOCI not enabled. Use --fizzoci to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

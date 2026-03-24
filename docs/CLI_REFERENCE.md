@@ -1319,6 +1319,13 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --fizzns-hierarchy           Render an ASCII tree of the namespace hierarchy, showing parent-child nesting relationships across all seven namespace types with reference counts and process membership at each level
 --fizzns-type TYPE           Filter namespace operations by type (PID, NET, MNT, UTS, IPC, USER, CGROUP), restricting --fizzns-list and --fizzns-hierarchy output to namespaces of the specified type
 
+# FizzOCI -- OCI-Compliant Container Runtime
+--fizzoci                    Enable the FizzOCI OCI-compliant container runtime, composing FizzNS namespace isolation and FizzCgroup resource limiting into full OCI containers with lifecycle management, seccomp profiles, and hooks
+--fizzoci-list               List all containers managed by the OCI runtime, displaying container ID, state (Creating/Created/Running/Stopped), PID, bundle path, creation timestamp, and namespace set
+--fizzoci-state ID           Display the OCI state report for a specific container, including oci_version, id, status, pid, bundle path, annotations, and created timestamp in the OCI-specified JSON format
+--fizzoci-spec               Generate a default OCI config.json template for FizzBuzz containers, pre-configured with DEFAULT seccomp profile, standard namespace set, and recommended cgroup resource limits
+--fizzoci-lifecycle          Display the OCI container lifecycle event log, showing state transitions (Creating->Created->Running->Stopped), hook executions, seccomp profile applications, and timing for each lifecycle phase
+
 # FizzCgroup -- Control Group Resource Accounting & Limiting
 --fizzcgroup                 Enable the FizzCgroup cgroups v2 resource accounting engine, attaching CPU, memory, I/O, and PIDs controllers to each container's cgroup node with enforcement of resource limits declared in FizzKube PodSpecs
 --fizzcgroup-tree            Display the cgroup unified hierarchy as an ASCII tree, showing cgroup paths, attached controllers, process counts, and subtree_control delegation at each level
