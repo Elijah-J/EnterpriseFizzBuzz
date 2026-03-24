@@ -172,4 +172,24 @@
   --surface-card: var(--surface-raised);
   --surface-card-hover: var(--surface-overlay);
   --surface-border: var(--border-default);
+
+  /* ----------------------------------------------------------------
+   * Typography Tokens
+   * The type system uses three font families across a defined scale.
+   * Instrument Serif provides editorial warmth for display headings,
+   * Geist Sans handles body and interface text, and Geist Mono is
+   * reserved for data values where tabular alignment is critical.
+   * ---------------------------------------------------------------- */
+  --font-serif: var(--font-instrument-serif, serif);
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.1em;
+
+  /* Type scale — pixel-equivalent sizing */
+  --text-display: 2.5rem;
+  --text-page: 1.75rem;
+  --text-section: 0.75rem;
+  --text-data-value: 1.5rem;
+  --text-data-unit: 0.75rem;
+  --text-data-label: 0.8125rem;
 }

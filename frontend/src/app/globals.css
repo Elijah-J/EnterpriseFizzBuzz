@@ -6,6 +6,7 @@
   --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif);
 
   /* Surface system */
   --color-surface-ground: var(--surface-ground);
@@ -131,6 +132,97 @@
  */
 @utility border-subtle {
   border-color: var(--border-subtle);
+}
+
+/* ----------------------------------------------------------------
+ * Type Scale Utilities
+ *
+ * Each utility class encapsulates a complete typographic treatment:
+ * family, size, weight, tracking, and color. This prevents partial
+ * overrides and ensures consistent application across all pages.
+ * ---------------------------------------------------------------- */
+
+/**
+ * Display heading — Instrument Serif at 2.5rem. Reserved for primary
+ * page heroes and dashboard titles. Maximum one per viewport to
+ * preserve editorial hierarchy.
+ */
+@utility heading-display {
+  font-family: var(--font-serif), serif;
+  font-size: var(--text-display, 2.5rem);
+  font-weight: 400;
+  letter-spacing: var(--tracking-tight, -0.02em);
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+/**
+ * Page heading — Instrument Serif at 1.75rem. Used for secondary page
+ * titles and major section introductions. Off-white to maintain
+ * hierarchy beneath display headings.
+ */
+@utility heading-page {
+  font-family: var(--font-serif), serif;
+  font-size: var(--text-page, 1.75rem);
+  font-weight: 400;
+  letter-spacing: var(--tracking-tight, -0.02em);
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+/**
+ * Section heading — Geist Sans at 0.75rem, uppercase with wide tracking.
+ * Functions as a structural label rather than a content heading. The
+ * reduced size and muted color signal organizational hierarchy without
+ * competing for visual attention.
+ */
+@utility heading-section {
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-section, 0.75rem);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide, 0.1em);
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/**
+ * Data value — Geist Mono at 1.5rem with tabular numerals. Ensures
+ * consistent column alignment in dashboards and data tables. The
+ * monospace family and tabular-nums variant prevent layout shifts
+ * as values change.
+ */
+@utility data-value {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-data-value, 1.5rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+/**
+ * Data unit — Geist Mono at 0.75rem. Used for unit labels (ms, %, req/s)
+ * adjacent to data values. Muted color creates visual subordination to
+ * the primary value while maintaining monospace alignment.
+ */
+@utility data-unit {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-data-unit, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/**
+ * Data label — Geist Sans at 0.8125rem. Used for descriptive labels
+ * beneath or beside data values. Secondary color provides clear
+ * hierarchy between the value and its description.
+ */
+@utility data-label {
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-data-label, 0.8125rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 body {
