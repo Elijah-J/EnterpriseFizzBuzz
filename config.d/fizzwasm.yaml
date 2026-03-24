@@ -1,0 +1,20 @@
+# FizzWASM -- WebAssembly 2.0 Runtime configuration
+# A complete WebAssembly runtime implementing the binary format
+# specification, a validating decoder for all 13 module sections,
+# a stack-machine interpreter with linear memory, WASI Preview 1
+# system call support, fuel-based execution metering, and a
+# Component Model layer for interface type composition. The
+# cross-compiler emits .wasm binaries; FizzWASM executes them.
+fizzwasm:
+  enabled: false                          # Master switch -- opt-in via --fizzwasm
+  fuel_budget: 10000000                   # Default fuel budget (10M instructions)
+  fuel_cost_model: weighted               # Fuel cost model: uniform, weighted, custom
+  fuel_check_interval: 1                  # Instructions between fuel checks
+  max_pages: 65536                        # Maximum memory pages (4 GiB)
+  max_table_size: 1048576                 # Maximum table entries
+  max_call_depth: 1024                    # Maximum call stack depth
+  wasi_enabled: true                      # Enable WASI Preview 1 system calls
+  wasi_allow_random: true                 # Allow WASI random_get
+  component_model: true                   # Enable Component Model layer
+  dashboard:
+    width: 72                             # ASCII dashboard width
