@@ -2849,6 +2849,127 @@ class FizzLifeDashboard:
 # ============================================================
 
 
+def run_animated(
+    config: Optional[SimulationConfig] = None,
+    fps: int = 10,
+) -> None:
+    """Run a live animated FizzLife simulation in the terminal.
+
+    Renders each generation of the cellular automaton in real time,
+    clearing the screen between frames to produce a fluid animation
+    of emergent Lenia dynamics. The display includes the grid state
+    as an ASCII density map, generation counter, population statistics,
+    and mass trajectory.
+
+    This is the FizzLife showcase mode: a full-size simulation rendered
+    at the specified frame rate so the operator can observe the
+    spatiotemporal patterns that underpin FizzBuzz classification.
+
+    Args:
+        config: Simulation configuration. Defaults to a 64x64 grid
+            with 500 generations and default Lenia parameters.
+        fps: Target frames per second for the animation.
+    """
+    import sys
+
+    if config is None:
+        config = SimulationConfig(
+            grid_size=64,
+            generations=500,
+            seed=42,
+        )
+
+    engine = FizzLifeEngine(config)
+    engine.initialize()
+
+    grid = engine._grid
+    assert grid is not None
+
+    frame_delay = 1.0 / fps
+    chars = DENSITY_CHARS
+    max_idx = len(chars) - 1
+    size = config.grid_size
+    scale = max(1, size // 64)
+
+    mass_history: list[float] = []
+    pop_history: list[int] = []
+
+    for gen in range(config.generations):
+        start = time.monotonic()
+
+        report = grid.step()
+        mass_history.append(report.total_mass)
+        pop_history.append(report.population)
+
+        if report.state == SimulationState.EXTINCT:
+            # Show final frame before exiting
+            pass
+
+        # Build the frame
+        lines: list[str] = []
+        lines.append("\033[2J\033[H")  # Clear screen, cursor to top
+        lines.append("=" * 68)
+        lines.append(
+            f"  FIZZLIFE LIVE  |  Gen {gen + 1:>4d}/{config.generations}  "
+            f"|  Pop: {report.population:>5d}  |  Mass: {report.total_mass:>8.1f}"
+        )
+        lines.append("=" * 68)
+
+        # Render grid
+        for y in range(0, size, scale):
+            row_chars: list[str] = []
+            for x in range(0, size, scale):
+                val = grid._grid[y][x]
+                idx = int(val * max_idx)
+                idx = max(0, min(max_idx, idx))
+                row_chars.append(chars[idx])
+            lines.append("  " + "".join(row_chars))
+
+        # Mass sparkline (last 60 values)
+        lines.append("-" * 68)
+        recent_mass = mass_history[-60:]
+        if recent_mass:
+            max_m = max(recent_mass) or 1.0
+            spark_chars = " _.,:-=!#"
+            spark = []
+            for m in recent_mass:
+                si = int(m / max_m * (len(spark_chars) - 1))
+                si = max(0, min(len(spark_chars) - 1, si))
+                spark.append(spark_chars[si])
+            lines.append(f"  Mass: {''.join(spark)}")
+
+        # State info
+        state_name = report.state.name if hasattr(report, 'state') else "RUNNING"
+        lines.append(f"  State: {state_name}  |  dt={config.dt}  |  R={config.kernel.radius}")
+        lines.append("=" * 68)
+
+        sys.stdout.write("\n".join(lines))
+        sys.stdout.flush()
+
+        if report.state == SimulationState.EXTINCT:
+            sys.stdout.write(f"\n\n  ** EXTINCT at generation {gen + 1} **\n")
+            break
+
+        # Frame timing
+        elapsed = time.monotonic() - start
+        sleep_time = frame_delay - elapsed
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+
+    # Final summary
+    species = engine._analyzer.classify_species(config)
+    species_name = species.name if species else "Unknown"
+    classification = engine._classify_result(
+        grid.state, [species_name] if species else [], []
+    )
+    sys.stdout.write(
+        f"\n  Species: {species_name}"
+        f"\n  Classification: {classification or '(plain number)'}"
+        f"\n  Final mass: {report.total_mass:.2f}"
+        f"\n  Generations: {gen + 1}\n"
+    )
+
+
 def create_default_config() -> SimulationConfig:
     """Create a SimulationConfig with default parameters.
 

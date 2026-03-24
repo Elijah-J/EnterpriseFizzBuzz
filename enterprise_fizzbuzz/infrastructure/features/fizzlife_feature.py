@@ -50,6 +50,8 @@ class FizzLifeFeature(FeatureDescriptor):
                                   "help": "Display the FizzLife ASCII simulation dashboard after execution"}),
         ("--fizzlife-verbose", {"action": "store_true", "default": False,
                                 "help": "Enable verbose logging of per-generation simulation telemetry in context metadata"}),
+        ("--fizzlife-animate", {"action": "store_true", "default": False,
+                                "help": "Run a live animated simulation showing cells evolving in real time"}),
     ]
 
     def is_enabled(self, args: Any) -> bool:
@@ -58,6 +60,7 @@ class FizzLifeFeature(FeatureDescriptor):
             getattr(args, "fizzlife_dashboard", False),
             getattr(args, "fizzlife_species_catalog", False),
             getattr(args, "fizzlife_evolve", False),
+            getattr(args, "fizzlife_animate", False),
         ])
 
     def create(self, config: Any, args: Any, event_bus: Any = None) -> tuple:
@@ -86,6 +89,36 @@ class FizzLifeFeature(FeatureDescriptor):
 
         if getattr(args, "fizzlife_species_catalog", False):
             print(catalog.render())
+
+        if getattr(args, "fizzlife_animate", False):
+            from enterprise_fizzbuzz.infrastructure.fizzlife import (
+                run_animated,
+                SimulationConfig,
+                KernelConfig,
+                GrowthConfig,
+                KernelType,
+                GrowthType,
+            )
+            anim_config = SimulationConfig(
+                grid_size=getattr(args, "fizzlife_grid_size", None) or 64,
+                generations=getattr(args, "fizzlife_generations", None) or 500,
+                seed=(args.fizzlife_seed if getattr(args, "fizzlife_seed", None) is not None
+                      else 42),
+                kernel=KernelConfig(
+                    kernel_type=KernelType.EXPONENTIAL,
+                    radius=getattr(args, "fizzlife_kernel_radius", None) or config.fizzlife_kernel_radius,
+                ),
+                growth=GrowthConfig(
+                    growth_type=GrowthType.GAUSSIAN,
+                    mu=(args.fizzlife_growth_mu if getattr(args, "fizzlife_growth_mu", None) is not None
+                        else config.fizzlife_growth_center),
+                    sigma=(args.fizzlife_growth_sigma if getattr(args, "fizzlife_growth_sigma", None) is not None
+                           else config.fizzlife_growth_width),
+                ),
+            )
+            run_animated(anim_config)
+            import sys
+            sys.exit(0)
 
         if getattr(args, "fizzlife_evolve", False):
             middleware.evolve(
