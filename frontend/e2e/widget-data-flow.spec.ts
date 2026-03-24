@@ -192,10 +192,10 @@ test.describe('Health Check Matrix data flow', () => {
     await expect(page.getByText('Overall').first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText('Healthy').first()).toBeVisible();
 
-    // Verify health cards rendered. The health page renders a summary with
-    // subsystem counts (e.g., "X up") once data has loaded from the provider.
+    // Verify health data rendered. The page renders subsystem cards in a grid
+    // once data loads. Look for the filter controls which only appear after data.
     await expect(
-      page.getByText(/\d+ up/i).first(),
+      page.getByText('Sort by:').first(),
     ).toBeVisible({ timeout: 15_000 });
 
     // SVG sparklines should be present

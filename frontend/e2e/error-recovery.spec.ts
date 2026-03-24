@@ -287,20 +287,24 @@ test.describe('Rapid tab switching', () => {
     await page.goto('./monitor/health');
     await page.waitForLoadState('networkidle');
 
-    const monitorTabs = ['Metrics', 'Health Matrix', 'SLA Dashboard', 'Traces', 'Alerts', 'Consensus'];
+    // Monitor "tabs" are actually separate routes in the sidebar.
+    // Navigate between them with enough time for each route to start
+    // loading (300ms) to test real navigation, not just click-spam.
+    const monitorRoutes = [
+      './monitor/metrics',
+      './monitor/health',
+      './monitor/sla',
+      './monitor/traces',
+      './monitor/alerts',
+      './monitor/consensus',
+    ];
 
-    // Rapid tab switching
-    for (let round = 0; round < 2; round++) {
-      for (const tab of monitorTabs) {
-        const tabEl = page.getByText(tab, { exact: true }).first();
-        if (await tabEl.isVisible().catch(() => false)) {
-          await tabEl.click();
-          await page.waitForTimeout(150);
-        }
-      }
+    for (const route of monitorRoutes) {
+      await page.goto(route);
+      await page.waitForTimeout(300);
     }
 
-    // End on Health Matrix and let it render
+    // Settle on the final page and let it render
     const healthTab = page.getByText('Health Matrix', { exact: true }).first();
     if (await healthTab.isVisible().catch(() => false)) {
       await healthTab.click();
