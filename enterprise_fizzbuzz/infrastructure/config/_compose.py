@@ -58,6 +58,7 @@ from .mixins.fizzoverlay import FizzoverlayConfigMixin
 from .mixins.fizzpm import FizzpmConfigMixin
 from .mixins.fizzregistry import FizzregistryConfigMixin
 from .mixins.fizzsql import FizzsqlConfigMixin
+from .mixins.fizzsystemd import FizzsystemdConfigMixin
 from .mixins.fizzstream import FizzstreamConfigMixin
 from .mixins.fizzwal import FizzwalConfigMixin
 from .mixins.flame import FlameConfigMixin
@@ -180,6 +181,7 @@ class ConfigurationManager(
     FizzpmConfigMixin,
     FizzregistryConfigMixin,
     FizzsqlConfigMixin,
+    FizzsystemdConfigMixin,
     FizzstreamConfigMixin,
     FizzwalConfigMixin,
     FlameConfigMixin,

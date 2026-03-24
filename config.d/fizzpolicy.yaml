@@ -1,0 +1,19 @@
+
+fizzpolicy:
+  enabled: false
+  eval_timeout_ms: 100.0
+  max_iterations: 100000
+  max_output_size_bytes: 1048576
+  cache_max_entries: 10000
+  explanation_mode: summary
+  signing_key: fizzbuzz-default-policy-key
+  data_refresh_interval: 30.0
+  bundle_coverage_threshold: 80.0
+  bundle_perf_threshold_ms: 10.0
+  decision_log:
+    mask_fields:
+      - token
+      - secret
+      - password
+      - hmac_key
+    page_size: 100
