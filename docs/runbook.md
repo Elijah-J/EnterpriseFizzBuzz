@@ -551,6 +551,244 @@ The rotation algorithm computes `(epoch_hours // 168) % 1`, which always yields 
 
 ---
 
+## 7. Deploying a New Version with FizzDeploy
+
+### 7.1 Pre-Deployment Checklist
+
+Before initiating a deployment through FizzDeploy (`enterprise_fizzbuzz/infrastructure/fizzdeploy.py`):
+
+1. Verify the target image exists in FizzRegistry and has passed vulnerability scanning.
+2. Confirm the deployment manifest is committed and the GitOps reconciliation loop is active.
+3. Review the current fleet health via the FizzContainerOps dashboard.
+4. Verify circuit breakers are CLOSED and SLO compliance is within targets.
+
+### 7.2 Deployment Procedure
+
+```
+1. Update the deployment manifest with the new image tag.
+     |
+     v
+2. FizzDeploy detects the manifest change via GitOps reconciliation.
+     |
+     v
+3. The DeploymentPipeline executes seven stages:
+   a. BUILD  — Verify image layers in FizzOverlay content store.
+   b. SCAN   — Run vulnerability scan against the simulated CVE database.
+   c. SIGN   — Validate image signature and integrity digest.
+   d. PUSH   — Ensure image is available in FizzRegistry.
+   e. DEPLOY — Execute the selected strategy:
+      - RollingUpdate: Replace instances incrementally (maxSurge, maxUnavailable).
+      - BlueGreen: Start new version in parallel, switch traffic atomically.
+      - Canary: Shift traffic gradually with regression analysis.
+      - Recreate: Terminate all old, start all new.
+   f. VALIDATE — Run health checks and verify SLO compliance post-deploy.
+   g. ROLLBACK (if validation fails) — Revert to the previous known-good state.
+     |
+     v
+4. Monitor the FizzContainerOps dashboard for anomalies in the first 15 minutes.
+```
+
+### 7.3 Strategy Selection Guidance
+
+| Scenario | Recommended Strategy | Rationale |
+|----------|---------------------|-----------|
+| Routine version bump | RollingUpdate | Incremental replacement minimizes risk while maintaining availability. |
+| Database schema change | BlueGreen | Atomic traffic switch prevents mixed-version queries during migration. |
+| Unvalidated change to evaluation logic | Canary | Gradual traffic shifting detects accuracy regressions before full rollout. |
+| Development or staging environment | Recreate | Speed over availability. Acceptable when Bob is the only user. |
+
+---
+
+## 8. Scaling a Service with FizzCompose
+
+### 8.1 Scaling a Running Service
+
+FizzCompose (`enterprise_fizzbuzz/infrastructure/fizzcompose.py`) manages multi-container service groups. To scale a service:
+
+1. Update the `replicas` field in `fizzbuzz-compose.yaml` for the target service.
+2. FizzCompose's reconciliation loop detects the change and adjusts the running instance count.
+3. New instances are started with the same configuration, connected to the compose-scoped network via FizzCNI, and health-checked before receiving traffic.
+4. Scaling down terminates instances gracefully, draining in-flight FizzBuzz evaluations before shutdown.
+
+### 8.2 Dependency-Aware Scaling
+
+When scaling a service that other services depend on, FizzCompose respects the topological ordering. Scaling down a dependency below the minimum required by its dependents triggers a warning. Scaling up a leaf service has no ordering constraints.
+
+### 8.3 Resource Limits
+
+Each service's `resources` block (CPU and memory) is enforced via FizzCgroup. Scaling up without adjusting host resource capacity results in scheduling failures when the cgroup controller cannot allocate the requested resources.
+
+---
+
+## 9. Running a Chaos Game Day
+
+### 9.1 Planning
+
+FizzContainerChaos (`enterprise_fizzbuzz/infrastructure/fizzcontainerchaos.py`) provides container-infrastructure-level chaos, complementing the application-layer chaos in `chaos.py`. Before running a game day:
+
+1. Define the hypothesis: what container failure mode is being tested?
+2. Establish steady-state metrics: container restart count, evaluation latency, SLO compliance.
+3. Set blast radius limits: which namespaces, services, or cgroup hierarchies are in scope.
+4. Configure automatic abort conditions to prevent uncontrolled damage.
+
+### 9.2 Available Fault Types
+
+| Fault Type | Target Layer | Effect |
+|------------|-------------|--------|
+| Container Kill | FizzContainerd task service | Terminates the container process. Tests restart policy and shim recovery. |
+| Network Partition | FizzCNI | Isolates a container from the compose network. Tests service mesh resilience. |
+| CPU Stress | FizzCgroup CPU controller | Saturates the CPU quota. Tests degraded performance handling. |
+| Memory Pressure | FizzCgroup memory controller | Pushes memory toward the cgroup limit. Tests OOM behavior. |
+| Disk Fill | FizzOverlay upper layer | Fills the writable layer. Tests write failure handling. |
+| Image Pull Failure | FizzRegistry | Simulates registry unavailability. Tests image caching and fallback. |
+| DNS Failure | FizzCNI DNS resolver | Breaks container name resolution. Tests DNS timeout handling. |
+| Network Latency | FizzCNI | Injects artificial delay on container network interfaces. Tests timeout configurations. |
+
+### 9.3 Execution Procedure
+
+```
+1. Select fault types and severity levels for the game day.
+     |
+     v
+2. Configure the FizzContainerChaos game day orchestrator with:
+   - Hypothesis statement
+   - Steady-state metric definitions
+   - Blast radius constraints
+   - Abort conditions
+     |
+     v
+3. Start the game day. The orchestrator injects faults according to the scenario phases.
+     |
+     v
+4. Monitor via FizzContainerOps dashboard:
+   - Container restart counts
+   - Cgroup resource utilization
+   - Network connectivity status
+   - Evaluation pipeline SLO compliance
+     |
+     v
+5. The orchestrator automatically aborts if abort conditions are met.
+     |
+     v
+6. Review the post-game-day report, which includes:
+   - Hypothesis validation (confirmed/disproved)
+   - Fault injection timeline
+   - Steady-state metric deviations
+   - Recommended improvements
+```
+
+### 9.4 Distinguishing Container Chaos from Application Chaos
+
+If you receive alerts during a chaos experiment, determine which chaos system is active:
+
+- **`chaos.py` (ChaosMonkey)**: Application-layer. Look for `chaos_corrupted`, `chaos_latency_ms` in evaluation metadata.
+- **`fizzcontainerchaos.py` (FizzContainerChaos)**: Infrastructure-layer. Look for container restart events, cgroup OOM kills, or CNI network failures in the FizzContainerOps log aggregator.
+
+Both systems can run simultaneously during a full-stack game day.
+
+---
+
+## 10. Investigating Container Issues with FizzContainerOps
+
+### 10.1 Log Aggregation
+
+FizzContainerOps (`enterprise_fizzbuzz/infrastructure/fizzcontainerops.py`) aggregates structured logs from all containers via an inverted index with full-text search. To investigate an issue:
+
+1. Query the log aggregator with the container ID or service name.
+2. Use the search DSL to filter by timestamp, log level, or content.
+3. Correlate log entries across containers using the distributed trace ID.
+
+### 10.2 Metrics Inspection
+
+Per-container cgroup metrics are collected in time-series ring buffers. Key metrics:
+
+| Metric | Source | What to Look For |
+|--------|--------|------------------|
+| CPU utilization | FizzCgroup CPU controller | Sustained utilization near the cgroup limit indicates CPU throttling. |
+| Memory usage | FizzCgroup memory controller | Usage approaching the limit triggers OOM kill risk. |
+| I/O throughput | FizzCgroup I/O controller | High I/O wait indicates storage bottleneck in the overlay filesystem. |
+| Network bytes | FizzCNI interface counters | Sudden drops indicate network partition or CNI plugin failure. |
+
+### 10.3 Interactive Diagnostics
+
+FizzContainerOps provides four interactive diagnostic tools:
+
+| Tool | Purpose |
+|------|---------|
+| **Container exec** | Execute a command inside a running container's namespace for live debugging. |
+| **Overlay diff** | Show filesystem changes in the container's writable layer relative to the image layers. |
+| **Process tree** | Display the process hierarchy within the container's PID namespace. |
+| **Cgroup flame graph** | Visualize resource consumption across the cgroup hierarchy. |
+
+### 10.4 Fleet Health Dashboard
+
+The ASCII fleet health dashboard displays the status of all running containers, including:
+
+- Container state (running, paused, stopped, restarting)
+- Resource utilization bars (CPU, memory)
+- Health check status
+- Restart count and last restart timestamp
+
+---
+
+## 11. Rolling Back a Failed Deployment
+
+### 11.1 Automatic Rollback
+
+FizzDeploy's validation stage runs health checks and SLO compliance verification after deployment. If validation fails, the pipeline automatically initiates rollback:
+
+1. The current (failed) deployment is marked as `FAILED`.
+2. The previous known-good deployment revision is identified from the deployment history.
+3. FizzContainerd restarts containers with the previous image.
+4. Health checks are re-run to confirm the rollback succeeded.
+5. A deployment event with status `ROLLED_BACK` is published.
+
+### 11.2 Manual Rollback
+
+If automatic rollback did not trigger (e.g., the deployment passed validation but issues emerged later):
+
+1. Identify the target revision from the deployment history.
+2. Update the deployment manifest to reference the previous image tag.
+3. FizzDeploy's GitOps reconciliation loop detects the change and executes the rollback as a standard deployment.
+4. Alternatively, invoke the `DeploymentPipeline.rollback()` method directly with the target revision.
+
+### 11.3 Rollback Decision Tree
+
+```
+ISSUE DETECTED POST-DEPLOYMENT
+    |
+    v
+Is the issue causing SLO violations?
+    |
+    +-- YES --> Is this within the FizzDeploy validation window?
+    |               |
+    |               +-- YES --> Automatic rollback should have triggered.
+    |               |           Check FizzDeploy logs for rollback status.
+    |               |           If rollback failed, initiate manual rollback.
+    |               |
+    |               +-- NO --> Initiate manual rollback via manifest revert
+    |                          or DeploymentPipeline.rollback().
+    |
+    +-- NO --> Is the issue affecting a subset of instances?
+                |
+                +-- YES --> Consider a targeted canary rollback for
+                |           affected instances only.
+                |
+                +-- NO --> Monitor. If the issue worsens, escalate
+                           to manual rollback.
+```
+
+### 11.4 Post-Rollback Verification
+
+After any rollback:
+
+1. Confirm all containers are running the expected image version via FizzContainerOps.
+2. Verify SLO compliance has recovered to pre-deployment levels.
+3. Check FizzCompose service health for all dependent services.
+4. Review the deployment event log for any cascading failures during the rollback.
+
+---
+
 ## Appendix A: Quick Reference Commands
 
 ### Check Circuit Breaker Status

@@ -568,3 +568,173 @@ The Enterprise FizzBuzz Platform maintains 1,142 tests for a codebase whose core
 The test suite is well-structured, with clear subsystem boundaries, consistent fixture patterns, and a contract testing framework that enforces interface compliance across implementations. The primary gaps are in CLI testing, cross-subsystem integration, and the emotional quality of cache eulogies.
 
 All tests pass. All tests run in under one second. The platform remains confident that 3 is divisible by 3.
+
+---
+
+## Testing Container Features
+
+The containerization layer introduces 13 modules spanning five tiers, from low-level namespace isolation through deployment orchestration to container-native chaos engineering. The following guidance covers testing strategies for the most common container feature development scenarios.
+
+### Testing Container Lifecycle
+
+Container lifecycle tests verify the progression of a container through its states: created, running, paused, resumed, stopped, and deleted. These tests exercise the FizzContainerd task service and the underlying FizzOCI runtime.
+
+**Key behaviors to test:**
+
+1. **State transitions**: Verify that containers transition through the expected state machine: `created -> running -> (paused -> running)* -> stopped -> deleted`. Invalid transitions (e.g., `created -> paused`) should raise the appropriate exception.
+
+2. **Shim survival**: FizzContainerd's shim architecture ensures running containers survive daemon restarts. Test that a container started before a daemon restart is still accessible after the daemon comes back up.
+
+3. **Resource enforcement**: Verify that FizzCgroup limits are applied at container creation. A container with a memory limit of 64Mi should have the corresponding cgroup memory.max set.
+
+4. **Namespace isolation**: Verify that a container's PID namespace, network namespace, and mount namespace are isolated from the host and from other containers. A process in container A should not be visible from container B's PID namespace.
+
+5. **Cleanup on failure**: If container creation fails (e.g., invalid OCI configuration), verify that all partially created resources (namespaces, cgroups, overlay mounts) are cleaned up.
+
+**Example test structure:**
+
+```python
+def test_container_lifecycle_happy_path():
+    """Verify full container lifecycle from creation through deletion."""
+    daemon = FizzContainerd()
+
+    # Create
+    container_id = daemon.task_service.create(image="efp/base:latest", config={...})
+    assert daemon.task_service.state(container_id) == "created"
+
+    # Start
+    daemon.task_service.start(container_id)
+    assert daemon.task_service.state(container_id) == "running"
+
+    # Kill
+    daemon.task_service.kill(container_id, signal="SIGTERM")
+    assert daemon.task_service.state(container_id) == "stopped"
+
+    # Delete
+    daemon.task_service.delete(container_id)
+    # Container should no longer exist in the registry
+
+def test_cgroup_memory_limit_enforced():
+    """Verify cgroup memory limit is set during container creation."""
+    runtime = FizzOCI()
+    container_id = runtime.create(config={"resources": {"memory": {"limit": "64Mi"}}})
+    cgroup = runtime.get_cgroup(container_id)
+    assert cgroup.memory_controller.limit == 64 * 1024 * 1024
+```
+
+### Testing Deployment Strategies
+
+FizzDeploy supports four deployment strategies. Each strategy has distinct behaviors that require targeted testing.
+
+**Rolling Update:**
+
+1. Verify that instances are replaced incrementally, respecting `maxSurge` and `maxUnavailable` constraints.
+2. Verify that health checks gate each replacement step — an unhealthy new instance should halt the rollout.
+3. Verify that rollback is triggered when the failure threshold is exceeded.
+
+**Blue-Green:**
+
+1. Verify that the new version runs in parallel with the old version during deployment.
+2. Verify that traffic switches atomically — there should be no period where traffic is split between versions.
+3. Verify that the old version is torn down after successful traffic switch.
+
+**Canary:**
+
+1. Verify that traffic is shifted gradually according to the configured percentage steps.
+2. Verify that automated regression analysis compares canary metrics against the baseline.
+3. Verify that the canary is rolled back if regression analysis detects degradation.
+
+**Recreate:**
+
+1. Verify that all old instances are terminated before any new instances start.
+2. Verify that the service experiences downtime during the transition (this is expected behavior for recreate).
+
+**Example test structure:**
+
+```python
+def test_rolling_update_respects_max_unavailable():
+    """Verify rolling update never exceeds maxUnavailable."""
+    pipeline = DeploymentPipeline()
+    manifest = load_manifest("rolling-update-test.yaml")
+
+    deployment = pipeline.deploy(manifest)
+
+    # During rollout, the number of unavailable instances should
+    # never exceed the configured maxUnavailable
+    for snapshot in deployment.rollout_history:
+        unavailable = snapshot.total_replicas - snapshot.available_replicas
+        assert unavailable <= manifest.spec.strategy.rolling_update.max_unavailable
+
+def test_canary_rollback_on_regression():
+    """Verify canary deployment rolls back when regression is detected."""
+    pipeline = DeploymentPipeline()
+    manifest = load_manifest("canary-test.yaml")
+
+    # Deploy a version that introduces latency regression
+    deployment = pipeline.deploy(manifest)
+
+    assert deployment.status == "ROLLED_BACK"
+    assert deployment.rollback_reason == "canary_regression_detected"
+```
+
+### Validating Compose Dependency Ordering
+
+FizzCompose resolves inter-service dependencies using Kahn's algorithm for topological sorting. Tests should verify that dependency ordering is correct and that cycles are detected.
+
+**Key behaviors to test:**
+
+1. **Topological order**: Given a dependency graph where service C depends on B and B depends on A, verify that startup order is A -> B -> C.
+
+2. **Health-gated startup**: A service should not start until all of its dependencies have passing health checks. Test that a service with a slow-starting dependency waits for the health check before proceeding.
+
+3. **Cycle detection**: Circular dependencies (A depends on B, B depends on A) should be detected during compose file parsing and reported as an error, not during startup.
+
+4. **Parallel startup**: Independent services (no dependency relationship) should start concurrently. Given services A, B (independent), and C (depends on both), A and B should start in parallel, and C should start only after both complete.
+
+5. **Graceful shutdown ordering**: Shutdown should proceed in reverse topological order. Dependents stop before their dependencies.
+
+**Example test structure:**
+
+```python
+def test_compose_topological_ordering():
+    """Verify services start in dependency order."""
+    compose = FizzCompose()
+    definition = parse_compose_yaml({
+        "services": {
+            "database": {"image": "efp/data:latest"},
+            "cache": {"image": "efp/cache:latest"},
+            "app": {
+                "image": "efp/core:latest",
+                "depends_on": ["database", "cache"],
+            },
+        }
+    })
+
+    startup_order = compose.resolve_startup_order(definition)
+
+    app_index = startup_order.index("app")
+    db_index = startup_order.index("database")
+    cache_index = startup_order.index("cache")
+
+    assert db_index < app_index
+    assert cache_index < app_index
+
+def test_compose_cycle_detection():
+    """Verify circular dependencies are detected at parse time."""
+    compose = FizzCompose()
+    definition = parse_compose_yaml({
+        "services": {
+            "a": {"image": "efp/a:latest", "depends_on": ["b"]},
+            "b": {"image": "efp/b:latest", "depends_on": ["a"]},
+        }
+    })
+
+    with pytest.raises(CircularDependencyError):
+        compose.resolve_startup_order(definition)
+```
+
+### Container Test Infrastructure Notes
+
+- **Singleton reset**: FizzContainerd and FizzRegistry may use singletons. Reset them between tests using the standard `_SingletonMeta.reset()` fixture pattern established in the existing test suite.
+- **Fixture isolation**: Each test should create its own container instances. Shared containers across tests risk state leakage, particularly in cgroup resource accounting and overlay layer state.
+- **Deterministic IDs**: When testing container lifecycle, use fixed container IDs or seeded UUID generation to ensure deterministic test output.

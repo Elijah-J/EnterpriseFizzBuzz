@@ -803,6 +803,148 @@ All file paths above are relative to `enterprise_fizzbuzz/`.
 
 ---
 
+## 8. Working with Container Features
+
+The platform's containerization layer provides a full container platform for deploying FizzBuzz subsystems as isolated, versioned workloads. The following walkthroughs cover the most common development tasks.
+
+### 8.1 Adding a New Subsystem Image to the FizzImage Catalog
+
+Every infrastructure module is available as a container image through the FizzImage catalog (`enterprise_fizzbuzz/infrastructure/fizzimage.py`). To add a new subsystem image:
+
+**Step 1: Register the image definition.**
+
+In `fizzimage.py`, add an entry to the subsystem image catalog. Each subsystem image specifies:
+
+- **`name`**: The image name, following the convention `efp/<subsystem-name>`.
+- **`module_path`**: The Python module path under `enterprise_fizzbuzz.infrastructure`.
+- **`image_class`**: One of `BASE`, `EVALUATION`, `SUBSYSTEM`, `INIT_CONTAINER`, or `SIDECAR`.
+- **`dependencies`**: Other images this image depends on, derived from the module's import graph.
+
+```python
+SubsystemImageDefinition(
+    name="efp/my-subsystem",
+    module_path="enterprise_fizzbuzz.infrastructure.my_subsystem",
+    image_class=ImageClass.SUBSYSTEM,
+    description="Provides enhanced FizzBuzz modulo capabilities",
+    version="1.0.0",
+)
+```
+
+**Step 2: Write a FizzFile.**
+
+FizzFile is the platform's Dockerfile equivalent, defined in `fizzregistry.py`. A FizzFile for a subsystem image typically:
+
+1. Starts `FROM efp/base:latest` — the base image containing the Python runtime and domain layer.
+2. Uses `FIZZCOPY` to add the module and its dependencies.
+3. Sets `FIZZCMD` to the subsystem's entry point.
+
+```dockerfile
+FROM efp/base:latest
+LABEL maintainer="bob.mcfizzington@enterprise.example.com"
+FIZZCOPY enterprise_fizzbuzz/infrastructure/my_subsystem.py /app/
+FIZZCMD ["python", "-m", "enterprise_fizzbuzz.infrastructure.my_subsystem"]
+```
+
+**Step 3: Build and push.**
+
+The FizzImage build pipeline will:
+1. Parse the FizzFile via `FizzFileParser`.
+2. Run AST-based dependency analysis to auto-include transitive imports.
+3. Scan the image for vulnerabilities against the simulated CVE database.
+4. Push the image to the FizzRegistry.
+
+### 8.2 Writing a Deployment Manifest for FizzDeploy
+
+Deployment manifests are declarative YAML files consumed by `FizzDeploy` (`enterprise_fizzbuzz/infrastructure/fizzdeploy.py`). A manifest defines the desired state for a containerized subsystem.
+
+**Manifest structure:**
+
+```yaml
+apiVersion: fizzdeploy/v1
+kind: Deployment
+metadata:
+  name: my-subsystem-deployment
+  namespace: fizzbuzz-production
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate       # One of: RollingUpdate, BlueGreen, Canary, Recreate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    image: efp/my-subsystem:1.0.0
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "64Mi"
+      limits:
+        cpu: "500m"
+        memory: "256Mi"
+    healthCheck:
+      type: http
+      path: /healthz
+      intervalSeconds: 10
+      failureThreshold: 3
+    env:
+      - name: EFP_LOG_LEVEL
+        value: "INFO"
+```
+
+**Key fields:**
+
+| Field | Description |
+|-------|-------------|
+| `spec.replicas` | Desired number of running instances. |
+| `spec.strategy.type` | Deployment strategy. `RollingUpdate` replaces instances incrementally. `BlueGreen` runs the new version in parallel and switches traffic atomically. `Canary` shifts traffic gradually with automated regression detection. `Recreate` terminates all old instances before starting new ones. |
+| `spec.template.image` | The container image from FizzRegistry. |
+| `spec.template.resources` | CPU and memory requests and limits, enforced via FizzCgroup. |
+| `spec.template.healthCheck` | Health probe configuration used for readiness gating. |
+
+**Deploying:**
+
+The `DeploymentPipeline` processes manifests through seven stages: build, scan, sign, push, deploy, validate, and (on failure) rollback. The GitOps reconciliation loop continuously compares the deployed state against the manifest and applies corrections when drift is detected.
+
+### 8.3 Adding a Service to fizzbuzz-compose.yaml
+
+`FizzCompose` (`enterprise_fizzbuzz/infrastructure/fizzcompose.py`) orchestrates multi-container service groups using a `fizzbuzz-compose.yaml` definition file. To add a new service:
+
+**Step 1: Define the service entry.**
+
+```yaml
+services:
+  my-subsystem:
+    image: efp/my-subsystem:1.0.0
+    depends_on:
+      - core
+      - data
+    ports:
+      - "8080:8080"
+    environment:
+      EFP_LOG_LEVEL: "INFO"
+      EFP_MY_SETTING: "42"
+    resources:
+      cpu: "200m"
+      memory: "128Mi"
+    restart_policy: on-failure
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    group: platform
+```
+
+**Step 2: Understand dependency resolution.**
+
+FizzCompose resolves service dependencies using Kahn's algorithm for topological sorting. Services listed in `depends_on` will be started before your service, and startup is gated on their health checks passing. The compose engine decomposes the platform's 116 infrastructure modules into 12 logical service groups (core, data, cache, network, security, observability, compute, devtools, platform, enterprise, ops, exotic), so assign your service to the appropriate `group`.
+
+**Step 3: Network and volume configuration.**
+
+FizzCompose provisions compose-scoped networks via FizzCNI and overlay-backed volumes via FizzOverlay. Services within the same compose definition can reach each other by service name through the compose network's DNS. Volumes persist data across container restarts.
+
+---
+
 ## Parting Wisdom
 
 The Enterprise FizzBuzz Platform has 24,800 lines of code, 69 custom exception classes, 829 tests, a neural network, a blockchain, a cache with funeral rites, and support for three fictional languages. It computes `n % 3`.

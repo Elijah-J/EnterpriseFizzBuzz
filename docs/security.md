@@ -520,3 +520,113 @@ the module docstring and the access denied response:
 These compliance claims have not been independently audited. The platform's legal
 counsel has advised that compliance with FizzBuzz-RBAC-v2 is self-certifying, on the
 grounds that no external auditor has agreed to review it.
+
+---
+
+## Container Security
+
+The containerization layer implements defense-in-depth security controls at every tier
+of the container stack. These controls ensure that the isolation, integrity, and
+auditability guarantees of the platform extend from the application layer down through
+the container runtime to the kernel resource boundaries.
+
+### Image Vulnerability Scanning
+
+FizzImage (`enterprise_fizzbuzz/infrastructure/fizzimage.py`) scans every container
+image against a simulated CVE database before the image enters the FizzRegistry. The
+scanning pipeline:
+
+1. **Dependency extraction**: AST-based analysis identifies all Python imports in the
+   image's module tree, building a complete dependency graph.
+2. **CVE matching**: Each dependency is checked against known vulnerabilities in the
+   simulated CVE database. Matches produce a severity-scored finding (CRITICAL, HIGH,
+   MEDIUM, LOW).
+3. **Policy enforcement**: Images with CRITICAL vulnerabilities are rejected from the
+   registry. HIGH vulnerabilities generate a warning but permit publication. MEDIUM
+   and LOW findings are logged for audit.
+4. **Continuous re-scanning**: The FizzImage catalog periodically re-scans published
+   images when the CVE database is updated, flagging newly discovered vulnerabilities
+   in previously clean images.
+
+FizzDeploy (`enterprise_fizzbuzz/infrastructure/fizzdeploy.py`) enforces a mandatory
+scan gate in its deployment pipeline. The SCAN stage must pass before the SIGN stage
+can proceed. Deployments referencing unscanned images are rejected.
+
+### Non-Root Containers
+
+FizzOCI (`enterprise_fizzbuzz/infrastructure/fizzoci.py`) enforces non-root execution
+by default. During container creation:
+
+1. The OCI runtime configuration (`config.json`) specifies the container's UID and GID.
+   The platform default maps the container process to a non-privileged user.
+2. FizzNS (`enterprise_fizzbuzz/infrastructure/fizzns.py`) configures USER namespace
+   mappings so that UID 0 inside the container maps to an unprivileged UID on the host.
+   This provides root-like behavior within the container's isolated view while
+   preventing privilege escalation to the host.
+3. FizzOverlay (`enterprise_fizzbuzz/infrastructure/fizzoverlay.py`) sets the upper
+   (writable) layer permissions to the mapped non-root UID, preventing unauthorized
+   writes to the container filesystem from other processes.
+
+### Seccomp Profiles
+
+FizzOCI applies seccomp (secure computing mode) syscall filtering during container
+creation. The seccomp profile:
+
+1. Operates in whitelist mode: only explicitly permitted system calls are allowed.
+   All others return `EPERM`.
+2. The default profile permits the minimal set of syscalls required for Python process
+   execution, including `read`, `write`, `open`, `close`, `mmap`, `brk`, `futex`,
+   and `clock_gettime`.
+3. Dangerous syscalls are blocked: `mount`, `umount`, `ptrace`, `reboot`,
+   `init_module`, `delete_module`, `sethostname`, and `pivot_root` are denied by
+   default.
+4. Custom seccomp profiles can be specified per container in the OCI runtime
+   configuration for subsystems with specialized syscall requirements.
+
+### Network Policies
+
+FizzCNI (`enterprise_fizzbuzz/infrastructure/fizzcni.py`) implements network policy
+enforcement via label-based microsegmentation:
+
+1. **Default deny**: Containers without an explicit network policy receive no inbound
+   connectivity from other containers. Outbound traffic to the compose network is
+   permitted by default.
+2. **Label selectors**: Network policies match containers by labels (e.g.,
+   `group=security`, `tier=data`). A policy specifying `allow: { from: { group: core } }`
+   permits inbound traffic only from containers labeled `group=core`.
+3. **Port-level rules**: Policies can restrict allowed ports. A container exposing
+   port 8080 can have a policy that only permits inbound connections on that port from
+   specific label groups.
+4. **Policy evaluation order**: Policies are evaluated in specificity order. A
+   container-specific policy overrides a namespace-wide policy. Conflicting policies
+   result in the most restrictive rule being applied.
+
+### Capability-Based Security Integration
+
+FizzOCI integrates with the platform's capability security system (`fizzcap.py`) to
+enforce the principle of least privilege at the Linux capability level:
+
+1. During container creation, FizzOCI drops all Linux capabilities except those
+   explicitly required by the container's workload.
+2. The default capability set retains only `CAP_NET_BIND_SERVICE` (for containers
+   that bind to privileged ports) and `CAP_SETUID`/`CAP_SETGID` (for user namespace
+   setup). All other capabilities, including `CAP_SYS_ADMIN`, `CAP_NET_RAW`, and
+   `CAP_SYS_PTRACE`, are dropped.
+3. Containers requesting elevated capabilities must declare them in the OCI runtime
+   configuration. FizzDeploy's security review stage flags any deployment manifest
+   that requests capabilities beyond the default set.
+
+### Container Security Audit Trail
+
+Every security-relevant container operation is recorded in the audit trail:
+
+| Operation | Audit Record |
+|-----------|-------------|
+| Image scan result | Image name, scan timestamp, CVE findings with severity |
+| Container creation | Container ID, image digest, seccomp profile, capability set, UID/GID mapping |
+| Network policy evaluation | Container ID, source/destination, policy match result, allowed/denied |
+| Capability request | Container ID, requested capabilities, granted/denied |
+| Deployment security gate | Deployment ID, scan result, signature verification, policy compliance |
+
+The audit trail is accessible through FizzContainerOps' structured log aggregation
+system, supporting both real-time monitoring and post-incident forensic analysis.

@@ -469,3 +469,114 @@ The following components use explicit locking for thread safety:
 | `CircuitBreaker` | `threading.Lock` | State machine, metrics, half-open call counter |
 | `SlidingWindow` | `threading.Lock` | Entry buffer |
 | `CircuitBreakerRegistry` | `threading.Lock` (instance + class) | Breaker map, singleton instance |
+
+## 14. Containerization Layer
+
+The platform's containerization layer spans two development rounds. Round 16 (Runtime) introduced the low-level container runtime primitives. Round 17 (Containerization) built the higher-level deployment, orchestration, and operations tooling on top. Together, these 13 modules form a complete container platform — from Linux namespace isolation through to multi-service composition and chaos-tested operations — all dedicated to the reliable evaluation of `n % 3` and `n % 5`.
+
+### 14.1 Layer Architecture
+
+The containerization stack is organized into five tiers, each building on the tier below:
+
+```
+Tier 5 — Operations
+  FizzContainerChaos    infrastructure/fizzcontainerchaos.py   Container-native chaos engineering
+  FizzContainerOps      infrastructure/fizzcontainerops.py     Container observability & diagnostics
+
+Tier 4 — Application Orchestration
+  FizzImage             infrastructure/fizzimage.py            Official container image catalog
+  FizzDeploy            infrastructure/fizzdeploy.py           CI/CD deployment pipeline
+  FizzCompose           infrastructure/fizzcompose.py          Multi-container service orchestration
+  FizzKubeV2            infrastructure/fizzkubev2.py           Container-aware FizzKube upgrade
+
+Tier 3 — High-Level Runtime
+  FizzContainerd        infrastructure/fizzcontainerd.py       Container daemon with shim architecture
+
+Tier 2 — Mid-Level Services
+  FizzOverlay           infrastructure/fizzoverlay.py          Copy-on-write union filesystem
+  FizzRegistry          infrastructure/fizzregistry.py         OCI distribution-compliant image registry
+  FizzCNI               infrastructure/fizzcni.py              Container network interface plugins
+
+Tier 1 — Low-Level Primitives
+  FizzNS                infrastructure/fizzns.py               Linux namespace isolation (7 types)
+  FizzCgroup            infrastructure/fizzcgroup.py           cgroups v2 resource accounting & limiting
+  FizzOCI               infrastructure/fizzoci.py              OCI-compliant low-level container runtime
+```
+
+### 14.2 Module Responsibilities
+
+#### Tier 1: Low-Level Primitives (Round 16)
+
+| Module | File | Purpose |
+|--------|------|---------|
+| **FizzNS** | `infrastructure/fizzns.py` | Implements all seven Linux namespace types (PID, NET, MNT, UTS, IPC, USER, CGROUP) following `clone(2)` and `unshare(2)` semantics. Provides the foundational isolation boundary for every container. |
+| **FizzCgroup** | `infrastructure/fizzcgroup.py` | Implements cgroups v2 unified hierarchy with CPU, memory, I/O, and PIDs controllers. Transforms orchestrator resource specifications into hard enforcement limits. |
+| **FizzOCI** | `infrastructure/fizzoci.py` | OCI runtime specification v1.0.2 compliant low-level runtime. Implements the five standard operations (create, start, kill, delete, state) and manages container lifecycle through namespace setup, cgroup configuration, seccomp filtering, and capability dropping. |
+
+#### Tier 2: Mid-Level Services (Round 16)
+
+| Module | File | Purpose |
+|--------|------|---------|
+| **FizzOverlay** | `infrastructure/fizzoverlay.py` | OverlayFS-style union filesystem with copy-on-write semantics. Stacks read-only image layers beneath a read-write upper layer, enabling content-addressable layer deduplication via SHA-256 digests. |
+| **FizzRegistry** | `infrastructure/fizzregistry.py` | OCI Distribution-compliant image registry with push, pull, tag, and catalog APIs. Includes FizzFile, the platform's Dockerfile equivalent, for building container images with FizzBuzz-specific instructions. |
+| **FizzCNI** | `infrastructure/fizzcni.py` | CNI specification v1.0.0 compliant plugin system with four network drivers (bridge, host, none, overlay). Provides IPAM, port mapping, container DNS, and network policy enforcement via label-based microsegmentation. |
+
+#### Tier 3: High-Level Runtime (Round 16)
+
+| Module | File | Purpose |
+|--------|------|---------|
+| **FizzContainerd** | `infrastructure/fizzcontainerd.py` | containerd-style daemon managing the full container lifecycle above FizzOCI. Provides seven services: content, metadata, image, task, shim manager, event, and CRI (Container Runtime Interface). The shim architecture ensures running containers survive daemon restarts. |
+
+#### Tier 4: Application Orchestration (Round 17)
+
+| Module | File | Purpose |
+|--------|------|---------|
+| **FizzImage** | `infrastructure/fizzimage.py` | Official container image catalog with five image classes: base, evaluation, subsystem, init container, and sidecar. Each image is built from FizzFile definitions, scanned for vulnerabilities, versioned, and published as multi-architecture OCI artifacts. |
+| **FizzDeploy** | `infrastructure/fizzdeploy.py` | CI/CD deployment pipeline implementing build, scan, sign, push, deploy, validate, and rollback stages. Supports four deployment strategies: rolling update, blue-green, canary, and recreate. Declarative YAML manifests define desired state with GitOps reconciliation. |
+| **FizzCompose** | `infrastructure/fizzcompose.py` | Docker Compose-style multi-service orchestrator parsing `fizzbuzz-compose.yaml` definitions. Resolves inter-service dependencies via Kahn's algorithm topological sort, provisions compose-scoped networks and volumes, and enforces restart policies with health-check-gated startup. |
+| **FizzKubeV2** | `infrastructure/fizzkubev2.py` | Upgrades the existing FizzKube orchestrator with real CRI integration, image pulling, init container execution, sidecar injection, and readiness/liveness probing through the Round 16 runtime stack. |
+
+#### Tier 5: Operations (Round 17)
+
+| Module | File | Purpose |
+|--------|------|---------|
+| **FizzContainerChaos** | `infrastructure/fizzcontainerchaos.py` | Container-infrastructure-level chaos engineering inspired by Chaos Mesh and LitmusChaos. Eight fault types target the container stack: container kill, network partition, CPU stress, memory pressure, disk fill, image pull failure, DNS failure, and network latency. Includes a game day orchestrator with hypotheses, steady-state metrics, and blast radius limits. |
+| **FizzContainerOps** | `infrastructure/fizzcontainerops.py` | Container observability and diagnostics providing five capabilities: structured log aggregation with inverted index search, per-container cgroup metrics with time-series ring buffers, distributed tracing across container boundaries, interactive diagnostics (exec, overlay diff, process trees, cgroup flame graphs), and an ASCII fleet health dashboard. |
+
+### 14.3 Integration Dependencies
+
+```
+FizzContainerOps ──> FizzContainerd ──> FizzOCI ──> FizzNS
+                 ──> FizzCgroup                  ──> FizzCgroup
+                 ──> FizzOverlay
+FizzContainerChaos ──> FizzContainerd
+                   ──> FizzNS
+                   ──> FizzCgroup
+                   ──> FizzOverlay
+                   ──> FizzCNI
+FizzCompose ──> FizzContainerd
+            ──> FizzCNI
+            ──> FizzOverlay
+FizzDeploy ──> FizzContainerd
+           ──> FizzImage
+           ──> FizzRegistry
+FizzKubeV2 ──> FizzContainerd (CRI)
+           ──> FizzImage
+FizzImage ──> FizzRegistry
+          ──> FizzOverlay
+FizzContainerd ──> FizzOCI
+               ──> FizzOverlay
+               ──> FizzRegistry
+               ──> FizzCNI
+```
+
+### 14.4 Relationship to Existing Subsystems
+
+The containerization layer integrates with several existing platform subsystems:
+
+| Existing Subsystem | Integration Point |
+|--------------------|-------------------|
+| FizzKube (Round 5) | FizzKubeV2 upgrades the kubelet with CRI calls to FizzContainerd, enabling real container creation instead of simulated scheduling. |
+| Chaos Engineering (`chaos.py`) | FizzContainerChaos operates at the infrastructure layer, complementing the application-layer chaos provided by `ChaosMonkey`. Application chaos corrupts FizzBuzz results; container chaos kills the processes computing them. |
+| FizzOTel (distributed tracing) | FizzContainerOps correlates application-level traces with container-level cgroup metrics, enabling root-cause analysis across the stack. |
+| Capability Security (`fizzcap.py`) | FizzOCI drops capabilities via the `CapabilityBitmask` system during container creation, enforcing the principle of least privilege. |
