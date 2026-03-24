@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Trace, TraceSpan } from "@/lib/data-providers";
@@ -347,15 +348,23 @@ export default function TracesPage() {
                   <div className="grid grid-cols-2 gap-2 text-[10px]">
                     <div>
                       <span className="text-text-muted">Span ID</span>
-                      <p className="font-mono text-text-secondary mt-0.5">
-                        {selectedSpan.spanId}
-                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <p className="font-mono text-text-secondary">
+                          {selectedSpan.spanId}
+                        </p>
+                        <CopyButton text={selectedSpan.spanId} />
+                      </div>
                     </div>
                     <div>
                       <span className="text-text-muted">Parent Span</span>
-                      <p className="font-mono text-text-secondary mt-0.5">
-                        {selectedSpan.parentSpanId ?? "— (root)"}
-                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <p className="font-mono text-text-secondary">
+                          {selectedSpan.parentSpanId ?? "— (root)"}
+                        </p>
+                        {selectedSpan.parentSpanId && (
+                          <CopyButton text={selectedSpan.parentSpanId} />
+                        )}
+                      </div>
                     </div>
                   </div>
 

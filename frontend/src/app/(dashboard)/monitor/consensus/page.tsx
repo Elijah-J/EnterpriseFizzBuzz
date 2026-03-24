@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Accordion } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Timeline } from "@/components/ui/timeline";
 import type {
   ClusterEdge,
   ClusterNode,
@@ -963,7 +965,36 @@ export default function ConsensusPage() {
           </p>
         </CardHeader>
         <CardContent>
-          <ElectionTimeline elections={elections} />
+          <Accordion
+            items={[
+              {
+                title: "Visual Timeline",
+                content: <ElectionTimeline elections={elections} />,
+              },
+              {
+                title: "Chronological Event Log",
+                content: (
+                  <Timeline
+                    items={[...elections]
+                      .sort((a, b) => b.term - a.term)
+                      .slice(0, 20)
+                      .map((e) => ({
+                        timestamp: formatTimestamp(e.startedAt),
+                        title: `Term ${e.term} — ${e.outcome}`,
+                        content: (
+                          <span className="text-[10px] font-mono text-text-muted">
+                            Candidate: {shortNodeId(e.candidateId)} | Votes: {e.votes}/{e.totalVoters}
+                            {e.resolvedAt ? ` | Duration: ${electionDuration(e.startedAt, e.resolvedAt)}` : ""}
+                          </span>
+                        ),
+                        status: e.outcome === "elected" ? "success" as const : e.outcome === "rejected" ? "error" as const : "active" as const,
+                      }))}
+                  />
+                ),
+              },
+            ]}
+            defaultOpen={[0]}
+          />
         </CardContent>
       </Card>
 

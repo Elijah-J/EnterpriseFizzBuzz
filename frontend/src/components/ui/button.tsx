@@ -1,4 +1,7 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+"use client";
+
+import { useRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { usePress } from "@/lib/hooks/use-press";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive";
 type ButtonSize = "sm" | "md" | "lg";
@@ -14,13 +17,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    "bg-accent text-text-inverse hover:bg-accent-hover active:scale-[0.98] focus-visible:ring-[var(--accent)]/50",
+    "bg-accent text-text-inverse hover:bg-accent-hover focus-visible:ring-[var(--accent)]/50",
   secondary:
     "bg-surface-raised text-text-secondary border border-border-subtle hover:bg-surface-overlay focus-visible:ring-border-default",
   ghost:
     "bg-transparent text-text-muted hover:bg-surface-raised hover:text-text-secondary focus-visible:ring-border-default",
   destructive:
-    "bg-[var(--status-error)] text-text-primary hover:opacity-90 active:scale-[0.98] focus-visible:ring-[var(--status-error)]/50",
+    "bg-[var(--status-error)] text-text-primary hover:opacity-90 focus-visible:ring-[var(--status-error)]/50",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -34,8 +37,11 @@ const sizeStyles: Record<ButtonSize, string> = {
  * All user-initiated state mutations must be routed through this component
  * to ensure consistent interaction patterns across the platform.
  *
- * The loading state renders three sequentially animated dots to communicate
- * pending operations without the cognitive overhead of spinner animations.
+ * Press interactions use spring-based scale animation via the usePress hook,
+ * replacing static CSS active:scale transforms with physically-modeled
+ * compression and overshoot recovery. The loading state renders three
+ * sequentially animated dots to communicate pending operations without
+ * the cognitive overhead of spinner animations.
  */
 export function Button({
   variant = "primary",
@@ -47,8 +53,13 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  usePress(buttonRef);
+
   return (
     <button
+      ref={buttonRef}
+      data-cursor="pointer"
       className={`inline-flex items-center justify-center rounded font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground disabled:pointer-events-none disabled:opacity-50 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       disabled={disabled || loading}
       {...props}

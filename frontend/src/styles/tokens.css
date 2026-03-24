@@ -192,4 +192,26 @@
   --text-data-value: 1.5rem;
   --text-data-unit: 0.75rem;
   --text-data-label: 0.8125rem;
+
+  /* ----------------------------------------------------------------
+   * Animation Duration Tokens
+   * Three-tier duration system calibrated against human perceptual
+   * thresholds: fast for micro-interactions (sub-conscious), normal
+   * for state transitions (conscious but not distracting), slow for
+   * entrance choreography (deliberate, editorial).
+   * ---------------------------------------------------------------- */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+
+  /* ----------------------------------------------------------------
+   * Easing Tokens
+   * Named easing curves for consistent motion character across the
+   * platform. Expo-out provides quick onset with gentle settle,
+   * spring adds overshoot for physical feedback, and smooth is the
+   * standard Material-derived curve for general transitions.
+   * ---------------------------------------------------------------- */
+  --easing-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }

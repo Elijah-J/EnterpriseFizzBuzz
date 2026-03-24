@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Reveal } from "@/components/ui/reveal";
+import { StatGroup } from "@/components/ui/stat-group";
+import { SplitText } from "@/components/typography";
 import { ConsensusWidget } from "@/components/widgets/consensus-widget";
 import { CostWidget } from "@/components/widgets/cost-widget";
 import { HealthMatrixWidget } from "@/components/widgets/health-matrix-widget";
@@ -36,9 +38,9 @@ export default function ExecutiveDashboard() {
         <Reveal>
           <div>
             <h1 className="heading-display text-gradient-amber">
-              Operations Center
+              <SplitText text="Operations Center" staggerMs={20} animation="slide" />
             </h1>
-            <p className="mt-2 text-sm text-text-secondary max-w-xl">
+            <p className="mt-2 text-sm text-text-secondary max-w-xl text-balance">
               Centralized monitoring and administration for mission-critical
               FizzBuzz evaluation infrastructure. All telemetry data refreshes
               automatically.
@@ -46,13 +48,31 @@ export default function ExecutiveDashboard() {
           </div>
         </Reveal>
 
+        {/* Executive KPI Summary — four key performance indicators
+            providing at-a-glance operational awareness above the detailed
+            bento grid. Values are static summaries; each widget below
+            contains the real-time telemetry feed. */}
+        <Reveal delay={25}>
+          <StatGroup
+            items={[
+              { label: "Uptime", value: "99.97%", trend: { direction: "up", label: "+0.02% vs prior window" } },
+              { label: "Eval Throughput", value: "12.4K/s", trend: { direction: "up", label: "+8.1% p/p" } },
+              { label: "P99 Latency", value: "42ms", trend: { direction: "down", label: "-3ms" } },
+              { label: "Open Incidents", value: "2", trend: { direction: "neutral", label: "No change" } },
+            ]}
+            className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+          />
+        </Reveal>
+
         {/* Asymmetric bento grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 auto-rows-auto">
           {/* Throughput — Hero card, 2x2 prominence */}
           <Reveal delay={50}>
             <Card
+              tabIndex={0}
+              data-card-index={0}
               variant="featured"
-              className="xl:col-span-2 xl:row-span-2 h-full"
+              className="xl:col-span-2 xl:row-span-2 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground"
             >
               <CardHeader>
                 <h2 className="heading-section">Evaluation Pipeline</h2>
@@ -65,7 +85,11 @@ export default function ExecutiveDashboard() {
 
           {/* SLA Budget — Standard cell beside throughput */}
           <Reveal delay={100}>
-            <Card>
+            <Card
+              tabIndex={0}
+              data-card-index={1}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground"
+            >
               <CardHeader>
                 <h2 className="heading-section">SLA Compliance</h2>
               </CardHeader>
@@ -77,7 +101,11 @@ export default function ExecutiveDashboard() {
 
           {/* Incidents — Standard cell */}
           <Reveal delay={150}>
-            <Card>
+            <Card
+              tabIndex={0}
+              data-card-index={2}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground"
+            >
               <CardHeader>
                 <h2 className="heading-section">Incident Status</h2>
               </CardHeader>
@@ -89,7 +117,11 @@ export default function ExecutiveDashboard() {
 
           {/* Health Matrix — Full width span for maximum density */}
           <Reveal delay={200}>
-            <Card className="xl:col-span-3">
+            <Card
+              tabIndex={0}
+              data-card-index={3}
+              className="xl:col-span-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground"
+            >
               <CardHeader>
                 <h2 className="heading-section">
                   Infrastructure Health Matrix
@@ -103,7 +135,11 @@ export default function ExecutiveDashboard() {
 
           {/* Cost — Standard cell */}
           <Reveal delay={250}>
-            <Card>
+            <Card
+              tabIndex={0}
+              data-card-index={4}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground"
+            >
               <CardHeader>
                 <h2 className="heading-section">FinOps Expenditure</h2>
               </CardHeader>
@@ -115,7 +151,11 @@ export default function ExecutiveDashboard() {
 
           {/* Consensus — Standard cell */}
           <Reveal delay={300}>
-            <Card>
+            <Card
+              tabIndex={0}
+              data-card-index={5}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground"
+            >
               <CardHeader>
                 <h2 className="heading-section">Paxos Consensus</h2>
               </CardHeader>
@@ -127,7 +167,12 @@ export default function ExecutiveDashboard() {
 
           {/* Blockchain Ledger — Wide placeholder */}
           <Reveal delay={350}>
-            <Card className="xl:col-span-2" variant="elevated">
+            <Card
+              tabIndex={0}
+              data-card-index={6}
+              className="xl:col-span-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-surface-ground"
+              variant="elevated"
+            >
               <CardHeader>
                 <h2 className="heading-section">Blockchain Ledger</h2>
               </CardHeader>

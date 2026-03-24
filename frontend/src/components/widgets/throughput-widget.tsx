@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkline } from "@/components/charts";
 import { AnimatedNumber } from "@/components/ui/animated-number";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MetricsSummary } from "@/lib/data-providers";
 import { useDataProvider } from "@/lib/data-providers";
@@ -20,11 +21,21 @@ export function ThroughputWidget() {
   const provider = useDataProvider();
   const [metrics, setMetrics] = useState<MetricsSummary | null>(null);
   const [prevEvalPerSec, setPrevEvalPerSec] = useState<number | null>(null);
+  const [deltaFlash, setDeltaFlash] = useState(false);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = useCallback(async () => {
     const data = await provider.getMetricsSummary();
     setMetrics((prev) => {
-      if (prev) setPrevEvalPerSec(prev.evaluationsPerSecond);
+      if (prev) {
+        setPrevEvalPerSec(prev.evaluationsPerSecond);
+        // Trigger delta flash on value change
+        if (prev.evaluationsPerSecond !== data.evaluationsPerSecond) {
+          setDeltaFlash(true);
+          if (flashTimer.current) clearTimeout(flashTimer.current);
+          flashTimer.current = setTimeout(() => setDeltaFlash(false), 200);
+        }
+      }
       return data;
     });
   }, [provider]);
@@ -60,7 +71,12 @@ export function ThroughputWidget() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="data-label">Throughput</p>
-          <div className="flex items-baseline gap-1.5">
+          <div
+            className="flex items-baseline gap-1.5 rounded px-1 -mx-1 transition-colors duration-200"
+            style={{
+              backgroundColor: deltaFlash ? "var(--accent-muted)" : "transparent",
+            }}
+          >
             <AnimatedNumber
               value={metrics.evaluationsPerSecond}
               className="data-value text-2xl"
@@ -68,12 +84,7 @@ export function ThroughputWidget() {
             <span className="data-unit">eval/s</span>
           </div>
           {throughputDelta !== null && (
-            <span
-              className={`text-xs font-medium ${throughputDelta >= 0 ? "text-fizz-400" : "text-[var(--status-error)]"}`}
-            >
-              {throughputDelta >= 0 ? "\u25B2" : "\u25BC"}{" "}
-              {Math.abs(throughputDelta).toFixed(1)}%
-            </span>
+            <DeltaBadge value={throughputDelta} />
           )}
         </div>
         <div>

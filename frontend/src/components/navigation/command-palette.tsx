@@ -6,8 +6,44 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 interface PaletteItem {
   label: string;
   href?: string;
-  section: "Navigation" | "Actions";
+  section: "Navigation" | "Actions" | "Recent";
   action?: () => void;
+  /** Keyboard shortcut hint displayed beside the item label. */
+  shortcut?: string;
+}
+
+const RECENT_COMMANDS_KEY = "efp-recent-commands";
+const MAX_RECENT = 5;
+
+/**
+ * Retrieves the most recently used command labels from localStorage.
+ */
+function getRecentCommands(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(RECENT_COMMANDS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Records a command label to the recent commands list in localStorage.
+ * Maintains a rolling window of the last 5 unique commands.
+ */
+function recordRecentCommand(label: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const recent = getRecentCommands().filter((l) => l !== label);
+    recent.unshift(label);
+    localStorage.setItem(
+      RECENT_COMMANDS_KEY,
+      JSON.stringify(recent.slice(0, MAX_RECENT))
+    );
+  } catch {
+    // localStorage quota exceeded or unavailable — silent degradation
+  }
 }
 
 interface CommandPaletteProps {
@@ -44,7 +80,14 @@ export function CommandPalette({
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const allItems: PaletteItem[] = useMemo(
+  const [recentLabels, setRecentLabels] = useState<string[]>([]);
+
+  // Load recent commands on mount
+  useEffect(() => {
+    setRecentLabels(getRecentCommands());
+  }, [open]);
+
+  const navigationItems: PaletteItem[] = useMemo(
     () => [
       { label: "Dashboard", href: "/", section: "Navigation" },
       { label: "Evaluation Console", href: "/evaluate", section: "Navigation" },
@@ -95,10 +138,28 @@ export function CommandPalette({
         href: "/archaeology",
         section: "Navigation",
       },
+    ],
+    [],
+  );
+
+  const actionItems: PaletteItem[] = useMemo(
+    () => [
       {
         label: "Toggle Sidebar",
         section: "Actions",
         action: onToggleSidebar,
+        shortcut: "\u2318B",
+      },
+      {
+        label: "Keyboard Shortcuts",
+        section: "Actions",
+        action: () => {
+          // Dispatching a custom key event to trigger the overlay
+          document.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "?" })
+          );
+        },
+        shortcut: "?",
       },
       {
         label: "Refresh Data",
@@ -108,6 +169,20 @@ export function CommandPalette({
     ],
     [onToggleSidebar],
   );
+
+  const allItems: PaletteItem[] = useMemo(() => {
+    const allNav = [...navigationItems, ...actionItems];
+    // Build Recent section from stored labels
+    const recentItems: PaletteItem[] = [];
+    for (const label of recentLabels) {
+      const found = allNav.find((item) => item.label === label);
+      if (found) {
+        recentItems.push({ ...found, section: "Recent" });
+      }
+    }
+
+    return [...recentItems, ...navigationItems, ...actionItems];
+  }, [navigationItems, actionItems, recentLabels]);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return allItems;
@@ -126,6 +201,7 @@ export function CommandPalette({
 
   const selectItem = useCallback(
     (item: PaletteItem) => {
+      recordRecentCommand(item.label);
       if (item.href) {
         router.push(item.href);
       } else if (item.action) {
@@ -231,7 +307,12 @@ export function CommandPalette({
                         onClick={() => selectItem(item)}
                         onMouseEnter={() => setActiveIndex(currentIndex)}
                       >
-                        {item.label}
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {item.shortcut && (
+                          <kbd className="shrink-0 font-mono text-[10px] text-text-muted border border-border-subtle rounded px-1 py-0.5">
+                            {item.shortcut}
+                          </kbd>
+                        )}
                       </button>
                     </li>
                   );

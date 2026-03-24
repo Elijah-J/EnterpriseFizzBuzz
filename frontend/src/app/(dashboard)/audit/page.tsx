@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
@@ -522,24 +523,6 @@ function PaginationControls({
   const startEntry = (page - 1) * pageSize + 1;
   const endEntry = Math.min(page * pageSize, totalCount);
 
-  // Generate page numbers to display
-  const pageNumbers: (number | "ellipsis")[] = [];
-  if (totalPages <= 7) {
-    for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
-  } else {
-    pageNumbers.push(1);
-    if (page > 3) pageNumbers.push("ellipsis");
-    for (
-      let i = Math.max(2, page - 1);
-      i <= Math.min(totalPages - 1, page + 1);
-      i++
-    ) {
-      pageNumbers.push(i);
-    }
-    if (page < totalPages - 2) pageNumbers.push("ellipsis");
-    pageNumbers.push(totalPages);
-  }
-
   return (
     <div className="flex items-center justify-between px-3 py-3 border-t border-border-subtle">
       <div className="flex items-center gap-2 text-xs text-text-secondary">
@@ -561,58 +544,12 @@ function PaginationControls({
         Showing {startEntry}-{endEntry} of {totalCount.toLocaleString()} entries
       </span>
 
-      <div className="flex items-center gap-1">
-        <button
-          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          disabled={page <= 1}
-          onClick={() => onPageChange(1)}
-        >
-          First
-        </button>
-        <button
-          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          disabled={page <= 1}
-          onClick={() => onPageChange(page - 1)}
-        >
-          Prev
-        </button>
-        {pageNumbers.map((p, idx) =>
-          p === "ellipsis" ? (
-            <span
-              key={`ellipsis-${idx}`}
-              className="px-1 text-xs text-text-muted"
-            >
-              ...
-            </span>
-          ) : (
-            <button
-              key={p}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                p === page
-                  ? "bg-fizzbuzz-600 text-white"
-                  : "bg-surface-raised text-text-secondary hover:bg-surface-overlay"
-              }`}
-              onClick={() => onPageChange(p)}
-            >
-              {p}
-            </button>
-          ),
-        )}
-        <button
-          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          disabled={page >= totalPages}
-          onClick={() => onPageChange(page + 1)}
-        >
-          Next
-        </button>
-        <button
-          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          disabled={page >= totalPages}
-          onClick={() => onPageChange(totalPages)}
-        >
-          Last
-        </button>
-      </div>
+      <Pagination
+        total={totalCount}
+        current={page}
+        onPageChange={onPageChange}
+        pageSize={pageSize}
+      />
     </div>
   );
 }

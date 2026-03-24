@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatGroup } from "@/components/ui/stat-group";
+import { Tabs } from "@/components/ui/tabs";
 import type {
   CacheAccessCell,
   CacheEulogy,
@@ -855,31 +857,57 @@ export default function CacheCoherencePage() {
         </div>
       </Reveal>
 
+      {/* KPI Summary */}
+      <StatGroup
+        items={[
+          { label: "Hit Ratio", value: `${(stats.hitRatio * 100).toFixed(1)}%`, trend: { direction: stats.hitRatio > 0.9 ? "up" as const : "down" as const, label: stats.hitRatio > 0.9 ? "Optimal" : "Below target" } },
+          { label: "Entries", value: String(stats.entries) },
+          { label: "Evictions", value: String(stats.evictions) },
+          { label: "Transitions", value: String(transitions.length) },
+        ]}
+        className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+      />
+
       {/* Stats Summary Bar */}
       <StatsSummary stats={stats} />
 
-      {/* Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (2/3 width) */}
-        <div className="lg:col-span-2 space-y-6">
-          <MESIStateMachine
-            stateDistribution={stats.stateDistribution}
-            recentTransitions={transitions}
-          />
-          <CacheLineTable lines={cacheLines} />
-          <HitMissHeatmap transitions={transitions} />
-        </div>
-
-        {/* Right Column (1/3 width) */}
-        <div className="space-y-6">
-          <StateDistributionDonut
-            distribution={stats.stateDistribution}
-            total={stats.entries}
-          />
-          <TransitionLog transitions={transitions} />
-          <EulogyFeed eulogies={eulogies} />
-        </div>
-      </div>
+      {/* Tabbed content — Stats / Lines / MESI */}
+      <Tabs
+        items={[
+          {
+            label: "Stats & Distribution",
+            content: (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <StateDistributionDonut
+                  distribution={stats.stateDistribution}
+                  total={stats.entries}
+                />
+                <HitMissHeatmap transitions={transitions} />
+              </div>
+            ),
+          },
+          {
+            label: "Cache Lines",
+            content: <CacheLineTable lines={cacheLines} />,
+          },
+          {
+            label: "MESI Protocol",
+            content: (
+              <div className="space-y-6">
+                <MESIStateMachine
+                  stateDistribution={stats.stateDistribution}
+                  recentTransitions={transitions}
+                />
+                <TransitionLog transitions={transitions} />
+              </div>
+            ),
+          },
+          {
+            label: "Eulogies",
+            content: <EulogyFeed eulogies={eulogies} />,
+          },
+        ]}
+      />
     </div>
   );
 }

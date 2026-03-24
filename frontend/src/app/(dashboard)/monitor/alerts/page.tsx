@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs } from "@/components/ui/tabs";
 import type { Alert } from "@/lib/data-providers";
 import { useDataProvider } from "@/lib/data-providers";
 
@@ -57,6 +59,8 @@ export default function AlertsPage() {
   const [subsystemFilter, setSubsystemFilter] = useState<string>("all");
   const [showAcknowledged, setShowAcknowledged] = useState(true);
   const [showSilenced, setShowSilenced] = useState(true);
+  const [alertPage, setAlertPage] = useState(1);
+  const ALERTS_PER_PAGE = 10;
 
   // -----------------------------------------------------------------------
   // Data fetching
@@ -207,25 +211,16 @@ export default function AlertsPage() {
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-3">
-        {/* Severity filter */}
-        <div className="flex rounded border border-border-subtle overflow-hidden">
-          {(["all", "critical", "warning", "info"] as const).map((sev) => (
-            <button
-              key={sev}
-              type="button"
-              onClick={() => setSeverityFilter(sev)}
-              className={`px-2.5 py-1 text-xs transition-colors ${
-                severityFilter === sev
-                  ? "bg-surface-overlay text-text-primary"
-                  : "bg-surface-raised text-text-secondary hover:bg-surface-overlay hover:text-text-secondary"
-              }`}
-            >
-              {sev === "all"
-                ? "All"
-                : sev.charAt(0).toUpperCase() + sev.slice(1)}
-            </button>
-          ))}
-        </div>
+        {/* Severity filter — Tabs component */}
+        <Tabs
+          items={(["all", "critical", "warning", "info"] as const).map((sev) => ({
+            label: sev === "all" ? `All (${summary.total})` : `${sev.charAt(0).toUpperCase() + sev.slice(1)} (${summary.counts[sev === "all" ? "critical" : sev]})`,
+            content: null as unknown as React.ReactNode,
+          }))}
+          activeIndex={(["all", "critical", "warning", "info"] as const).indexOf(severityFilter)}
+          onChange={(idx) => setSeverityFilter((["all", "critical", "warning", "info"] as const)[idx])}
+          className="[&_[role=tabpanel]]:hidden [&_[role=tablist]]:border-0"
+        />
 
         {/* Subsystem filter */}
         <select
@@ -274,7 +269,7 @@ export default function AlertsPage() {
           </div>
         )}
 
-        {filteredAlerts.map((alert) => {
+        {filteredAlerts.slice((alertPage - 1) * ALERTS_PER_PAGE, alertPage * ALERTS_PER_PAGE).map((alert) => {
           const styles = SEVERITY_STYLES[alert.severity];
 
           return (
@@ -354,6 +349,18 @@ export default function AlertsPage() {
             </Card>
           );
         })}
+
+        {/* Pagination for large alert lists */}
+        {filteredAlerts.length > ALERTS_PER_PAGE && (
+          <div className="flex justify-center pt-2">
+            <Pagination
+              total={filteredAlerts.length}
+              current={alertPage}
+              onPageChange={setAlertPage}
+              pageSize={ALERTS_PER_PAGE}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

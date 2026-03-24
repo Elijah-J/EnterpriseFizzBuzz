@@ -226,6 +226,125 @@
 }
 
 /* ----------------------------------------------------------------
+ * Advanced Typography Utilities
+ *
+ * These utilities provide precise typographic control for display
+ * headings, data-dense layouts, and prose contexts. Text wrapping
+ * utilities prevent orphaned words in headings while maintaining
+ * natural line breaks in body content. Numeric variant utilities
+ * ensure consistent digit rendering across all metric displays.
+ * ---------------------------------------------------------------- */
+
+/**
+ * Text balance — prevents orphaned words in headings by distributing
+ * text evenly across lines. Applied to display and page headings.
+ */
+@utility text-balance {
+  text-wrap: balance;
+}
+
+/**
+ * Text pretty — optimizes line breaking for body text, avoiding
+ * typographic widows on the last line.
+ */
+@utility text-pretty {
+  text-wrap: pretty;
+}
+
+/**
+ * Tabular numerals with tight tracking — ensures equal-width digits
+ * for column-aligned data displays. The negative letter-spacing
+ * compensates for the wider digit forms in tabular mode.
+ */
+@utility tabular-nums {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/**
+ * Oldstyle numerals — text-harmonized digits with varying heights
+ * and descenders. Used for inline prose numbers where tabular
+ * alignment is not required and readability is prioritized.
+ */
+@utility oldstyle-nums {
+  font-variant-numeric: oldstyle-nums;
+}
+
+/**
+ * Diagonal fractions — renders fraction sequences (e.g. 1/3, 2/5)
+ * as proper diagonal fractions when supported by the font.
+ */
+@utility diagonal-fractions {
+  font-variant-numeric: diagonal-fractions;
+}
+
+/**
+ * Decimal alignment for tabular number displays.
+ */
+.tabular-number-decimal {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  text-align: right;
+}
+
+/* ----------------------------------------------------------------
+ * Split Text Animation Keyframes
+ *
+ * Per-character entrance animations for hero display headings.
+ * Each character receives a staggered delay via inline style,
+ * creating a typewriter-style reveal that draws attention to
+ * primary page titles without competing for ongoing visual focus.
+ * ---------------------------------------------------------------- */
+
+@keyframes split-text-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes split-text-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.split-text-char {
+  display: inline-block;
+}
+
+.split-text-fade {
+  opacity: 0;
+  animation: split-text-fade-in var(--duration-normal, 250ms) var(--easing-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+.split-text-slide {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: split-text-slide-in var(--duration-normal, 250ms) var(--easing-out, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+}
+
+/* ----------------------------------------------------------------
+ * Responsive Type Scale
+ *
+ * Display headings use fluid typography via CSS clamp() to scale
+ * gracefully from mobile (1.75rem) to desktop (2.5rem) viewports.
+ * This eliminates the need for breakpoint-specific font-size
+ * overrides while maintaining typographic hierarchy at all widths.
+ * ---------------------------------------------------------------- */
+
+.heading-display {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+/* ----------------------------------------------------------------
  * Motion Keyframes
  *
  * The platform's animation vocabulary is deliberately minimal.
@@ -260,6 +379,35 @@
   }
   to {
     transform: translateX(0);
+  }
+}
+
+/**
+ * Dialog backdrop entrance — opacity fade from transparent to final state.
+ * Separated from the panel animation to allow independent timing control.
+ */
+@keyframes dialog-backdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/**
+ * Dialog panel entrance — combined opacity and vertical shift matching
+ * the platform's standard enter motion vocabulary. The 8px translateY
+ * offset creates a subtle upward settle that communicates layering depth.
+ */
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -309,16 +457,142 @@
   animation: enter 300ms ease-out both;
 }
 
+/* ----------------------------------------------------------------
+ * View Transition API Styles
+ *
+ * These pseudo-element rules govern the crossfade behavior during
+ * page-to-page navigation. The View Transitions API captures a
+ * snapshot of the outgoing page and composites it with the incoming
+ * page using these animation definitions. The slight scale shift
+ * (±1%) communicates spatial direction without parallax overhead.
+ * ---------------------------------------------------------------- */
+
+::view-transition-old(root) {
+  animation: vt-fade-out 150ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+::view-transition-new(root) {
+  animation: vt-fade-in 200ms cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+::view-transition-group(*) {
+  animation-duration: 250ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes vt-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(1.01);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-group(*) {
+    animation: none;
+  }
+
   .animate-shimmer {
     animation: none;
   }
   .animate-enter {
     animation: none;
   }
+  .split-text-fade,
+  .split-text-slide {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+/**
+ * Generative background positioning — fixed behind page content,
+ * non-interactive, below all foreground elements. Used by the
+ * topographic contour and dot grid SVG generators.
+ */
+@utility generative-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ----------------------------------------------------------------
+ * Custom Scrollbar
+ *
+ * Branded scrollbar using the warm stone surface system. The narrow
+ * 8px track integrates with the surface-ground background, while the
+ * rounded thumb uses surface-overlay for subtle visibility. Hover
+ * state elevates to text-muted for clear interactive feedback.
+ *
+ * Firefox receives equivalent treatment via the scrollbar-color
+ * shorthand property.
+ * ---------------------------------------------------------------- */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-ground);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-overlay);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ----------------------------------------------------------------
+ * Custom Cursor System
+ *
+ * When the custom cursor overlay is active (non-touch, non-reduced-motion),
+ * the native cursor is hidden to prevent visual doubling. Touch devices
+ * and reduced-motion contexts retain the platform default cursor.
+ * ---------------------------------------------------------------- */
+
+.custom-cursor-container ~ *,
+.custom-cursor-container ~ * * {
+  cursor: none !important;
+}
+
+@media (pointer: coarse) {
+  .custom-cursor-container ~ *,
+  .custom-cursor-container ~ * * {
+    cursor: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .custom-cursor-container {
+    display: none;
+  }
 }
 
 body {
   background: var(--surface-ground);
   color: var(--text-primary);
+  scrollbar-color: var(--surface-overlay) var(--surface-ground);
 }

@@ -1,3 +1,8 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+import { AboutPanel } from "@/components/delight/about-panel";
+
 /**
  * Enterprise FizzBuzz Platform — Brand Lettermark
  *
@@ -107,18 +112,47 @@ interface WordmarkProps {
  * in the sidebar header and marketing contexts.
  */
 export function Wordmark({ logoSize = 28, className }: WordmarkProps) {
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleLogoClick = useCallback(() => {
+    clickCountRef.current++;
+
+    // Reset counter after 2 seconds of inactivity
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 2000);
+
+    if (clickCountRef.current >= 5) {
+      clickCountRef.current = 0;
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      setAboutOpen(true);
+    }
+  }, []);
+
   return (
-    <span className={`inline-flex items-center gap-2.5 ${className ?? ""}`}>
-      <Logo size={logoSize} />
+    <>
       <span
-        className="text-sm font-normal tracking-tight"
-        style={{
-          fontFamily: "var(--font-serif, var(--font-geist-sans)), serif",
-        }}
+        className={`inline-flex items-center gap-2.5 cursor-pointer select-none ${className ?? ""}`}
+        onClick={handleLogoClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleLogoClick(); }}
       >
-        <span className="text-[var(--text-primary,#FAFAF9)]">Enterprise</span>{" "}
-        <span className="text-[var(--accent,#F59E0B)]">FizzBuzz</span>
+        <Logo size={logoSize} />
+        <span
+          className="text-sm font-normal tracking-tight"
+          style={{
+            fontFamily: "var(--font-serif, var(--font-geist-sans)), serif",
+          }}
+        >
+          <span className="text-[var(--text-primary,#FAFAF9)]">Enterprise</span>{" "}
+          <span className="text-[var(--accent,#F59E0B)]">FizzBuzz</span>
+        </span>
       </span>
-    </span>
+      <AboutPanel open={aboutOpen} onClose={() => setAboutOpen(false)} />
+    </>
   );
 }

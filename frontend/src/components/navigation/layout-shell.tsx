@@ -1,7 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/brand";
+import { Topographic } from "@/components/backgrounds";
+import { Confetti, type ConfettiHandle } from "@/components/delight/confetti";
+import { PageTransition } from "@/components/transitions";
+import { CustomCursor } from "@/components/ui/custom-cursor";
+import { KeyboardShortcutOverlay } from "@/components/ui/keyboard-shortcut-overlay";
+import { LiveIndicator } from "@/components/ui/live-indicator";
+import { useKeyboardNavigation } from "@/lib/hooks/use-keyboard-navigation";
+import { useKonami } from "@/lib/hooks/use-konami";
 import { Breadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
 import { MobileDrawer } from "./mobile-drawer";
@@ -19,13 +28,81 @@ interface LayoutShellProps {
  * command palette visibility, mobile drawer toggling — to keep the root
  * RootLayout as a server component for optimal static export performance.
  */
+/**
+ * Derives a deterministic numeric seed from a route pathname.
+ * Each page in the platform receives a unique topographic terrain
+ * background based on its URL path, ensuring visual differentiation
+ * without runtime randomness.
+ */
+function hashPathname(path: string): number {
+  let hash = 5381;
+  for (let i = 0; i < path.length; i++) {
+    hash = ((hash << 5) + hash + path.charCodeAt(i)) | 0;
+  }
+  return Math.abs(hash);
+}
+
 export function LayoutShell({ children }: LayoutShellProps) {
+  const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
+  const [liveTimestamp, setLiveTimestamp] = useState<number | null>(null);
+  const [isDataStale, setIsDataStale] = useState(false);
+  const pathname = usePathname();
+  const topoSeed = useMemo(() => hashPathname(pathname), [pathname]);
+
+  // Konami code detection and confetti burst
+  const { activated: konamiActivated } = useKonami();
+  const confettiRef = useRef<ConfettiHandle>(null);
+  const [konamiFlash, setKonamiFlash] = useState(false);
+
+  useEffect(() => {
+    if (konamiActivated) {
+      confettiRef.current?.fire();
+      setKonamiFlash(true);
+      setTimeout(() => setKonamiFlash(false), 200);
+    }
+  }, [konamiActivated]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
+  }, []);
+
+  const toggleShortcutOverlay = useCallback(() => {
+    setShortcutOverlayOpen((prev) => !prev);
+  }, []);
+
+  const navigateTo = useCallback(
+    (href: string) => router.push(href),
+    [router]
+  );
+
+  useKeyboardNavigation({
+    onOpenSearch: useCallback(() => setPaletteOpen(true), []),
+    onToggleOverlay: toggleShortcutOverlay,
+    navigate: navigateTo,
+  });
+
+  // Live data heartbeat — tracks telemetry freshness for the top bar indicator
+  useEffect(() => {
+    const pulse = () => {
+      setLiveTimestamp(Date.now());
+      setIsDataStale(false);
+    };
+    pulse();
+    const id = setInterval(pulse, 5_000);
+    const staleCheck = setInterval(() => {
+      if (liveTimestamp && Date.now() - liveTimestamp > 10_000) {
+        setIsDataStale(true);
+      }
+    }, 2_000);
+    return () => {
+      clearInterval(id);
+      clearInterval(staleCheck);
+    };
+  // biome-ignore lint/correctness/useExhaustiveDependencies: liveTimestamp is read inside but should not re-trigger the effect
   }, []);
 
   // Global Cmd+K / Ctrl+K listener
@@ -42,6 +119,17 @@ export function LayoutShell({ children }: LayoutShellProps) {
 
   return (
     <>
+      {/* Confetti overlay for Konami code activation */}
+      <Confetti ref={confettiRef} />
+
+      {/* Konami activation flash — 200ms amber border pulse */}
+      {konamiFlash && (
+        <div
+          className="fixed inset-0 z-[9998] pointer-events-none border-4 border-accent rounded-lg"
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar — desktop only */}
       <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
 
@@ -116,16 +204,21 @@ export function LayoutShell({ children }: LayoutShellProps) {
               </kbd>
             </button>
 
-            {/* Operational status indicator */}
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-xs text-text-secondary">
-              <span className="h-2 w-2 rounded-full bg-accent" />
-              All Systems Operational
+            {/* Operational status — live temporal indicator */}
+            <span className="hidden sm:inline-flex">
+              <LiveIndicator lastUpdated={liveTimestamp} isStale={isDataStale} />
             </span>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="relative flex-1 overflow-y-auto p-6">
+          {/* Generative topographic background — route-seeded terrain */}
+          <div className="generative-bg">
+            <Topographic seed={topoSeed} density={12} opacity={0.04} />
+          </div>
+          <PageTransition>{children}</PageTransition>
+        </main>
       </div>
 
       {/* Overlays */}
@@ -135,6 +228,13 @@ export function LayoutShell({ children }: LayoutShellProps) {
         onToggleSidebar={toggleSidebar}
       />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <KeyboardShortcutOverlay
+        open={shortcutOverlayOpen}
+        onClose={() => setShortcutOverlayOpen(false)}
+      />
+
+      {/* Custom cursor — warm amber tracking dot with interactive morphing */}
+      <CustomCursor />
     </>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Accordion } from "@/components/ui/accordion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatGroup } from "@/components/ui/stat-group";
 import type { HealthCheckPoint, SubsystemHealth } from "@/lib/data-providers";
 import { useDataProvider } from "@/lib/data-providers";
 
@@ -235,38 +237,17 @@ export default function HealthCheckMatrixPage() {
         </div>
       </Reveal>
 
-      {/* Summary bar */}
-      <Card>
-        <CardContent className="py-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-            <span className="text-fizz-400 font-mono font-medium">
-              {upCount} UP
-            </span>
-            {degradedCount > 0 && (
-              <span className="text-amber-400 font-mono font-medium">
-                {degradedCount} DEGRADED
-              </span>
-            )}
-            {downCount > 0 && (
-              <span className="text-red-400 font-mono font-medium">
-                {downCount} DOWN
-              </span>
-            )}
-            {unknownCount > 0 && (
-              <span className="text-text-muted font-mono font-medium">
-                {unknownCount} UNKNOWN
-              </span>
-            )}
-            <span className="text-text-muted">|</span>
-            <span className="text-text-secondary">
-              Overall:{" "}
-              <span className={`font-semibold ${overall.color}`}>
-                {overall.label}
-              </span>
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Summary KPI bar */}
+      <StatGroup
+        items={[
+          { label: "Overall", value: overall.label },
+          { label: "Healthy", value: String(upCount), trend: { direction: "up", label: `${health.length > 0 ? ((upCount / health.length) * 100).toFixed(0) : 0}%` } },
+          { label: "Degraded", value: String(degradedCount) },
+          { label: "Down", value: String(downCount) },
+          { label: "Unknown", value: String(unknownCount) },
+        ]}
+        className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+      />
 
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
