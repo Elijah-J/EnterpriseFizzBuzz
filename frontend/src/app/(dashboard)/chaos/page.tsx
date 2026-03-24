@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatGroup } from "@/components/ui/stat-group";
+import { Tabs } from "@/components/ui/tabs";
 import type {
   ChaosExperiment,
   ChaosMetrics,
@@ -759,6 +761,16 @@ export default function ChaosEngineeringPage() {
 
       {/* Section A: Metrics Summary Bar */}
       {metrics && (
+        <>
+        <StatGroup
+          items={[
+            { label: "Resilience Score", value: `${metrics.resilienceScore}/100`, trend: { direction: metrics.resilienceScore >= 80 ? "up" as const : "down" as const, label: metrics.resilienceScore >= 80 ? "Healthy" : "Below threshold" } },
+            { label: "Experiments Run", value: String(metrics.experimentsRun) },
+            { label: "MTTR", value: `${metrics.mttrMs}ms` },
+            { label: "Fault Injection Rate", value: `${metrics.faultInjectionRate.toFixed(1)}/hr` },
+          ]}
+          className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardContent>
@@ -827,6 +839,7 @@ export default function ChaosEngineeringPage() {
             </CardContent>
           </Card>
         </div>
+        </>
       )}
 
       {/* Section B + C: Experiment Catalog and Active Experiment Panel */}

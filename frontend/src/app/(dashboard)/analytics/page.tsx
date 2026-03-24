@@ -5,7 +5,9 @@ import { DonutChart, HeatmapGrid, LineChart } from "@/components/charts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
+import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs } from "@/components/ui/tabs";
 import type {
   ClassificationDistribution,
   EvaluationTrend,

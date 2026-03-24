@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MetricGauge } from "@/components/charts/metric-gauge";
+import { Accordion } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatGroup } from "@/components/ui/stat-group";
+import { Tabs } from "@/components/ui/tabs";
 import type {
   AuditEntry,
   ComplianceFinding,
@@ -347,6 +350,18 @@ export default function ComplianceCenterPage() {
           visibility.
         </p>
       </div>
+
+      {/* Compliance KPI Summary */}
+      <StatGroup
+        items={[
+          { label: "Score", value: `${aggregateScore.toFixed(1)}%`, trend: { direction: aggregateScore >= 90 ? "up" as const : "down" as const, label: aggregateScore >= 90 ? "Compliant" : "Action Required" } },
+          { label: "Controls", value: String(totalControls) },
+          { label: "Passing", value: String(totalPassing), trend: { direction: "up" as const, label: `${totalControls > 0 ? ((totalPassing / totalControls) * 100).toFixed(0) : 0}%` } },
+          { label: "Failing", value: String(totalFailing) },
+          { label: "Open Findings", value: String(totalOpenFindings) },
+        ]}
+        className="rounded-lg border border-border-subtle bg-surface-raised px-4 py-3"
+      />
 
       {/* Section 5.1: Overall Compliance Score */}
       <Card>

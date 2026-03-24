@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Accordion } from "@/components/ui/accordion";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs } from "@/components/ui/tabs";
+import { Timeline } from "@/components/ui/timeline";
 import type {
   Artifact,
   BayesianReconstruction,

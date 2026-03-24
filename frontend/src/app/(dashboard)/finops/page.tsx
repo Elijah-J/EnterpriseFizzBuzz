@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatGroup } from "@/components/ui/stat-group";
+import { Tabs } from "@/components/ui/tabs";
 import type {
   BudgetStatus,
   CostAllocation,

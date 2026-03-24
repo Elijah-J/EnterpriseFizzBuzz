@@ -4,8 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Sparkline } from "@/components/charts/sparkline";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
+import { Pagination } from "@/components/ui/pagination";
 import { Reveal } from "@/components/ui/reveal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Timeline } from "@/components/ui/timeline";
 import type {
   Block,
   BlockchainStats,
@@ -419,12 +422,7 @@ export default function BlockchainExplorerPage() {
                   <h2 className="text-base font-semibold text-text-primary">
                     Block #{selectedBlock.index}
                   </h2>
-                  <button
-                    onClick={() => copyToClipboard(selectedBlock.hash)}
-                    className="rounded border border-border-default px-2 py-0.5 text-[10px] text-text-secondary hover:bg-surface-overlay transition-colors"
-                  >
-                    {copiedHash ? "Copied" : "Copy Hash"}
-                  </button>
+                  <CopyButton text={selectedBlock.hash} />
                 </div>
                 <p className="font-mono text-xs text-text-secondary mt-1 break-all">
                   {selectedBlock.hash}
