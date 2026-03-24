@@ -342,7 +342,7 @@ describe("Regression: CacheStats hitRate field", () => {
     expect(typeof stats.hitRate).toBe("number");
 
     // hitRatio should NOT exist
-    expect((stats as Record<string, unknown>).hitRatio).toBeUndefined();
+    expect((stats as unknown as Record<string, unknown>).hitRatio).toBeUndefined();
   });
 
   it("CacheStats hitRate is usable for percentage display", () => {
