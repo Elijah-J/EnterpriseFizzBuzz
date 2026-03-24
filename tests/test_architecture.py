@@ -186,15 +186,25 @@ class TestPackageStructure:
         assert expected.issubset(actual), f"Missing application modules: {expected - actual}"
 
     def test_infrastructure_contains_expected_modules(self) -> None:
-        expected = {
-            "config.py", "container.py", "formatters.py", "observers.py",
+        expected_files = {
+            "container.py", "formatters.py", "observers.py",
             "plugins.py", "rules_engine.py", "otel_tracing.py", "middleware.py",
             "auth.py", "blockchain.py", "cache.py", "chaos.py",
             "circuit_breaker.py", "event_sourcing.py", "feature_flags.py",
             "ml_engine.py", "sla.py", "migrations.py", "i18n.py",
         }
-        actual = {f.name for f in _get_python_files(INFRASTRUCTURE_DIR)}
-        assert expected.issubset(actual), f"Missing infrastructure modules: {expected - actual}"
+        expected_packages = {"config"}
+        actual_files = {f.name for f in _get_python_files(INFRASTRUCTURE_DIR)}
+        actual_packages = {
+            d.name for d in INFRASTRUCTURE_DIR.iterdir()
+            if d.is_dir() and (d / "__init__.py").exists()
+        }
+        assert expected_files.issubset(actual_files), (
+            f"Missing infrastructure modules: {expected_files - actual_files}"
+        )
+        assert expected_packages.issubset(actual_packages), (
+            f"Missing infrastructure packages: {expected_packages - actual_packages}"
+        )
 
 
 class TestBackwardCompatibleStubs:
