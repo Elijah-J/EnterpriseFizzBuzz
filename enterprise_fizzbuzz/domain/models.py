@@ -882,6 +882,24 @@ class EventType(Enum):
     CONTAINERD_GC_STARTED = auto()
     CONTAINERD_GC_COMPLETED = auto()
 
+    # FizzImage — Official Container Image Catalog events
+    FIZZIMAGE_CATALOG_LOADED = auto()
+    FIZZIMAGE_CATALOG_STATS = auto()
+    FIZZIMAGE_IMAGE_REGISTERED = auto()
+    FIZZIMAGE_BASE_BUILT = auto()
+    FIZZIMAGE_EVAL_BUILT = auto()
+    FIZZIMAGE_SUBSYSTEM_GENERATED = auto()
+    FIZZIMAGE_INIT_BUILT = auto()
+    FIZZIMAGE_SIDECAR_BUILT = auto()
+    FIZZIMAGE_MULTI_ARCH_INDEXED = auto()
+    FIZZIMAGE_SCAN_STARTED = auto()
+    FIZZIMAGE_SCAN_COMPLETED = auto()
+    FIZZIMAGE_SCAN_BLOCKED = auto()
+    FIZZIMAGE_VERSION_BUMPED = auto()
+    FIZZIMAGE_IMAGE_REMOVED = auto()
+    FIZZIMAGE_BUILD_ALL_STARTED = auto()
+    FIZZIMAGE_BUILD_ALL_COMPLETED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

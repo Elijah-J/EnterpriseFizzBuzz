@@ -524,6 +524,12 @@ from enterprise_fizzbuzz.infrastructure.fizzcontainerd import (
     FizzContainerdMiddleware,
     create_fizzcontainerd_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzimage import (
+    ImageCatalog,
+    FizzImageDashboard,
+    FizzImageMiddleware,
+    create_fizzimage_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3783,6 +3789,50 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--containerd-gc",
         action="store_true",
         help="Display garbage collection dashboard after execution",
+    )
+
+    # FizzImage — Official Container Image Catalog
+    parser.add_argument(
+        "--fizzimage",
+        action="store_true",
+        default=False,
+        help="Enable FizzImage: official container image catalog with base, eval, subsystem, init, and sidecar images",
+    )
+    parser.add_argument(
+        "--fizzimage-catalog",
+        action="store_true",
+        default=False,
+        help="Display the full image catalog with versions, sizes, and scan status",
+    )
+    parser.add_argument(
+        "--fizzimage-build",
+        type=str,
+        default="",
+        help="Build a specific catalog image by name",
+    )
+    parser.add_argument(
+        "--fizzimage-build-all",
+        action="store_true",
+        default=False,
+        help="Build the entire image catalog (base, eval, subsystem, init, sidecar)",
+    )
+    parser.add_argument(
+        "--fizzimage-inspect",
+        type=str,
+        default="",
+        help="Inspect an image: show layers, metadata, and vulnerability report",
+    )
+    parser.add_argument(
+        "--fizzimage-deps",
+        type=str,
+        default="",
+        help="Display the dependency graph for a catalog image",
+    )
+    parser.add_argument(
+        "--fizzimage-scan",
+        action="store_true",
+        default=False,
+        help="Run vulnerability scanning against all catalog images",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8214,6 +8264,43 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # FizzImage — Official Container Image Catalog
+    fizzimage_catalog_instance = None
+    fizzimage_middleware_instance = None
+
+    if args.fizzimage or args.fizzimage_catalog or args.fizzimage_build or args.fizzimage_build_all or args.fizzimage_inspect or args.fizzimage_deps or args.fizzimage_scan:
+        fizzimage_catalog_instance, fizzimage_middleware_instance = create_fizzimage_subsystem(
+            registry_url=config.fizzimage_registry_url,
+            base_image_name=config.fizzimage_base_image_name,
+            scan_severity_threshold=config.fizzimage_scan_severity_threshold,
+            max_catalog_size=config.fizzimage_max_catalog_size,
+            python_version=config.fizzimage_python_version,
+            initial_version=config.fizzimage_initial_version,
+            vuln_db_size=config.fizzimage_vuln_db_size,
+            module_base_path=config.fizzimage_module_base_path,
+            dashboard_width=config.fizzimage_dashboard_width,
+            enable_dashboard=args.fizzimage_catalog,
+            event_bus=event_bus if 'event_bus' in dir() else None,
+        )
+
+        builder.with_middleware(fizzimage_middleware_instance)
+
+        if not args.quiet:
+            print(
+                "\n"
+                "  +----------------------------------------------------------+\n"
+                "  | FIZZIMAGE: OFFICIAL CONTAINER IMAGE CATALOG              |\n"
+                "  +----------------------------------------------------------+\n"
+                "  | Official image catalog for the Enterprise FizzBuzz       |\n"
+                "  | Platform -- base, eval, subsystem, init, and sidecar     |\n"
+                "  +----------------------------------------------------------+\n"
+            )
+
+        if args.fizzimage_build:
+            fizzimage_catalog_instance.build_image(args.fizzimage_build)
+        if args.fizzimage_build_all:
+            fizzimage_catalog_instance.build_all()
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11748,6 +11835,23 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(containerd_middleware_instance.render_gc())
     elif args.containerd_gc and containerd_middleware_instance is None:
         print("\n  FizzContainerd not enabled. Use --containerd to enable.\n")
+
+    # FizzImage post-execution rendering
+    if args.fizzimage_catalog and fizzimage_middleware_instance is not None:
+        print()
+        print(fizzimage_middleware_instance.render_catalog())
+
+    if args.fizzimage_inspect and fizzimage_middleware_instance is not None:
+        print()
+        print(fizzimage_middleware_instance.render_image_detail(args.fizzimage_inspect))
+
+    if args.fizzimage_deps and fizzimage_middleware_instance is not None:
+        print()
+        print(fizzimage_middleware_instance.render_dependencies(args.fizzimage_deps))
+
+    if args.fizzimage_scan and fizzimage_middleware_instance is not None:
+        print()
+        print(fizzimage_middleware_instance.render_scan_results())
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

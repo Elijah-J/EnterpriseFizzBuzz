@@ -2096,6 +2096,19 @@ fizzcontainerd:
   dashboard:
     width: 72                             # ASCII dashboard width
 
+fizzimage:
+  enabled: false
+  base_image_name: fizzbuzz-base
+  registry_url: "registry.fizzbuzz.internal:5000"
+  scan_severity_threshold: critical
+  max_catalog_size: 1024
+  python_version: "3.12"
+  initial_version: "1.0.0"
+  vuln_db_size: 512
+  module_base_path: "enterprise_fizzbuzz.infrastructure"
+  dashboard:
+    width: 72
+
 # Observer configuration
 observers:
   console_observer:
