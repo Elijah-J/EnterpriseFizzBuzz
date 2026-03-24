@@ -24,9 +24,9 @@ export const metadata: Metadata = {
   title: "Enterprise FizzBuzz Operations Center",
   description:
     "Mission-critical monitoring and administration interface for the Enterprise FizzBuzz Platform. Provides real-time observability into FizzBuzz evaluation pipelines, compliance dashboards, and operational analytics.",
-  manifest: "/EnterpriseFizzBuzz/manifest.json",
+  manifest: "/manifest.json",
   icons: [
-    { rel: "icon", url: "/EnterpriseFizzBuzz/favicon.svg", type: "image/svg+xml" },
+    { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
   ],
   themeColor: "#0C0A09",
   appleWebApp: {
