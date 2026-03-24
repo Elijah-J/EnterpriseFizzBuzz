@@ -205,30 +205,9 @@ function ActiveExperimentPanel({
   experiment: ChaosExperiment | null;
   elapsedSec: number;
 }) {
-  if (!experiment) {
-    return (
-      <Card className="h-full">
-        <CardHeader>
-          <h2 className="heading-section">Active Experiment</h2>
-        </CardHeader>
-        <CardContent>
-          <p className="text-xs text-text-muted text-center py-8">
-            No active experiments. Select an experiment from the catalog to
-            begin fault injection.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const progress = Math.min(
-    100,
-    (elapsedSec / experiment.estimatedDurationSec) * 100,
-  );
-  const remaining = Math.max(0, experiment.estimatedDurationSec - elapsedSec);
-
-  // Simulated event timeline entries
+  // Hooks must be called unconditionally — React Rules of Hooks.
   const eventTimeline = useMemo(() => {
+    if (!experiment) return [];
     const events = [
       { offset: 0, label: "Fault injection initiated" },
       {
@@ -250,6 +229,28 @@ function ActiveExperimentPanel({
     ];
     return events.filter((e) => e.offset <= elapsedSec);
   }, [experiment, elapsedSec]);
+
+  if (!experiment) {
+    return (
+      <Card className="h-full">
+        <CardHeader>
+          <h2 className="heading-section">Active Experiment</h2>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-text-muted text-center py-8">
+            No active experiments. Select an experiment from the catalog to
+            begin fault injection.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const progress = Math.min(
+    100,
+    (elapsedSec / experiment.estimatedDurationSec) * 100,
+  );
+  const remaining = Math.max(0, experiment.estimatedDurationSec - elapsedSec);
 
   const affectedCount = experiment.results
     ? Math.floor(experiment.results.evaluationsAffected * (progress / 100))
