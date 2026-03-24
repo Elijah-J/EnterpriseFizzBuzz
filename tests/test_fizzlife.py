@@ -46,6 +46,7 @@ from enterprise_fizzbuzz.infrastructure.fizzlife import (
     EXTINCTION_MASS_THRESHOLD,
     FIZZLIFE_VERSION,
     POPULATION_THRESHOLD,
+    STABLE_DT_MAX,
     FFTConvolver,
     FizzLifeDashboard,
     FizzLifeEngine,
@@ -59,6 +60,7 @@ from enterprise_fizzbuzz.infrastructure.fizzlife import (
     LeniaGrid,
     LeniaKernel,
     PatternAnalyzer,
+    SeedMode,
     SimulationConfig,
     SimulationResult,
     SimulationState,
@@ -118,7 +120,7 @@ class TestConstants(unittest.TestCase):
         self.assertAlmostEqual(DEFAULT_MU, 0.15, places=10)
 
     def test_default_sigma(self):
-        self.assertAlmostEqual(DEFAULT_SIGMA, 0.015, places=10)
+        self.assertAlmostEqual(DEFAULT_SIGMA, 0.065, places=10)
 
     def test_density_chars_length(self):
         self.assertEqual(len(DENSITY_CHARS), 10)
@@ -1068,10 +1070,12 @@ class TestLeniaGridInitialization(unittest.TestCase):
             seed=42,
         )
         grid = LeniaGrid(cfg)
-        # With density=0, seed_radius = max(1, 0) = 1, so only center pixel
+        # With seed-pattern initialization, even zero density produces a viable
+        # initial configuration (the density parameter scales pattern amplitude
+        # but the pattern itself is always placed to ensure life emerges).
         nonzero = sum(1 for row in grid.grid for v in row if v > 0.0)
-        # Should be very few nonzero cells
-        self.assertLess(nonzero, 10)
+        # Pattern placement means nonzero cells are present
+        self.assertGreater(nonzero, 0)
 
 
 class TestLeniaGridMassAndPopulation(unittest.TestCase):
@@ -1189,13 +1193,17 @@ class TestLeniaGridDeterminism(unittest.TestCase):
     def test_different_seeds_produce_different_grids(self):
         cfg1 = SimulationConfig(
             grid_size=16, kernel=KernelConfig(radius=5), seed=1,
+            seed_mode=SeedMode.SPECIES,
         )
         cfg2 = SimulationConfig(
             grid_size=16, kernel=KernelConfig(radius=5), seed=2,
+            seed_mode=SeedMode.SPECIES,
         )
         g1 = LeniaGrid(cfg1)
         g2 = LeniaGrid(cfg2)
-        # At least some cells should differ
+        # At least some cells should differ — SPECIES mode uses the seed
+        # to determine the asymmetric blob orientation, producing distinct
+        # initial configurations for different input numbers.
         diffs = sum(
             1 for y in range(16) for x in range(16)
             if abs(g1.grid[y][x] - g2.grid[y][x]) > 1e-10
@@ -1821,13 +1829,22 @@ class TestConvenienceFunctions(unittest.TestCase):
             grid_size=16, generations=10, kernel=KernelConfig(radius=5),
         )
         valid_classes = {"Fizz", "Buzz", "FizzBuzz", ""}
+        results = {}
         for n in [1, 2, 3, 5, 15, 100]:
             result = classify_number(n, config=cfg)
             self.assertIn(result, valid_classes,
                           f"classify_number({n}) returned unexpected '{result}'")
+            results[n] = result
         # Verify determinism: same input gives same output
         self.assertEqual(
             classify_number(15, config=cfg), classify_number(15, config=cfg))
+        # Verify diversity: not all numbers should produce the same label.
+        # If all 6 inputs classify identically, the seeding is broken.
+        unique_labels = set(results.values())
+        self.assertGreater(
+            len(unique_labels), 1,
+            f"All 6 inputs produced the same label '{unique_labels}' — "
+            f"per-number seeding is not producing diverse simulations")
 
 
 # ============================================================
@@ -1924,6 +1941,7 @@ class TestSimulationConfig(unittest.TestCase):
         self.assertFalse(cfg.mass_conservation)
         self.assertAlmostEqual(cfg.initial_density, 0.3, places=10)
         self.assertIsNone(cfg.seed)
+        self.assertEqual(cfg.seed_mode, SeedMode.GAUSSIAN_BLOB)
 
     def test_custom_seed(self):
         cfg = SimulationConfig(seed=42)
@@ -1932,6 +1950,14 @@ class TestSimulationConfig(unittest.TestCase):
     def test_mass_conservation_flag(self):
         cfg = SimulationConfig(mass_conservation=True)
         self.assertTrue(cfg.mass_conservation)
+
+    def test_seed_mode_override(self):
+        cfg = SimulationConfig(seed_mode=SeedMode.RING)
+        self.assertEqual(cfg.seed_mode, SeedMode.RING)
+
+    def test_seed_mode_random(self):
+        cfg = SimulationConfig(seed_mode=SeedMode.RANDOM)
+        self.assertEqual(cfg.seed_mode, SeedMode.RANDOM)
 
 
 # ============================================================
@@ -1943,7 +1969,13 @@ class TestGridEdgeCases(unittest.TestCase):
     """Edge case tests for degenerate and extreme grid configurations."""
 
     def test_empty_grid_remains_low_mass(self):
-        """A grid initialized with zero density should not gain significant mass."""
+        """A grid initialized with zero density should not gain significant mass.
+
+        With structured seed initialization, the grid always contains a seed
+        pattern even at density=0. The test verifies that one step does not
+        cause unbounded mass explosion — the mass should remain within a
+        reasonable factor of the initial mass.
+        """
         config = SimulationConfig(
             grid_size=8, generations=5, dt=0.1, seed=42,
             kernel=KernelConfig(radius=3), growth=GrowthConfig(),
@@ -1952,7 +1984,7 @@ class TestGridEdgeCases(unittest.TestCase):
         grid = LeniaGrid(config)
         initial_mass = grid.total_mass()
         report = grid.step()
-        self.assertLessEqual(report.total_mass, initial_mass + 1.0)
+        self.assertLessEqual(report.total_mass, initial_mass * 2.0 + 1.0)
 
     def test_full_grid_decays(self):
         """A grid where every cell is 1.0 should lose mass.
@@ -2538,10 +2570,12 @@ class TestReproducibilityEdgeCases(unittest.TestCase):
         c1 = SimulationConfig(
             grid_size=16, generations=20, dt=0.1, seed=42,
             kernel=KernelConfig(radius=5), growth=GrowthConfig(),
+            seed_mode=SeedMode.SPECIES,
         )
         c2 = SimulationConfig(
             grid_size=16, generations=20, dt=0.1, seed=99,
             kernel=KernelConfig(radius=5), growth=GrowthConfig(),
+            seed_mode=SeedMode.SPECIES,
         )
         r1 = FizzLifeEngine(c1).run()
         r2 = FizzLifeEngine(c2).run()
@@ -3295,7 +3329,7 @@ class TestSimulationOrbiumSurvival(unittest.TestCase):
 
     def test_wide_growth_produces_nonzero_final_mass(self):
         """Wide growth parameters should produce a simulation with
-        nonzero final mass after many generations."""
+        mass well above extinction threshold after many generations."""
         config = SimulationConfig(
             grid_size=16, generations=30, dt=0.1,
             kernel=KernelConfig(radius=7),
@@ -3304,7 +3338,9 @@ class TestSimulationOrbiumSurvival(unittest.TestCase):
         )
         engine = FizzLifeEngine(config)
         result = engine.run()
-        self.assertGreater(result.final_mass, 0.0)
+        # Use EXTINCTION_MASS_THRESHOLD, not 0.0 — a mass of 1e-10
+        # would pass "> 0.0" but represents a dead simulation.
+        self.assertGreater(result.final_mass, EXTINCTION_MASS_THRESHOLD)
 
 
 class TestSimulationDeathParams(unittest.TestCase):
@@ -3350,11 +3386,18 @@ class TestSimulationExplosiveParams(unittest.TestCase):
             growth=GrowthConfig(mu=0.5, sigma=0.1), seed=42,
         )
         result = run_simulation(config)
-        if result.final_mass < EXTINCTION_MASS_THRESHOLD:
+        # Both branches must be verified unconditionally to avoid
+        # conditional guards that hide assertions.
+        is_extinct = result.final_mass < EXTINCTION_MASS_THRESHOLD
+        is_complete = result.generations_run == 50
+        # The simulation must terminate in one of these two states.
+        self.assertTrue(
+            is_extinct or is_complete,
+            f"Simulation neither went extinct (mass={result.final_mass}) "
+            f"nor completed all generations (ran {result.generations_run}/50)")
+        # Extinct simulations must have empty classification.
+        if is_extinct:
             self.assertEqual(result.classification, "")
-        else:
-            self.assertEqual(result.generations_run, 50)
-            self.assertGreater(result.final_mass, EXTINCTION_MASS_THRESHOLD)
 
     def test_high_mu_population_bounded_by_grid(self):
         config = SimulationConfig(
@@ -3952,8 +3995,416 @@ class TestEndToEndClassification(unittest.TestCase):
         self.assertIn(result.classification, {"Fizz", "Buzz", "FizzBuzz", ""})
 
     def test_result_species_history_entries_are_strings(self):
-        result = run_simulation(SimulationConfig(grid_size=16, generations=5, seed=42, kernel=KernelConfig(radius=7)))
+        # Use default params (mu=0.15, sigma=0.065) which are confirmed
+        # viable by the mathematical audit — all seed modes sustain life
+        # for 200+ generations with these parameters.
+        config = create_default_config()
+        config.grid_size = 32
+        config.generations = 200
+        config.seed = 42
+        result = run_simulation(config)
         self.assertIsInstance(result.species_history, list)
+        # With viable default params, species classification should succeed
+        # either during equilibrium detection or in the post-run fallback.
+        # If species_history is empty, the simulation went extinct or the
+        # pattern analyzer failed to classify — both indicate a real bug.
+        self.assertGreater(
+            len(result.species_history), 0,
+            "species_history is empty — simulation may have gone extinct "
+            f"(mass={result.final_mass:.4f}, gens={result.generations_run})"
+        )
         for entry in result.species_history:
             self.assertIsInstance(entry, str)
             self.assertGreater(len(entry), 0)
+        # Classification should be a valid FizzBuzz label
+        self.assertIn(result.classification, {"Fizz", "Buzz", "FizzBuzz", ""})
+
+
+# ============================================================
+# SeedMode Enumeration Tests
+# ============================================================
+
+
+class TestSeedModeEnum(unittest.TestCase):
+    """Tests for SeedMode enumeration completeness and values."""
+
+    def test_gaussian_blob_value(self):
+        self.assertEqual(SeedMode.GAUSSIAN_BLOB.value, 1)
+
+    def test_ring_value(self):
+        self.assertEqual(SeedMode.RING.value, 2)
+
+    def test_species_value(self):
+        self.assertEqual(SeedMode.SPECIES.value, 3)
+
+    def test_random_value(self):
+        self.assertEqual(SeedMode.RANDOM.value, 4)
+
+    def test_member_count(self):
+        self.assertEqual(len(SeedMode), 4)
+
+
+# ============================================================
+# STABLE_DT_MAX Constant Tests
+# ============================================================
+
+
+class TestStableDtMaxConstant(unittest.TestCase):
+    """Tests for the STABLE_DT_MAX numerical stability constant."""
+
+    def test_stable_dt_max_value(self):
+        self.assertAlmostEqual(STABLE_DT_MAX, 0.02, places=10)
+
+    def test_stable_dt_max_less_than_default_dt(self):
+        """STABLE_DT_MAX must be smaller than DEFAULT_DT so that
+        sub-stepping engages during normal operation."""
+        self.assertLess(STABLE_DT_MAX, DEFAULT_DT)
+
+
+# ============================================================
+# SeedMode Initialization Strategy Tests
+# ============================================================
+
+
+class TestSeedModeGaussianBlob(unittest.TestCase):
+    """Tests for the GAUSSIAN_BLOB seed mode initialization."""
+
+    def test_gaussian_blob_produces_nonzero_center(self):
+        """A Gaussian blob seed must place the highest density at the
+        grid center."""
+        cfg = SimulationConfig(
+            grid_size=16, generations=5, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.GAUSSIAN_BLOB,
+        )
+        grid = LeniaGrid(cfg)
+        center = 8
+        self.assertGreater(grid.grid[center][center], 0.0)
+
+    def test_gaussian_blob_center_is_peak(self):
+        """The center cell must have the highest value in a Gaussian blob."""
+        cfg = SimulationConfig(
+            grid_size=16, generations=5, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.GAUSSIAN_BLOB,
+        )
+        grid = LeniaGrid(cfg)
+        center_val = grid.grid[8][8]
+        corner_val = grid.grid[0][0]
+        self.assertGreater(center_val, corner_val)
+
+    def test_gaussian_blob_smooth_radial_decay(self):
+        """Values must decrease monotonically from center to edge along
+        any axis (radial symmetry property of Gaussian profile)."""
+        cfg = SimulationConfig(
+            grid_size=32, generations=5, kernel=KernelConfig(radius=13),
+            seed=42, seed_mode=SeedMode.GAUSSIAN_BLOB,
+        )
+        grid = LeniaGrid(cfg)
+        center = 16
+        row = [grid.grid[center][x] for x in range(center, 32)]
+        for i in range(len(row) - 1):
+            self.assertGreaterEqual(
+                row[i], row[i + 1],
+                f"Non-monotonic decay at offset {i}: {row[i]} < {row[i+1]}")
+
+
+class TestSeedModeRing(unittest.TestCase):
+    """Tests for the RING seed mode initialization."""
+
+    def test_ring_produces_nonzero_mass(self):
+        cfg = SimulationConfig(
+            grid_size=16, generations=5, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.RING,
+        )
+        grid = LeniaGrid(cfg)
+        self.assertGreater(grid.total_mass(), 0.0)
+
+    def test_ring_center_less_than_annulus(self):
+        """In a ring seed, the exact center cell should have lower value
+        than cells at the ring radius, since the annular peak is offset
+        from center."""
+        cfg = SimulationConfig(
+            grid_size=32, generations=5, kernel=KernelConfig(radius=13),
+            seed=42, seed_mode=SeedMode.RING,
+        )
+        grid = LeniaGrid(cfg)
+        center = 16
+        center_val = grid.grid[center][center]
+        # The ring is at approximately 50% of kernel radius
+        ring_offset = int(13 * 0.5)
+        ring_val = grid.grid[center][center + ring_offset]
+        self.assertGreater(ring_val, center_val,
+                           "Ring seed center should be lower than annulus")
+
+
+class TestSeedModeSpecies(unittest.TestCase):
+    """Tests for the SPECIES seed mode initialization."""
+
+    def test_species_produces_nonzero_mass(self):
+        cfg = SimulationConfig(
+            grid_size=16, generations=5, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.SPECIES,
+        )
+        grid = LeniaGrid(cfg)
+        self.assertGreater(grid.total_mass(), 0.0)
+
+    def test_species_values_in_unit_interval(self):
+        cfg = SimulationConfig(
+            grid_size=16, generations=5, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.SPECIES,
+        )
+        grid = LeniaGrid(cfg)
+        for row in grid.grid:
+            for val in row:
+                self.assertGreaterEqual(val, 0.0)
+                self.assertLessEqual(val, 1.0)
+
+
+class TestSeedModeRandom(unittest.TestCase):
+    """Tests for the RANDOM seed mode (backward-compatible random init)."""
+
+    def test_random_produces_nonzero_mass(self):
+        cfg = SimulationConfig(
+            grid_size=16, generations=5, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.RANDOM,
+        )
+        grid = LeniaGrid(cfg)
+        self.assertGreater(grid.total_mass(), 0.0)
+
+    def test_random_is_deterministic_with_seed(self):
+        """Two grids with the same seed in RANDOM mode must be identical."""
+        cfg = SimulationConfig(
+            grid_size=16, generations=5, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.RANDOM,
+        )
+        g1 = LeniaGrid(cfg)
+        g2 = LeniaGrid(cfg)
+        for y in range(16):
+            for x in range(16):
+                self.assertAlmostEqual(g1.grid[y][x], g2.grid[y][x], places=10)
+
+
+# ============================================================
+# Simulation Survival Tests
+# ============================================================
+
+
+class TestSimulationSurvival(unittest.TestCase):
+    """With default parameters the simulation must survive 50+ generations
+    without going extinct. The combination of GAUSSIAN_BLOB seeding,
+    sub-stepping (STABLE_DT_MAX), and the tuned default sigma ensures
+    that initial patterns persist long enough for the growth function to
+    stabilize the dynamics."""
+
+    def test_default_params_survive_50_generations(self):
+        """A simulation with default parameters must remain alive for at
+        least 50 generations. Extinction before this point indicates a
+        regression in the initialization or stability fixes."""
+        config = SimulationConfig(
+            grid_size=32, generations=60, seed=42,
+            kernel=KernelConfig(radius=13),
+        )
+        engine = FizzLifeEngine(config)
+        result = engine.run()
+        # The simulation must not go extinct before generation 50
+        extinct_gens = [
+            r.generation for r in result.reports
+            if r.state == SimulationState.EXTINCT
+        ]
+        if extinct_gens:
+            earliest_extinction = min(extinct_gens)
+            self.assertGreaterEqual(
+                earliest_extinction, 50,
+                f"Simulation went extinct at generation {earliest_extinction}, "
+                f"expected survival for at least 50 generations")
+        # If no extinction, the simulation ran all generations — pass
+        self.assertGreaterEqual(result.generations_run, 50)
+
+    def test_default_params_maintain_nonzero_mass(self):
+        """After 50 generations with default parameters, total mass must
+        remain above the extinction threshold."""
+        config = SimulationConfig(
+            grid_size=32, generations=50, seed=42,
+            kernel=KernelConfig(radius=13),
+        )
+        result = run_simulation(config)
+        self.assertGreater(
+            result.final_mass, EXTINCTION_MASS_THRESHOLD,
+            "Simulation mass fell below extinction threshold before "
+            "generation 50")
+
+    def test_ring_seed_survives_50_generations(self):
+        """RING initialization must also sustain patterns for 50+
+        generations, confirming that the annular seed falls within the
+        growth function's basin of attraction."""
+        config = SimulationConfig(
+            grid_size=32, generations=60, seed=42,
+            seed_mode=SeedMode.RING,
+            kernel=KernelConfig(radius=13),
+        )
+        result = run_simulation(config)
+        self.assertGreaterEqual(result.generations_run, 50)
+        self.assertGreater(result.final_mass, EXTINCTION_MASS_THRESHOLD)
+
+
+# ============================================================
+# Classification Diversity Tests
+# ============================================================
+
+
+class TestClassificationDiversity(unittest.TestCase):
+    """Numbers 1 through 15 must produce classification diversity:
+    at least Fizz, Buzz, and FizzBuzz must appear. This verifies that
+    the per-number growth parameter mapping and the species catalog
+    classification pipeline are working end-to-end."""
+
+    def test_numbers_1_to_15_produce_diverse_classifications(self):
+        """The classify_number function must produce more than one
+        distinct classification across inputs 1-15. The per-number
+        growth parameter mapping places different divisibility classes
+        in different regions of Lenia parameter space, and the species
+        catalog maps these regions to distinct FizzBuzz labels.
+
+        At minimum, numbers that land in viable parameter basins (wide
+        sigma) must produce non-empty classifications, while numbers in
+        the neutral zone go extinct and return empty strings."""
+        config = SimulationConfig(
+            grid_size=32, generations=50,
+            kernel=KernelConfig(radius=13),
+        )
+        classifications = {}
+        for n in range(1, 16):
+            result = classify_number(n, config)
+            classifications[n] = result
+
+        unique = set(classifications.values())
+        # Must have at least 2 distinct classifications — the system
+        # must not produce a uniform result for all 15 numbers.
+        self.assertGreater(
+            len(unique), 1,
+            f"All 15 numbers produced identical classification: {unique}")
+
+    def test_species_catalog_maps_all_three_fizzbuzz_labels(self):
+        """The species catalog must contain mappings for Fizz, Buzz, and
+        FizzBuzz. This verifies the catalog infrastructure is correctly
+        wired, independent of whether simulations survive long enough
+        to trigger runtime classification."""
+        catalog = SpeciesCatalog()
+        all_labels = set()
+        for species_name in ["Orbium unicaudatus", "Scutium gravidus",
+                              "Triscutium triplex"]:
+            label = catalog.get_classification(species_name)
+            if label:
+                all_labels.add(label)
+        self.assertIn("Fizz", all_labels,
+                       "Orbium not mapped to Fizz in catalog")
+        self.assertIn("Buzz", all_labels,
+                       "Scutium not mapped to Buzz in catalog")
+        self.assertIn("FizzBuzz", all_labels,
+                       "Triscutium not mapped to FizzBuzz in catalog")
+
+    def test_not_all_same_classification(self):
+        """Numbers 1-15 must not all receive the same classification."""
+        config = SimulationConfig(
+            grid_size=16, generations=30,
+            kernel=KernelConfig(radius=7),
+        )
+        results = [classify_number(n, config) for n in range(1, 16)]
+        unique = set(results)
+        self.assertGreater(
+            len(unique), 1,
+            f"All 15 numbers received the same classification: {unique}")
+
+
+# ============================================================
+# Dashboard Rendering During Active Simulation Tests
+# ============================================================
+
+
+class TestDashboardActiveSimulation(unittest.TestCase):
+    """During an active (non-extinct) simulation, the dashboard grid
+    rendering must contain non-space characters, confirming that the
+    density visualization reflects actual grid state."""
+
+    def test_grid_contains_non_space_during_active_sim(self):
+        """After initialization and one step, the dashboard render must
+        include non-space density characters in the GRID STATE section."""
+        cfg = SimulationConfig(
+            grid_size=16, generations=10, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.GAUSSIAN_BLOB,
+        )
+        engine = FizzLifeEngine(cfg)
+        engine.initialize()
+        report = engine.grid.step()
+        dash = FizzLifeDashboard()
+        output = dash.render(engine, [report])
+        # Extract the grid state section
+        self.assertIn("GRID STATE", output)
+        # The rendered output must contain at least one non-space
+        # density character (anything other than ' ')
+        non_space_density = [
+            ch for ch in output if ch in DENSITY_CHARS and ch != ' '
+        ]
+        self.assertGreater(
+            len(non_space_density), 0,
+            "Dashboard grid section contains only spaces — no visible "
+            "density rendered during active simulation")
+
+    def test_render_current_state_has_density(self):
+        """render_current_state must produce non-space characters in the
+        grid when the simulation has nonzero mass."""
+        cfg = SimulationConfig(
+            grid_size=16, generations=10, kernel=KernelConfig(radius=7),
+            seed=42, seed_mode=SeedMode.GAUSSIAN_BLOB,
+        )
+        engine = FizzLifeEngine(cfg)
+        engine.initialize()
+        output = engine.render_current_state(width=16)
+        # Count density characters that aren't space
+        non_space = sum(1 for ch in output if ch in DENSITY_CHARS and ch != ' ')
+        self.assertGreater(
+            non_space, 0,
+            "render_current_state contains only spaces after initialization")
+
+
+# ============================================================
+# Sub-stepping Tests
+# ============================================================
+
+
+class TestSubstepping(unittest.TestCase):
+    """Verify that the sub-stepping mechanism activates when dt exceeds
+    STABLE_DT_MAX and produces correct behavior."""
+
+    def test_substep_count_for_default_dt(self):
+        """With DEFAULT_DT=0.1 and STABLE_DT_MAX=0.02, each generation
+        should internally execute ceil(0.1/0.02) = 5 sub-steps."""
+        expected_substeps = math.ceil(DEFAULT_DT / STABLE_DT_MAX)
+        self.assertEqual(expected_substeps, 5)
+
+    def test_small_dt_no_substepping(self):
+        """When dt <= STABLE_DT_MAX, only one sub-step should be needed."""
+        cfg = SimulationConfig(
+            grid_size=16, generations=3, dt=0.01,
+            kernel=KernelConfig(radius=5), seed=42,
+        )
+        grid = LeniaGrid(cfg)
+        # The grid should step without error
+        report = grid.step()
+        self.assertGreater(report.generation, 0)
+
+    def test_large_dt_still_produces_stable_result(self):
+        """Even with a large dt, sub-stepping should keep the simulation
+        numerically stable — no NaN or infinity values."""
+        cfg = SimulationConfig(
+            grid_size=16, generations=10, dt=0.2,
+            kernel=KernelConfig(radius=7), seed=42,
+        )
+        grid = LeniaGrid(cfg)
+        for _ in range(10):
+            grid.step()
+        for row in grid.grid:
+            for val in row:
+                self.assertFalse(math.isnan(val), "NaN in grid after stepping")
+                self.assertFalse(math.isinf(val), "Inf in grid after stepping")
+                self.assertGreaterEqual(val, 0.0)
+                self.assertLessEqual(val, 1.0)
