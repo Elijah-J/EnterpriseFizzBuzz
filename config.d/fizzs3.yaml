@@ -1,0 +1,30 @@
+
+fizzs3:
+  enabled: false                              # Master switch — opt-in via --fizzs3
+  default_region: fizz-east-1                 # Default region for new buckets
+  max_buckets: 100                            # Maximum buckets per owner
+  default_encryption: sse-s3                  # Default encryption mode (sse-s3, sse-kms, sse-c)
+  chunk_size: 4194304                         # Content-addressable chunk size (4 MB)
+  gc_interval: 21600.0                        # Garbage collection interval (6 hours)
+  gc_safety_delay: 86400.0                    # GC safety delay before collecting (24 hours)
+  lifecycle_interval: 86400.0                 # Lifecycle evaluation interval (24 hours)
+  compaction_threshold: 0.5                   # Segment fragmentation compaction trigger
+  segment_max_size: 268435456                 # Maximum segment size (256 MB)
+  replication_retry_max: 24                   # Maximum replication retry attempts
+  presign_default_expiry: 3600               # Default presigned URL expiry (1 hour)
+  key_rotation_days: 90                       # SSE-S3 master key rotation interval
+  erasure_coding:
+    standard:
+      data_fragments: 10                      # STANDARD class data fragments
+      parity_fragments: 4                     # STANDARD class parity fragments
+    standard_ia:
+      data_fragments: 6                       # STANDARD_IA data fragments
+      parity_fragments: 4                     # STANDARD_IA parity fragments
+    archive:
+      data_fragments: 4                       # ARCHIVE data fragments
+      parity_fragments: 4                     # ARCHIVE parity fragments
+    deep_archive:
+      data_fragments: 2                       # DEEP_ARCHIVE data fragments
+      parity_fragments: 4                     # DEEP_ARCHIVE parity fragments
+  dashboard:
+    width: 72                                 # ASCII dashboard width
