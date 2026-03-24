@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   ConfigCategory,
   ConfigItem,
   FeatureFlag,
   FeatureFlagLifecycle,
 } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -17,7 +19,10 @@ import { Badge } from "@/components/ui/badge";
 
 const REFRESH_INTERVAL_MS = 30_000;
 
-const CATEGORY_TABS: { label: string; value: ConfigCategory | "feature_flags_tab" }[] = [
+const CATEGORY_TABS: {
+  label: string;
+  value: ConfigCategory | "feature_flags_tab";
+}[] = [
   { label: "Evaluation", value: "evaluation" },
   { label: "Cache", value: "cache" },
   { label: "Compliance", value: "compliance" },
@@ -32,7 +37,10 @@ const CATEGORY_TABS: { label: string; value: ConfigCategory | "feature_flags_tab
   { label: "Feature Flags", value: "feature_flags_tab" },
 ];
 
-const LIFECYCLE_BADGE_VARIANT: Record<FeatureFlagLifecycle, "error" | "warning" | "info" | "success"> = {
+const LIFECYCLE_BADGE_VARIANT: Record<
+  FeatureFlagLifecycle,
+  "error" | "warning" | "info" | "success"
+> = {
   development: "info",
   testing: "warning",
   canary: "warning",
@@ -89,12 +97,26 @@ export default function ConfigurationManagementPage() {
   const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
 
   // UI state
-  const [activeTab, setActiveTab] = useState<ConfigCategory | "feature_flags_tab">("evaluation");
+  const [activeTab, setActiveTab] = useState<
+    ConfigCategory | "feature_flags_tab"
+  >("evaluation");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Pending changes — keyed by item/flag id
-  const [pendingConfigChanges, setPendingConfigChanges] = useState<Map<string, { before: string; after: string }>>(new Map());
-  const [pendingFlagChanges, setPendingFlagChanges] = useState<Map<string, { beforeEnabled: boolean; afterEnabled: boolean; beforeRollout: number; afterRollout: number }>>(new Map());
+  const [pendingConfigChanges, setPendingConfigChanges] = useState<
+    Map<string, { before: string; after: string }>
+  >(new Map());
+  const [pendingFlagChanges, setPendingFlagChanges] = useState<
+    Map<
+      string,
+      {
+        beforeEnabled: boolean;
+        afterEnabled: boolean;
+        beforeRollout: number;
+        afterRollout: number;
+      }
+    >
+  >(new Map());
 
   // Applying state
   const [applying, setApplying] = useState(false);
@@ -125,7 +147,11 @@ export default function ConfigurationManagementPage() {
       const merged = flags.map((flag) => {
         const pending = pendingFlagChanges.get(flag.id);
         if (pending) {
-          return { ...flag, enabled: pending.afterEnabled, rolloutPercentage: pending.afterRollout };
+          return {
+            ...flag,
+            enabled: pending.afterEnabled,
+            rolloutPercentage: pending.afterRollout,
+          };
         }
         return flag;
       });
@@ -204,7 +230,9 @@ export default function ConfigurationManagementPage() {
     } else {
       setPendingConfigChanges((prev) => {
         const next = new Map(prev);
-        const before = prev.has(item.id) ? prev.get(item.id)!.before : item.value;
+        const before = prev.has(item.id)
+          ? prev.get(item.id)!.before
+          : item.value;
         next.set(item.id, { before, after: newValue });
         return next;
       });
@@ -262,7 +290,10 @@ export default function ConfigurationManagementPage() {
       ? pendingFlagChanges.get(flag.id)!.afterEnabled
       : flag.enabled;
 
-    if (currentEnabled === originalEnabled && rolloutPercentage === originalRollout) {
+    if (
+      currentEnabled === originalEnabled &&
+      rolloutPercentage === originalRollout
+    ) {
       setPendingFlagChanges((prev) => {
         const next = new Map(prev);
         next.delete(flag.id);
@@ -303,7 +334,11 @@ export default function ConfigurationManagementPage() {
 
       // Apply flag changes sequentially
       for (const [flagId, change] of pendingFlagChanges) {
-        const result = await provider.toggleFeatureFlag(flagId, change.afterEnabled, change.afterRollout);
+        const result = await provider.toggleFeatureFlag(
+          flagId,
+          change.afterEnabled,
+          change.afterRollout,
+        );
         if (!result.success) {
           console.error(`Failed to toggle ${flagId}: ${result.error}`);
         }
@@ -342,7 +377,11 @@ export default function ConfigurationManagementPage() {
       prev.map((flag) => {
         const pending = pendingFlagChanges.get(flag.id);
         if (pending) {
-          return { ...flag, enabled: pending.beforeEnabled, rolloutPercentage: pending.beforeRollout };
+          return {
+            ...flag,
+            enabled: pending.beforeEnabled,
+            rolloutPercentage: pending.beforeRollout,
+          };
         }
         return flag;
       }),
@@ -398,10 +437,10 @@ export default function ConfigurationManagementPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-panel-50">
+        <h1 className="text-xl font-bold tracking-tight text-text-primary">
           Configuration Management
         </h1>
-        <p className="mt-1 text-xs text-panel-400">
+        <p className="mt-1 text-xs text-text-secondary">
           Centralized parameter governance for all platform subsystems. Changes
           are staged locally, reviewed in the pending changes panel, and applied
           atomically.
@@ -409,7 +448,7 @@ export default function ConfigurationManagementPage() {
       </div>
 
       {/* Category tabs */}
-      <div className="border-b border-panel-700 overflow-x-auto">
+      <div className="border-b border-border-subtle overflow-x-auto">
         <div className="flex gap-0">
           {CATEGORY_TABS.map((tab) => (
             <button
@@ -418,7 +457,7 @@ export default function ConfigurationManagementPage() {
               className={`whitespace-nowrap px-4 py-2 text-xs font-medium transition-colors border-b-2 ${
                 activeTab === tab.value
                   ? "border-fizzbuzz-400 text-fizzbuzz-400"
-                  : "border-transparent text-panel-400 hover:text-panel-200"
+                  : "border-transparent text-text-secondary hover:text-text-secondary"
               }`}
             >
               {tab.label}
@@ -434,7 +473,7 @@ export default function ConfigurationManagementPage() {
           placeholder="Search configuration items..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-md border border-panel-600 bg-panel-800 px-3 py-2 text-sm text-panel-200 placeholder:text-panel-500 focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
+          className="w-full rounded-md border border-border-default bg-surface-raised px-3 py-2 text-sm text-text-secondary placeholder:text-text-muted focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
         />
       </div>
 
@@ -444,7 +483,7 @@ export default function ConfigurationManagementPage() {
           <CardContent>
             <div className="divide-y divide-panel-700">
               {filteredConfigItems.length === 0 && (
-                <p className="py-4 text-center text-xs text-panel-500">
+                <p className="py-4 text-center text-xs text-text-muted">
                   No configuration items match the current filter.
                 </p>
               )}
@@ -457,7 +496,7 @@ export default function ConfigurationManagementPage() {
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-panel-100">
+                        <span className="text-sm font-medium text-text-primary">
                           {item.name}
                         </span>
                         {item.requiresRestart && (
@@ -465,17 +504,21 @@ export default function ConfigurationManagementPage() {
                         )}
                       </div>
                       <div className="flex-shrink-0">
-                        <ConfigInput item={item} onChange={handleConfigChange} />
+                        <ConfigInput
+                          item={item}
+                          onChange={handleConfigChange}
+                        />
                       </div>
                     </div>
-                    <div className="mt-1 text-xs text-panel-500">
+                    <div className="mt-1 text-xs text-text-muted">
                       <span className="font-mono">{item.id}</span>
                       {" — "}
                       {item.description}
                     </div>
-                    <div className="mt-0.5 flex gap-3 text-[10px] text-panel-500">
+                    <div className="mt-0.5 flex gap-3 text-[10px] text-text-muted">
                       <span>
-                        Default: <span className="font-mono">{item.defaultValue}</span>
+                        Default:{" "}
+                        <span className="font-mono">{item.defaultValue}</span>
                       </span>
                       {item.lastModifiedAt && (
                         <span>
@@ -496,7 +539,7 @@ export default function ConfigurationManagementPage() {
       {isFeatureFlagsTab && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           {filteredFlags.length === 0 && (
-            <p className="col-span-full py-4 text-center text-xs text-panel-500">
+            <p className="col-span-full py-4 text-center text-xs text-text-muted">
               No feature flags match the current filter.
             </p>
           )}
@@ -510,10 +553,10 @@ export default function ConfigurationManagementPage() {
                 <CardContent>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-medium text-panel-100 truncate">
+                      <h3 className="text-sm font-medium text-text-primary truncate">
                         {flag.name}
                       </h3>
-                      <p className="text-xs font-mono text-panel-500 mt-0.5">
+                      <p className="text-xs font-mono text-text-muted mt-0.5">
                         {flag.id}
                       </p>
                     </div>
@@ -533,18 +576,20 @@ export default function ConfigurationManagementPage() {
                     </button>
                   </div>
 
-                  <p className="mt-2 text-xs text-panel-400 leading-relaxed">
+                  <p className="mt-2 text-xs text-text-secondary leading-relaxed">
                     {flag.description}
                   </p>
 
                   {/* Rollout bar */}
                   <div className="mt-3">
-                    <div className="flex items-center justify-between text-xs text-panel-400 mb-1">
+                    <div className="flex items-center justify-between text-xs text-text-secondary mb-1">
                       <span>Rollout</span>
-                      <span className="font-mono">{flag.rolloutPercentage}%</span>
+                      <span className="font-mono">
+                        {flag.rolloutPercentage}%
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 rounded-full bg-panel-700 overflow-hidden">
+                      <div className="flex-1 h-1.5 rounded-full bg-surface-overlay overflow-hidden">
                         <div
                           className="h-full bg-fizzbuzz-400 rounded-full transition-all duration-300"
                           style={{ width: `${flag.rolloutPercentage}%` }}
@@ -564,13 +609,13 @@ export default function ConfigurationManagementPage() {
                   </div>
 
                   {/* Lifecycle and metadata */}
-                  <div className="mt-3 flex items-center gap-3 text-[10px] text-panel-500">
+                  <div className="mt-3 flex items-center gap-3 text-[10px] text-text-muted">
                     <span>Lifecycle:</span>
                     <Badge variant={LIFECYCLE_BADGE_VARIANT[flag.lifecycle]}>
                       {flag.lifecycle}
                     </Badge>
                   </div>
-                  <div className="mt-1 text-[10px] text-panel-500">
+                  <div className="mt-1 text-[10px] text-text-muted">
                     Last toggled: {relativeTime(flag.lastToggledAt)} by{" "}
                     {flag.lastToggledBy}
                   </div>
@@ -584,10 +629,10 @@ export default function ConfigurationManagementPage() {
       {/* Pending Changes Panel */}
       {pendingChanges.length > 0 && (
         <div className="sticky bottom-0 z-10">
-          <Card className="border-amber-800 bg-panel-900">
+          <Card className="border-amber-800 bg-surface-base">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-panel-100">
+                <h3 className="heading-section">
                   Pending Changes ({pendingChanges.length})
                 </h3>
                 <div className="flex gap-2">
@@ -601,7 +646,7 @@ export default function ConfigurationManagementPage() {
                   <button
                     onClick={handleDiscard}
                     disabled={applying}
-                    className="rounded-md border border-panel-600 px-3 py-1 text-xs font-medium text-panel-300 hover:bg-panel-800 disabled:opacity-50 transition-colors"
+                    className="rounded-md border border-border-default px-3 py-1 text-xs font-medium text-text-secondary hover:bg-surface-raised disabled:opacity-50 transition-colors"
                   >
                     Discard
                   </button>
@@ -611,7 +656,7 @@ export default function ConfigurationManagementPage() {
             <CardContent>
               <table className="w-full">
                 <thead>
-                  <tr className="text-[10px] text-panel-500 uppercase tracking-wider">
+                  <tr className="text-[10px] text-text-muted uppercase tracking-wider">
                     <th className="text-left pb-2 pr-4">Parameter</th>
                     <th className="text-left pb-2 pr-4">Before</th>
                     <th className="text-left pb-2">After</th>
@@ -619,8 +664,11 @@ export default function ConfigurationManagementPage() {
                 </thead>
                 <tbody>
                   {pendingChanges.map((change) => (
-                    <tr key={change.id} className="border-t border-panel-700">
-                      <td className="py-1.5 pr-4 text-xs font-mono text-panel-300">
+                    <tr
+                      key={change.id}
+                      className="border-t border-border-subtle"
+                    >
+                      <td className="py-1.5 pr-4 text-xs font-mono text-text-secondary">
                         {change.id}
                       </td>
                       <td className="py-1.5 pr-4">
@@ -682,7 +730,7 @@ function ConfigInput({
         <select
           value={item.value}
           onChange={(e) => onChange(item, e.target.value)}
-          className="rounded-md border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
+          className="rounded-md border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
         >
           {item.enumValues?.map((v) => (
             <option key={v} value={v}>
@@ -699,13 +747,9 @@ function ConfigInput({
           value={item.value}
           min={item.min}
           max={item.max}
-          step={
-            Number(item.value) < 1 && Number(item.value) > 0
-              ? 0.0001
-              : 1
-          }
+          step={Number(item.value) < 1 && Number(item.value) > 0 ? 0.0001 : 1}
           onChange={(e) => onChange(item, e.target.value)}
-          className="w-28 rounded-md border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 font-mono focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
+          className="w-28 rounded-md border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary font-mono focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
         />
       );
 
@@ -716,7 +760,7 @@ function ConfigInput({
           type="text"
           value={item.value}
           onChange={(e) => onChange(item, e.target.value)}
-          className="w-44 rounded-md border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 font-mono focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
+          className="w-44 rounded-md border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary font-mono focus:border-fizzbuzz-400 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-400"
         />
       );
   }

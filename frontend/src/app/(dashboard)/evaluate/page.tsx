@@ -1,12 +1,24 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useDataProvider } from "@/lib/data-providers";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { EvaluationSession, FizzBuzzResult } from "@/lib/data-providers";
-import { formatPlain, formatJSON, formatXML, formatCSV } from "@/lib/formatters";
+import { useDataProvider } from "@/lib/data-providers";
+import {
+  formatCSV,
+  formatJSON,
+  formatPlain,
+  formatXML,
+} from "@/lib/formatters";
 
 // ---------------------------------------------------------------------------
 // Strategy metadata
@@ -154,24 +166,22 @@ export default function EvaluateConsolePage() {
   return (
     <div className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-panel-50">
-          FizzBuzz Evaluation Console
-        </h1>
-        <p className="mt-1 text-sm text-panel-400">
-          Execute and inspect FizzBuzz evaluations across configurable ranges
-          and strategies. All sessions are recorded for audit compliance.
-        </p>
-      </div>
+      <Reveal>
+        <div>
+          <h1 className="heading-page">FizzBuzz Evaluation Console</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Execute and inspect FizzBuzz evaluations across configurable ranges
+            and strategies. All sessions are recorded for audit compliance.
+          </p>
+        </div>
+      </Reveal>
 
       {/* ----------------------------------------------------------------- */}
       {/* Control Panel                                                      */}
       {/* ----------------------------------------------------------------- */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-panel-100">
-            Evaluation Parameters
-          </h2>
+          <h2 className="heading-section">Evaluation Parameters</h2>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -179,7 +189,7 @@ export default function EvaluateConsolePage() {
             <div>
               <label
                 htmlFor="eval-start"
-                className="block text-xs font-medium text-panel-400 mb-1"
+                className="block text-xs font-medium text-text-secondary mb-1"
               >
                 Range Start
               </label>
@@ -190,9 +200,9 @@ export default function EvaluateConsolePage() {
                 max={10000}
                 value={start}
                 onChange={(e) => setStart(Number(e.target.value))}
-                className={`w-full rounded border bg-panel-900 px-3 py-2 text-sm text-panel-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-panel-950 ${
+                className={`w-full rounded border bg-surface-base px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-ground ${
                   startValid
-                    ? "border-panel-700 focus:ring-fizzbuzz-500"
+                    ? "border-border-subtle focus:ring-fizzbuzz-500"
                     : "border-red-600 focus:ring-red-500"
                 }`}
               />
@@ -207,7 +217,7 @@ export default function EvaluateConsolePage() {
             <div>
               <label
                 htmlFor="eval-end"
-                className="block text-xs font-medium text-panel-400 mb-1"
+                className="block text-xs font-medium text-text-secondary mb-1"
               >
                 Range End
               </label>
@@ -218,9 +228,9 @@ export default function EvaluateConsolePage() {
                 max={10000}
                 value={end}
                 onChange={(e) => setEnd(Number(e.target.value))}
-                className={`w-full rounded border bg-panel-900 px-3 py-2 text-sm text-panel-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-panel-950 ${
+                className={`w-full rounded border bg-surface-base px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-ground ${
                   endValid && (start < end || !startValid)
-                    ? "border-panel-700 focus:ring-fizzbuzz-500"
+                    ? "border-border-subtle focus:ring-fizzbuzz-500"
                     : "border-red-600 focus:ring-red-500"
                 }`}
               />
@@ -235,7 +245,7 @@ export default function EvaluateConsolePage() {
             <div>
               <label
                 htmlFor="eval-strategy"
-                className="block text-xs font-medium text-panel-400 mb-1"
+                className="block text-xs font-medium text-text-secondary mb-1"
               >
                 Evaluation Strategy
               </label>
@@ -243,7 +253,7 @@ export default function EvaluateConsolePage() {
                 id="eval-strategy"
                 value={strategy}
                 onChange={(e) => setStrategy(e.target.value as typeof strategy)}
-                className="w-full rounded border border-panel-700 bg-panel-900 px-3 py-2 text-sm text-panel-50 focus:outline-none focus:ring-2 focus:ring-fizzbuzz-500 focus:ring-offset-2 focus:ring-offset-panel-950"
+                className="w-full rounded border border-border-subtle bg-surface-base px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-fizzbuzz-500 focus:ring-offset-2 focus:ring-offset-surface-ground"
               >
                 {STRATEGIES.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -251,7 +261,7 @@ export default function EvaluateConsolePage() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-panel-500">
+              <p className="mt-1 text-xs text-text-muted">
                 {STRATEGIES.find((s) => s.value === strategy)?.description}
               </p>
             </div>
@@ -275,9 +285,7 @@ export default function EvaluateConsolePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-panel-100">
-                Evaluation Results
-              </h2>
+              <h2 className="heading-section">Evaluation Results</h2>
               <Badge variant="success">
                 {session.results.length} evaluations
               </Badge>
@@ -295,10 +303,12 @@ export default function EvaluateConsolePage() {
                   }`}
                   title={`${result.number}: ${result.output} (${result.processingTimeNs.toFixed(0)}ns)`}
                 >
-                  <span className={`text-[10px] font-mono ${LABEL_COLOR[result.classification]}`}>
+                  <span
+                    className={`text-[10px] font-mono ${LABEL_COLOR[result.classification]}`}
+                  >
                     {result.output}
                   </span>
-                  <span className="text-[9px] text-panel-500 font-mono">
+                  <span className="text-[9px] text-text-muted font-mono">
                     {result.number}
                   </span>
                 </div>
@@ -314,13 +324,15 @@ export default function EvaluateConsolePage() {
       {session && analytics && (
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Session Metadata
-            </h2>
+            <h2 className="heading-section">Session Metadata</h2>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              <MetadataField label="Session ID" value={session.sessionId} mono />
+              <MetadataField
+                label="Session ID"
+                value={session.sessionId}
+                mono
+              />
               <MetadataField label="Strategy" value={session.strategy} />
               <MetadataField
                 label="Total Processing Time"
@@ -367,9 +379,7 @@ export default function EvaluateConsolePage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-panel-100">
-                Output Format Viewer
-              </h2>
+              <h2 className="heading-section">Output Format Viewer</h2>
               <div className="flex gap-1">
                 {(Object.keys(FORMAT_LABELS) as OutputFormat[]).map((fmt) => (
                   <button
@@ -379,7 +389,7 @@ export default function EvaluateConsolePage() {
                     className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                       outputFormat === fmt
                         ? "bg-fizzbuzz-600 text-white"
-                        : "bg-panel-700 text-panel-300 hover:bg-panel-600 hover:text-panel-100"
+                        : "bg-surface-overlay text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
                     }`}
                   >
                     {FORMAT_LABELS[fmt]}
@@ -389,7 +399,7 @@ export default function EvaluateConsolePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <pre className="max-h-96 overflow-auto rounded border border-panel-700 bg-panel-900 p-4 text-xs font-mono text-panel-300 leading-relaxed">
+            <pre className="max-h-96 overflow-auto rounded border border-border-subtle bg-surface-base p-4 text-xs font-mono text-text-secondary leading-relaxed">
               {formattedOutput}
             </pre>
           </CardContent>
@@ -416,9 +426,9 @@ function MetadataField({
 }) {
   return (
     <div>
-      <p className="text-xs text-panel-500 mb-0.5">{label}</p>
+      <p className="text-xs text-text-muted mb-0.5">{label}</p>
       <p
-        className={`text-sm ${mono ? "font-mono" : ""} ${className ?? "text-panel-100"} truncate`}
+        className={`text-sm ${mono ? "font-mono" : ""} ${className ?? "text-text-primary"} truncate`}
         title={value}
       >
         {value}

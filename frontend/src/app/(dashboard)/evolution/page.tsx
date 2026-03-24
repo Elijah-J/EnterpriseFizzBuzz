@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useDataProvider } from "@/lib/data-providers";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
+  GAChromosome,
   GAConfig,
   GAEvolutionHistory,
-  GAChromosome,
   GAPopulation,
 } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -53,7 +55,12 @@ function FitnessConvergenceChart({
   if (generations.length === 0) {
     return (
       <svg width={width} height={height} className="min-w-full">
-        <text x={width / 2} y={height / 2} textAnchor="middle" className="fill-panel-500 text-sm">
+        <text
+          x={width / 2}
+          y={height / 2}
+          textAnchor="middle"
+          className="fill-text-muted text-sm"
+        >
           No evolution data. Configure parameters and press Evolve.
         </text>
       </svg>
@@ -66,15 +73,26 @@ function FitnessConvergenceChart({
   const toY = (val: number) => CHART_TOP + plotH * (1 - val);
 
   // Build polyline strings
-  const bestLine = generations.map((g, i) => `${toX(i)},${toY(g.bestFitness)}`).join(" ");
-  const avgLine = generations.map((g, i) => `${toX(i)},${toY(g.averageFitness)}`).join(" ");
-  const worstLine = generations.map((g, i) => `${toX(i)},${toY(g.worstFitness)}`).join(" ");
+  const bestLine = generations
+    .map((g, i) => `${toX(i)},${toY(g.bestFitness)}`)
+    .join(" ");
+  const avgLine = generations
+    .map((g, i) => `${toX(i)},${toY(g.averageFitness)}`)
+    .join(" ");
+  const worstLine = generations
+    .map((g, i) => `${toX(i)},${toY(g.worstFitness)}`)
+    .join(" ");
 
   // Cursor position
   const cursorX = toX(selectedGen);
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="min-w-full">
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="min-w-full"
+    >
       {/* Grid lines at 0.25 increments */}
       {[0, 0.25, 0.5, 0.75, 1.0].map((v) => (
         <g key={v}>
@@ -91,7 +109,7 @@ function FitnessConvergenceChart({
             x={CHART_LEFT - 6}
             y={toY(v) + 4}
             textAnchor="end"
-            className="fill-panel-500"
+            className="fill-text-muted"
             fontSize={10}
           >
             {v.toFixed(2)}
@@ -101,14 +119,18 @@ function FitnessConvergenceChart({
 
       {/* X-axis labels */}
       {generations
-        .filter((_, i) => i % Math.max(1, Math.floor(generations.length / 8)) === 0 || i === maxGen)
+        .filter(
+          (_, i) =>
+            i % Math.max(1, Math.floor(generations.length / 8)) === 0 ||
+            i === maxGen,
+        )
         .map((g) => (
           <text
             key={g.generation}
             x={toX(g.generation)}
             y={height - 6}
             textAnchor="middle"
-            className="fill-panel-500"
+            className="fill-text-muted"
             fontSize={10}
           >
             {g.generation}
@@ -116,9 +138,26 @@ function FitnessConvergenceChart({
         ))}
 
       {/* Data lines */}
-      <polyline points={worstLine} fill="none" stroke="#f87171" strokeWidth={1.5} opacity={0.7} />
-      <polyline points={avgLine} fill="none" stroke="#fbbf24" strokeWidth={1.5} opacity={0.8} />
-      <polyline points={bestLine} fill="none" stroke="#4ade80" strokeWidth={2} />
+      <polyline
+        points={worstLine}
+        fill="none"
+        stroke="#f87171"
+        strokeWidth={1.5}
+        opacity={0.7}
+      />
+      <polyline
+        points={avgLine}
+        fill="none"
+        stroke="#fbbf24"
+        strokeWidth={1.5}
+        opacity={0.8}
+      />
+      <polyline
+        points={bestLine}
+        fill="none"
+        stroke="#4ade80"
+        strokeWidth={2}
+      />
 
       {/* Cursor */}
       <line
@@ -155,7 +194,12 @@ function DiversityChart({
   if (generations.length === 0) {
     return (
       <svg width={width} height={height} className="min-w-full">
-        <text x={width / 2} y={height / 2} textAnchor="middle" className="fill-panel-500 text-sm">
+        <text
+          x={width / 2}
+          y={height / 2}
+          textAnchor="middle"
+          className="fill-text-muted text-sm"
+        >
           Awaiting evolution data.
         </text>
       </svg>
@@ -169,7 +213,9 @@ function DiversityChart({
   const toY = (val: number) => CHART_TOP + plotH * (1 - val / maxDiversity);
 
   // Build area path
-  const linePoints = generations.map((g, i) => `${toX(i)},${toY(g.diversityIndex)}`);
+  const linePoints = generations.map(
+    (g, i) => `${toX(i)},${toY(g.diversityIndex)}`,
+  );
   const areaPath = `M ${CHART_LEFT},${CHART_TOP + plotH} L ${linePoints.join(" L ")} L ${toX(maxGen)},${CHART_TOP + plotH} Z`;
 
   // Extinction threshold line
@@ -179,7 +225,12 @@ function DiversityChart({
   const cursorX = toX(selectedGen);
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="min-w-full">
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="min-w-full"
+    >
       {/* Y-axis labels */}
       {[0, 0.25, 0.5, 0.75, 1.0].map((frac) => {
         const val = frac * maxDiversity;
@@ -198,7 +249,7 @@ function DiversityChart({
               x={CHART_LEFT - 6}
               y={toY(val) + 4}
               textAnchor="end"
-              className="fill-panel-500"
+              className="fill-text-muted"
               fontSize={10}
             >
               {val.toFixed(1)}
@@ -263,23 +314,42 @@ function FitnessBreakdown({ chromosome }: { chromosome: GAChromosome }) {
   const components: { label: string; value: number; color: string }[] = [
     { label: "Accuracy", value: chromosome.fitness.accuracy, color: "#4ade80" },
     { label: "Coverage", value: chromosome.fitness.coverage, color: "#38bdf8" },
-    { label: "Distinctness", value: chromosome.fitness.distinctness, color: "#a78bfa" },
-    { label: "Phonetic Harmony", value: chromosome.fitness.phoneticHarmony, color: "#fbbf24" },
-    { label: "Math Elegance", value: chromosome.fitness.mathematicalElegance, color: "#fb7185" },
+    {
+      label: "Distinctness",
+      value: chromosome.fitness.distinctness,
+      color: "#a78bfa",
+    },
+    {
+      label: "Phonetic Harmony",
+      value: chromosome.fitness.phoneticHarmony,
+      color: "#fbbf24",
+    },
+    {
+      label: "Math Elegance",
+      value: chromosome.fitness.mathematicalElegance,
+      color: "#fb7185",
+    },
   ];
 
   return (
     <div className="space-y-2">
       {components.map((c) => (
         <div key={c.label} className="flex items-center gap-3">
-          <span className="text-xs text-panel-400 w-32 text-right shrink-0">{c.label}</span>
-          <div className="flex-1 h-4 bg-panel-900 rounded overflow-hidden">
+          <span className="text-xs text-text-secondary w-32 text-right shrink-0">
+            {c.label}
+          </span>
+          <div className="flex-1 h-4 bg-surface-base rounded overflow-hidden">
             <div
               className="h-full rounded transition-all"
-              style={{ width: `${(c.value * 100).toFixed(1)}%`, backgroundColor: c.color }}
+              style={{
+                width: `${(c.value * 100).toFixed(1)}%`,
+                backgroundColor: c.color,
+              }}
             />
           </div>
-          <span className="text-xs text-panel-300 w-12 text-right font-mono">{c.value.toFixed(3)}</span>
+          <span className="text-xs text-text-secondary w-12 text-right font-mono">
+            {c.value.toFixed(3)}
+          </span>
         </div>
       ))}
     </div>
@@ -300,7 +370,9 @@ function CorrectnessGrid({ chromosome }: { chromosome: GAChromosome }) {
       const matching = chromosome.genes
         .filter((g) => n % g.divisor === 0)
         .sort((a, b) => a.priority - b.priority);
-      results.push(matching.length > 0 ? matching.map((g) => g.label).join("") : String(n));
+      results.push(
+        matching.length > 0 ? matching.map((g) => g.label).join("") : String(n),
+      );
     }
     return results;
   }, [chromosome]);
@@ -335,19 +407,23 @@ function CorrectnessGrid({ chromosome }: { chromosome: GAChromosome }) {
         })}
       </div>
       {hoveredCell !== null && (
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-panel-700 border border-panel-600 rounded px-3 py-2 text-xs z-10 whitespace-nowrap shadow-lg">
-          <div className="text-panel-200">
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-surface-overlay border border-border-default rounded px-3 py-2 text-xs z-10 whitespace-nowrap shadow-lg">
+          <div className="text-text-secondary">
             <span className="font-mono font-bold">{hoveredCell}</span>
           </div>
-          <div className="text-panel-400">
+          <div className="text-text-secondary">
             Expected:{" "}
-            <span className="text-fizz-400 font-mono">{canonicalOutput(hoveredCell)}</span>
+            <span className="text-fizz-400 font-mono">
+              {canonicalOutput(hoveredCell)}
+            </span>
           </div>
-          <div className="text-panel-400">
+          <div className="text-text-secondary">
             Got:{" "}
             <span
               className={`font-mono ${
-                chromosome.correctnessMap[hoveredCell - 1] ? "text-fizz-400" : "text-red-400"
+                chromosome.correctnessMap[hoveredCell - 1]
+                  ? "text-fizz-400"
+                  : "text-red-400"
               }`}
             >
               {outputs[hoveredCell - 1]}
@@ -390,12 +466,15 @@ export default function EvolutionObservatoryPage() {
   const [config, setConfig] = useState<GAConfig>({ ...DEFAULT_CONFIG });
 
   // Run state
-  const [runState, setRunState] = useState<"idle" | "evolving" | "converged">("idle");
+  const [runState, setRunState] = useState<"idle" | "evolving" | "converged">(
+    "idle",
+  );
   const [history, setHistory] = useState<GAEvolutionHistory | null>(null);
 
   // UI state
   const [selectedGen, setSelectedGen] = useState(0);
-  const [selectedChromosome, setSelectedChromosome] = useState<GAChromosome | null>(null);
+  const [selectedChromosome, setSelectedChromosome] =
+    useState<GAChromosome | null>(null);
 
   // Launch evolution run
   const handleEvolve = useCallback(async () => {
@@ -435,10 +514,8 @@ export default function EvolutionObservatoryPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-panel-50">
-            Genetic Algorithm Observatory
-          </h1>
-          <p className="text-sm text-panel-400 mt-1">
+          <h1 className="heading-page">Genetic Algorithm Observatory</h1>
+          <p className="text-sm text-text-secondary mt-1">
             Evolutionary Rule Discovery Engine
           </p>
         </div>
@@ -450,20 +527,30 @@ export default function EvolutionObservatoryPage() {
         <CardContent className="py-4">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-panel-400">Population Size</label>
+              <label className="text-xs text-text-secondary">
+                Population Size
+              </label>
               <input
                 type="number"
                 min={10}
                 max={200}
                 value={config.populationSize}
                 onChange={(e) =>
-                  setConfig((c) => ({ ...c, populationSize: Math.max(10, Math.min(200, Number(e.target.value) || 10)) }))
+                  setConfig((c) => ({
+                    ...c,
+                    populationSize: Math.max(
+                      10,
+                      Math.min(200, Number(e.target.value) || 10),
+                    ),
+                  }))
                 }
-                className="w-24 rounded bg-panel-900 border border-panel-600 px-2 py-1.5 text-sm text-panel-100 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                className="w-24 rounded bg-surface-base border border-border-default px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-panel-400">Mutation Rate</label>
+              <label className="text-xs text-text-secondary">
+                Mutation Rate
+              </label>
               <input
                 type="number"
                 min={0.01}
@@ -471,13 +558,21 @@ export default function EvolutionObservatoryPage() {
                 step={0.01}
                 value={config.mutationRate}
                 onChange={(e) =>
-                  setConfig((c) => ({ ...c, mutationRate: Math.max(0.01, Math.min(0.5, Number(e.target.value) || 0.01)) }))
+                  setConfig((c) => ({
+                    ...c,
+                    mutationRate: Math.max(
+                      0.01,
+                      Math.min(0.5, Number(e.target.value) || 0.01),
+                    ),
+                  }))
                 }
-                className="w-24 rounded bg-panel-900 border border-panel-600 px-2 py-1.5 text-sm text-panel-100 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                className="w-24 rounded bg-surface-base border border-border-default px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-panel-400">Crossover Rate</label>
+              <label className="text-xs text-text-secondary">
+                Crossover Rate
+              </label>
               <input
                 type="number"
                 min={0.1}
@@ -485,35 +580,57 @@ export default function EvolutionObservatoryPage() {
                 step={0.05}
                 value={config.crossoverRate}
                 onChange={(e) =>
-                  setConfig((c) => ({ ...c, crossoverRate: Math.max(0.1, Math.min(1.0, Number(e.target.value) || 0.1)) }))
+                  setConfig((c) => ({
+                    ...c,
+                    crossoverRate: Math.max(
+                      0.1,
+                      Math.min(1.0, Number(e.target.value) || 0.1),
+                    ),
+                  }))
                 }
-                className="w-24 rounded bg-panel-900 border border-panel-600 px-2 py-1.5 text-sm text-panel-100 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                className="w-24 rounded bg-surface-base border border-border-default px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-panel-400">Elitism Count</label>
+              <label className="text-xs text-text-secondary">
+                Elitism Count
+              </label>
               <input
                 type="number"
                 min={0}
                 max={10}
                 value={config.elitismCount}
                 onChange={(e) =>
-                  setConfig((c) => ({ ...c, elitismCount: Math.max(0, Math.min(10, Number(e.target.value) || 0)) }))
+                  setConfig((c) => ({
+                    ...c,
+                    elitismCount: Math.max(
+                      0,
+                      Math.min(10, Number(e.target.value) || 0),
+                    ),
+                  }))
                 }
-                className="w-24 rounded bg-panel-900 border border-panel-600 px-2 py-1.5 text-sm text-panel-100 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                className="w-24 rounded bg-surface-base border border-border-default px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs text-panel-400">Max Generations</label>
+              <label className="text-xs text-text-secondary">
+                Max Generations
+              </label>
               <input
                 type="number"
                 min={10}
                 max={200}
                 value={config.maxGenerations}
                 onChange={(e) =>
-                  setConfig((c) => ({ ...c, maxGenerations: Math.max(10, Math.min(200, Number(e.target.value) || 10)) }))
+                  setConfig((c) => ({
+                    ...c,
+                    maxGenerations: Math.max(
+                      10,
+                      Math.min(200, Number(e.target.value) || 10),
+                    ),
+                  }))
                 }
-                className="w-24 rounded bg-panel-900 border border-panel-600 px-2 py-1.5 text-sm text-panel-100 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+                className="w-24 rounded bg-surface-base border border-border-default px-2 py-1.5 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
               />
             </div>
             <Button
@@ -532,7 +649,9 @@ export default function EvolutionObservatoryPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-panel-200">Fitness Convergence</h2>
+              <h2 className="text-sm font-semibold text-text-secondary">
+                Fitness Convergence
+              </h2>
               <div className="flex items-center gap-4 text-xs">
                 <span className="flex items-center gap-1.5">
                   <span className="inline-block w-3 h-0.5 bg-green-400 rounded" />
@@ -563,7 +682,9 @@ export default function EvolutionObservatoryPage() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-200">Genetic Diversity Index</h2>
+            <h2 className="text-sm font-semibold text-text-secondary">
+              Genetic Diversity Index
+            </h2>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -583,7 +704,9 @@ export default function EvolutionObservatoryPage() {
         <Card>
           <CardContent className="py-4">
             <div className="flex items-center gap-4">
-              <label className="text-sm text-panel-400 shrink-0">Generation</label>
+              <label className="text-sm text-text-secondary shrink-0">
+                Generation
+              </label>
               <input
                 type="range"
                 min={0}
@@ -595,7 +718,7 @@ export default function EvolutionObservatoryPage() {
                 }}
                 className="flex-1 accent-fizzbuzz-500"
               />
-              <span className="text-sm font-mono text-panel-200 w-16 text-right">
+              <span className="text-sm font-mono text-text-secondary w-16 text-right">
                 {selectedGen} / {history.generations.length - 1}
               </span>
             </div>
@@ -608,10 +731,10 @@ export default function EvolutionObservatoryPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-panel-200">
+              <h2 className="text-sm font-semibold text-text-secondary">
                 Population Inspector — Generation {currentPopulation.generation}
               </h2>
-              <span className="text-xs text-panel-500">
+              <span className="text-xs text-text-muted">
                 {currentPopulation.chromosomes.length} chromosomes | Best:{" "}
                 <span className="text-fizz-400 font-mono">
                   {currentPopulation.bestFitness.toFixed(4)}
@@ -628,7 +751,8 @@ export default function EvolutionObservatoryPage() {
               {[...currentPopulation.chromosomes]
                 .sort((a, b) => b.fitness.overall - a.fitness.overall)
                 .map((chromo) => {
-                  const isSelected = selectedChromosome?.chromosomeId === chromo.chromosomeId;
+                  const isSelected =
+                    selectedChromosome?.chromosomeId === chromo.chromosomeId;
                   return (
                     <button
                       key={chromo.chromosomeId}
@@ -636,24 +760,29 @@ export default function EvolutionObservatoryPage() {
                       className={`rounded p-1.5 text-center transition-all border ${
                         isSelected
                           ? "border-fizzbuzz-400 ring-1 ring-fizzbuzz-500"
-                          : "border-panel-700 hover:border-panel-500"
+                          : "border-border-subtle hover:border-panel-500"
                       }`}
                       style={{
-                        backgroundColor: chromosomeFitnessColor(chromo.fitness.overall) + "20",
+                        backgroundColor:
+                          chromosomeFitnessColor(chromo.fitness.overall) + "20",
                       }}
                     >
                       <div
                         className="text-[9px] font-mono truncate"
-                        style={{ color: chromosomeFitnessColor(chromo.fitness.overall) }}
+                        style={{
+                          color: chromosomeFitnessColor(chromo.fitness.overall),
+                        }}
                       >
                         {chromo.chromosomeId.slice(0, 6)}
                       </div>
-                      <div className="text-[10px] text-panel-400">
+                      <div className="text-[10px] text-text-secondary">
                         {chromo.genes.length}g
                       </div>
                       <div
                         className="text-xs font-mono font-bold"
-                        style={{ color: chromosomeFitnessColor(chromo.fitness.overall) }}
+                        style={{
+                          color: chromosomeFitnessColor(chromo.fitness.overall),
+                        }}
                       >
                         {chromo.fitness.overall.toFixed(3)}
                       </div>
@@ -670,13 +799,13 @@ export default function EvolutionObservatoryPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-panel-200">
+              <h2 className="text-sm font-semibold text-text-secondary">
                 Chromosome Detail —{" "}
                 <span className="font-mono text-fizzbuzz-400">
                   {selectedChromosome.chromosomeId.slice(0, 12)}
                 </span>
               </h2>
-              <span className="text-xs text-panel-500">
+              <span className="text-xs text-text-muted">
                 Generation {selectedChromosome.generation} | Overall Fitness:{" "}
                 <span className="text-fizz-400 font-mono">
                   {selectedChromosome.fitness.overall.toFixed(4)}
@@ -688,27 +817,37 @@ export default function EvolutionObservatoryPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Gene Table */}
               <div>
-                <h3 className="text-xs font-semibold text-panel-400 uppercase tracking-wider mb-2">
-                  Gene Table
-                </h3>
-                <div className="overflow-hidden rounded border border-panel-700">
+                <h3 className="heading-section">Gene Table</h3>
+                <div className="overflow-hidden rounded border border-border-subtle">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-panel-900 text-panel-400 text-xs">
-                        <th className="px-3 py-1.5 text-left font-medium">Divisor</th>
-                        <th className="px-3 py-1.5 text-left font-medium">Label</th>
-                        <th className="px-3 py-1.5 text-right font-medium">Priority</th>
+                      <tr className="bg-surface-base text-text-secondary text-xs">
+                        <th className="px-3 py-1.5 text-left font-medium">
+                          Divisor
+                        </th>
+                        <th className="px-3 py-1.5 text-left font-medium">
+                          Label
+                        </th>
+                        <th className="px-3 py-1.5 text-right font-medium">
+                          Priority
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedChromosome.genes.map((gene, i) => (
                         <tr
                           key={i}
-                          className="border-t border-panel-700 text-panel-200"
+                          className="border-t border-border-subtle text-text-secondary"
                         >
-                          <td className="px-3 py-1.5 font-mono">{gene.divisor}</td>
-                          <td className="px-3 py-1.5 font-mono">{gene.label}</td>
-                          <td className="px-3 py-1.5 font-mono text-right">{gene.priority}</td>
+                          <td className="px-3 py-1.5 font-mono">
+                            {gene.divisor}
+                          </td>
+                          <td className="px-3 py-1.5 font-mono">
+                            {gene.label}
+                          </td>
+                          <td className="px-3 py-1.5 font-mono text-right">
+                            {gene.priority}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -718,10 +857,8 @@ export default function EvolutionObservatoryPage() {
                 {/* Lineage */}
                 {selectedChromosome.parentIds.length > 0 && (
                   <div className="mt-4">
-                    <h3 className="text-xs font-semibold text-panel-400 uppercase tracking-wider mb-1">
-                      Lineage
-                    </h3>
-                    <div className="text-xs text-panel-500 space-y-0.5">
+                    <h3 className="heading-section">Lineage</h3>
+                    <div className="text-xs text-text-muted space-y-0.5">
                       {selectedChromosome.parentIds.map((pid) => (
                         <div key={pid} className="font-mono">
                           Parent: {pid.slice(0, 12)}...
@@ -734,17 +871,13 @@ export default function EvolutionObservatoryPage() {
 
               {/* Fitness Breakdown */}
               <div>
-                <h3 className="text-xs font-semibold text-panel-400 uppercase tracking-wider mb-2">
-                  Fitness Breakdown
-                </h3>
+                <h3 className="heading-section">Fitness Breakdown</h3>
                 <FitnessBreakdown chromosome={selectedChromosome} />
               </div>
 
               {/* Correctness Grid */}
               <div>
-                <h3 className="text-xs font-semibold text-panel-400 uppercase tracking-wider mb-2">
-                  Correctness Grid (1-100)
-                </h3>
+                <h3 className="heading-section">Correctness Grid (1-100)</h3>
                 <CorrectnessGrid chromosome={selectedChromosome} />
               </div>
             </div>

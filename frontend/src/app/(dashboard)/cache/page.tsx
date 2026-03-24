@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
+  CacheAccessCell,
+  CacheEulogy,
   CacheLine,
   CacheStats,
-  MESITransition,
-  CacheEulogy,
   MESIState,
-  CacheAccessCell,
+  MESITransition,
 } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -18,15 +20,49 @@ import type {
 const REFRESH_INTERVAL_MS = 5_000;
 
 /** Canonical MESI state color scheme, used consistently across all widgets. */
-const MESI_COLORS: Record<MESIState, { bg: string; text: string; border: string; fill: string; label: string }> = {
-  MODIFIED:  { bg: "bg-red-950",  text: "text-red-400",  border: "border-red-800",  fill: "#ef4444", label: "Modified" },
-  EXCLUSIVE: { bg: "bg-blue-950", text: "text-blue-400", border: "border-blue-800", fill: "#3b82f6", label: "Exclusive" },
-  SHARED:    { bg: "bg-green-950", text: "text-green-400", border: "border-green-800", fill: "#22c55e", label: "Shared" },
-  INVALID:   { bg: "bg-gray-950", text: "text-gray-400", border: "border-gray-800", fill: "#6b7280", label: "Invalid" },
+const MESI_COLORS: Record<
+  MESIState,
+  { bg: string; text: string; border: string; fill: string; label: string }
+> = {
+  MODIFIED: {
+    bg: "bg-red-950",
+    text: "text-red-400",
+    border: "border-red-800",
+    fill: "#ef4444",
+    label: "Modified",
+  },
+  EXCLUSIVE: {
+    bg: "bg-blue-950",
+    text: "text-blue-400",
+    border: "border-blue-800",
+    fill: "#3b82f6",
+    label: "Exclusive",
+  },
+  SHARED: {
+    bg: "bg-green-950",
+    text: "text-green-400",
+    border: "border-green-800",
+    fill: "#22c55e",
+    label: "Shared",
+  },
+  INVALID: {
+    bg: "bg-gray-950",
+    text: "text-gray-400",
+    border: "border-gray-800",
+    fill: "#6b7280",
+    label: "Invalid",
+  },
 };
 
 /** Sort configuration for the cache line inventory table. */
-type SortField = "state" | "key" | "value" | "accessCount" | "dignityLevel" | "createdAt" | "ttlSeconds";
+type SortField =
+  | "state"
+  | "key"
+  | "value"
+  | "accessCount"
+  | "dignityLevel"
+  | "createdAt"
+  | "ttlSeconds";
 type SortDirection = "asc" | "desc";
 
 // ---------------------------------------------------------------------------
@@ -57,7 +93,12 @@ function formatNumber(n: number): string {
 
 /** Compute the MESI state ordering for sort comparison. */
 function mesiStateOrder(state: MESIState): number {
-  const order: Record<MESIState, number> = { MODIFIED: 0, EXCLUSIVE: 1, SHARED: 2, INVALID: 3 };
+  const order: Record<MESIState, number> = {
+    MODIFIED: 0,
+    EXCLUSIVE: 1,
+    SHARED: 2,
+    INVALID: 3,
+  };
   return order[state];
 }
 
@@ -68,7 +109,9 @@ function mesiStateOrder(state: MESIState): number {
 function MESIBadge({ state }: { state: MESIState }) {
   const c = MESI_COLORS[state];
   return (
-    <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${c.bg} ${c.text} border ${c.border}`}>
+    <span
+      className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${c.bg} ${c.text} border ${c.border}`}
+    >
       {state[0]}
     </span>
   );
@@ -83,40 +126,53 @@ function StatsSummary({ stats }: { stats: CacheStats }) {
     {
       label: "Hit Rate",
       value: `${(stats.hitRate * 100).toFixed(1)}%`,
-      color: stats.hitRate >= 0.8 ? "text-green-400" : stats.hitRate >= 0.6 ? "text-amber-400" : "text-red-400",
+      color:
+        stats.hitRate >= 0.8
+          ? "text-green-400"
+          : stats.hitRate >= 0.6
+            ? "text-amber-400"
+            : "text-red-400",
     },
     {
       label: "Miss Rate",
       value: `${(stats.missRate * 100).toFixed(1)}%`,
-      color: stats.missRate <= 0.2 ? "text-green-400" : stats.missRate <= 0.4 ? "text-amber-400" : "text-red-400",
+      color:
+        stats.missRate <= 0.2
+          ? "text-green-400"
+          : stats.missRate <= 0.4
+            ? "text-amber-400"
+            : "text-red-400",
     },
     {
       label: "Total Requests",
       value: formatNumber(stats.totalRequests),
-      color: "text-panel-50",
+      color: "text-text-primary",
     },
     {
       label: "Live Entries",
       value: `${stats.entries} / ${stats.capacity}`,
-      color: "text-panel-50",
+      color: "text-text-primary",
     },
     {
       label: "Evictions",
       value: formatNumber(stats.evictions),
-      color: "text-panel-50",
+      color: "text-text-primary",
     },
     {
       label: "Total Transitions",
       value: formatNumber(stats.totalTransitions),
-      color: "text-panel-50",
+      color: "text-text-primary",
     },
   ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-lg border border-panel-700 bg-panel-900 p-4">
-          <p className="text-xs text-panel-400 mb-1">{card.label}</p>
+        <div
+          key={card.label}
+          className="rounded-lg border border-border-subtle bg-surface-base p-4"
+        >
+          <p className="text-xs text-text-secondary mb-1">{card.label}</p>
           <p className={`text-xl font-semibold ${card.color}`}>{card.value}</p>
         </div>
       ))}
@@ -152,31 +208,110 @@ function MESIStateMachine({
     labelX: number;
     labelY: number;
   }> = [
-    { from: "INVALID", to: "EXCLUSIVE", trigger: "miss", path: "M 80,130 Q 180,80 320,135", labelX: 180, labelY: 90 },
-    { from: "EXCLUSIVE", to: "MODIFIED", trigger: "write", path: "M 330,130 Q 310,70 225,60", labelX: 295, labelY: 70 },
-    { from: "EXCLUSIVE", to: "SHARED", trigger: "share", path: "M 340,170 Q 320,230 225,245", labelX: 310, labelY: 220 },
-    { from: "EXCLUSIVE", to: "INVALID", trigger: "inval", path: "M 320,160 Q 200,180 80,160", labelX: 200, labelY: 180 },
-    { from: "SHARED", to: "MODIFIED", trigger: "upgrade", path: "M 185,235 Q 140,150 185,65", labelX: 135, labelY: 150 },
-    { from: "SHARED", to: "INVALID", trigger: "inval", path: "M 175,245 Q 90,230 60,175", labelX: 95, labelY: 235 },
-    { from: "MODIFIED", to: "EXCLUSIVE", trigger: "wb", path: "M 225,65 Q 310,80 340,130", labelX: 300, labelY: 85 },
-    { from: "MODIFIED", to: "SHARED", trigger: "wb+share", path: "M 215,65 Q 260,150 215,235", labelX: 255, labelY: 150 },
-    { from: "MODIFIED", to: "INVALID", trigger: "inval", path: "M 175,55 Q 90,70 55,130", labelX: 95, labelY: 70 },
+    {
+      from: "INVALID",
+      to: "EXCLUSIVE",
+      trigger: "miss",
+      path: "M 80,130 Q 180,80 320,135",
+      labelX: 180,
+      labelY: 90,
+    },
+    {
+      from: "EXCLUSIVE",
+      to: "MODIFIED",
+      trigger: "write",
+      path: "M 330,130 Q 310,70 225,60",
+      labelX: 295,
+      labelY: 70,
+    },
+    {
+      from: "EXCLUSIVE",
+      to: "SHARED",
+      trigger: "share",
+      path: "M 340,170 Q 320,230 225,245",
+      labelX: 310,
+      labelY: 220,
+    },
+    {
+      from: "EXCLUSIVE",
+      to: "INVALID",
+      trigger: "inval",
+      path: "M 320,160 Q 200,180 80,160",
+      labelX: 200,
+      labelY: 180,
+    },
+    {
+      from: "SHARED",
+      to: "MODIFIED",
+      trigger: "upgrade",
+      path: "M 185,235 Q 140,150 185,65",
+      labelX: 135,
+      labelY: 150,
+    },
+    {
+      from: "SHARED",
+      to: "INVALID",
+      trigger: "inval",
+      path: "M 175,245 Q 90,230 60,175",
+      labelX: 95,
+      labelY: 235,
+    },
+    {
+      from: "MODIFIED",
+      to: "EXCLUSIVE",
+      trigger: "wb",
+      path: "M 225,65 Q 310,80 340,130",
+      labelX: 300,
+      labelY: 85,
+    },
+    {
+      from: "MODIFIED",
+      to: "SHARED",
+      trigger: "wb+share",
+      path: "M 215,65 Q 260,150 215,235",
+      labelX: 255,
+      labelY: 150,
+    },
+    {
+      from: "MODIFIED",
+      to: "INVALID",
+      trigger: "inval",
+      path: "M 175,55 Q 90,70 55,130",
+      labelX: 95,
+      labelY: 70,
+    },
   ];
 
   // Determine which transitions were recent (last 2 transitions) for glow effect
   const recentPairs = new Set(
-    recentTransitions.slice(0, 2).map((t) => `${t.fromState}->${t.toState}`)
+    recentTransitions.slice(0, 2).map((t) => `${t.fromState}->${t.toState}`),
   );
 
   return (
-    <div className="rounded-lg border border-panel-700 bg-panel-900 p-4">
-      <h3 className="text-sm font-medium text-panel-200 mb-3">MESI State Machine</h3>
+    <div className="rounded-lg border border-border-subtle bg-surface-base p-4">
+      <h3 className="text-sm font-medium text-text-secondary mb-3">
+        MESI State Machine
+      </h3>
       <svg viewBox="0 0 400 300" className="w-full" style={{ maxHeight: 280 }}>
         <defs>
-          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <marker
+            id="arrowhead"
+            markerWidth="8"
+            markerHeight="6"
+            refX="7"
+            refY="3"
+            orient="auto"
+          >
             <polygon points="0 0, 8 3, 0 6" fill="#64748b" />
           </marker>
-          <marker id="arrowhead-glow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <marker
+            id="arrowhead-glow"
+            markerWidth="8"
+            markerHeight="6"
+            refX="7"
+            refY="3"
+            orient="auto"
+          >
             <polygon points="0 0, 8 3, 0 6" fill="#fbbf24" />
           </marker>
           <filter id="glow">
@@ -198,7 +333,9 @@ function MESIStateMachine({
                 fill="none"
                 stroke={isActive ? "#fbbf24" : "#475569"}
                 strokeWidth={isActive ? 2 : 1}
-                markerEnd={isActive ? "url(#arrowhead-glow)" : "url(#arrowhead)"}
+                markerEnd={
+                  isActive ? "url(#arrowhead-glow)" : "url(#arrowhead)"
+                }
                 filter={isActive ? "url(#glow)" : undefined}
                 className={isActive ? "animate-pulse" : ""}
               />
@@ -230,10 +367,22 @@ function MESIStateMachine({
                 stroke={color.fill}
                 strokeWidth={2}
               />
-              <text x={cx} y={cy - 5} textAnchor="middle" fill={color.fill} className="text-sm font-bold">
+              <text
+                x={cx}
+                y={cy - 5}
+                textAnchor="middle"
+                fill={color.fill}
+                className="text-sm font-bold"
+              >
                 {state[0]}
               </text>
-              <text x={cx} y={cy + 12} textAnchor="middle" fill={color.fill} className="text-[10px]">
+              <text
+                x={cx}
+                y={cy + 12}
+                textAnchor="middle"
+                fill={color.fill}
+                className="text-[10px]"
+              >
                 {count}
               </text>
             </g>
@@ -261,7 +410,7 @@ function CacheLineTable({ lines }: { lines: CacheLine[] }) {
         setSortDir("desc");
       }
     },
-    [sortField]
+    [sortField],
   );
 
   const sorted = useMemo(() => {
@@ -280,7 +429,10 @@ function CacheLineTable({ lines }: { lines: CacheLine[] }) {
         case "dignityLevel":
           return dir * (a.dignityLevel - b.dignityLevel);
         case "createdAt":
-          return dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          return (
+            dir *
+            (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+          );
         case "ttlSeconds":
           return dir * (a.ttlSeconds - b.ttlSeconds);
         default:
@@ -301,21 +453,25 @@ function CacheLineTable({ lines }: { lines: CacheLine[] }) {
   ];
 
   return (
-    <div className="rounded-lg border border-panel-700 bg-panel-900 p-4">
-      <h3 className="text-sm font-medium text-panel-200 mb-3">Cache Line Inventory</h3>
+    <div className="rounded-lg border border-border-subtle bg-surface-base p-4">
+      <h3 className="text-sm font-medium text-text-secondary mb-3">
+        Cache Line Inventory
+      </h3>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-panel-700 text-left text-xs text-panel-400">
+            <tr className="border-b border-border-subtle text-left text-xs text-text-secondary">
               {headers.map((h) => (
                 <th
                   key={h.field}
-                  className="pb-2 pr-3 cursor-pointer hover:text-panel-200 select-none"
+                  className="pb-2 pr-3 cursor-pointer hover:text-text-secondary select-none"
                   onClick={() => handleSort(h.field)}
                 >
                   {h.label}
                   {sortField === h.field && (
-                    <span className="ml-1">{sortDir === "asc" ? "\u25B2" : "\u25BC"}</span>
+                    <span className="ml-1">
+                      {sortDir === "asc" ? "\u25B2" : "\u25BC"}
+                    </span>
                   )}
                 </th>
               ))}
@@ -339,12 +495,18 @@ function CacheLineTable({ lines }: { lines: CacheLine[] }) {
                   <td className="py-1.5 pr-3">
                     <MESIBadge state={line.state} />
                   </td>
-                  <td className="py-1.5 pr-3 font-mono text-xs text-panel-300">{line.key}</td>
-                  <td className="py-1.5 pr-3 text-panel-200">{line.value}</td>
-                  <td className="py-1.5 pr-3 text-panel-300">{formatNumber(line.accessCount)}</td>
+                  <td className="py-1.5 pr-3 font-mono text-xs text-text-secondary">
+                    {line.key}
+                  </td>
+                  <td className="py-1.5 pr-3 text-text-secondary">
+                    {line.value}
+                  </td>
+                  <td className="py-1.5 pr-3 text-text-secondary">
+                    {formatNumber(line.accessCount)}
+                  </td>
                   <td className="py-1.5 pr-3">
                     <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-16 rounded-full bg-panel-700 overflow-hidden">
+                      <div className="h-1.5 w-16 rounded-full bg-surface-overlay overflow-hidden">
                         <div
                           className={`h-full rounded-full ${
                             line.dignityLevel >= 0.6
@@ -356,11 +518,17 @@ function CacheLineTable({ lines }: { lines: CacheLine[] }) {
                           style={{ width: `${line.dignityLevel * 100}%` }}
                         />
                       </div>
-                      <span className="text-xs text-panel-400">{(line.dignityLevel * 100).toFixed(0)}%</span>
+                      <span className="text-xs text-text-secondary">
+                        {(line.dignityLevel * 100).toFixed(0)}%
+                      </span>
                     </div>
                   </td>
-                  <td className="py-1.5 pr-3 text-xs text-panel-400">{formatRelativeTime(line.createdAt)}</td>
-                  <td className="py-1.5 pr-3 text-xs text-panel-400">{formatTTL(line.ttlSeconds)}</td>
+                  <td className="py-1.5 pr-3 text-xs text-text-secondary">
+                    {formatRelativeTime(line.createdAt)}
+                  </td>
+                  <td className="py-1.5 pr-3 text-xs text-text-secondary">
+                    {formatTTL(line.ttlSeconds)}
+                  </td>
                 </tr>
               );
             })}
@@ -397,24 +565,33 @@ function HitMissHeatmap({ transitions }: { transitions: MESITransition[] }) {
   const display = cells.slice(0, 128);
 
   return (
-    <div className="rounded-lg border border-panel-700 bg-panel-900 p-4">
-      <h3 className="text-sm font-medium text-panel-200 mb-3">Hit/Miss Heatmap</h3>
-      <div className="grid grid-cols-16 gap-0.5" style={{ gridTemplateColumns: "repeat(16, 1fr)" }}>
+    <div className="rounded-lg border border-border-subtle bg-surface-base p-4">
+      <h3 className="text-sm font-medium text-text-secondary mb-3">
+        Hit/Miss Heatmap
+      </h3>
+      <div
+        className="grid grid-cols-16 gap-0.5"
+        style={{ gridTemplateColumns: "repeat(16, 1fr)" }}
+      >
         {display.map((cell, i) => (
           <div
             key={i}
             className={`aspect-square rounded-sm ${
               cell.key === ""
-                ? "bg-panel-800"
+                ? "bg-surface-raised"
                 : cell.result === "hit"
                   ? "bg-green-600 hover:bg-green-500"
                   : "bg-red-600 hover:bg-red-500"
             }`}
-            title={cell.key ? `${cell.key} — ${cell.result} — ${formatRelativeTime(cell.timestamp)}` : ""}
+            title={
+              cell.key
+                ? `${cell.key} — ${cell.result} — ${formatRelativeTime(cell.timestamp)}`
+                : ""
+            }
           />
         ))}
       </div>
-      <div className="flex items-center gap-4 mt-2 text-xs text-panel-400">
+      <div className="flex items-center gap-4 mt-2 text-xs text-text-secondary">
         <span className="flex items-center gap-1">
           <span className="h-2.5 w-2.5 rounded-sm bg-green-600" /> Hit
         </span>
@@ -430,14 +607,25 @@ function HitMissHeatmap({ transitions }: { transitions: MESITransition[] }) {
 // State Distribution Donut Chart (pure SVG)
 // ---------------------------------------------------------------------------
 
-function StateDistributionDonut({ distribution, total }: { distribution: Record<MESIState, number>; total: number }) {
+function StateDistributionDonut({
+  distribution,
+  total,
+}: {
+  distribution: Record<MESIState, number>;
+  total: number;
+}) {
   const radius = 60;
   const cx = 80;
   const cy = 80;
   const strokeWidth = 18;
   const circumference = 2 * Math.PI * radius;
 
-  const stateOrder: MESIState[] = ["MODIFIED", "EXCLUSIVE", "SHARED", "INVALID"];
+  const stateOrder: MESIState[] = [
+    "MODIFIED",
+    "EXCLUSIVE",
+    "SHARED",
+    "INVALID",
+  ];
   let cumulativeOffset = 0;
 
   const segments = stateOrder.map((state) => {
@@ -450,12 +638,21 @@ function StateDistributionDonut({ distribution, total }: { distribution: Record<
   });
 
   return (
-    <div className="rounded-lg border border-panel-700 bg-panel-900 p-4">
-      <h3 className="text-sm font-medium text-panel-200 mb-3">State Distribution</h3>
+    <div className="rounded-lg border border-border-subtle bg-surface-base p-4">
+      <h3 className="text-sm font-medium text-text-secondary mb-3">
+        State Distribution
+      </h3>
       <div className="flex justify-center">
         <svg width="160" height="160" viewBox="0 0 160 160">
           {/* Background ring */}
-          <circle cx={cx} cy={cy} r={radius} fill="none" stroke="#1e293b" strokeWidth={strokeWidth} />
+          <circle
+            cx={cx}
+            cy={cy}
+            r={radius}
+            fill="none"
+            stroke="#1e293b"
+            strokeWidth={strokeWidth}
+          />
           {/* Segments */}
           {segments.map((seg) => (
             <circle
@@ -472,10 +669,22 @@ function StateDistributionDonut({ distribution, total }: { distribution: Record<
             />
           ))}
           {/* Center text */}
-          <text x={cx} y={cy - 4} textAnchor="middle" fill="#e2e8f0" className="text-lg font-bold">
+          <text
+            x={cx}
+            y={cy - 4}
+            textAnchor="middle"
+            fill="#e2e8f0"
+            className="text-lg font-bold"
+          >
             {total}
           </text>
-          <text x={cx} y={cy + 12} textAnchor="middle" fill="#94a3b8" className="text-[9px]">
+          <text
+            x={cx}
+            y={cy + 12}
+            textAnchor="middle"
+            fill="#94a3b8"
+            className="text-[9px]"
+          >
             entries
           </text>
         </svg>
@@ -483,15 +692,20 @@ function StateDistributionDonut({ distribution, total }: { distribution: Record<
       {/* Legend */}
       <div className="mt-3 space-y-1">
         {segments.map((seg) => (
-          <div key={seg.state} className="flex items-center justify-between text-xs">
+          <div
+            key={seg.state}
+            className="flex items-center justify-between text-xs"
+          >
             <div className="flex items-center gap-2">
               <span
                 className="h-2.5 w-2.5 rounded-sm"
                 style={{ backgroundColor: MESI_COLORS[seg.state].fill }}
               />
-              <span className="text-panel-300">{MESI_COLORS[seg.state].label}</span>
+              <span className="text-text-secondary">
+                {MESI_COLORS[seg.state].label}
+              </span>
             </div>
-            <span className="text-panel-400">
+            <span className="text-text-secondary">
               {seg.count} ({total > 0 ? (seg.fraction * 100).toFixed(0) : 0}%)
             </span>
           </div>
@@ -507,8 +721,10 @@ function StateDistributionDonut({ distribution, total }: { distribution: Record<
 
 function TransitionLog({ transitions }: { transitions: MESITransition[] }) {
   return (
-    <div className="rounded-lg border border-panel-700 bg-panel-900 p-4">
-      <h3 className="text-sm font-medium text-panel-200 mb-3">MESI Transition Log</h3>
+    <div className="rounded-lg border border-border-subtle bg-surface-base p-4">
+      <h3 className="text-sm font-medium text-text-secondary mb-3">
+        MESI Transition Log
+      </h3>
       <div className="max-h-80 overflow-y-auto space-y-1.5 pr-1">
         {transitions.map((t) => (
           <div
@@ -516,11 +732,17 @@ function TransitionLog({ transitions }: { transitions: MESITransition[] }) {
             className="flex items-center gap-2 text-xs border-b border-panel-800 pb-1.5"
           >
             <MESIBadge state={t.fromState} />
-            <span className="text-panel-500">&rarr;</span>
+            <span className="text-text-muted">&rarr;</span>
             <MESIBadge state={t.toState} />
-            <span className="rounded bg-panel-800 px-1.5 py-0.5 text-panel-300">{t.trigger}</span>
-            <span className="font-mono text-panel-400 truncate flex-1">{t.cacheLineKey}</span>
-            <span className="text-panel-500 whitespace-nowrap">{formatRelativeTime(t.timestamp)}</span>
+            <span className="rounded bg-surface-raised px-1.5 py-0.5 text-text-secondary">
+              {t.trigger}
+            </span>
+            <span className="font-mono text-text-secondary truncate flex-1">
+              {t.cacheLineKey}
+            </span>
+            <span className="text-text-muted whitespace-nowrap">
+              {formatRelativeTime(t.timestamp)}
+            </span>
           </div>
         ))}
       </div>
@@ -534,30 +756,38 @@ function TransitionLog({ transitions }: { transitions: MESITransition[] }) {
 
 function EulogyFeed({ eulogies }: { eulogies: CacheEulogy[] }) {
   return (
-    <div className="rounded-lg border border-panel-700 bg-panel-900 p-4">
-      <h3 className="text-sm font-medium text-panel-200 mb-3">Eviction Eulogies</h3>
+    <div className="rounded-lg border border-border-subtle bg-surface-base p-4">
+      <h3 className="text-sm font-medium text-text-secondary mb-3">
+        Eviction Eulogies
+      </h3>
       <div className="max-h-96 overflow-y-auto space-y-3 pr-1">
         {eulogies.map((e) => (
           <div
             key={e.id}
-            className="rounded-lg border border-panel-600 bg-panel-950 p-3"
+            className="rounded-lg border border-border-default bg-surface-ground p-3"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-sm text-panel-200">{e.key}</span>
-              <span className="text-[10px] text-panel-500 italic">In Memoriam</span>
+              <span className="font-mono text-sm text-text-secondary">
+                {e.key}
+              </span>
+              <span className="text-[10px] text-text-muted italic">
+                In Memoriam
+              </span>
             </div>
-            <div className="text-xs text-panel-400 space-y-1 mb-2">
+            <div className="text-xs text-text-secondary space-y-1 mb-2">
               <p>Born: {new Date(e.bornAt).toLocaleString()}</p>
               <p>Died: {new Date(e.diedAt).toLocaleString()}</p>
             </div>
-            <div className="flex items-center gap-3 text-xs text-panel-400 mb-2">
+            <div className="flex items-center gap-3 text-xs text-text-secondary mb-2">
               <span>{formatNumber(e.accessCount)} accesses</span>
               <span>Dignity: {(e.finalDignity * 100).toFixed(0)}%</span>
-              <span className="rounded bg-panel-800 px-1.5 py-0.5 text-panel-500 border border-panel-700">
+              <span className="rounded bg-surface-raised px-1.5 py-0.5 text-text-muted border border-border-subtle">
                 {e.causeOfDeath}
               </span>
             </div>
-            <p className="text-xs text-panel-300 italic leading-relaxed">{e.eulogy}</p>
+            <p className="text-xs text-text-secondary italic leading-relaxed">
+              {e.eulogy}
+            </p>
           </div>
         ))}
       </div>
@@ -605,7 +835,9 @@ export default function CacheCoherencePage() {
   if (loading || !stats) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-panel-400 text-sm">Initializing MESI cache coherence telemetry...</p>
+        <p className="text-text-secondary text-sm">
+          Initializing MESI cache coherence telemetry...
+        </p>
       </div>
     );
   }
@@ -613,12 +845,15 @@ export default function CacheCoherencePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-panel-50">MESI Cache Coherence Visualizer</h1>
-        <p className="text-sm text-panel-400 mt-1">
-          Real-time coherence protocol monitoring and cache line lifecycle management
-        </p>
-      </div>
+      <Reveal>
+        <div>
+          <h1 className="heading-page">MESI Cache Coherence Visualizer</h1>
+          <p className="text-sm text-text-secondary mt-1">
+            Real-time coherence protocol monitoring and cache line lifecycle
+            management
+          </p>
+        </div>
+      </Reveal>
 
       {/* Stats Summary Bar */}
       <StatsSummary stats={stats} />

@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
-  ClusterTopology,
-  ClusterNode,
   ClusterEdge,
+  ClusterNode,
+  ClusterTopology,
   LeaderElection,
   PaxosMessage,
   PaxosMessageType,
 } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -35,7 +37,10 @@ const NODE_POSITIONS: Record<string, { x: number; y: number }> = {
 };
 
 /** Region bounding boxes for the subtle background grouping rectangles. */
-const REGION_BOUNDS: Record<string, { x: number; y: number; w: number; h: number; label: string }> = {
+const REGION_BOUNDS: Record<
+  string,
+  { x: number; y: number; w: number; h: number; label: string }
+> = {
   "us-east-1": { x: 0.04, y: 0.15, w: 0.22, h: 0.7, label: "us-east-1" },
   "us-west-2": { x: 0.34, y: 0.1, w: 0.22, h: 0.8, label: "us-west-2" },
   "eu-west-1": { x: 0.67, y: 0.05, w: 0.22, h: 0.9, label: "eu-west-1" },
@@ -43,16 +48,19 @@ const REGION_BOUNDS: Record<string, { x: number; y: number; w: number; h: number
 
 const NODE_RADIUS = 22;
 
-const STATUS_STYLES: Record<string, { fill: string; stroke: string; dash?: string }> = {
-  healthy: { fill: "#475569", stroke: "#64748b" },        // panel-600/500
-  degraded: { fill: "#92400e", stroke: "#f59e0b" },       // amber
+const STATUS_STYLES: Record<
+  string,
+  { fill: string; stroke: string; dash?: string }
+> = {
+  healthy: { fill: "#475569", stroke: "#64748b" }, // panel-600/500
+  degraded: { fill: "#92400e", stroke: "#f59e0b" }, // amber
   unreachable: { fill: "#7f1d1d", stroke: "#ef4444", dash: "4,4" }, // red dashed
   partitioned: { fill: "#7f1d1d", stroke: "#ef4444", dash: "4,4" }, // red dashed
 };
 
 const ROLE_BADGE_STYLES: Record<string, string> = {
   leader: "bg-fizzbuzz-400/20 text-fizzbuzz-400 border-fizzbuzz-400/30",
-  follower: "bg-panel-600/20 text-panel-300 border-panel-500/30",
+  follower: "bg-panel-600/20 text-text-secondary border-panel-500/30",
   candidate: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
   observer: "bg-red-500/20 text-red-400 border-red-500/30",
 };
@@ -101,7 +109,12 @@ function shortNodeId(id: string): string {
 /** Format a timestamp for display in the message log. */
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return d.toLocaleTimeString("en-US", {
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 }
 
 /** Compute duration between two ISO timestamps in a human-friendly format. */
@@ -182,7 +195,9 @@ function TopologyGraph({
             y1={fromPos.y * svgHeight}
             x2={toPos.x * svgWidth}
             y2={toPos.y * svgHeight}
-            stroke={edge.healthy ? "rgba(100,116,139,0.4)" : "rgba(239,68,68,0.6)"}
+            stroke={
+              edge.healthy ? "rgba(100,116,139,0.4)" : "rgba(239,68,68,0.6)"
+            }
             strokeWidth={edge.healthy ? 1 : 1.5}
             strokeDasharray={edge.healthy ? undefined : "6,4"}
           />
@@ -269,26 +284,94 @@ function TopologyGraph({
 
       {/* Legend */}
       <g transform={`translate(${svgWidth - 160}, 16)`}>
-        <rect x={0} y={0} width={150} height={100} rx={6} fill="rgba(15,23,42,0.8)" stroke="rgba(100,116,139,0.3)" strokeWidth={1} />
-        <text x={10} y={16} fill="#94a3b8" fontSize={9} fontWeight="600">Legend</text>
+        <rect
+          x={0}
+          y={0}
+          width={150}
+          height={100}
+          rx={6}
+          fill="rgba(15,23,42,0.8)"
+          stroke="rgba(100,116,139,0.3)"
+          strokeWidth={1}
+        />
+        <text x={10} y={16} fill="#94a3b8" fontSize={9} fontWeight="600">
+          Legend
+        </text>
         {/* Leader */}
-        <circle cx={18} cy={32} r={6} fill="#475569" stroke="#facc15" strokeWidth={1.5} strokeDasharray="2,2" />
-        <text x={30} y={35} fill="#94a3b8" fontSize={8}>Leader</text>
+        <circle
+          cx={18}
+          cy={32}
+          r={6}
+          fill="#475569"
+          stroke="#facc15"
+          strokeWidth={1.5}
+          strokeDasharray="2,2"
+        />
+        <text x={30} y={35} fill="#94a3b8" fontSize={8}>
+          Leader
+        </text>
         {/* Follower */}
-        <circle cx={18} cy={48} r={6} fill="#475569" stroke="#64748b" strokeWidth={1.5} />
-        <text x={30} y={51} fill="#94a3b8" fontSize={8}>Follower</text>
+        <circle
+          cx={18}
+          cy={48}
+          r={6}
+          fill="#475569"
+          stroke="#64748b"
+          strokeWidth={1.5}
+        />
+        <text x={30} y={51} fill="#94a3b8" fontSize={8}>
+          Follower
+        </text>
         {/* Degraded */}
-        <circle cx={18} cy={64} r={6} fill="#92400e" stroke="#f59e0b" strokeWidth={1.5} />
-        <text x={30} y={67} fill="#94a3b8" fontSize={8}>Degraded</text>
+        <circle
+          cx={18}
+          cy={64}
+          r={6}
+          fill="#92400e"
+          stroke="#f59e0b"
+          strokeWidth={1.5}
+        />
+        <text x={30} y={67} fill="#94a3b8" fontSize={8}>
+          Degraded
+        </text>
         {/* Partitioned */}
-        <circle cx={18} cy={80} r={6} fill="#7f1d1d" stroke="#ef4444" strokeWidth={1.5} strokeDasharray="2,2" />
-        <text x={30} y={83} fill="#94a3b8" fontSize={8}>Partitioned</text>
+        <circle
+          cx={18}
+          cy={80}
+          r={6}
+          fill="#7f1d1d"
+          stroke="#ef4444"
+          strokeWidth={1.5}
+          strokeDasharray="2,2"
+        />
+        <text x={30} y={83} fill="#94a3b8" fontSize={8}>
+          Partitioned
+        </text>
         {/* Edge healthy */}
-        <line x1={85} y1={32} x2={110} y2={32} stroke="rgba(100,116,139,0.6)" strokeWidth={1} />
-        <text x={115} y={35} fill="#94a3b8" fontSize={8}>OK</text>
+        <line
+          x1={85}
+          y1={32}
+          x2={110}
+          y2={32}
+          stroke="rgba(100,116,139,0.6)"
+          strokeWidth={1}
+        />
+        <text x={115} y={35} fill="#94a3b8" fontSize={8}>
+          OK
+        </text>
         {/* Edge unhealthy */}
-        <line x1={85} y1={48} x2={110} y2={48} stroke="rgba(239,68,68,0.6)" strokeWidth={1.5} strokeDasharray="4,3" />
-        <text x={115} y={51} fill="#94a3b8" fontSize={8}>Down</text>
+        <line
+          x1={85}
+          y1={48}
+          x2={110}
+          y2={48}
+          stroke="rgba(239,68,68,0.6)"
+          strokeWidth={1.5}
+          strokeDasharray="4,3"
+        />
+        <text x={115} y={51} fill="#94a3b8" fontSize={8}>
+          Down
+        </text>
       </g>
     </svg>
   );
@@ -309,10 +392,12 @@ function NodeDetailPanel({
   return (
     <Card className="absolute top-4 right-4 w-72 z-10 shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between">
-        <span className="text-sm font-semibold text-panel-100 font-mono">{node.id}</span>
+        <span className="text-sm font-semibold text-text-primary font-mono">
+          {node.id}
+        </span>
         <button
           onClick={onClose}
-          className="text-panel-400 hover:text-panel-200 text-lg leading-none"
+          className="text-text-secondary hover:text-text-secondary text-lg leading-none"
           aria-label="Close node detail panel"
         >
           &times;
@@ -320,35 +405,47 @@ function NodeDetailPanel({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-panel-400">Role</span>
-          <span className={`text-xs px-2 py-0.5 rounded border ${ROLE_BADGE_STYLES[node.role]}`}>
+          <span className="text-xs text-text-secondary">Role</span>
+          <span
+            className={`text-xs px-2 py-0.5 rounded border ${ROLE_BADGE_STYLES[node.role]}`}
+          >
             {node.role}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-panel-400">Status</span>
-          <span className={`text-xs px-2 py-0.5 rounded ${STATUS_BADGE_STYLES[node.status]}`}>
+          <span className="text-xs text-text-secondary">Status</span>
+          <span
+            className={`text-xs px-2 py-0.5 rounded ${STATUS_BADGE_STYLES[node.status]}`}
+          >
             {node.status}
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-panel-400">Region</span>
-          <span className="text-xs text-panel-200 font-mono">{node.region}</span>
+          <span className="text-xs text-text-secondary">Region</span>
+          <span className="text-xs text-text-secondary font-mono">
+            {node.region}
+          </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-panel-400">Last Heartbeat</span>
-          <span className="text-xs text-panel-200">{relativeTime(node.lastHeartbeat)}</span>
+          <span className="text-xs text-text-secondary">Last Heartbeat</span>
+          <span className="text-xs text-text-secondary">
+            {relativeTime(node.lastHeartbeat)}
+          </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-panel-400">Ballot Number</span>
-          <span className="text-xs text-panel-200 font-mono">{node.ballotNumber}</span>
+          <span className="text-xs text-text-secondary">Ballot Number</span>
+          <span className="text-xs text-text-secondary font-mono">
+            {node.ballotNumber}
+          </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-panel-400">Log Index</span>
-          <span className="text-xs text-panel-200 font-mono">{node.logIndex.toLocaleString()}</span>
+          <span className="text-xs text-text-secondary">Log Index</span>
+          <span className="text-xs text-text-secondary font-mono">
+            {node.logIndex.toLocaleString()}
+          </span>
         </div>
         {isLeader && (
-          <div className="mt-2 pt-2 border-t border-panel-700">
+          <div className="mt-2 pt-2 border-t border-border-subtle">
             <span className="text-xs text-fizzbuzz-400 font-medium">
               Leader since term {currentTerm}
             </span>
@@ -372,7 +469,7 @@ function ElectionTimeline({ elections }: { elections: LeaderElection[] }) {
   return (
     <div className="relative">
       {/* Timeline axis */}
-      <div className="absolute top-1/2 left-0 right-0 h-px bg-panel-700" />
+      <div className="absolute top-1/2 left-0 right-0 h-px bg-surface-overlay" />
 
       <div className="flex gap-3 overflow-x-auto pb-4 pt-2 px-2 relative">
         {sorted.map((election) => {
@@ -388,47 +485,71 @@ function ElectionTimeline({ elections }: { elections: LeaderElection[] }) {
               {/* Election card */}
               <div
                 className={`px-3 py-2 rounded-lg border transition-all cursor-default ${
-                  isHovered ? "bg-panel-700 border-panel-500 scale-105" : "bg-panel-800 border-panel-700"
+                  isHovered
+                    ? "bg-surface-overlay border-panel-500 scale-105"
+                    : "bg-surface-raised border-border-subtle"
                 }`}
                 style={{ minWidth: 120 }}
               >
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-xs font-mono text-panel-300">T{election.term}</span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded border ${ELECTION_OUTCOME_STYLES[election.outcome]}`}>
+                  <span className="text-xs font-mono text-text-secondary">
+                    T{election.term}
+                  </span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded border ${ELECTION_OUTCOME_STYLES[election.outcome]}`}
+                  >
                     {election.outcome}
                   </span>
                 </div>
-                <div className="text-[10px] text-panel-400 truncate" title={election.candidateId}>
+                <div
+                  className="text-[10px] text-text-secondary truncate"
+                  title={election.candidateId}
+                >
                   {shortNodeId(election.candidateId)}
                 </div>
               </div>
 
               {/* Hover tooltip with full details */}
               {isHovered && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 bg-panel-900 border border-panel-600 rounded-lg p-3 shadow-xl whitespace-nowrap">
-                  <div className="text-xs text-panel-200 font-semibold mb-2">Term {election.term} Election</div>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 bg-surface-base border border-border-default rounded-lg p-3 shadow-xl whitespace-nowrap">
+                  <div className="text-xs text-text-secondary font-semibold mb-2">
+                    Term {election.term} Election
+                  </div>
                   <div className="space-y-1 text-[11px]">
                     <div className="flex justify-between gap-4">
-                      <span className="text-panel-400">Candidate</span>
-                      <span className="text-panel-200 font-mono">{election.candidateId}</span>
+                      <span className="text-text-secondary">Candidate</span>
+                      <span className="text-text-secondary font-mono">
+                        {election.candidateId}
+                      </span>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <span className="text-panel-400">Votes</span>
-                      <span className="text-panel-200">{election.votes}/{election.totalVoters}</span>
+                      <span className="text-text-secondary">Votes</span>
+                      <span className="text-text-secondary">
+                        {election.votes}/{election.totalVoters}
+                      </span>
                     </div>
                     <div className="flex justify-between gap-4">
-                      <span className="text-panel-400">Started</span>
-                      <span className="text-panel-200">{formatTimestamp(election.startedAt)}</span>
+                      <span className="text-text-secondary">Started</span>
+                      <span className="text-text-secondary">
+                        {formatTimestamp(election.startedAt)}
+                      </span>
                     </div>
                     {election.resolvedAt && (
                       <div className="flex justify-between gap-4">
-                        <span className="text-panel-400">Resolved</span>
-                        <span className="text-panel-200">{formatTimestamp(election.resolvedAt)}</span>
+                        <span className="text-text-secondary">Resolved</span>
+                        <span className="text-text-secondary">
+                          {formatTimestamp(election.resolvedAt)}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between gap-4">
-                      <span className="text-panel-400">Duration</span>
-                      <span className="text-panel-200">{electionDuration(election.startedAt, election.resolvedAt)}</span>
+                      <span className="text-text-secondary">Duration</span>
+                      <span className="text-text-secondary">
+                        {electionDuration(
+                          election.startedAt,
+                          election.resolvedAt,
+                        )}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -446,9 +567,10 @@ function PaxosMessageLog({ messages }: { messages: PaxosMessage[] }) {
   const [typeFilter, setTypeFilter] = useState<PaxosMessageType | "all">("all");
 
   const filtered = useMemo(() => {
-    const result = typeFilter === "all"
-      ? messages
-      : messages.filter((m) => m.type === typeFilter);
+    const result =
+      typeFilter === "all"
+        ? messages
+        : messages.filter((m) => m.type === typeFilter);
     return result.slice(-50);
   }, [messages, typeFilter]);
 
@@ -456,11 +578,13 @@ function PaxosMessageLog({ messages }: { messages: PaxosMessage[] }) {
     <div className="flex flex-col h-full">
       {/* Filter bar */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="text-xs text-panel-400">Filter:</span>
+        <span className="text-xs text-text-secondary">Filter:</span>
         <select
           value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as PaxosMessageType | "all")}
-          className="text-xs bg-panel-900 border border-panel-700 rounded px-2 py-1 text-panel-200 focus:outline-none focus:border-panel-500"
+          onChange={(e) =>
+            setTypeFilter(e.target.value as PaxosMessageType | "all")
+          }
+          className="text-xs bg-surface-base border border-border-subtle rounded px-2 py-1 text-text-secondary focus:outline-none focus:border-panel-500"
         >
           <option value="all">All Types</option>
           <option value="prepare">Prepare</option>
@@ -474,7 +598,7 @@ function PaxosMessageLog({ messages }: { messages: PaxosMessage[] }) {
       <div className="flex-1 overflow-y-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="text-panel-400 border-b border-panel-700">
+            <tr className="text-text-secondary border-b border-border-subtle">
               <th className="text-left py-1.5 px-2 font-medium">Time</th>
               <th className="text-left py-1.5 px-2 font-medium">Type</th>
               <th className="text-left py-1.5 px-2 font-medium">From</th>
@@ -485,23 +609,36 @@ function PaxosMessageLog({ messages }: { messages: PaxosMessage[] }) {
           </thead>
           <tbody>
             {filtered.map((msg) => (
-              <tr key={msg.id} className="border-b border-panel-700/50 hover:bg-panel-700/30">
-                <td className="py-1.5 px-2 text-panel-300 font-mono">{formatTimestamp(msg.timestamp)}</td>
+              <tr
+                key={msg.id}
+                className="border-b border-border-subtle/50 hover:bg-panel-700/30"
+              >
+                <td className="py-1.5 px-2 text-text-secondary font-mono">
+                  {formatTimestamp(msg.timestamp)}
+                </td>
                 <td className="py-1.5 px-2">
-                  <span className={`px-1.5 py-0.5 rounded border text-[10px] ${PAXOS_TYPE_STYLES[msg.type]}`}>
+                  <span
+                    className={`px-1.5 py-0.5 rounded border text-[10px] ${PAXOS_TYPE_STYLES[msg.type]}`}
+                  >
                     {msg.type}
                   </span>
                 </td>
-                <td className="py-1.5 px-2 text-panel-200 font-mono">{shortNodeId(msg.from)}</td>
-                <td className="py-1.5 px-2 text-panel-500">&rarr;</td>
-                <td className="py-1.5 px-2 text-panel-200 font-mono">{shortNodeId(msg.to)}</td>
-                <td className="py-1.5 px-2 text-right text-panel-300 font-mono">{msg.ballotNumber}</td>
+                <td className="py-1.5 px-2 text-text-secondary font-mono">
+                  {shortNodeId(msg.from)}
+                </td>
+                <td className="py-1.5 px-2 text-text-muted">&rarr;</td>
+                <td className="py-1.5 px-2 text-text-secondary font-mono">
+                  {shortNodeId(msg.to)}
+                </td>
+                <td className="py-1.5 px-2 text-right text-text-secondary font-mono">
+                  {msg.ballotNumber}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div className="text-center text-panel-500 text-xs py-6">
+          <div className="text-center text-text-muted text-xs py-6">
             No messages match the selected filter.
           </div>
         )}
@@ -521,7 +658,12 @@ function PartitionSimulator({
   nodes: ClusterNode[];
   onSimulate: (nodeIds: string[]) => void;
   onReset: () => void;
-  simulationResult: { summary: string; leaderElected: boolean; newTerm?: number; newLeader?: string } | null;
+  simulationResult: {
+    summary: string;
+    leaderElected: boolean;
+    newTerm?: number;
+    newLeader?: string;
+  } | null;
   isSimulating: boolean;
 }) {
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
@@ -549,7 +691,7 @@ function PartitionSimulator({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-panel-400">
+      <p className="text-xs text-text-secondary">
         Select nodes to isolate behind a network partition. The cluster will
         attempt to maintain quorum and elect a new leader if necessary.
       </p>
@@ -565,11 +707,13 @@ function PartitionSimulator({
               type="checkbox"
               checked={selectedNodes.has(node.id)}
               onChange={() => toggleNode(node.id)}
-              className="rounded border-panel-600 bg-panel-900 text-fizzbuzz-400 focus:ring-fizzbuzz-400/50"
+              className="rounded border-border-default bg-surface-base text-fizzbuzz-400 focus:ring-fizzbuzz-400/50"
               disabled={isSimulating}
             />
-            <span className="font-mono text-panel-200">{node.id}</span>
-            <span className={`ml-auto text-[10px] px-1.5 py-0.5 rounded ${ROLE_BADGE_STYLES[node.role]}`}>
+            <span className="font-mono text-text-secondary">{node.id}</span>
+            <span
+              className={`ml-auto text-[10px] px-1.5 py-0.5 rounded ${ROLE_BADGE_STYLES[node.role]}`}
+            >
               {node.role}
             </span>
           </label>
@@ -587,7 +731,7 @@ function PartitionSimulator({
         </button>
         <button
           onClick={handleReset}
-          className="text-xs px-3 py-1.5 rounded bg-panel-700 text-panel-300 border border-panel-600 hover:bg-panel-600 transition-colors"
+          className="text-xs px-3 py-1.5 rounded bg-surface-overlay text-text-secondary border border-border-default hover:bg-panel-600 transition-colors"
         >
           Reset
         </button>
@@ -595,14 +739,20 @@ function PartitionSimulator({
 
       {/* Simulation result */}
       {simulationResult && (
-        <div className="mt-3 p-3 rounded bg-panel-900 border border-panel-700 space-y-2">
-          <p className="text-xs text-panel-200 leading-relaxed">{simulationResult.summary}</p>
+        <div className="mt-3 p-3 rounded bg-surface-base border border-border-subtle space-y-2">
+          <p className="text-xs text-text-secondary leading-relaxed">
+            {simulationResult.summary}
+          </p>
           {simulationResult.leaderElected && (
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-panel-400">New Leader:</span>
-              <span className="font-mono text-fizzbuzz-400">{simulationResult.newLeader}</span>
-              <span className="text-panel-400">Term:</span>
-              <span className="font-mono text-panel-200">{simulationResult.newTerm}</span>
+              <span className="text-text-secondary">New Leader:</span>
+              <span className="font-mono text-fizzbuzz-400">
+                {simulationResult.newLeader}
+              </span>
+              <span className="text-text-secondary">Term:</span>
+              <span className="font-mono text-text-secondary">
+                {simulationResult.newTerm}
+              </span>
             </div>
           )}
         </div>
@@ -652,7 +802,12 @@ export default function ConsensusPage() {
       // provider they come from the pre-seeded buffer
       const now = Date.now();
       const nodeIds = topo.nodes.map((n) => n.id);
-      const types: PaxosMessageType[] = ["prepare", "promise", "accept", "accepted"];
+      const types: PaxosMessageType[] = [
+        "prepare",
+        "promise",
+        "accept",
+        "accepted",
+      ];
       const newMessages: PaxosMessage[] = [];
       for (let i = 0; i < 5; i++) {
         const fromIdx = Math.floor(Math.random() * nodeIds.length);
@@ -664,7 +819,9 @@ export default function ConsensusPage() {
           from: nodeIds[fromIdx],
           to: nodeIds[toIdx],
           ballotNumber: topo.currentTerm,
-          timestamp: new Date(now - Math.floor(Math.random() * 10_000)).toISOString(),
+          timestamp: new Date(
+            now - Math.floor(Math.random() * 10_000),
+          ).toISOString(),
         });
       }
 
@@ -734,7 +891,7 @@ export default function ConsensusPage() {
 
   if (loading || !topology) {
     return (
-      <div className="flex items-center justify-center h-64 text-panel-400 text-sm">
+      <div className="flex items-center justify-center h-64 text-text-secondary text-sm">
         Initializing Paxos cluster telemetry...
       </div>
     );
@@ -742,26 +899,37 @@ export default function ConsensusPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page header */}
+      <Reveal>
+        <div>
+          <h1 className="heading-page">Consensus Cluster</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Paxos distributed consensus monitoring with leader election timeline
+            and network partition simulation.
+          </p>
+        </div>
+      </Reveal>
+
       {/* Section 4a: Cluster Topology Graph */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-panel-100">Cluster Topology</h2>
-              <p className="text-xs text-panel-400 mt-0.5">
+              <h2 className="heading-section">Cluster Topology</h2>
+              <p className="text-xs text-text-secondary mt-0.5">
                 7-node Paxos consensus cluster spanning 3 availability regions
               </p>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-panel-400">Leader:</span>
+                <span className="text-xs text-text-secondary">Leader:</span>
                 <span className="text-xs font-mono text-fizzbuzz-400 bg-fizzbuzz-400/10 px-2 py-0.5 rounded">
                   {topology.currentLeader}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-panel-400">Term:</span>
-                <span className="text-xs font-mono text-panel-200 bg-panel-700 px-2 py-0.5 rounded">
+                <span className="text-xs text-text-secondary">Term:</span>
+                <span className="text-xs font-mono text-text-secondary bg-surface-overlay px-2 py-0.5 rounded">
                   {topology.currentTerm}
                 </span>
               </div>
@@ -789,8 +957,8 @@ export default function ConsensusPage() {
       {/* Section 4c: Election Timeline */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-panel-100">Election Timeline</h2>
-          <p className="text-xs text-panel-400 mt-0.5">
+          <h2 className="heading-section">Election Timeline</h2>
+          <p className="text-xs text-text-secondary mt-0.5">
             Leader election history across the Paxos consensus cluster
           </p>
         </CardHeader>
@@ -804,8 +972,8 @@ export default function ConsensusPage() {
         {/* Section 4d: Paxos Message Log (~60% width) */}
         <Card className="lg:col-span-3">
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">Paxos Message Log</h2>
-            <p className="text-xs text-panel-400 mt-0.5">
+            <h2 className="heading-section">Paxos Message Log</h2>
+            <p className="text-xs text-text-secondary mt-0.5">
               Real-time protocol messages exchanged between cluster nodes
             </p>
           </CardHeader>
@@ -817,8 +985,8 @@ export default function ConsensusPage() {
         {/* Section 4e: Partition Simulator (~40% width) */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">Network Partition Simulator</h2>
-            <p className="text-xs text-panel-400 mt-0.5">
+            <h2 className="heading-section">Network Partition Simulator</h2>
+            <p className="text-xs text-text-secondary mt-0.5">
               Validate cluster fault tolerance by injecting network partitions
             </p>
           </CardHeader>

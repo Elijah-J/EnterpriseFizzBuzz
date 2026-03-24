@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
-import type { MetricDefinition, TimeSeriesData } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Sparkline } from "@/components/charts/sparkline";
-import { LineChart } from "@/components/charts/line-chart";
 import { HistogramChart } from "@/components/charts/histogram-chart";
+import { LineChart } from "@/components/charts/line-chart";
 import { MetricGauge } from "@/components/charts/metric-gauge";
+import { Sparkline } from "@/components/charts/sparkline";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { MetricDefinition, TimeSeriesData } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -55,13 +57,21 @@ export default function MetricsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Time controls
-  const [timeRange, setTimeRange] = useState<(typeof TIME_RANGES)[number]>(TIME_RANGES[1]); // default 5m
-  const [refreshInterval, setRefreshInterval] = useState<(typeof REFRESH_OPTIONS)[number]>(REFRESH_OPTIONS[1]); // default 5s
+  const [timeRange, setTimeRange] = useState<(typeof TIME_RANGES)[number]>(
+    TIME_RANGES[1],
+  ); // default 5m
+  const [refreshInterval, setRefreshInterval] = useState<
+    (typeof REFRESH_OPTIONS)[number]
+  >(REFRESH_OPTIONS[1]); // default 5s
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   // Data
-  const [mainTimeSeries, setMainTimeSeries] = useState<TimeSeriesData | null>(null);
-  const [sparklineCache, setSparklineCache] = useState<Record<string, number[]>>({});
+  const [mainTimeSeries, setMainTimeSeries] = useState<TimeSeriesData | null>(
+    null,
+  );
+  const [sparklineCache, setSparklineCache] = useState<
+    Record<string, number[]>
+  >({});
 
   // Dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -80,7 +90,9 @@ export default function MetricsPage() {
         setSelectedMetric(defs[0].name);
       }
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider]);
 
@@ -90,7 +102,10 @@ export default function MetricsPage() {
 
   const fetchMainData = useCallback(async () => {
     if (!selectedMetric) return;
-    const data = await provider.getMetricTimeSeries(selectedMetric, timeRange.seconds);
+    const data = await provider.getMetricTimeSeries(
+      selectedMetric,
+      timeRange.seconds,
+    );
     setMainTimeSeries(data);
   }, [provider, selectedMetric, timeRange]);
 
@@ -138,7 +153,10 @@ export default function MetricsPage() {
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     }
@@ -187,10 +205,10 @@ export default function MetricsPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-panel-50">
+        <h1 className="text-xl font-bold tracking-tight text-text-primary">
           Real-Time Metrics Dashboard
         </h1>
-        <p className="mt-1 text-xs text-panel-400">
+        <p className="mt-1 text-xs text-text-secondary">
           Platform-wide telemetry signals for the Enterprise FizzBuzz evaluation
           infrastructure. All metrics are collected at 1-second resolution and
           retained for the configured scrape window.
@@ -204,7 +222,7 @@ export default function MetricsPage() {
           <button
             type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 rounded border border-panel-600 bg-panel-800 px-3 py-1.5 text-xs text-panel-100 hover:border-panel-500 transition-colors min-w-[280px]"
+            className="flex items-center gap-2 rounded border border-border-default bg-surface-raised px-3 py-1.5 text-xs text-text-primary hover:border-panel-500 transition-colors min-w-[280px]"
           >
             <span className="flex-1 text-left truncate font-mono">
               {selectedMetric || "Select metric..."}
@@ -223,14 +241,14 @@ export default function MetricsPage() {
           </button>
 
           {dropdownOpen && (
-            <div className="absolute z-50 mt-1 w-[360px] rounded border border-panel-600 bg-panel-800 shadow-xl">
-              <div className="border-b border-panel-700 p-2">
+            <div className="absolute z-50 mt-1 w-[360px] rounded border border-border-default bg-surface-raised shadow-xl">
+              <div className="border-b border-border-subtle p-2">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search metrics..."
-                  className="w-full rounded bg-panel-900 px-2 py-1 text-xs text-panel-100 placeholder-panel-500 outline-none border border-panel-700 focus:border-panel-500"
+                  className="w-full rounded bg-surface-base px-2 py-1 text-xs text-text-primary placeholder-panel-500 outline-none border border-border-subtle focus:border-panel-500"
                   autoFocus
                 />
               </div>
@@ -244,23 +262,23 @@ export default function MetricsPage() {
                         setDropdownOpen(false);
                         setSearchQuery("");
                       }}
-                      className={`w-full px-3 py-1.5 text-left hover:bg-panel-700 transition-colors ${
+                      className={`w-full px-3 py-1.5 text-left hover:bg-surface-overlay transition-colors ${
                         m.name === selectedMetric
-                          ? "bg-panel-700 text-panel-50"
-                          : "text-panel-300"
+                          ? "bg-surface-overlay text-text-primary"
+                          : "text-text-secondary"
                       }`}
                     >
                       <span className="block text-xs font-mono truncate">
                         {m.name}
                       </span>
-                      <span className="block text-[10px] text-panel-500 truncate mt-0.5">
+                      <span className="block text-[10px] text-text-muted truncate mt-0.5">
                         {m.type} &middot; {m.unit}
                       </span>
                     </button>
                   </li>
                 ))}
                 {filteredMetrics.length === 0 && (
-                  <li className="px-3 py-2 text-xs text-panel-500">
+                  <li className="px-3 py-2 text-xs text-text-muted">
                     No metrics match the current filter
                   </li>
                 )}
@@ -270,7 +288,7 @@ export default function MetricsPage() {
         </div>
 
         {/* Time range selector */}
-        <div className="flex rounded border border-panel-700 overflow-hidden">
+        <div className="flex rounded border border-border-subtle overflow-hidden">
           {TIME_RANGES.map((tr) => (
             <button
               key={tr.label}
@@ -278,8 +296,8 @@ export default function MetricsPage() {
               onClick={() => setTimeRange(tr)}
               className={`px-2.5 py-1 text-xs transition-colors ${
                 tr.label === timeRange.label
-                  ? "bg-panel-700 text-panel-50"
-                  : "bg-panel-800 text-panel-400 hover:bg-panel-700 hover:text-panel-200"
+                  ? "bg-surface-overlay text-text-primary"
+                  : "bg-surface-raised text-text-secondary hover:bg-surface-overlay hover:text-text-secondary"
               }`}
             >
               {tr.label}
@@ -289,10 +307,10 @@ export default function MetricsPage() {
 
         {/* Auto-refresh controls */}
         <div className="flex items-center gap-2 ml-auto">
-          <span className="text-[10px] text-panel-500 uppercase tracking-wider">
+          <span className="text-[10px] text-text-muted uppercase tracking-wider">
             Refresh
           </span>
-          <div className="flex rounded border border-panel-700 overflow-hidden">
+          <div className="flex rounded border border-border-subtle overflow-hidden">
             {REFRESH_OPTIONS.map((opt) => (
               <button
                 key={opt.label}
@@ -303,10 +321,10 @@ export default function MetricsPage() {
                 }}
                 className={`px-2 py-1 text-xs transition-colors ${
                   opt.label === refreshInterval.label && autoRefresh
-                    ? "bg-panel-700 text-panel-50"
+                    ? "bg-surface-overlay text-text-primary"
                     : opt.label === "Off" && !autoRefresh
-                      ? "bg-panel-700 text-panel-50"
-                      : "bg-panel-800 text-panel-400 hover:bg-panel-700 hover:text-panel-200"
+                      ? "bg-surface-overlay text-text-primary"
+                      : "bg-surface-raised text-text-secondary hover:bg-surface-overlay hover:text-text-secondary"
                 }`}
               >
                 {opt.label}
@@ -322,11 +340,11 @@ export default function MetricsPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-panel-100 font-mono">
+                <h2 className="text-sm font-semibold text-text-primary font-mono">
                   {selectedMetric}
                 </h2>
                 {selectedDef && (
-                  <p className="text-[10px] text-panel-500 mt-0.5">
+                  <p className="text-[10px] text-text-muted mt-0.5">
                     {selectedDef.description}
                   </p>
                 )}
@@ -337,7 +355,8 @@ export default function MetricsPage() {
                   style={{
                     color: TYPE_COLORS[selectedDef.type] ?? "var(--panel-400)",
                     borderWidth: 1,
-                    borderColor: TYPE_COLORS[selectedDef.type] ?? "var(--panel-600)",
+                    borderColor:
+                      TYPE_COLORS[selectedDef.type] ?? "var(--panel-600)",
                   }}
                 >
                   {selectedDef.type}
@@ -363,7 +382,7 @@ export default function MetricsPage() {
               )
             ) : (
               <div className="flex h-[300px] items-center justify-center">
-                <span className="text-xs text-panel-500">
+                <span className="text-xs text-text-muted">
                   Initializing metric telemetry stream...
                 </span>
               </div>
@@ -374,7 +393,7 @@ export default function MetricsPage() {
         {/* Details panel */}
         <Card>
           <CardHeader>
-            <h2 className="text-xs font-semibold text-panel-200 uppercase tracking-wider">
+            <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
               Metric Details
             </h2>
           </CardHeader>
@@ -387,22 +406,18 @@ export default function MetricsPage() {
                     value={stats.current}
                     label={selectedDef.unit}
                     size={112}
-                    invertColor={selectedMetric === "quantum_qubit_decoherence_rate"}
+                    invertColor={
+                      selectedMetric === "quantum_qubit_decoherence_rate"
+                    }
                   />
                 </div>
               )}
 
               <div className="space-y-2.5">
                 <DetailRow label="Name" value={selectedMetric} mono />
-                <DetailRow
-                  label="Type"
-                  value={selectedDef?.type ?? "-"}
-                />
-                <DetailRow
-                  label="Unit"
-                  value={selectedDef?.unit ?? "-"}
-                />
-                <div className="border-t border-panel-700 pt-2.5">
+                <DetailRow label="Type" value={selectedDef?.type ?? "-"} />
+                <DetailRow label="Unit" value={selectedDef?.unit ?? "-"} />
+                <div className="border-t border-border-subtle pt-2.5">
                   <DetailRow
                     label="Current"
                     value={formatMetricValue(stats.current)}
@@ -432,13 +447,14 @@ export default function MetricsPage() {
 
       {/* Metric grid — all metrics as sparkline cards */}
       <div>
-        <h2 className="text-xs font-semibold text-panel-200 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-wider mb-3">
           All Platform Metrics
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {metrics.map((m) => {
             const sparkData = sparklineCache[m.name] ?? [];
-            const lastValue = sparkData.length > 0 ? sparkData[sparkData.length - 1] : null;
+            const lastValue =
+              sparkData.length > 0 ? sparkData[sparkData.length - 1] : null;
             const isSelected = m.name === selectedMetric;
 
             return (
@@ -448,18 +464,18 @@ export default function MetricsPage() {
                 onClick={() => setSelectedMetric(m.name)}
                 className={`rounded-lg border text-left p-3 transition-all ${
                   isSelected
-                    ? "border-fizzbuzz-400/50 bg-panel-800 ring-1 ring-fizzbuzz-400/20"
-                    : "border-panel-700 bg-panel-800 hover:border-panel-600"
+                    ? "border-fizzbuzz-400/50 bg-surface-raised ring-1 ring-fizzbuzz-400/20"
+                    : "border-border-subtle bg-surface-raised hover:border-border-default"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[10px] text-panel-500 truncate">
+                    <p className="text-[10px] text-text-muted truncate">
                       {m.name}
                     </p>
-                    <p className="text-sm font-mono font-semibold text-panel-50 mt-0.5">
+                    <p className="text-sm font-mono font-semibold text-text-primary mt-0.5">
                       {lastValue !== null ? formatMetricValue(lastValue) : "-"}
-                      <span className="text-[10px] text-panel-400 font-normal ml-1">
+                      <span className="text-[10px] text-text-secondary font-normal ml-1">
                         {m.unit}
                       </span>
                     </p>
@@ -506,9 +522,9 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-2 text-xs">
-      <span className="text-panel-500 shrink-0">{label}</span>
+      <span className="text-text-muted shrink-0">{label}</span>
       <span
-        className={`text-panel-200 truncate text-right ${mono ? "font-mono" : ""}`}
+        className={`text-text-secondary truncate text-right ${mono ? "font-mono" : ""}`}
       >
         {value}
       </span>

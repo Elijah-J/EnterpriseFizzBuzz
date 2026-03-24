@@ -2,10 +2,32 @@
 @import "../styles/tokens.css";
 
 @theme inline {
-  --color-background: var(--surface-primary);
+  --color-background: var(--surface-ground);
   --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif);
+
+  /* Surface system */
+  --color-surface-ground: var(--surface-ground);
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-overlay: var(--surface-overlay);
+
+  /* Text system */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  /* Accent */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-muted: var(--accent-muted);
+
+  /* Borders */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
 
   /* Fizz — divisible by 3 */
   --color-fizz-50: var(--fizz-50);
@@ -60,7 +82,7 @@
   --color-number-900: var(--number-900);
   --color-number-950: var(--number-950);
 
-  /* Panel — dashboard surfaces */
+  /* Panel — backward-compatible surface tokens */
   --color-panel-50: var(--panel-50);
   --color-panel-100: var(--panel-100);
   --color-panel-200: var(--panel-200);
@@ -74,7 +96,229 @@
   --color-panel-950: var(--panel-950);
 }
 
+/**
+ * Grain overlay utility — applies a positioned noise texture at low opacity
+ * to counter the flatness of digital rendering. Should be applied to a
+ * pseudo-element or dedicated overlay div, never directly to content layers.
+ */
+@utility grain {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--texture-grain);
+    background-repeat: repeat;
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+/**
+ * Amber text gradient — reserved exclusively for hero-level display headings.
+ * Overuse dilutes the editorial impact. Maximum one instance per viewport.
+ */
+@utility text-gradient-amber {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/**
+ * Subtle border utility — applies the low-contrast border token for
+ * structural separation without visual noise.
+ */
+@utility border-subtle {
+  border-color: var(--border-subtle);
+}
+
+/* ----------------------------------------------------------------
+ * Type Scale Utilities
+ *
+ * Each utility class encapsulates a complete typographic treatment:
+ * family, size, weight, tracking, and color. This prevents partial
+ * overrides and ensures consistent application across all pages.
+ * ---------------------------------------------------------------- */
+
+/**
+ * Display heading — Instrument Serif at 2.5rem. Reserved for primary
+ * page heroes and dashboard titles. Maximum one per viewport to
+ * preserve editorial hierarchy.
+ */
+@utility heading-display {
+  font-family: var(--font-serif), serif;
+  font-size: var(--text-display, 2.5rem);
+  font-weight: 400;
+  letter-spacing: var(--tracking-tight, -0.02em);
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+
+/**
+ * Page heading — Instrument Serif at 1.75rem. Used for secondary page
+ * titles and major section introductions. Off-white to maintain
+ * hierarchy beneath display headings.
+ */
+@utility heading-page {
+  font-family: var(--font-serif), serif;
+  font-size: var(--text-page, 1.75rem);
+  font-weight: 400;
+  letter-spacing: var(--tracking-tight, -0.02em);
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+/**
+ * Section heading — Geist Sans at 0.75rem, uppercase with wide tracking.
+ * Functions as a structural label rather than a content heading. The
+ * reduced size and muted color signal organizational hierarchy without
+ * competing for visual attention.
+ */
+@utility heading-section {
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-section, 0.75rem);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide, 0.1em);
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/**
+ * Data value — Geist Mono at 1.5rem with tabular numerals. Ensures
+ * consistent column alignment in dashboards and data tables. The
+ * monospace family and tabular-nums variant prevent layout shifts
+ * as values change.
+ */
+@utility data-value {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-data-value, 1.5rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+/**
+ * Data unit — Geist Mono at 0.75rem. Used for unit labels (ms, %, req/s)
+ * adjacent to data values. Muted color creates visual subordination to
+ * the primary value while maintaining monospace alignment.
+ */
+@utility data-unit {
+  font-family: var(--font-mono), monospace;
+  font-size: var(--text-data-unit, 0.75rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/**
+ * Data label — Geist Sans at 0.8125rem. Used for descriptive labels
+ * beneath or beside data values. Secondary color provides clear
+ * hierarchy between the value and its description.
+ */
+@utility data-label {
+  font-family: var(--font-sans), sans-serif;
+  font-size: var(--text-data-label, 0.8125rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ----------------------------------------------------------------
+ * Motion Keyframes
+ *
+ * The platform's animation vocabulary is deliberately minimal.
+ * Two keyframes serve all motion needs: a warm shimmer for loading
+ * states and a subtle entrance for viewport-triggered reveals.
+ * No pulse, glow, spin, or ambient animations exist by design.
+ * ---------------------------------------------------------------- */
+
+/**
+ * Loading dot animation — sequential opacity pulse for button loading states.
+ * Three dots animate with staggered delays to create a typing-indicator pattern
+ * that communicates pending operations without spinner overhead.
+ */
+@keyframes loading-dot {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/**
+ * Slide-in animation for mobile navigation drawer. Translates from
+ * fully off-screen left to resting position over 200ms.
+ */
+@keyframes slideInFromLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * Shimmer animation utility — applies a warm-toned gradient sweep
+ * across the element background. The gradient uses off-white highlights
+ * over the raised surface tone, maintaining palette cohesion during
+ * loading states.
+ */
+@utility animate-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-raised) 0%,
+    var(--surface-overlay) 40%,
+    var(--surface-raised) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/**
+ * Entrance animation utility — fade in with 4px upward translation.
+ * Duration and easing calibrated to be perceptible but not theatrical.
+ * Applied via intersection observer triggers, not on initial render.
+ */
+@utility animate-enter {
+  animation: enter 300ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+  .animate-enter {
+    animation: none;
+  }
+}
+
 body {
-  background: var(--surface-primary);
+  background: var(--surface-ground);
   color: var(--text-primary);
 }

@@ -1,19 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { HeatmapData } from "@/lib/data-providers";
+import { useReducedMotion } from "@/lib/hooks/use-reduced-motion";
 
 /**
- * SVG divisibility heatmap grid for visualizing modular arithmetic patterns.
+ * SVG divisibility heatmap grid with staggered center-outward fade-in
+ * and accent-colored hover borders.
  *
- * Renders a grid where rows represent integers and columns represent divisors.
- * Cells are colored based on divisibility, with classification-appropriate colors
- * for divisors 3, 5, and 15 (the FizzBuzz-critical divisors). Non-divisible cells
- * use a neutral background at reduced opacity.
+ * Cells fade in from the center of the grid outward, with each distance
+ * ring receiving a progressive delay. This radial stagger communicates
+ * the grid's mathematical structure — the center of the integer range
+ * appears first, with the boundaries resolving last.
  *
- * This visualization reveals the periodic structure of modular arithmetic that
- * underpins the FizzBuzz classification engine, enabling operators to visually
- * confirm correct divisor behavior across arbitrary integer ranges.
+ * Hover highlights apply a border in the accent color with no scale
+ * transform or glow effect — consistent with the platform's restrained
+ * motion philosophy.
+ *
+ * This visualization reveals the periodic structure of modular arithmetic
+ * that underpins the FizzBuzz classification engine.
  */
 
 interface HeatmapGridProps {
@@ -31,7 +36,7 @@ interface HeatmapGridProps {
  */
 function getCellColor(divisor: number, divisible: boolean): string {
   if (!divisible) {
-    return "var(--panel-800)";
+    return "var(--surface-raised)";
   }
   if (divisor === 15) return "var(--fizzbuzz-400)";
   if (divisor === 3) return "var(--fizz-400)";
@@ -57,12 +62,45 @@ export function HeatmapGrid({
     y: number;
   } | null>(null);
 
+  const prefersReduced = useReducedMotion();
+  const [animationProgress, setAnimationProgress] = useState(
+    prefersReduced ? 1 : 0,
+  );
+
   const totalWidth =
-    LABEL_MARGIN_LEFT +
-    data.divisors.length * (cellSize + CELL_GAP);
+    LABEL_MARGIN_LEFT + data.divisors.length * (cellSize + CELL_GAP);
   const totalHeight =
-    LABEL_MARGIN_TOP +
-    data.numbers.length * (cellSize + CELL_GAP);
+    LABEL_MARGIN_TOP + data.numbers.length * (cellSize + CELL_GAP);
+
+  // Center of the grid for radial stagger calculation
+  const centerRow = (data.numbers.length - 1) / 2;
+  const centerCol = (data.divisors.length - 1) / 2;
+  const maxDist = Math.hypot(centerRow, centerCol) || 1;
+
+  // Staggered center-outward fade-in
+  useEffect(() => {
+    if (prefersReduced) {
+      setAnimationProgress(1);
+      return;
+    }
+
+    setAnimationProgress(0);
+    const startTime = performance.now();
+    const duration = 600;
+    let frameId: number;
+
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      setAnimationProgress(t);
+      if (t < 1) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    frameId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameId);
+  }, [prefersReduced]);
 
   // Build a lookup for fast cell access
   const cellMap = new Map<string, (typeof data.cells)[number]>();
@@ -77,10 +115,13 @@ export function HeatmapGrid({
         height={totalHeight}
         viewBox={`0 0 ${totalWidth} ${totalHeight}`}
         className="overflow-visible"
+        role="img"
+        aria-label="Divisibility heatmap grid"
       >
         {/* Column headers (divisors) */}
         {data.divisors.map((divisor, colIdx) => {
-          const x = LABEL_MARGIN_LEFT + colIdx * (cellSize + CELL_GAP) + cellSize / 2;
+          const x =
+            LABEL_MARGIN_LEFT + colIdx * (cellSize + CELL_GAP) + cellSize / 2;
           const isHighlighted = highlightDivisors.includes(divisor);
 
           return (
@@ -89,7 +130,7 @@ export function HeatmapGrid({
                 x={x}
                 y={LABEL_MARGIN_TOP - 10}
                 textAnchor="middle"
-                className={`text-[10px] ${isHighlighted ? "fill-panel-200 font-semibold" : "fill-panel-500"}`}
+                className={`text-[10px] ${isHighlighted ? "fill-text-primary font-semibold" : "fill-text-muted"}`}
               >
                 {divisor}
               </text>
@@ -97,7 +138,11 @@ export function HeatmapGrid({
               {isHighlighted && (
                 <line
                   x1={LABEL_MARGIN_LEFT + colIdx * (cellSize + CELL_GAP)}
-                  x2={LABEL_MARGIN_LEFT + colIdx * (cellSize + CELL_GAP) + cellSize}
+                  x2={
+                    LABEL_MARGIN_LEFT +
+                    colIdx * (cellSize + CELL_GAP) +
+                    cellSize
+                  }
                   y1={LABEL_MARGIN_TOP - 4}
                   y2={LABEL_MARGIN_TOP - 4}
                   stroke={
@@ -127,7 +172,7 @@ export function HeatmapGrid({
                 y={y + cellSize / 2}
                 textAnchor="end"
                 dominantBaseline="central"
-                className="text-[10px] fill-panel-500"
+                className="text-[10px] fill-text-muted"
               >
                 {num}
               </text>
@@ -137,7 +182,29 @@ export function HeatmapGrid({
                 const cell = cellMap.get(`${num}-${divisor}`);
                 if (!cell) return null;
 
-                const cellX = LABEL_MARGIN_LEFT + colIdx * (cellSize + CELL_GAP);
+                const cellX =
+                  LABEL_MARGIN_LEFT + colIdx * (cellSize + CELL_GAP);
+
+                // Distance from center for stagger delay
+                const dist = Math.hypot(rowIdx - centerRow, colIdx - centerCol);
+                const normalizedDist = dist / maxDist;
+                // Cell becomes visible when animation progress exceeds its distance threshold
+                const cellOpacity =
+                  animationProgress >= 1
+                    ? cell.divisible
+                      ? 0.8
+                      : 0.4
+                    : Math.max(
+                        0,
+                        Math.min(
+                          1,
+                          (animationProgress - normalizedDist * 0.6) / 0.4,
+                        ),
+                      ) * (cell.divisible ? 0.8 : 0.4);
+
+                const isHovered =
+                  hoveredCell?.number === num &&
+                  hoveredCell?.divisor === divisor;
 
                 return (
                   <rect
@@ -148,7 +215,9 @@ export function HeatmapGrid({
                     height={cellSize}
                     rx={2}
                     fill={getCellColor(divisor, cell.divisible)}
-                    opacity={cell.divisible ? 0.8 : 0.4}
+                    opacity={cellOpacity}
+                    stroke={isHovered ? "var(--accent)" : "transparent"}
+                    strokeWidth={isHovered ? 1.5 : 0}
                     onMouseEnter={() =>
                       setHoveredCell({
                         number: num,
@@ -160,7 +229,9 @@ export function HeatmapGrid({
                       })
                     }
                     onMouseLeave={() => setHoveredCell(null)}
+                    aria-label={`${num} mod ${divisor}`}
                     style={{ cursor: "pointer" }}
+                    className="transition-[stroke] duration-150"
                   />
                 );
               })}
@@ -169,14 +240,17 @@ export function HeatmapGrid({
         })}
 
         {/* Hover tooltip */}
-        {hoveredCell && (
+        {hoveredCell &&
           (() => {
             const text = hoveredCell.divisible
               ? `${hoveredCell.number} mod ${hoveredCell.divisor} = 0 (divisible)`
               : `${hoveredCell.number} mod ${hoveredCell.divisor} = ${hoveredCell.remainder}`;
             const rectW = text.length * 6.5 + 16;
             const rectH = 24;
-            const tx = Math.min(hoveredCell.x - rectW / 2, totalWidth - rectW - 4);
+            const tx = Math.min(
+              hoveredCell.x - rectW / 2,
+              totalWidth - rectW - 4,
+            );
             const ty = hoveredCell.y - rectH - 6;
 
             return (
@@ -187,21 +261,20 @@ export function HeatmapGrid({
                   width={rectW}
                   height={rectH}
                   rx={4}
-                  fill="var(--panel-800)"
-                  stroke="var(--panel-600)"
+                  fill="var(--surface-raised)"
+                  stroke="var(--border-default)"
                   strokeWidth="0.5"
                 />
                 <text
                   x={Math.max(4, tx) + 8}
                   y={Math.max(4, ty) + 15}
-                  className="text-[10px] fill-panel-200 font-mono"
+                  className="text-[10px] fill-text-primary font-mono"
                 >
                   {text}
                 </text>
               </g>
             );
-          })()
-        )}
+          })()}
       </svg>
     </div>
   );

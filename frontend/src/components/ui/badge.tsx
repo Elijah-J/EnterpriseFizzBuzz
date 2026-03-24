@@ -7,10 +7,10 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  success: "bg-fizz-950 text-fizz-400 border-fizz-800",
-  warning: "bg-amber-950 text-amber-400 border-amber-800",
-  error: "bg-red-950 text-red-400 border-red-800",
-  info: "bg-buzz-950 text-buzz-400 border-buzz-800",
+  success: "bg-fizz-400/15 text-fizz-400",
+  warning: "bg-[var(--accent)]/15 text-[var(--accent)]",
+  error: "bg-[var(--status-error)]/15 text-[var(--status-error)]",
+  info: "bg-buzz-400/15 text-buzz-400",
 };
 
 /**
@@ -20,6 +20,10 @@ const variantStyles: Record<BadgeVariant, string> = {
  *   - warning: degraded performance or pending compliance action
  *   - error: service disruption or SLA breach
  *   - info: informational, no action required
+ *
+ * Backgrounds use domain color at 15% opacity for soft, confident presence
+ * that integrates with the warm stone surface system without visual
+ * aggression or attention-demanding effects.
  */
 export function Badge({
   variant = "info",
@@ -29,7 +33,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${variantStyles[variant]} ${className}`}
       {...props}
     >
       {children}

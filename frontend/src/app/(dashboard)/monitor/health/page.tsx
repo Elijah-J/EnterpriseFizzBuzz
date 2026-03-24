@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
-import type { SubsystemHealth, HealthCheckPoint } from "@/lib/data-providers";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { HealthCheckPoint, SubsystemHealth } from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Status taxonomy
@@ -13,14 +15,14 @@ const STATUS_DOT: Record<SubsystemHealth["status"], string> = {
   up: "bg-fizz-400",
   degraded: "bg-amber-400",
   down: "bg-red-500",
-  unknown: "bg-panel-500",
+  unknown: "bg-text-muted",
 };
 
 const STATUS_TEXT: Record<SubsystemHealth["status"], string> = {
   up: "text-fizz-400",
   degraded: "text-amber-400",
   down: "text-red-400",
-  unknown: "text-panel-500",
+  unknown: "text-text-muted",
 };
 
 const STATUS_PRIORITY: Record<SubsystemHealth["status"], number> = {
@@ -63,7 +65,9 @@ function HealthSparkline({ data }: { data: HealthCheckPoint[] }) {
     .join(" ");
 
   // Color segments based on status
-  const hasIssues = data.some((d) => d.status === "down" || d.status === "degraded");
+  const hasIssues = data.some(
+    (d) => d.status === "down" || d.status === "degraded",
+  );
   const strokeColor = hasIssues ? "var(--fizzbuzz-gold)" : "var(--fizz-400)";
 
   return (
@@ -106,9 +110,10 @@ function relativeTime(isoString: string): string {
 // Overall status derivation
 // ---------------------------------------------------------------------------
 
-function deriveOverallStatus(
-  health: SubsystemHealth[],
-): { label: string; color: string } {
+function deriveOverallStatus(health: SubsystemHealth[]): {
+  label: string;
+  color: string;
+} {
   const hasDown = health.some((h) => h.status === "down");
   const hasDegraded = health.some((h) => h.status === "degraded");
 
@@ -124,7 +129,9 @@ function deriveOverallStatus(
 export default function HealthCheckMatrixPage() {
   const provider = useDataProvider();
   const [health, setHealth] = useState<SubsystemHealth[]>([]);
-  const [historyMap, setHistoryMap] = useState<Record<string, HealthCheckPoint[]>>({});
+  const [historyMap, setHistoryMap] = useState<
+    Record<string, HealthCheckPoint[]>
+  >({});
   const [sortBy, setSortBy] = useState<SortKey>("status");
   const [filter, setFilter] = useState<FilterMode>("all");
   const initialLoadDone = useRef(false);
@@ -202,8 +209,8 @@ export default function HealthCheckMatrixPage() {
     return (
       <div className="flex h-64 items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-panel-600 border-t-fizzbuzz-400 mb-3" />
-          <p className="text-sm text-panel-500">
+          <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-border-default border-t-fizzbuzz-400 mb-3" />
+          <p className="text-sm text-text-muted">
             Probing infrastructure subsystem health...
           </p>
         </div>
@@ -216,7 +223,18 @@ export default function HealthCheckMatrixPage() {
   // -------------------------------------------------------------------------
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Page header */}
+      <Reveal>
+        <div>
+          <h1 className="heading-page">Health Check Matrix</h1>
+          <p className="mt-1 text-sm text-text-secondary">
+            Real-time infrastructure subsystem health monitoring with response
+            time tracking and historical sparklines.
+          </p>
+        </div>
+      </Reveal>
+
       {/* Summary bar */}
       <Card>
         <CardContent className="py-3">
@@ -235,12 +253,12 @@ export default function HealthCheckMatrixPage() {
               </span>
             )}
             {unknownCount > 0 && (
-              <span className="text-panel-500 font-mono font-medium">
+              <span className="text-text-muted font-mono font-medium">
                 {unknownCount} UNKNOWN
               </span>
             )}
-            <span className="text-panel-600">|</span>
-            <span className="text-panel-400">
+            <span className="text-text-muted">|</span>
+            <span className="text-text-secondary">
               Overall:{" "}
               <span className={`font-semibold ${overall.color}`}>
                 {overall.label}
@@ -254,12 +272,14 @@ export default function HealthCheckMatrixPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Sort controls */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-panel-500">Sort by:</span>
-          {([
-            ["status", "Status"],
-            ["name", "Name"],
-            ["responseTime", "Response Time"],
-          ] as [SortKey, string][]).map(([key, label]) => (
+          <span className="text-xs text-text-muted">Sort by:</span>
+          {(
+            [
+              ["status", "Status"],
+              ["name", "Name"],
+              ["responseTime", "Response Time"],
+            ] as [SortKey, string][]
+          ).map(([key, label]) => (
             <button
               key={key}
               type="button"
@@ -267,7 +287,7 @@ export default function HealthCheckMatrixPage() {
               className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                 sortBy === key
                   ? "bg-fizzbuzz-600 text-white"
-                  : "bg-panel-700 text-panel-300 hover:bg-panel-600 hover:text-panel-100"
+                  : "bg-surface-overlay text-text-secondary hover:bg-surface-overlay hover:text-text-primary"
               }`}
             >
               {label}
@@ -277,11 +297,11 @@ export default function HealthCheckMatrixPage() {
 
         {/* Filter dropdown */}
         <div className="flex items-center gap-2">
-          <span className="text-xs text-panel-500">Show:</span>
+          <span className="text-xs text-text-muted">Show:</span>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value as FilterMode)}
-            className="rounded border border-panel-700 bg-panel-900 px-2.5 py-1 text-xs text-panel-200 focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
+            className="rounded border border-border-subtle bg-surface-base px-2.5 py-1 text-xs text-text-secondary focus:outline-none focus:ring-1 focus:ring-fizzbuzz-500"
           >
             <option value="all">All Subsystems</option>
             <option value="up">UP Only</option>
@@ -306,7 +326,7 @@ export default function HealthCheckMatrixPage() {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-sm font-medium text-panel-100 truncate">
+                    <h3 className="text-sm font-medium text-text-primary truncate">
                       {subsystem.name}
                     </h3>
                     <span
@@ -317,17 +337,17 @@ export default function HealthCheckMatrixPage() {
                   </div>
 
                   {/* Metrics row */}
-                  <div className="mt-1.5 flex items-center gap-3 text-xs text-panel-400">
+                  <div className="mt-1.5 flex items-center gap-3 text-xs text-text-secondary">
                     <span>
                       Checked{" "}
-                      <span className="text-panel-300">
+                      <span className="text-text-secondary">
                         {relativeTime(subsystem.lastChecked)}
                       </span>
                     </span>
                     {subsystem.status !== "down" && (
                       <span>
                         Response{" "}
-                        <span className="font-mono text-panel-300">
+                        <span className="font-mono text-text-secondary">
                           {subsystem.responseTimeMs.toFixed(1)}ms
                         </span>
                       </span>
@@ -350,15 +370,16 @@ export default function HealthCheckMatrixPage() {
       {/* Empty state for filtered view */}
       {filteredHealth.length === 0 && (
         <div className="flex h-32 items-center justify-center">
-          <p className="text-sm text-panel-500">
+          <p className="text-sm text-text-muted">
             No subsystems match the current filter.
           </p>
         </div>
       )}
 
       {/* Refresh indicator */}
-      <p className="text-[10px] text-panel-600 text-right">
-        Auto-refreshing every 5 seconds &middot; {health.length} subsystems monitored
+      <p className="text-[10px] text-text-muted text-right">
+        Auto-refreshing every 5 seconds &middot; {health.length} subsystems
+        monitored
       </p>
     </div>
   );

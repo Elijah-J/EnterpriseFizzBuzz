@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDataProvider } from "@/lib/data-providers";
-import type {
-  ComplianceFramework,
-  ComplianceFinding,
-  FindingSeverity,
-  AuditEntry,
-} from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { MetricGauge } from "@/components/charts/metric-gauge";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
+import type {
+  AuditEntry,
+  ComplianceFinding,
+  ComplianceFramework,
+  FindingSeverity,
+} from "@/lib/data-providers";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -52,14 +54,20 @@ const ACTION_OPTIONS = [
   { label: "Evidence Uploaded", value: "evidence-uploaded" },
 ] as const;
 
-const SEVERITY_BADGE_VARIANT: Record<FindingSeverity, "error" | "warning" | "info" | "success"> = {
+const SEVERITY_BADGE_VARIANT: Record<
+  FindingSeverity,
+  "error" | "warning" | "info" | "success"
+> = {
   critical: "error",
   high: "warning",
   medium: "info",
   low: "success",
 };
 
-const ACTION_BADGE_VARIANT: Record<AuditEntry["action"], "error" | "warning" | "info" | "success"> = {
+const ACTION_BADGE_VARIANT: Record<
+  AuditEntry["action"],
+  "error" | "warning" | "info" | "success"
+> = {
   "audit-run": "info",
   "finding-created": "error",
   "finding-updated": "warning",
@@ -68,7 +76,10 @@ const ACTION_BADGE_VARIANT: Record<AuditEntry["action"], "error" | "warning" | "
   "evidence-uploaded": "info",
 };
 
-const FRAMEWORK_STATUS_VARIANT: Record<ComplianceFramework["status"], "success" | "warning" | "error"> = {
+const FRAMEWORK_STATUS_VARIANT: Record<
+  ComplianceFramework["status"],
+  "success" | "warning" | "error"
+> = {
   compliant: "success",
   "at-risk": "warning",
   "non-compliant": "error",
@@ -119,7 +130,7 @@ function ComplianceProgressBar({
   const pendPct = (pending / total) * 100;
 
   return (
-    <div className="flex h-2 w-full overflow-hidden rounded-full bg-panel-700">
+    <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-overlay">
       <div
         className="bg-fizz-500 transition-all duration-300"
         style={{ width: `${passPct}%` }}
@@ -142,10 +153,10 @@ function FindingRow({ finding }: { finding: ComplianceFinding }) {
   return (
     <>
       <tr
-        className="border-b border-panel-700 hover:bg-panel-800/50 cursor-pointer transition-colors"
+        className="border-b border-border-subtle hover:bg-surface-raised/50 cursor-pointer transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <td className="px-3 py-2 text-xs font-mono text-panel-300">
+        <td className="px-3 py-2 text-xs font-mono text-text-secondary">
           {finding.id}
         </td>
         <td className="px-3 py-2">
@@ -153,13 +164,13 @@ function FindingRow({ finding }: { finding: ComplianceFinding }) {
             {finding.severity}
           </Badge>
         </td>
-        <td className="px-3 py-2 text-xs text-panel-300">
+        <td className="px-3 py-2 text-xs text-text-secondary">
           {finding.frameworkId}
         </td>
-        <td className="px-3 py-2 text-xs font-mono text-panel-400">
+        <td className="px-3 py-2 text-xs font-mono text-text-secondary">
           {finding.controlId}
         </td>
-        <td className="px-3 py-2 text-xs text-panel-200 max-w-[200px] truncate">
+        <td className="px-3 py-2 text-xs text-text-secondary max-w-[200px] truncate">
           {finding.title}
         </td>
         <td className="px-3 py-2 text-xs">
@@ -171,29 +182,34 @@ function FindingRow({ finding }: { finding: ComplianceFinding }) {
                   ? "bg-amber-950 text-amber-400"
                   : finding.status === "remediated"
                     ? "bg-fizz-950 text-fizz-400"
-                    : "bg-panel-700 text-panel-300"
+                    : "bg-surface-overlay text-text-secondary"
             }`}
           >
             {finding.status}
           </span>
         </td>
-        <td className="px-3 py-2 text-xs text-panel-400">
+        <td className="px-3 py-2 text-xs text-text-secondary">
           {finding.assignee ?? "-"}
         </td>
-        <td className="px-3 py-2 text-xs text-panel-500">
+        <td className="px-3 py-2 text-xs text-text-muted">
           {finding.dueDate ? relativeTime(finding.dueDate) : "-"}
         </td>
       </tr>
       {expanded && (
-        <tr className="border-b border-panel-700 bg-panel-800/30">
+        <tr className="border-b border-border-subtle bg-surface-raised/30">
           <td colSpan={8} className="px-6 py-3">
-            <p className="text-xs text-panel-300 leading-relaxed">
+            <p className="text-xs text-text-secondary leading-relaxed">
               {finding.description}
             </p>
-            <div className="mt-2 flex gap-4 text-[10px] text-panel-500">
-              <span>Identified: {new Date(finding.identifiedAt).toLocaleDateString()}</span>
+            <div className="mt-2 flex gap-4 text-[10px] text-text-muted">
+              <span>
+                Identified:{" "}
+                {new Date(finding.identifiedAt).toLocaleDateString()}
+              </span>
               {finding.dueDate && (
-                <span>Due: {new Date(finding.dueDate).toLocaleDateString()}</span>
+                <span>
+                  Due: {new Date(finding.dueDate).toLocaleDateString()}
+                </span>
               )}
             </div>
           </td>
@@ -308,9 +324,7 @@ export default function ComplianceCenterPage() {
     }
     if (auditSearchQuery) {
       const q = auditSearchQuery.toLowerCase();
-      result = result.filter((e) =>
-        e.description.toLowerCase().includes(q),
-      );
+      result = result.filter((e) => e.description.toLowerCase().includes(q));
     }
     return result;
   }, [auditLog, auditActionFilter, auditSearchQuery]);
@@ -323,13 +337,14 @@ export default function ComplianceCenterPage() {
     <div className="space-y-6">
       {/* Page header */}
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-panel-50">
+        <h1 className="text-xl font-bold tracking-tight text-text-primary">
           Compliance Center
         </h1>
-        <p className="mt-1 text-xs text-panel-400">
+        <p className="mt-1 text-xs text-text-secondary">
           Unified regulatory compliance monitoring across SOX, GDPR, HIPAA, and
-          FizzBuzz-ISO-27001 frameworks. Control assessments, findings, and audit
-          trails are consolidated for cross-framework operational visibility.
+          FizzBuzz-ISO-27001 frameworks. Control assessments, findings, and
+          audit trails are consolidated for cross-framework operational
+          visibility.
         </p>
       </div>
 
@@ -349,32 +364,32 @@ export default function ComplianceCenterPage() {
 
             {/* KPI tiles */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
-              <div className="rounded-lg border border-panel-700 bg-panel-800 p-3 text-center">
-                <p className="text-[10px] text-panel-500 uppercase tracking-wider">
+              <div className="rounded-lg border border-border-subtle bg-surface-raised p-3 text-center">
+                <p className="text-[10px] text-text-muted uppercase tracking-wider">
                   Total Controls
                 </p>
-                <p className="text-2xl font-mono font-semibold text-panel-50 mt-1">
+                <p className="text-2xl font-mono font-semibold text-text-primary mt-1">
                   {totalControls}
                 </p>
               </div>
-              <div className="rounded-lg border border-panel-700 bg-panel-800 p-3 text-center">
-                <p className="text-[10px] text-panel-500 uppercase tracking-wider">
+              <div className="rounded-lg border border-border-subtle bg-surface-raised p-3 text-center">
+                <p className="text-[10px] text-text-muted uppercase tracking-wider">
                   Passing
                 </p>
                 <p className="text-2xl font-mono font-semibold text-fizz-400 mt-1">
                   {totalPassing}
                 </p>
               </div>
-              <div className="rounded-lg border border-panel-700 bg-panel-800 p-3 text-center">
-                <p className="text-[10px] text-panel-500 uppercase tracking-wider">
+              <div className="rounded-lg border border-border-subtle bg-surface-raised p-3 text-center">
+                <p className="text-[10px] text-text-muted uppercase tracking-wider">
                   Failing
                 </p>
                 <p className="text-2xl font-mono font-semibold text-red-400 mt-1">
                   {totalFailing}
                 </p>
               </div>
-              <div className="rounded-lg border border-panel-700 bg-panel-800 p-3 text-center">
-                <p className="text-[10px] text-panel-500 uppercase tracking-wider">
+              <div className="rounded-lg border border-border-subtle bg-surface-raised p-3 text-center">
+                <p className="text-[10px] text-text-muted uppercase tracking-wider">
                   Open Findings
                 </p>
                 <p className="text-2xl font-mono font-semibold text-amber-400 mt-1">
@@ -392,7 +407,7 @@ export default function ComplianceCenterPage() {
           <Card key={fw.id}>
             <CardHeader>
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-panel-100 truncate">
+                <h2 className="text-sm font-semibold text-text-primary truncate">
                   {fw.name}
                 </h2>
                 <Badge variant={FRAMEWORK_STATUS_VARIANT[fw.status]}>
@@ -413,7 +428,7 @@ export default function ComplianceCenterPage() {
 
                 {/* Control breakdown */}
                 <div>
-                  <div className="flex items-center justify-between text-[10px] text-panel-400 mb-1">
+                  <div className="flex items-center justify-between text-[10px] text-text-secondary mb-1">
                     <span>
                       {fw.passingControls}/{fw.totalControls} controls passing
                     </span>
@@ -427,14 +442,15 @@ export default function ComplianceCenterPage() {
                 </div>
 
                 {/* Audit dates */}
-                <div className="text-[10px] text-panel-500 space-y-0.5">
+                <div className="text-[10px] text-text-muted space-y-0.5">
                   <p>Last audit: {relativeTime(fw.lastAuditDate)}</p>
                   <p>Next audit: {relativeTime(fw.nextAuditDate)}</p>
                 </div>
 
                 {/* Open findings */}
                 <p className="text-xs text-amber-400 font-medium">
-                  {fw.openFindings} open finding{fw.openFindings !== 1 ? "s" : ""}
+                  {fw.openFindings} open finding
+                  {fw.openFindings !== 1 ? "s" : ""}
                 </p>
               </div>
             </CardContent>
@@ -445,9 +461,7 @@ export default function ComplianceCenterPage() {
       {/* Section 5.3: Findings Table */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-panel-100">
-            Compliance Findings
-          </h2>
+          <h2 className="heading-section">Compliance Findings</h2>
         </CardHeader>
         <CardContent>
           {/* Filter controls */}
@@ -455,7 +469,7 @@ export default function ComplianceCenterPage() {
             <select
               value={findingFrameworkFilter}
               onChange={(e) => setFindingFrameworkFilter(e.target.value)}
-              className="rounded border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 outline-none"
+              className="rounded border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary outline-none"
             >
               {FRAMEWORK_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -466,7 +480,7 @@ export default function ComplianceCenterPage() {
             <select
               value={findingSeverityFilter}
               onChange={(e) => setFindingSeverityFilter(e.target.value)}
-              className="rounded border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 outline-none"
+              className="rounded border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary outline-none"
             >
               {SEVERITY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -477,7 +491,7 @@ export default function ComplianceCenterPage() {
             <select
               value={findingStatusFilter}
               onChange={(e) => setFindingStatusFilter(e.target.value)}
-              className="rounded border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 outline-none"
+              className="rounded border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary outline-none"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -491,7 +505,7 @@ export default function ComplianceCenterPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-panel-600 text-[10px] text-panel-500 uppercase tracking-wider">
+                <tr className="border-b border-border-default text-[10px] text-text-muted uppercase tracking-wider">
                   <th className="px-3 py-2 font-medium">ID</th>
                   <th className="px-3 py-2 font-medium">Severity</th>
                   <th className="px-3 py-2 font-medium">Framework</th>
@@ -510,7 +524,7 @@ export default function ComplianceCenterPage() {
                   <tr>
                     <td
                       colSpan={8}
-                      className="px-3 py-6 text-center text-xs text-panel-500"
+                      className="px-3 py-6 text-center text-xs text-text-muted"
                     >
                       No findings match the current filters
                     </td>
@@ -525,9 +539,7 @@ export default function ComplianceCenterPage() {
       {/* Section 5.4: Audit Log */}
       <Card>
         <CardHeader>
-          <h2 className="text-sm font-semibold text-panel-100">
-            Compliance Audit Log
-          </h2>
+          <h2 className="heading-section">Compliance Audit Log</h2>
         </CardHeader>
         <CardContent>
           {/* Filter controls */}
@@ -537,12 +549,12 @@ export default function ComplianceCenterPage() {
               value={auditSearchQuery}
               onChange={(e) => setAuditSearchQuery(e.target.value)}
               placeholder="Search audit log..."
-              className="rounded border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 placeholder-panel-500 outline-none min-w-[200px]"
+              className="rounded border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary placeholder-panel-500 outline-none min-w-[200px]"
             />
             <select
               value={auditActionFilter}
               onChange={(e) => setAuditActionFilter(e.target.value)}
-              className="rounded border border-panel-600 bg-panel-800 px-2 py-1 text-xs text-panel-200 outline-none"
+              className="rounded border border-border-default bg-surface-raised px-2 py-1 text-xs text-text-secondary outline-none"
             >
               {ACTION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -556,7 +568,7 @@ export default function ComplianceCenterPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-panel-600 text-[10px] text-panel-500 uppercase tracking-wider">
+                <tr className="border-b border-border-default text-[10px] text-text-muted uppercase tracking-wider">
                   <th className="px-3 py-2 font-medium">Timestamp</th>
                   <th className="px-3 py-2 font-medium">Action</th>
                   <th className="px-3 py-2 font-medium">Framework</th>
@@ -568,10 +580,10 @@ export default function ComplianceCenterPage() {
                 {filteredAuditLog.map((entry) => (
                   <tr
                     key={entry.id}
-                    className="border-b border-panel-700 hover:bg-panel-800/50 transition-colors"
+                    className="border-b border-border-subtle hover:bg-surface-raised/50 transition-colors"
                   >
                     <td
-                      className="px-3 py-2 text-xs text-panel-400 whitespace-nowrap"
+                      className="px-3 py-2 text-xs text-text-secondary whitespace-nowrap"
                       title={entry.timestamp}
                     >
                       {relativeTime(entry.timestamp)}
@@ -581,13 +593,13 @@ export default function ComplianceCenterPage() {
                         {entry.action}
                       </Badge>
                     </td>
-                    <td className="px-3 py-2 text-xs text-panel-300">
+                    <td className="px-3 py-2 text-xs text-text-secondary">
                       {entry.frameworkId ?? "-"}
                     </td>
-                    <td className="px-3 py-2 text-xs text-panel-300 whitespace-nowrap">
+                    <td className="px-3 py-2 text-xs text-text-secondary whitespace-nowrap">
                       {entry.actor}
                     </td>
-                    <td className="px-3 py-2 text-xs text-panel-200">
+                    <td className="px-3 py-2 text-xs text-text-secondary">
                       {entry.description}
                     </td>
                   </tr>
@@ -596,7 +608,7 @@ export default function ComplianceCenterPage() {
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-3 py-6 text-center text-xs text-panel-500"
+                      className="px-3 py-6 text-center text-xs text-text-muted"
                     >
                       No audit entries match the current filters
                     </td>
@@ -609,7 +621,7 @@ export default function ComplianceCenterPage() {
       </Card>
 
       {/* Refresh footer */}
-      <p className="text-center text-[10px] text-panel-500">
+      <p className="text-center text-[10px] text-text-muted">
         Auto-refreshing every 10 seconds
       </p>
     </div>

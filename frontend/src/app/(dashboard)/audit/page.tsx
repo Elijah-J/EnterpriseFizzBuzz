@@ -1,15 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { useDataProvider } from "@/lib/data-providers";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Reveal } from "@/components/ui/reveal";
+import { Skeleton } from "@/components/ui/skeleton";
 import type {
   AuditEntry,
   AuditLogFilter,
   AuditLogSortField,
   PaginatedAuditLog,
 } from "@/lib/data-providers";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { useDataProvider } from "@/lib/data-providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -68,7 +70,10 @@ const SUBSYSTEM_OPTIONS = [
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 250] as const;
 
-const SEVERITY_BADGE_VARIANT: Record<AuditEntry["severity"], "error" | "warning" | "info" | "success"> = {
+const SEVERITY_BADGE_VARIANT: Record<
+  AuditEntry["severity"],
+  "error" | "warning" | "info" | "success"
+> = {
   critical: "error",
   high: "warning",
   medium: "info",
@@ -76,7 +81,10 @@ const SEVERITY_BADGE_VARIANT: Record<AuditEntry["severity"], "error" | "warning"
   info: "info",
 };
 
-const ACTION_BADGE_VARIANT: Record<AuditEntry["action"], "error" | "warning" | "info" | "success"> = {
+const ACTION_BADGE_VARIANT: Record<
+  AuditEntry["action"],
+  "error" | "warning" | "info" | "success"
+> = {
   "audit-run": "info",
   "finding-created": "error",
   "finding-updated": "warning",
@@ -89,7 +97,7 @@ const OUTCOME_COLORS: Record<AuditEntry["outcome"], string> = {
   success: "bg-fizz-950 text-fizz-400",
   failure: "bg-red-950 text-red-400",
   denied: "bg-amber-950 text-amber-400",
-  error: "bg-panel-700 text-panel-300",
+  error: "bg-surface-overlay text-text-secondary",
 };
 
 const SEVERITY_DOT_COLORS: Record<AuditEntry["severity"], string> = {
@@ -127,7 +135,10 @@ function relativeTime(isoString: string): string {
 
 function formatTimestamp(isoString: string): string {
   const d = new Date(isoString);
-  return d.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "Z");
+  return d
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d{3}Z$/, "Z");
 }
 
 function formatLocalTimestamp(isoString: string): string {
@@ -174,8 +185,8 @@ function SortableHeader({
   const isActive = currentField === field;
   return (
     <th
-      className={`px-3 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none hover:text-panel-50 transition-colors ${
-        isActive ? "text-fizzbuzz-400" : "text-panel-400"
+      className={`px-3 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer select-none hover:text-text-primary transition-colors ${
+        isActive ? "text-fizzbuzz-400" : "text-text-secondary"
       }`}
       style={{ width }}
       onClick={() => onSort(field)}
@@ -206,10 +217,13 @@ function AuditEntryRow({
   return (
     <>
       <tr
-        className="border-b border-panel-700 hover:bg-panel-800/50 cursor-pointer transition-colors"
+        className="border-b border-border-subtle hover:bg-surface-raised/50 cursor-pointer transition-colors"
         onClick={onToggle}
       >
-        <td className="px-3 py-2 text-xs font-mono text-panel-300" title={`${formatTimestamp(entry.timestamp)}\n${formatLocalTimestamp(entry.timestamp)}`}>
+        <td
+          className="px-3 py-2 text-xs font-mono text-text-secondary"
+          title={`${formatTimestamp(entry.timestamp)}\n${formatLocalTimestamp(entry.timestamp)}`}
+        >
           {relativeTime(entry.timestamp)}
         </td>
         <td className="px-3 py-2">
@@ -222,10 +236,13 @@ function AuditEntryRow({
             {entry.action}
           </Badge>
         </td>
-        <td className="px-3 py-2 text-xs text-panel-300 max-w-[140px] truncate" title={entry.actor}>
+        <td
+          className="px-3 py-2 text-xs text-text-secondary max-w-[140px] truncate"
+          title={entry.actor}
+        >
           {entry.actor}
         </td>
-        <td className="px-3 py-2 text-xs font-mono text-panel-400">
+        <td className="px-3 py-2 text-xs font-mono text-text-secondary">
           {entry.subsystem}
         </td>
         <td className="px-3 py-2">
@@ -235,30 +252,35 @@ function AuditEntryRow({
             {entry.outcome}
           </span>
         </td>
-        <td className="px-3 py-2 text-xs text-panel-400">
+        <td className="px-3 py-2 text-xs text-text-secondary">
           {entry.frameworkId}
         </td>
-        <td className="px-3 py-2 text-xs text-panel-300 max-w-[250px] truncate" title={entry.description}>
+        <td
+          className="px-3 py-2 text-xs text-text-secondary max-w-[250px] truncate"
+          title={entry.description}
+        >
           {entry.description}
         </td>
       </tr>
       {expanded && (
-        <tr className="border-b border-panel-700 bg-panel-800/30">
+        <tr className="border-b border-border-subtle bg-surface-raised/30">
           <td colSpan={8} className="px-6 py-4">
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div>
-                <h4 className="text-panel-400 uppercase tracking-wider text-[10px] mb-2 font-medium">
+                <h4 className="text-text-secondary uppercase tracking-wider text-[10px] mb-2 font-medium">
                   Description
                 </h4>
-                <p className="text-panel-200">{entry.description}</p>
+                <p className="text-text-secondary">{entry.description}</p>
               </div>
               <div>
-                <h4 className="text-panel-400 uppercase tracking-wider text-[10px] mb-2 font-medium">
+                <h4 className="text-text-secondary uppercase tracking-wider text-[10px] mb-2 font-medium">
                   Details
                 </h4>
                 <dl className="space-y-1">
                   <div className="flex gap-2">
-                    <dt className="text-panel-500 min-w-[140px]">Session Correlation ID</dt>
+                    <dt className="text-text-muted min-w-[140px]">
+                      Session Correlation ID
+                    </dt>
                     <dd>
                       <button
                         className="text-fizzbuzz-400 hover:underline font-mono text-[11px]"
@@ -272,35 +294,49 @@ function AuditEntryRow({
                     </dd>
                   </div>
                   <div className="flex gap-2">
-                    <dt className="text-panel-500 min-w-[140px]">Source IP</dt>
-                    <dd className="text-panel-200 font-mono">{entry.sourceIp}</dd>
+                    <dt className="text-text-muted min-w-[140px]">Source IP</dt>
+                    <dd className="text-text-secondary font-mono">
+                      {entry.sourceIp}
+                    </dd>
                   </div>
                   <div className="flex gap-2">
-                    <dt className="text-panel-500 min-w-[140px]">Timestamp (ISO 8601)</dt>
-                    <dd className="text-panel-200 font-mono">{formatTimestamp(entry.timestamp)}</dd>
+                    <dt className="text-text-muted min-w-[140px]">
+                      Timestamp (ISO 8601)
+                    </dt>
+                    <dd className="text-text-secondary font-mono">
+                      {formatTimestamp(entry.timestamp)}
+                    </dd>
                   </div>
                   <div className="flex gap-2">
-                    <dt className="text-panel-500 min-w-[140px]">Timestamp (local)</dt>
-                    <dd className="text-panel-200 font-mono">{formatLocalTimestamp(entry.timestamp)}</dd>
+                    <dt className="text-text-muted min-w-[140px]">
+                      Timestamp (local)
+                    </dt>
+                    <dd className="text-text-secondary font-mono">
+                      {formatLocalTimestamp(entry.timestamp)}
+                    </dd>
                   </div>
                   {entry.evaluationSessionId && (
                     <div className="flex gap-2">
-                      <dt className="text-panel-500 min-w-[140px]">Evaluation Session</dt>
-                      <dd className="text-fizzbuzz-400 font-mono text-[11px]">{entry.evaluationSessionId}</dd>
+                      <dt className="text-text-muted min-w-[140px]">
+                        Evaluation Session
+                      </dt>
+                      <dd className="text-fizzbuzz-400 font-mono text-[11px]">
+                        {entry.evaluationSessionId}
+                      </dd>
                     </div>
                   )}
                 </dl>
               </div>
               {entry.metadata && Object.keys(entry.metadata).length > 0 && (
                 <div className="col-span-2">
-                  <h4 className="text-panel-400 uppercase tracking-wider text-[10px] mb-2 font-medium">
+                  <h4 className="text-text-secondary uppercase tracking-wider text-[10px] mb-2 font-medium">
                     Metadata
                   </h4>
                   <dl className="grid grid-cols-3 gap-x-4 gap-y-1">
                     {Object.entries(entry.metadata).map(([key, value]) => (
                       <div key={key} className="flex gap-2">
-                        <dt className="text-panel-500 font-mono">{key}</dt>
-                        <dd className="text-panel-200">{value}</dd>
+                        <dt className="text-text-muted font-mono">{key}</dt>
+                        <dd className="text-text-secondary">{value}</dd>
                       </div>
                     ))}
                   </dl>
@@ -333,65 +369,93 @@ function TimelineNode({
     <>
       {showDayHeader && (
         <div className="flex items-center gap-3 py-2">
-          <span className="text-xs font-semibold text-panel-300 uppercase tracking-wider">
+          <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             {dayLabel}
           </span>
-          <div className="flex-1 border-t border-panel-700" />
+          <div className="flex-1 border-t border-border-subtle" />
         </div>
       )}
       <div
-        className="flex gap-3 py-2 cursor-pointer hover:bg-panel-800/30 rounded px-2 transition-colors"
+        className="flex gap-3 py-2 cursor-pointer hover:bg-surface-raised/30 rounded px-2 transition-colors"
         onClick={onToggle}
       >
         {/* Timeline dot and line */}
         <div className="flex flex-col items-center w-4 pt-1">
-          <div className={`w-3 h-3 rounded-full flex-shrink-0 ${SEVERITY_DOT_COLORS[entry.severity]}`} />
-          <div className="w-px flex-1 bg-panel-700 mt-1" />
+          <div
+            className={`w-3 h-3 rounded-full flex-shrink-0 ${SEVERITY_DOT_COLORS[entry.severity]}`}
+          />
+          <div className="w-px flex-1 bg-surface-overlay mt-1" />
         </div>
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-panel-400 font-mono">
+            <span className="text-text-secondary font-mono">
               {new Date(entry.timestamp).toLocaleTimeString()}
             </span>
             <Badge variant={ACTION_BADGE_VARIANT[entry.action]}>
               {entry.action}
             </Badge>
-            <span className="text-panel-300 truncate">{entry.actor}</span>
+            <span className="text-text-secondary truncate">{entry.actor}</span>
           </div>
-          <p className="text-xs text-panel-400 mt-0.5 truncate">{entry.description}</p>
+          <p className="text-xs text-text-secondary mt-0.5 truncate">
+            {entry.description}
+          </p>
           {expanded && (
-            <div className="mt-3 p-3 rounded bg-panel-800/50 border border-panel-700">
+            <div className="mt-3 p-3 rounded bg-surface-raised/50 border border-border-subtle">
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                  <p className="text-panel-200 mb-2">{entry.description}</p>
+                  <p className="text-text-secondary mb-2">
+                    {entry.description}
+                  </p>
                   <dl className="space-y-1">
                     <div className="flex gap-2">
-                      <dt className="text-panel-500 min-w-[120px]">Severity</dt>
-                      <dd><Badge variant={SEVERITY_BADGE_VARIANT[entry.severity]}>{entry.severity}</Badge></dd>
+                      <dt className="text-text-muted min-w-[120px]">
+                        Severity
+                      </dt>
+                      <dd>
+                        <Badge variant={SEVERITY_BADGE_VARIANT[entry.severity]}>
+                          {entry.severity}
+                        </Badge>
+                      </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="text-panel-500 min-w-[120px]">Outcome</dt>
+                      <dt className="text-text-muted min-w-[120px]">Outcome</dt>
                       <dd>
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${OUTCOME_COLORS[entry.outcome]}`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${OUTCOME_COLORS[entry.outcome]}`}
+                        >
                           {entry.outcome}
                         </span>
                       </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="text-panel-500 min-w-[120px]">Subsystem</dt>
-                      <dd className="text-panel-200 font-mono">{entry.subsystem}</dd>
+                      <dt className="text-text-muted min-w-[120px]">
+                        Subsystem
+                      </dt>
+                      <dd className="text-text-secondary font-mono">
+                        {entry.subsystem}
+                      </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="text-panel-500 min-w-[120px]">Framework</dt>
-                      <dd className="text-panel-200">{entry.frameworkId}</dd>
+                      <dt className="text-text-muted min-w-[120px]">
+                        Framework
+                      </dt>
+                      <dd className="text-text-secondary">
+                        {entry.frameworkId}
+                      </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="text-panel-500 min-w-[120px]">Source IP</dt>
-                      <dd className="text-panel-200 font-mono">{entry.sourceIp}</dd>
+                      <dt className="text-text-muted min-w-[120px]">
+                        Source IP
+                      </dt>
+                      <dd className="text-text-secondary font-mono">
+                        {entry.sourceIp}
+                      </dd>
                     </div>
                     <div className="flex gap-2">
-                      <dt className="text-panel-500 min-w-[120px]">Session ID</dt>
+                      <dt className="text-text-muted min-w-[120px]">
+                        Session ID
+                      </dt>
                       <dd>
                         <button
                           className="text-fizzbuzz-400 hover:underline font-mono text-[11px]"
@@ -406,22 +470,26 @@ function TimelineNode({
                     </div>
                     {entry.evaluationSessionId && (
                       <div className="flex gap-2">
-                        <dt className="text-panel-500 min-w-[120px]">Eval Session</dt>
-                        <dd className="text-fizzbuzz-400 font-mono text-[11px]">{entry.evaluationSessionId}</dd>
+                        <dt className="text-text-muted min-w-[120px]">
+                          Eval Session
+                        </dt>
+                        <dd className="text-fizzbuzz-400 font-mono text-[11px]">
+                          {entry.evaluationSessionId}
+                        </dd>
                       </div>
                     )}
                   </dl>
                 </div>
                 {entry.metadata && Object.keys(entry.metadata).length > 0 && (
                   <div>
-                    <h4 className="text-panel-400 uppercase tracking-wider text-[10px] mb-2 font-medium">
+                    <h4 className="text-text-secondary uppercase tracking-wider text-[10px] mb-2 font-medium">
                       Metadata
                     </h4>
                     <dl className="space-y-1">
                       {Object.entries(entry.metadata).map(([key, value]) => (
                         <div key={key} className="flex gap-2">
-                          <dt className="text-panel-500 font-mono">{key}</dt>
-                          <dd className="text-panel-200">{value}</dd>
+                          <dt className="text-text-muted font-mono">{key}</dt>
+                          <dd className="text-text-secondary">{value}</dd>
                         </div>
                       ))}
                     </dl>
@@ -461,7 +529,11 @@ function PaginationControls({
   } else {
     pageNumbers.push(1);
     if (page > 3) pageNumbers.push("ellipsis");
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
+    for (
+      let i = Math.max(2, page - 1);
+      i <= Math.min(totalPages - 1, page + 1);
+      i++
+    ) {
       pageNumbers.push(i);
     }
     if (page < totalPages - 2) pageNumbers.push("ellipsis");
@@ -469,34 +541,36 @@ function PaginationControls({
   }
 
   return (
-    <div className="flex items-center justify-between px-3 py-3 border-t border-panel-700">
-      <div className="flex items-center gap-2 text-xs text-panel-400">
+    <div className="flex items-center justify-between px-3 py-3 border-t border-border-subtle">
+      <div className="flex items-center gap-2 text-xs text-text-secondary">
         <span>Rows per page:</span>
         <select
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200"
+          className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary"
         >
           {PAGE_SIZE_OPTIONS.map((size) => (
-            <option key={size} value={size}>{size}</option>
+            <option key={size} value={size}>
+              {size}
+            </option>
           ))}
         </select>
       </div>
 
-      <span className="text-xs text-panel-400">
+      <span className="text-xs text-text-secondary">
         Showing {startEntry}-{endEntry} of {totalCount.toLocaleString()} entries
       </span>
 
       <div className="flex items-center gap-1">
         <button
-          className="px-2 py-1 text-xs rounded bg-panel-800 text-panel-300 hover:bg-panel-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           disabled={page <= 1}
           onClick={() => onPageChange(1)}
         >
           First
         </button>
         <button
-          className="px-2 py-1 text-xs rounded bg-panel-800 text-panel-300 hover:bg-panel-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
         >
@@ -504,14 +578,19 @@ function PaginationControls({
         </button>
         {pageNumbers.map((p, idx) =>
           p === "ellipsis" ? (
-            <span key={`ellipsis-${idx}`} className="px-1 text-xs text-panel-500">...</span>
+            <span
+              key={`ellipsis-${idx}`}
+              className="px-1 text-xs text-text-muted"
+            >
+              ...
+            </span>
           ) : (
             <button
               key={p}
               className={`px-2 py-1 text-xs rounded transition-colors ${
                 p === page
                   ? "bg-fizzbuzz-600 text-white"
-                  : "bg-panel-800 text-panel-300 hover:bg-panel-700"
+                  : "bg-surface-raised text-text-secondary hover:bg-surface-overlay"
               }`}
               onClick={() => onPageChange(p)}
             >
@@ -520,14 +599,14 @@ function PaginationControls({
           ),
         )}
         <button
-          className="px-2 py-1 text-xs rounded bg-panel-800 text-panel-300 hover:bg-panel-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
         >
           Next
         </button>
         <button
-          className="px-2 py-1 text-xs rounded bg-panel-800 text-panel-300 hover:bg-panel-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-2 py-1 text-xs rounded bg-surface-raised text-text-secondary hover:bg-surface-overlay disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           disabled={page >= totalPages}
           onClick={() => onPageChange(totalPages)}
         >
@@ -560,7 +639,9 @@ export default function AuditLogPage() {
   // Filters
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(getDefaultDateTo);
-  const [selectedActions, setSelectedActions] = useState<AuditEntry["action"][]>([]);
+  const [selectedActions, setSelectedActions] = useState<
+    AuditEntry["action"][]
+  >([]);
   const [actorFilter, setActorFilter] = useState("");
   const [severityFilter, setSeverityFilter] = useState("");
   const [outcomeFilter, setOutcomeFilter] = useState("");
@@ -581,17 +662,32 @@ export default function AuditLogPage() {
   // Derived filter object
   // ---------------------------------------------------------------------------
 
-  const filters: AuditLogFilter = useMemo(() => ({
-    dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined,
-    dateTo: dateTo ? new Date(dateTo + "T23:59:59.999Z").toISOString() : undefined,
-    actions: selectedActions.length > 0 ? selectedActions : undefined,
-    searchQuery: searchQuery || undefined,
-    outcome: (outcomeFilter as AuditEntry["outcome"]) || undefined,
-    severity: (severityFilter as AuditEntry["severity"]) || undefined,
-    frameworkId: frameworkFilter || undefined,
-    subsystem: subsystemFilter || undefined,
-    actor: actorFilter || undefined,
-  }), [dateFrom, dateTo, selectedActions, searchQuery, outcomeFilter, severityFilter, frameworkFilter, subsystemFilter, actorFilter]);
+  const filters: AuditLogFilter = useMemo(
+    () => ({
+      dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined,
+      dateTo: dateTo
+        ? new Date(dateTo + "T23:59:59.999Z").toISOString()
+        : undefined,
+      actions: selectedActions.length > 0 ? selectedActions : undefined,
+      searchQuery: searchQuery || undefined,
+      outcome: (outcomeFilter as AuditEntry["outcome"]) || undefined,
+      severity: (severityFilter as AuditEntry["severity"]) || undefined,
+      frameworkId: frameworkFilter || undefined,
+      subsystem: subsystemFilter || undefined,
+      actor: actorFilter || undefined,
+    }),
+    [
+      dateFrom,
+      dateTo,
+      selectedActions,
+      searchQuery,
+      outcomeFilter,
+      severityFilter,
+      frameworkFilter,
+      subsystemFilter,
+      actorFilter,
+    ],
+  );
 
   // ---------------------------------------------------------------------------
   // Data fetching
@@ -600,7 +696,11 @@ export default function AuditLogPage() {
   const fetchData = useCallback(async () => {
     try {
       const result = await provider.getAuditLogPaginated(
-        filters, page, pageSize, sortField, sortDirection,
+        filters,
+        page,
+        pageSize,
+        sortField,
+        sortDirection,
       );
 
       // Track new entries for real-time animation
@@ -625,7 +725,16 @@ export default function AuditLogPage() {
     } finally {
       setLoading(false);
     }
-  }, [provider, filters, page, pageSize, sortField, sortDirection, realTimeEnabled, data]);
+  }, [
+    provider,
+    filters,
+    page,
+    pageSize,
+    sortField,
+    sortDirection,
+    realTimeEnabled,
+    data,
+  ]);
 
   useEffect(() => {
     setLoading(true);
@@ -643,15 +752,18 @@ export default function AuditLogPage() {
   // Handlers
   // ---------------------------------------------------------------------------
 
-  const handleSort = useCallback((field: AuditLogSortField) => {
-    if (field === sortField) {
-      setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(field);
-      setSortDirection("desc");
-    }
-    setPage(1);
-  }, [sortField]);
+  const handleSort = useCallback(
+    (field: AuditLogSortField) => {
+      if (field === sortField) {
+        setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+      } else {
+        setSortField(field);
+        setSortDirection("desc");
+      }
+      setPage(1);
+    },
+    [sortField],
+  );
 
   const handlePageSizeChange = useCallback((size: number) => {
     setPageSize(size);
@@ -702,47 +814,77 @@ export default function AuditLogPage() {
   // Export handlers
   // ---------------------------------------------------------------------------
 
-  const exportAll = useCallback(async (format: "csv" | "json") => {
-    // Fetch all entries matching current filters (no pagination)
-    const all = await provider.getAuditLogPaginated(
-      filters, 1, 10000, sortField, sortDirection,
-    );
+  const exportAll = useCallback(
+    async (format: "csv" | "json") => {
+      // Fetch all entries matching current filters (no pagination)
+      const all = await provider.getAuditLogPaginated(
+        filters,
+        1,
+        10000,
+        sortField,
+        sortDirection,
+      );
 
-    let content: string;
-    let mimeType: string;
-    let filename: string;
+      let content: string;
+      let mimeType: string;
+      let filename: string;
 
-    if (format === "csv") {
-      const headers = [
-        "id", "timestamp", "action", "severity", "outcome", "actor",
-        "subsystem", "frameworkId", "description", "sourceIp",
-        "sessionCorrelationId", "evaluationSessionId", "metadata",
-      ];
-      const rows = all.entries.map((e) => [
-        e.id, e.timestamp, e.action, e.severity, e.outcome, e.actor,
-        e.subsystem, e.frameworkId ?? "", e.description, e.sourceIp,
-        e.sessionCorrelationId, e.evaluationSessionId ?? "",
-        e.metadata ? JSON.stringify(e.metadata) : "",
-      ].map(escapeCsvField).join(","));
-      content = [headers.join(","), ...rows].join("\n");
-      mimeType = "text/csv";
-      filename = `audit-log-export-${new Date().toISOString().slice(0, 10)}.csv`;
-    } else {
-      content = JSON.stringify(all.entries, null, 2);
-      mimeType = "application/json";
-      filename = `audit-log-export-${new Date().toISOString().slice(0, 10)}.json`;
-    }
+      if (format === "csv") {
+        const headers = [
+          "id",
+          "timestamp",
+          "action",
+          "severity",
+          "outcome",
+          "actor",
+          "subsystem",
+          "frameworkId",
+          "description",
+          "sourceIp",
+          "sessionCorrelationId",
+          "evaluationSessionId",
+          "metadata",
+        ];
+        const rows = all.entries.map((e) =>
+          [
+            e.id,
+            e.timestamp,
+            e.action,
+            e.severity,
+            e.outcome,
+            e.actor,
+            e.subsystem,
+            e.frameworkId ?? "",
+            e.description,
+            e.sourceIp,
+            e.sessionCorrelationId,
+            e.evaluationSessionId ?? "",
+            e.metadata ? JSON.stringify(e.metadata) : "",
+          ]
+            .map(escapeCsvField)
+            .join(","),
+        );
+        content = [headers.join(","), ...rows].join("\n");
+        mimeType = "text/csv";
+        filename = `audit-log-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      } else {
+        content = JSON.stringify(all.entries, null, 2);
+        mimeType = "application/json";
+        filename = `audit-log-export-${new Date().toISOString().slice(0, 10)}.json`;
+      }
 
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [provider, filters, sortField, sortDirection]);
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+    [provider, filters, sortField, sortDirection],
+  );
 
   // ---------------------------------------------------------------------------
   // Timeline grouping
@@ -780,15 +922,17 @@ export default function AuditLogPage() {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-panel-50">Audit Log</h1>
+            <h1 className="heading-page">Audit Log</h1>
             {data && (
-              <span className="inline-flex items-center rounded-full bg-panel-800 border border-panel-600 px-2.5 py-0.5 text-xs font-medium text-panel-300">
+              <span className="inline-flex items-center rounded-full bg-surface-raised border border-border-default px-2.5 py-0.5 text-xs font-medium text-text-secondary">
                 {data.totalCount.toLocaleString()} entries
               </span>
             )}
           </div>
-          <p className="text-sm text-panel-400 mt-1">
-            Centralized audit trail for SOX Section 302/404, GDPR Article 30, and HIPAA Security Rule compliance. Supports forensic investigation, incident correlation, and regulatory evidence production.
+          <p className="text-sm text-text-secondary mt-1">
+            Centralized audit trail for SOX Section 302/404, GDPR Article 30,
+            and HIPAA Security Rule compliance. Supports forensic investigation,
+            incident correlation, and regulatory evidence production.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -806,7 +950,7 @@ export default function AuditLogPage() {
                 }`}
               />
             </button>
-            <span className="text-xs text-panel-400 flex items-center gap-1.5">
+            <span className="text-xs text-text-secondary flex items-center gap-1.5">
               {realTimeEnabled && (
                 <span className="h-2 w-2 rounded-full bg-fizzbuzz-400 animate-pulse" />
               )}
@@ -817,13 +961,13 @@ export default function AuditLogPage() {
           {/* Export buttons */}
           <button
             onClick={() => exportAll("csv")}
-            className="px-3 py-1.5 text-xs rounded bg-panel-800 border border-panel-600 text-panel-300 hover:bg-panel-700 transition-colors"
+            className="px-3 py-1.5 text-xs rounded bg-surface-raised border border-border-default text-text-secondary hover:bg-surface-overlay transition-colors"
           >
             Export CSV
           </button>
           <button
             onClick={() => exportAll("json")}
-            className="px-3 py-1.5 text-xs rounded bg-panel-800 border border-panel-600 text-panel-300 hover:bg-panel-700 transition-colors"
+            className="px-3 py-1.5 text-xs rounded bg-surface-raised border border-border-default text-text-secondary hover:bg-surface-overlay transition-colors"
           >
             Export JSON
           </button>
@@ -836,29 +980,41 @@ export default function AuditLogPage() {
           <div className="flex flex-wrap items-end gap-3">
             {/* Date range */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">From</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                From
+              </label>
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[130px]"
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[130px]"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">To</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                To
+              </label>
               <input
                 type="date"
                 value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[130px]"
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[130px]"
               />
             </div>
 
             {/* Action type multi-select */}
             <div className="flex flex-col gap-1 relative">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">Action</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                Action
+              </label>
               <button
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[160px] text-left"
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[160px] text-left"
                 onClick={() => setActionDropdownOpen(!actionDropdownOpen)}
               >
                 {selectedActions.length === 0
@@ -866,11 +1022,11 @@ export default function AuditLogPage() {
                   : `${selectedActions.length} selected`}
               </button>
               {actionDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 z-50 bg-panel-800 border border-panel-600 rounded shadow-lg py-1 w-[200px]">
+                <div className="absolute top-full left-0 mt-1 z-50 bg-surface-raised border border-border-default rounded shadow-lg py-1 w-[200px]">
                   {ACTION_OPTIONS.map((opt) => (
                     <label
                       key={opt.value}
-                      className="flex items-center gap-2 px-3 py-1 hover:bg-panel-700 cursor-pointer text-xs text-panel-200"
+                      className="flex items-center gap-2 px-3 py-1 hover:bg-surface-overlay cursor-pointer text-xs text-text-secondary"
                     >
                       <input
                         type="checkbox"
@@ -887,88 +1043,126 @@ export default function AuditLogPage() {
 
             {/* Actor */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">Actor</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                Actor
+              </label>
               <input
                 type="text"
                 value={actorFilter}
-                onChange={(e) => { setActorFilter(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setActorFilter(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Filter by actor"
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[140px]"
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[140px]"
               />
             </div>
 
             {/* Severity */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">Severity</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                Severity
+              </label>
               <select
                 value={severityFilter}
-                onChange={(e) => { setSeverityFilter(e.target.value); setPage(1); }}
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[100px]"
+                onChange={(e) => {
+                  setSeverityFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[100px]"
               >
                 {SEVERITY_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Outcome */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">Outcome</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                Outcome
+              </label>
               <select
                 value={outcomeFilter}
-                onChange={(e) => { setOutcomeFilter(e.target.value); setPage(1); }}
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[100px]"
+                onChange={(e) => {
+                  setOutcomeFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[100px]"
               >
                 {OUTCOME_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Framework */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">Framework</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                Framework
+              </label>
               <select
                 value={frameworkFilter}
-                onChange={(e) => { setFrameworkFilter(e.target.value); setPage(1); }}
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[160px]"
+                onChange={(e) => {
+                  setFrameworkFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[160px]"
               >
                 {FRAMEWORK_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Subsystem */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">Subsystem</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                Subsystem
+              </label>
               <select
                 value={subsystemFilter}
-                onChange={(e) => { setSubsystemFilter(e.target.value); setPage(1); }}
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[160px]"
+                onChange={(e) => {
+                  setSubsystemFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[160px]"
               >
                 {SUBSYSTEM_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             {/* Search */}
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-panel-500 uppercase tracking-wider">Search</label>
+              <label className="text-[10px] text-text-muted uppercase tracking-wider">
+                Search
+              </label>
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
                 placeholder="Search descriptions..."
-                className="bg-panel-800 border border-panel-600 rounded px-2 py-1 text-xs text-panel-200 w-[160px]"
+                className="bg-surface-raised border border-border-default rounded px-2 py-1 text-xs text-text-secondary w-[160px]"
               />
             </div>
 
             {/* Clear filters */}
             <button
               onClick={clearFilters}
-              className="px-3 py-1 text-xs rounded bg-panel-700 text-panel-300 hover:bg-panel-600 transition-colors"
+              className="px-3 py-1 text-xs rounded bg-surface-overlay text-text-secondary hover:bg-panel-600 transition-colors"
             >
               Clear filters
             </button>
@@ -977,13 +1171,13 @@ export default function AuditLogPage() {
       </Card>
 
       {/* View Toggle */}
-      <div className="flex items-center gap-1 bg-panel-800 rounded-lg p-0.5 w-fit">
+      <div className="flex items-center gap-1 bg-surface-raised rounded-lg p-0.5 w-fit">
         <button
           onClick={() => setViewMode("table")}
           className={`px-3 py-1 text-xs rounded-md transition-colors ${
             viewMode === "table"
-              ? "bg-panel-700 text-panel-50"
-              : "text-panel-400 hover:text-panel-200"
+              ? "bg-surface-overlay text-text-primary"
+              : "text-text-secondary hover:text-text-secondary"
           }`}
         >
           Table View
@@ -992,8 +1186,8 @@ export default function AuditLogPage() {
           onClick={() => setViewMode("timeline")}
           className={`px-3 py-1 text-xs rounded-md transition-colors ${
             viewMode === "timeline"
-              ? "bg-panel-700 text-panel-50"
-              : "text-panel-400 hover:text-panel-200"
+              ? "bg-surface-overlay text-text-primary"
+              : "text-text-secondary hover:text-text-secondary"
           }`}
         >
           Timeline View
@@ -1004,25 +1198,70 @@ export default function AuditLogPage() {
       {loading && !data ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-sm text-panel-400">Loading audit log...</p>
+            <p className="text-sm text-text-secondary">Loading audit log...</p>
           </CardContent>
         </Card>
       ) : data && viewMode === "table" ? (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
-              <thead className="border-b border-panel-700 bg-panel-800/50">
+              <thead className="border-b border-border-subtle bg-surface-raised/50">
                 <tr>
-                  <SortableHeader label="Timestamp" field="timestamp" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} width="140px" />
-                  <SortableHeader label="Severity" field="severity" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} width="80px" />
-                  <SortableHeader label="Action" field="action" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} width="120px" />
-                  <SortableHeader label="Actor" field="actor" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} width="140px" />
-                  <SortableHeader label="Subsystem" field="subsystem" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} width="130px" />
-                  <SortableHeader label="Outcome" field="outcome" currentField={sortField} currentDirection={sortDirection} onSort={handleSort} width="80px" />
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-panel-400" style={{ width: "100px" }}>
+                  <SortableHeader
+                    label="Timestamp"
+                    field="timestamp"
+                    currentField={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    width="140px"
+                  />
+                  <SortableHeader
+                    label="Severity"
+                    field="severity"
+                    currentField={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    width="80px"
+                  />
+                  <SortableHeader
+                    label="Action"
+                    field="action"
+                    currentField={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    width="120px"
+                  />
+                  <SortableHeader
+                    label="Actor"
+                    field="actor"
+                    currentField={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    width="140px"
+                  />
+                  <SortableHeader
+                    label="Subsystem"
+                    field="subsystem"
+                    currentField={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    width="130px"
+                  />
+                  <SortableHeader
+                    label="Outcome"
+                    field="outcome"
+                    currentField={sortField}
+                    currentDirection={sortDirection}
+                    onSort={handleSort}
+                    width="80px"
+                  />
+                  <th
+                    className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-text-secondary"
+                    style={{ width: "100px" }}
+                  >
                     Framework
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-panel-400">
+                  <th className="px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-text-secondary">
                     Description
                   </th>
                 </tr>
@@ -1039,7 +1278,10 @@ export default function AuditLogPage() {
                 ))}
                 {data.entries.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-3 py-12 text-center text-sm text-panel-400">
+                    <td
+                      colSpan={8}
+                      className="px-3 py-12 text-center text-sm text-text-secondary"
+                    >
                       No audit entries match the current filters.
                     </td>
                   </tr>
@@ -1074,7 +1316,7 @@ export default function AuditLogPage() {
                 )),
               )}
               {data.entries.length === 0 && (
-                <p className="text-sm text-panel-400 text-center py-12">
+                <p className="text-sm text-text-secondary text-center py-12">
                   No audit entries match the current filters.
                 </p>
               )}

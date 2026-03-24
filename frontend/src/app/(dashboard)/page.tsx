@@ -1,16 +1,24 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ThroughputWidget } from "@/components/widgets/throughput-widget";
-import { HealthMatrixWidget } from "@/components/widgets/health-matrix-widget";
-import { SLABudgetWidget } from "@/components/widgets/sla-budget-widget";
-import { IncidentsWidget } from "@/components/widgets/incidents-widget";
-import { CostWidget } from "@/components/widgets/cost-widget";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Reveal } from "@/components/ui/reveal";
 import { ConsensusWidget } from "@/components/widgets/consensus-widget";
+import { CostWidget } from "@/components/widgets/cost-widget";
+import { HealthMatrixWidget } from "@/components/widgets/health-matrix-widget";
+import { IncidentsWidget } from "@/components/widgets/incidents-widget";
+import { SLABudgetWidget } from "@/components/widgets/sla-budget-widget";
+import { ThroughputWidget } from "@/components/widgets/throughput-widget";
 
 /**
  * Executive Dashboard — The primary operational view of the Enterprise
  * FizzBuzz Platform. Provides real-time visibility into evaluation
  * throughput, infrastructure health, SLA compliance, incident status,
  * FinOps expenditure, and distributed consensus state.
+ *
+ * The asymmetric bento grid layout establishes visual hierarchy through
+ * variable card spans: the throughput hero occupies a 2x2 region,
+ * the health matrix stretches full width, and secondary metrics
+ * fill single cells. This deliberate asymmetry creates editorial
+ * rhythm that distinguishes the layout from uniform dashboard grids.
  *
  * This is a Server Component that composes Client Component widgets.
  * Each widget manages its own polling interval via the DataProvider
@@ -19,107 +27,119 @@ import { ConsensusWidget } from "@/components/widgets/consensus-widget";
  */
 export default function ExecutiveDashboard() {
   return (
-    <div className="space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-panel-50">
-          Enterprise FizzBuzz Operations Center
-        </h1>
-        <p className="mt-1 text-sm text-panel-400">
-          Centralized monitoring and administration for mission-critical FizzBuzz
-          evaluation infrastructure. All telemetry data refreshes automatically.
-        </p>
-      </div>
+    <div className="relative min-h-full">
+      {/* Grain overlay — editorial texture on page background */}
+      <div className="grain pointer-events-none absolute inset-0 z-0" />
 
-      {/* Widget grid — 3 columns on desktop, 2 on tablet, 1 on mobile */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {/* Throughput — Primary KPI, top-left prominence */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Evaluation Pipeline
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <ThroughputWidget />
-          </CardContent>
-        </Card>
+      <div className="relative z-10 space-y-8">
+        {/* Hero header */}
+        <Reveal>
+          <div>
+            <h1 className="heading-display text-gradient-amber">
+              Operations Center
+            </h1>
+            <p className="mt-2 text-sm text-text-secondary max-w-xl">
+              Centralized monitoring and administration for mission-critical
+              FizzBuzz evaluation infrastructure. All telemetry data refreshes
+              automatically.
+            </p>
+          </div>
+        </Reveal>
 
-        {/* Health Matrix — Spans full width on large screens for density */}
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Infrastructure Health Matrix
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <HealthMatrixWidget />
-          </CardContent>
-        </Card>
+        {/* Asymmetric bento grid */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 auto-rows-auto">
+          {/* Throughput — Hero card, 2x2 prominence */}
+          <Reveal delay={50}>
+            <Card
+              variant="featured"
+              className="xl:col-span-2 xl:row-span-2 h-full"
+            >
+              <CardHeader>
+                <h2 className="heading-section">Evaluation Pipeline</h2>
+              </CardHeader>
+              <CardContent>
+                <ThroughputWidget />
+              </CardContent>
+            </Card>
+          </Reveal>
 
-        {/* SLA Budget */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              SLA Compliance
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <SLABudgetWidget />
-          </CardContent>
-        </Card>
+          {/* SLA Budget — Standard cell beside throughput */}
+          <Reveal delay={100}>
+            <Card>
+              <CardHeader>
+                <h2 className="heading-section">SLA Compliance</h2>
+              </CardHeader>
+              <CardContent>
+                <SLABudgetWidget />
+              </CardContent>
+            </Card>
+          </Reveal>
 
-        {/* Incidents */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Incident Status
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <IncidentsWidget />
-          </CardContent>
-        </Card>
+          {/* Incidents — Standard cell */}
+          <Reveal delay={150}>
+            <Card>
+              <CardHeader>
+                <h2 className="heading-section">Incident Status</h2>
+              </CardHeader>
+              <CardContent>
+                <IncidentsWidget />
+              </CardContent>
+            </Card>
+          </Reveal>
 
-        {/* Cost */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              FinOps Expenditure
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <CostWidget />
-          </CardContent>
-        </Card>
+          {/* Health Matrix — Full width span for maximum density */}
+          <Reveal delay={200}>
+            <Card className="xl:col-span-3">
+              <CardHeader>
+                <h2 className="heading-section">
+                  Infrastructure Health Matrix
+                </h2>
+              </CardHeader>
+              <CardContent>
+                <HealthMatrixWidget />
+              </CardContent>
+            </Card>
+          </Reveal>
 
-        {/* Consensus */}
-        <Card>
-          <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Paxos Consensus
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <ConsensusWidget />
-          </CardContent>
-        </Card>
+          {/* Cost — Standard cell */}
+          <Reveal delay={250}>
+            <Card>
+              <CardHeader>
+                <h2 className="heading-section">FinOps Expenditure</h2>
+              </CardHeader>
+              <CardContent>
+                <CostWidget />
+              </CardContent>
+            </Card>
+          </Reveal>
 
-        {/* Placeholder for future widgets */}
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <h2 className="text-sm font-semibold text-panel-100">
-              Blockchain Ledger
-            </h2>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-24 items-center justify-center rounded border border-panel-700 bg-panel-900">
-              <span className="text-xs text-panel-500">
-                Block explorer integration pending deployment
-              </span>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Consensus — Standard cell */}
+          <Reveal delay={300}>
+            <Card>
+              <CardHeader>
+                <h2 className="heading-section">Paxos Consensus</h2>
+              </CardHeader>
+              <CardContent>
+                <ConsensusWidget />
+              </CardContent>
+            </Card>
+          </Reveal>
+
+          {/* Blockchain Ledger — Wide placeholder */}
+          <Reveal delay={350}>
+            <Card className="xl:col-span-2" variant="elevated">
+              <CardHeader>
+                <h2 className="heading-section">Blockchain Ledger</h2>
+              </CardHeader>
+              <CardContent>
+                <EmptyState
+                  title="Block Explorer"
+                  description="Distributed ledger integration is pending deployment. The blockchain subsystem will provide immutable audit trails for all FizzBuzz evaluation records."
+                />
+              </CardContent>
+            </Card>
+          </Reveal>
+        </div>
       </div>
     </div>
   );
