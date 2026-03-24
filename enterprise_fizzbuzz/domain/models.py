@@ -826,6 +826,24 @@ class EventType(Enum):
     OVL_TAR_PACKED = auto()
     OVL_PROVIDER_MOUNTED = auto()
 
+    # FizzRegistry: OCI Distribution-Compliant Image Registry
+    REG_BLOB_PUSHED = auto()
+    REG_BLOB_PULLED = auto()
+    REG_BLOB_DELETED = auto()
+    REG_MANIFEST_PUSHED = auto()
+    REG_MANIFEST_PULLED = auto()
+    REG_MANIFEST_DELETED = auto()
+    REG_TAG_CREATED = auto()
+    REG_TAG_DELETED = auto()
+    REG_IMAGE_BUILT = auto()
+    REG_LAYER_CACHED = auto()
+    REG_GC_COMPLETED = auto()
+    REG_IMAGE_SIGNED = auto()
+    REG_IMAGE_VERIFIED = auto()
+    REG_VULN_SCANNED = auto()
+    REG_REPO_CREATED = auto()
+    REG_DASHBOARD_RENDERED = auto()
+
 
 class NodeState(Enum):
     """Membership states for nodes in the P2P Gossip Network.

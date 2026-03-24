@@ -506,6 +506,12 @@ from enterprise_fizzbuzz.infrastructure.fizzoci import (
     OCIRuntimeMiddleware,
     create_fizzoci_subsystem,
 )
+from enterprise_fizzbuzz.infrastructure.fizzregistry import (
+    FizzRegistryMiddleware,
+    RegistryAPI,
+    RegistryDashboard,
+    create_fizzregistry_subsystem,
+)
 from enterprise_fizzbuzz.infrastructure.p2p_network import (
     P2PDashboard,
     P2PMiddleware,
@@ -3674,6 +3680,38 @@ def build_argument_parser() -> argparse.ArgumentParser:
         "--overlay-cache",
         action="store_true",
         help="Display layer cache statistics after execution",
+    )
+
+    # FizzRegistry — OCI Distribution-Compliant Image Registry
+    parser.add_argument(
+        "--registry",
+        action="store_true",
+        help="Enable FizzRegistry: OCI distribution-compliant image registry with content-addressable blobs, manifest management, and FizzFile DSL",
+    )
+    parser.add_argument(
+        "--registry-catalog",
+        action="store_true",
+        help="Display registry repository catalog after execution",
+    )
+    parser.add_argument(
+        "--registry-build",
+        action="store_true",
+        help="Display image builder statistics after execution",
+    )
+    parser.add_argument(
+        "--registry-gc",
+        action="store_true",
+        help="Display garbage collection report after execution",
+    )
+    parser.add_argument(
+        "--registry-scan",
+        action="store_true",
+        help="Display vulnerability scan summary after execution",
+    )
+    parser.add_argument(
+        "--registry-sign",
+        action="store_true",
+        help="Display image signing statistics after execution",
     )
 
     # FizzPager — Incident Paging & Escalation Engine
@@ -8008,6 +8046,36 @@ def main(argv: Optional[list[str]] = None) -> int:
                 "  +---------------------------------------------------------+"
             )
 
+    # ----------------------------------------------------------------
+    # FizzRegistry — OCI Distribution-Compliant Image Registry
+    # ----------------------------------------------------------------
+    registry_api_instance = None
+    registry_middleware_instance = None
+
+    if args.registry or args.registry_catalog or args.registry_build or args.registry_gc or args.registry_scan or args.registry_sign:
+        registry_api_instance, registry_middleware_instance = create_fizzregistry_subsystem(
+            max_blobs=config.fizzregistry_max_blobs,
+            max_repos=config.fizzregistry_max_repos,
+            max_tags=config.fizzregistry_max_tags,
+            gc_grace_period=config.fizzregistry_gc_grace_period,
+            dashboard_width=config.fizzregistry_dashboard_width,
+            enable_dashboard=args.registry_catalog,
+            event_bus=event_bus,
+        )
+        builder.with_middleware(registry_middleware_instance)
+
+        if not args.no_banner:
+            print(
+                "  +---------------------------------------------------------+\n"
+                "  | FIZZREGISTRY: OCI DISTRIBUTION-COMPLIANT REGISTRY      |\n"
+                f"  | Max Blobs: {config.fizzregistry_max_blobs:<10} Max Repos: {config.fizzregistry_max_repos:<10}    |\n"
+                f"  | Max Tags: {config.fizzregistry_max_tags:<10} GC Grace: {config.fizzregistry_gc_grace_period:<10.0f}   |\n"
+                "  | Content-addressable blobs, SHA-256 deduplication       |\n"
+                "  | FizzFile DSL, layer caching, signing, vuln scanning    |\n"
+                "  | OCI Distribution Spec v1.0.0 compliant                 |\n"
+                "  +---------------------------------------------------------+"
+            )
+
     # Add Allocator middleware (priority 50, runs early for memory setup)
     if alloc_middleware is not None:
         builder.with_middleware(alloc_middleware)
@@ -11444,6 +11512,41 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(overlay_middleware_instance.render_cache_stats())
     elif args.overlay_cache and overlay_middleware_instance is None:
         print("\n  FizzOverlay not enabled. Use --overlay to enable.\n")
+
+    # FizzRegistry Catalog (post-execution)
+    if args.registry_catalog and registry_middleware_instance is not None:
+        print()
+        print(registry_middleware_instance.render_catalog())
+    elif args.registry_catalog and registry_middleware_instance is None:
+        print("\n  FizzRegistry not enabled. Use --registry to enable.\n")
+
+    # FizzRegistry Build Stats (post-execution)
+    if args.registry_build and registry_middleware_instance is not None:
+        print()
+        print(registry_middleware_instance.render_build_stats())
+    elif args.registry_build and registry_middleware_instance is None:
+        print("\n  FizzRegistry not enabled. Use --registry to enable.\n")
+
+    # FizzRegistry GC Report (post-execution)
+    if args.registry_gc and registry_middleware_instance is not None:
+        print()
+        print(registry_middleware_instance.render_gc_report())
+    elif args.registry_gc and registry_middleware_instance is None:
+        print("\n  FizzRegistry not enabled. Use --registry to enable.\n")
+
+    # FizzRegistry Scan Summary (post-execution)
+    if args.registry_scan and registry_middleware_instance is not None:
+        print()
+        print(registry_middleware_instance.render_scan_summary())
+    elif args.registry_scan and registry_middleware_instance is None:
+        print("\n  FizzRegistry not enabled. Use --registry to enable.\n")
+
+    # FizzRegistry Sign Stats (post-execution)
+    if args.registry_sign and registry_middleware_instance is not None:
+        print()
+        print(registry_middleware_instance.render_stats())
+    elif args.registry_sign and registry_middleware_instance is None:
+        print("\n  FizzRegistry not enabled. Use --registry to enable.\n")
 
     # FizzGC Dashboard (post-execution)
     if args.gc_dashboard and gc_middleware_instance is not None:

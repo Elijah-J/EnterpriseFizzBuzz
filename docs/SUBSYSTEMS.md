@@ -65,6 +65,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzCgroup Control Group Resource Accounting Architecture](#fizzcgroup-control-group-resource-accounting-architecture)
 - [FizzOverlay Copy-on-Write Union Filesystem Architecture](#fizzoverlay-copy-on-write-union-filesystem-architecture)
 - [FizzOCI OCI-Compliant Container Runtime Architecture](#fizzoci-oci-compliant-container-runtime-architecture)
+- [FizzRegistry OCI Distribution-Compliant Image Registry Architecture](#fizzregistry-oci-distribution-compliant-image-registry-architecture)
 
 ---
 
@@ -5531,3 +5532,143 @@ The `OCIRuntimeMiddleware` integrates into the middleware pipeline at priority 1
 | Test count | ~350 |
 
 FizzOCI is the layer that composes raw kernel primitives into containers. FizzNS provides isolation. FizzCgroup provides resource enforcement. FizzOCI binds them together according to the OCI runtime specification -- the industry-standard contract that every container manager expects its low-level runtime to implement. Without FizzOCI, the platform has isolation and resource limits but no standard interface for creating containers from them. With FizzOCI, a higher-level daemon can call `create`, `start`, `kill`, `delete`, and `state` with the same semantics as runc, crun, or youki. The container stack now has its low-level runtime.
+
+## FizzRegistry OCI Distribution-Compliant Image Registry Architecture
+
+> Module: `enterprise_fizzbuzz/infrastructure/fizzregistry.py`
+
+FizzRegistry is an OCI Distribution-compliant image registry implementing the OCI Distribution Specification (v1.0.0) -- the standard API for storing and serving container images. The registry provides content-addressable blob storage, manifest management, push/pull APIs, a FizzFile build DSL, layer caching, image signing, vulnerability scanning, and garbage collection.
+
+### Registry Storage
+
+The registry stores two categories of objects: blobs and manifests.
+
+```
+                    ┌─────────────────────────────────────────────────┐
+                    │              FizzRegistry                       │
+                    │                                                 │
+                    │  ┌──────────────┐     ┌───────────────────┐     │
+                    │  │  BlobStore   │     │  ManifestStore    │     │
+                    │  │              │     │                   │     │
+                    │  │  SHA-256     │◄────│  <repo>:<ref>     │     │
+                    │  │  content-    │     │  referential      │     │
+                    │  │  addressable │     │  integrity        │     │
+                    │  │  dedup       │     │  validation       │     │
+                    │  │  ref count   │     │                   │     │
+                    │  └──────────────┘     └───────────────────┘     │
+                    │         ▲                      ▲                │
+                    │         │                      │                │
+                    │  ┌──────┴──────────────────────┴──────────┐     │
+                    │  │           Registry API                 │     │
+                    │  │                                        │     │
+                    │  │  GET  /v2/                             │     │
+                    │  │  HEAD /v2/<name>/blobs/<digest>        │     │
+                    │  │  GET  /v2/<name>/blobs/<digest>        │     │
+                    │  │  POST /v2/<name>/blobs/uploads/        │     │
+                    │  │  PUT  /v2/<name>/manifests/<reference> │     │
+                    │  │  GET  /v2/<name>/manifests/<reference> │     │
+                    │  │  GET  /v2/_catalog                     │     │
+                    │  │  GET  /v2/<name>/tags/list             │     │
+                    │  └───────────────────────────────────────┘     │
+                    └─────────────────────────────────────────────────┘
+```
+
+**`BlobStore`** -- Content-addressable storage for binary blobs (image layers and config blobs) indexed by SHA-256 digest. Operations: `exists(digest)`, `get(digest)`, `put(data)` (returns computed digest), `delete(digest)` (only if unreferenced), `stat(digest)` (size and media type). Deduplication is automatic: uploading a blob with an existing digest is a no-op.
+
+**`ManifestStore`** -- Stores OCI manifests and image indexes indexed by `<repository>:<reference>`. Each manifest references config and layer blobs by digest. Referential integrity is enforced: all referenced blobs must exist before a manifest is accepted.
+
+### OCI Image Model
+
+| Data Structure | Description |
+|---------------|-------------|
+| `OCIManifest` | Single image descriptor with `schemaVersion`, `mediaType`, `config` descriptor, and ordered `layers` list |
+| `OCIImageIndex` | Multi-architecture manifest list mapping platform (os/architecture) to per-platform manifests |
+| `OCIImageConfig` | Runtime configuration blob with `architecture`, `os`, `rootfs` (layer diff_ids), `history`, and container config (args, env, cwd, entrypoint) |
+| `OCIDescriptor` | Content reference with `mediaType`, `digest`, `size`, and optional `annotations` |
+| `OCIPlatform` | Platform selector with `os`, `architecture`, and optional `variant` |
+
+### FizzFile DSL
+
+The FizzFile is the platform's Dockerfile equivalent -- a declarative build script with FizzBuzz-specific instructions:
+
+| Instruction | Syntax | Description |
+|-------------|--------|-------------|
+| `FROM` | `FROM <image>:<tag>` | Select base image from the registry |
+| `FIZZ` | `FIZZ <divisor> <label>` | Add a Fizz divisibility rule to the container |
+| `BUZZ` | `BUZZ <divisor> <label>` | Add a Buzz divisibility rule to the container |
+| `RUN` | `RUN <command>` | Execute a command during the build |
+| `COPY` | `COPY <src> <dst>` | Add files to the image filesystem |
+| `ENV` | `ENV <key> <value>` | Set an environment variable |
+| `ENTRYPOINT` | `ENTRYPOINT <command>` | Define the container's entrypoint |
+| `LABEL` | `LABEL <key> <value>` | Add metadata to the image |
+
+The `FizzFileParser` tokenizes and validates FizzFile syntax. Each instruction produces a `FizzFileStep` that the builder executes sequentially.
+
+### ImageBuilder
+
+The `ImageBuilder` executes FizzFile instructions against the registry and FizzOverlay:
+
+1. Parse the FizzFile into a sequence of `FizzFileStep` entries
+2. Resolve the base image (`FROM`) from the registry
+3. For each instruction, execute it in a build container and capture filesystem changes via FizzOverlay's snapshotter
+4. Layer caching: if an instruction and its context match a previously cached layer, reuse the cached layer instead of re-executing
+5. Commit the final layer stack as a new image manifest and push to the registry
+
+### Garbage Collector
+
+The `GarbageCollector` implements mark-and-sweep with reference walking:
+
+1. **Mark phase**: Walk all manifests in the registry, marking every referenced blob (config blobs, layer blobs) as live
+2. **Sweep phase**: Iterate all blobs in the store; delete any blob not marked as live
+3. **Report**: Produce a `GCReport` with counts of reclaimed blobs, freed storage, and duration
+
+The collector is safe against concurrent pushes: blobs referenced by manifests pushed during collection are not reclaimed.
+
+### Image Signing
+
+The `ImageSigner` provides cosign-style signing and verification using ECDSA with the P-256 curve:
+
+- **Sign**: Generate a signature over the image manifest digest using the private key. The signature is stored alongside the manifest as a `ImageSignature` record
+- **Verify**: Validate the stored signature against the manifest digest using the public key. Verification status is reported as `VALID`, `INVALID`, or `UNSIGNED`
+
+### Vulnerability Scanner
+
+The `VulnerabilityScanner` classifies images against a CVE database:
+
+- Scans image layers for known vulnerable components
+- Classifies findings by severity: CRITICAL, HIGH, MEDIUM, LOW
+- Produces a `VulnerabilityReport` with finding count, severity distribution, and remediation guidance
+- Integrates with the registry dashboard for at-a-glance security posture visibility
+
+### FizzRegistry Dashboard
+
+The `RegistryDashboard` renders an ASCII display with:
+
+- Repository catalog with tag counts and total image size
+- Blob storage utilization with deduplication ratio
+- Image signing status (signed/unsigned/invalid counts)
+- Vulnerability scan summary with severity distribution
+- Garbage collection history with reclaimed storage metrics
+
+### FizzRegistry Middleware
+
+The `RegistryMiddleware` integrates into the middleware pipeline at priority 110, after OCIRuntimeMiddleware (108). When a FizzBuzz evaluation references a container image, the middleware resolves the image through the registry, pulling the manifest and layer blobs as needed.
+
+### Specification
+
+| Spec | Value |
+|------|-------|
+| Distribution API endpoints | 8 (version, blob head, blob get, blob push, manifest get, manifest put, catalog, tags) |
+| FizzFile instructions | 8 (FROM, FIZZ, BUZZ, RUN, COPY, ENV, ENTRYPOINT, LABEL) |
+| OCI manifest schema version | 2 |
+| Content addressing | SHA-256 |
+| Signing algorithm | ECDSA P-256 |
+| Vulnerability severity levels | 4 (CRITICAL, HIGH, MEDIUM, LOW) |
+| GC algorithm | Mark-and-sweep with reference walking |
+| Middleware priority | 110 |
+| Custom exceptions | 20 (EFP-REG00 through EFP-REG19) |
+| EventType entries | 16 |
+| CLI flags | 6 (`--registry`, `--registry-catalog`, `--registry-build`, `--registry-gc`, `--registry-scan`, `--registry-sign`) |
+| Test count | ~300 |
+
+FizzRegistry is the distribution layer that transforms FizzKube's `importlib`-based image resolution into a standards-compliant pull protocol. Previously, `image: "enterprise_fizzbuzz.infrastructure.cache"` resolved to a Python import. Now, images are OCI manifests stored in a content-addressable registry, pulled via the OCI Distribution API, and composed into containers by FizzOCI via FizzOverlay's layered filesystem. The FizzFile DSL provides reproducible image builds. Layer caching avoids redundant work. Signing provides supply chain attestation. Vulnerability scanning provides security posture visibility. Garbage collection reclaims storage. The container stack now has its registry.

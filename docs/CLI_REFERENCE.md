@@ -1339,6 +1339,12 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --overlay-mounts             Display all active overlay mounts with their lowerdir stack, upperdir path, merged view path, mount state, and associated container ID
 --overlay-diff DIGEST_A DIGEST_B  Compute and display the filesystem differences between two layers identified by digest, showing added, modified, and deleted entries with file sizes and whiteout markers
 --overlay-cache              Display layer cache statistics including cache size, capacity, hit rate, miss rate, eviction count, and memory utilization with LRU ordering
+--registry                   Enable FizzRegistry: OCI Distribution-compliant image registry with content-addressable blob storage, manifest management, and push/pull APIs
+--registry-catalog           Display the registry catalog listing all repositories with tag counts, total blob size, and image signing status
+--registry-build FIZZFILE    Build a container image from a FizzFile (the platform's Dockerfile equivalent) with layer caching via FizzOverlay
+--registry-gc                Run the garbage collector: mark-and-sweep with reference walking from manifests to blobs, reclaiming unreferenced storage
+--registry-scan              Run the vulnerability scanner against all images in the registry, classifying findings by CRITICAL/HIGH/MEDIUM/LOW severity
+--registry-sign              Sign all unsigned images in the registry using cosign-style ECDSA-P256 signatures for supply chain verification
 ```
 
 ## Environment Variables
