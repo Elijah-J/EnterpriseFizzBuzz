@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Wordmark } from "@/components/brand";
 import { Topographic } from "@/components/backgrounds";
 import { PageTransition } from "@/components/transitions";
+import { KeyboardShortcutOverlay } from "@/components/ui/keyboard-shortcut-overlay";
+import { useKeyboardNavigation } from "@/lib/hooks/use-keyboard-navigation";
 import { Breadcrumbs } from "./breadcrumbs";
 import { CommandPalette } from "./command-palette";
 import { MobileDrawer } from "./mobile-drawer";
@@ -37,15 +39,32 @@ function hashPathname(path: string): number {
 }
 
 export function LayoutShell({ children }: LayoutShellProps) {
+  const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [shortcutOverlayOpen, setShortcutOverlayOpen] = useState(false);
   const pathname = usePathname();
   const topoSeed = useMemo(() => hashPathname(pathname), [pathname]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((prev) => !prev);
   }, []);
+
+  const toggleShortcutOverlay = useCallback(() => {
+    setShortcutOverlayOpen((prev) => !prev);
+  }, []);
+
+  const navigateTo = useCallback(
+    (href: string) => router.push(href),
+    [router]
+  );
+
+  useKeyboardNavigation({
+    onOpenSearch: useCallback(() => setPaletteOpen(true), []),
+    onToggleOverlay: toggleShortcutOverlay,
+    navigate: navigateTo,
+  });
 
   // Global Cmd+K / Ctrl+K listener
   useEffect(() => {
@@ -160,6 +179,10 @@ export function LayoutShell({ children }: LayoutShellProps) {
         onToggleSidebar={toggleSidebar}
       />
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <KeyboardShortcutOverlay
+        open={shortcutOverlayOpen}
+        onClose={() => setShortcutOverlayOpen(false)}
+      />
     </>
   );
 }
