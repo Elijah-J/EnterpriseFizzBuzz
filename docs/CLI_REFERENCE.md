@@ -22,6 +22,12 @@ python main.py --async --verbose
 # Machine Learning strategy (trains a neural network, then runs inference)
 python main.py --strategy machine_learning --range 1 20 --debug
 
+# FizzChat LLM Pipeline: evaluate divisibility using a pure-Python NanoLLM and VectorDB
+python main.py --strategy fizzchat --range 1 20
+
+# FizzChat Debate System: let three LLMs argue about divisibility before deciding
+python main.py --strategy fizzchat_debate --range 1 20
+
 # CSV output, no frills
 python main.py --range 1 100 --format csv --no-banner --no-summary
 
@@ -1006,7 +1012,7 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 ```
 --range START END     Numeric range to evaluate (default: 1-100)
 --format FORMAT       Output format: plain, json, xml, csv
---strategy STRATEGY   Evaluation strategy: standard, chain_of_responsibility, parallel_async, machine_learning
+--strategy STRATEGY   Evaluation strategy: standard, chain_of_responsibility, parallel_async, machine_learning, fizzchat, fizzchat_debate
 --config PATH         Path to YAML configuration file
 --verbose, -v         Enable verbose event logging
 --debug               Enable debug-level logging

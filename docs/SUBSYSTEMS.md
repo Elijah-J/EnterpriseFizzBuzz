@@ -6179,3 +6179,63 @@ Domain layer (FizzBuzzError, IMiddleware, FizzBuzzResult, ProcessingContext). In
 | Test count | ~244 |
 
 Round 17 extends the container platform beyond runtime into the operational domain. Containers can now be cataloged, deployed, composed, orchestrated with full CRI integration, chaos-tested at the infrastructure layer, and observed through a unified diagnostics dashboard. The container stack is no longer merely functional -- it is operable.
+
+## FizzChat LLM Architecture
+
+The FizzChat subsystem replaces the mathematically sound `%` operator with a probabilistic NanoLLM pipeline, demonstrating that any simple problem can be solved by throwing a VectorDB and an LLM at it. It implements full Retrieval-Augmented Generation (RAG) using a pure-Python TF-IDF Vector Database, Reinforcement Learning from Human Feedback (RLHF), and a Multi-Agent Debate System.
+
+```
+    +-------------------+
+    |   Integer Input   |
+    +--------+----------+
+             |
+             v
+    +--------+----------+     +------------------------+
+    | Prompt Injection  |---->| Vector Database (RAG)  |
+    | Guard             |     | (Cosine Similarity)    |
+    +--------+----------+     +--------+---------------+
+             |                         |
+             v                         v
+    +--------+----------+     +--------+---------------+
+    | Semantic Caching  |---->| NanoLLM Engine         |
+    | (FizzCache)       |     | (pure-Python MLP)      |
+    +--------+----------+     +--------+---------------+
+                                       |
+          +----------------------------+-----------------------------+
+          |                            |                             |
+          v                            v                             v
+  +---------------+            +---------------+             +---------------+
+  | Proposer LLM  |            | Devil's       |             | Judge LLM     |
+  |               |<---------->| Advocate LLM  |<----------->|               |
+  +-------+-------+  (debate)  +-------+-------+  (debate)   +-------+-------+
+          |                            |                             |
+          +----------------------------+-----------------------------+
+                                       |
+                                       v
+                             +---------+---------+
+                             | Token Billing &   |
+                             | Carbon Offset     |
+                             +---------+---------+
+                                       |
+                                       v
+                                   Result
+```
+
+**Key components:**
+- **NanoLLM Engine** - Pure-Python LLM trained on a corpus of "vibes" and semantic context for divisibility.
+- **TF-IDF Vector Database (RAG)** - Stores historical FizzBuzz truths and retrieves the most semantically relevant context before inference.
+- **RLHF Fine-Tuning** - Pings Bob McFizzington when the LLM hallucinates (e.g., classifying 15 as "BuzzFizz"), asking for human validation before adjusting weights via Stochastic Gradient Descent.
+- **FizzChat Consensus (Multi-Agent Debate)** - Three distinct LLMs take on personas (Proposer, Devil's Advocate, Judge) and debate the integer's classification for up to 5 rounds before reaching consensus.
+- **Token Billing Engine** - Implements a strict corporate API budget. Every character processed costs tokens. If the budget runs out mid-evaluation, raises `QuotaExceededException`.
+- **Prompt Injection Guard** - Prevents malicious numbers (like `-1` or `NaN`) from tricking the LLM into revealing its system prompt.
+- **Semantic Caching (FizzCache)** - Evaluates incoming integers against cached integers via >95% cosine similarity to skip the LLM entirely (saving precious tokens).
+- **EcoFizz Carbon Offset Engine** - Tracks FLOPs used per forward pass, converts to Joules, and subtracts from an ESG Carbon Credit Wallet to ensure green enterprise compliance.
+
+| Spec | Value |
+|------|-------|
+| LLM parameters | 130 |
+| RAG Vector DB | TF-IDF with Cosine Similarity |
+| Debate rounds | 5 (Proposer vs Devil's Advocate) |
+| Fine-tuning | SGD based on Bob's tears |
+| Token limits | Strictly enforced corporate budget |
+| ESG compliance | 100% Carbon Neutral FizzBuzz |

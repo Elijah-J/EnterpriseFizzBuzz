@@ -400,6 +400,8 @@ The platform supports four evaluation strategies, selectable via `--strategy` or
 | `CHAIN_OF_RESPONSIBILITY` | `ChainOfResponsibilityEngine` | Builds a linked list of `ChainLink` objects from the sorted rules. Each link evaluates its rule and passes the number to the next link regardless of match status. All matches are collected. |
 | `PARALLEL_ASYNC` | `ParallelAsyncEngine` | Creates an `asyncio` task per rule, gathers results concurrently. Sorts matches by priority after gathering. The synchronous fallback delegates to `StandardRuleEngine` because concurrent modulo is an aspirational goal. |
 | `MACHINE_LEARNING` | `MachineLearningEngine` | A from-scratch multi-layer perceptron with cyclical feature encoding (`sin(2*pi*n/d)`, `cos(2*pi*n/d)` for each divisor). Trains on a generated dataset at initialization. Achieves 100% accuracy with 130 trainable parameters. |
+| `FIZZCHAT` | `FizzChatPipeline` | A pure-Python mathematically faithful NanoLLM and Cosine Similarity Vector Store for semantic divisibility inference, complete with token billing and ESG carbon offset tracking. |
+| `FIZZCHAT_DEBATE` | `FizzChatConsensusEngine` | Multi-agent NanoLLM system featuring a Proposer, Devil's Advocate, and Judge that conversationally debate `n % 3` before rendering a verdict. |
 
 ## 11. Domain Interfaces
 

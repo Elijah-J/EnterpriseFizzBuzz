@@ -6,6 +6,14 @@ All notable changes to the Enterprise FizzBuzz Platform are documented in this f
 
 ## [Unreleased]
 ### Added
+- **FizzChat LLM Pipeline**
+  - NanoLLM & TF-IDF Vector Database (RAG) for semantic FizzBuzz divisibility evaluation
+  - RLHF (Reinforcement Learning from Human Feedback) with automatic fine-tuning via SGD
+  - Multi-Agent Debate System (FizzChat Consensus) using Proposer, Devil's Advocate, and Judge NanoLLMs
+  - Token Billing Engine tracking input/output tokens against a simulated corporate budget
+  - Prompt Injection Guard intercepting malicious integers executing jailbreaks
+  - Semantic Caching (FizzCache) using cosine similarity caching
+  - EcoFizz Carbon Offset Engine deducting FLOPs-to-Joules conversions from an ESG Carbon Credit Wallet
 - Round 17 docs updates (README, FEATURES, FAQ, CHANGELOG, CLAUDE.md)
 
 ---

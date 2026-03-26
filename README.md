@@ -38,6 +38,13 @@ Operated and maintained by **Bob McFizzington**, Senior Principal Staff FizzBuzz
 
 ### Platform Highlights
 
+- **NanoLLM & TF-IDF Vector Database (RAG)**: A pure-Python mathematically faithful Neural Network trained via Backpropagation and a Cosine Similarity Vector Store to evaluate FizzBuzz divisibility based on semantic context, replacing the modulo operator.
+- **RLHF (Reinforcement Learning from Human Feedback)**: Pages Bob McFizzington and automatically fine-tunes the LLM via Stochastic Gradient Descent when it hallucinates.
+- **Multi-Agent Debate System (FizzChat Consensus)**: Three distinct NanoLLMs (Proposer, Devil's Advocate, Judge) that conversationally debate the divisibility of a number before deciding.
+- **Token Billing Engine**: Tracks LLM input/output tokens and deducts from a simulated corporate budget (with a `QuotaExceededException`).
+- **Prompt Injection Guard**: Intercepts malicious integers trying to execute "Ignore previous instructions" jailbreaks.
+- **Semantic Caching (FizzCache)**: A >95% cosine similarity cache that bypasses the LLM and VectorDB to save billing tokens.
+- **EcoFizz Carbon Offset Engine**: Mathematically calculates the exact FLOPs of the Neural Network's forward passes, converts them to simulated Joules, and deducts from an ESG Carbon Credit Wallet.
 - **Neural Network** that trains from scratch on labeled divisibility data, then classifies numbers through forward propagation -- because hard-coding `n % 3` would be a maintenance liability
 - **Blockchain** with SHA-256 proof-of-work mining that records every FizzBuzz evaluation as an immutable, cryptographically linked ledger entry -- which SOX requires Bob McFizzington to personally audit
 - **Protein Folding Simulator** that models amino acid chains to determine the tertiary structure of the string "FizzBuzz" using energy minimization and Ramachandran validation
