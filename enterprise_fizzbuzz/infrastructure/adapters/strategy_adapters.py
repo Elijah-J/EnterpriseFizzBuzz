@@ -433,7 +433,7 @@ class StrategyAdapterFactory:
                 reference_strategy=reference,
             )
 
-        elif strategy == EvaluationStrategy.FIZZCHAT:
+        elif strategy in (EvaluationStrategy.FIZZCHAT, EvaluationStrategy.FIZZCHAT_DEBATE):
             return FizzChatStrategyAdapter(engine, rules)
 
         else:

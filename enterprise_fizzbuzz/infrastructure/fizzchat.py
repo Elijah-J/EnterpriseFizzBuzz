@@ -335,13 +335,18 @@ class FizzChatEngine(IRuleEngine):
     Perceptron LLM to classify whether the number is Fizz, Buzz, or FizzBuzz. Includes an 
     RLHF mechanism utilizing the canonical StandardEngine for autonomous model fine-tuning.
     """
-    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None, billing: Optional[FizzChatBillingEngine] = None, guard: Optional[PromptInjectionGuard] = None, cache: Optional[FizzCache] = None):
+    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None, billing: Optional[FizzChatBillingEngine] = None, guard: Optional[PromptInjectionGuard] = None, cache: Optional[FizzCache] = None, debate_mode: bool = False):
         self.chroma = chroma or ChromaDB()
         self.llm = llm or LLM(n_gram_size=4)
         self.billing = billing or FizzChatBillingEngine()
         self.guard = guard or PromptInjectionGuard()
         self.cache = cache
+        self.debate_mode = debate_mode
         self._trained = False
+        if self.debate_mode:
+            self.proposer_llm = LLM(n_gram_size=4)
+            self.devil_advocate_llm = LLM(n_gram_size=4)
+            self.judge_llm = LLM(n_gram_size=4)
 
     def _ensure_trained(self):
         if getattr(self, '_trained', False):
@@ -373,6 +378,35 @@ class FizzChatEngine(IRuleEngine):
             corpus = " ".join(corpus_parts)
             self.llm.train(corpus, epochs=100, lr=0.1)
             
+        if self.debate_mode:
+            if not getattr(self, 'proposer_llm', None):
+                self.proposer_llm = LLM(n_gram_size=4)
+            if not getattr(self, 'devil_advocate_llm', None):
+                self.devil_advocate_llm = LLM(n_gram_size=4)
+            if not getattr(self, 'judge_llm', None):
+                self.judge_llm = LLM(n_gram_size=4)
+
+            if not self.proposer_llm.is_compiled:
+                corpus_parts = []
+                for i in range(1, 101):
+                    out = "FizzBuzz" if i % 15 == 0 else "Fizz" if i % 3 == 0 else "Buzz" if i % 5 == 0 else str(i)
+                    corpus_parts.append(f"Proposer {i} -> {out}")
+                self.proposer_llm.train(" ".join(corpus_parts), epochs=2, lr=0.1)
+
+            if not self.devil_advocate_llm.is_compiled:
+                corpus_parts = []
+                for i in range(1, 101):
+                    out = "FizzBuzz" if i % 15 == 0 else "Fizz" if i % 3 == 0 else "Buzz" if i % 5 == 0 else str(i)
+                    corpus_parts.append(f"Devil {i} {out} -> Critique")
+                self.devil_advocate_llm.train(" ".join(corpus_parts), epochs=2, lr=0.1)
+
+            if not self.judge_llm.is_compiled:
+                corpus_parts = []
+                for i in range(1, 101):
+                    out = "FizzBuzz" if i % 15 == 0 else "Fizz" if i % 3 == 0 else "Buzz" if i % 5 == 0 else str(i)
+                    corpus_parts.append(f"Judge {i} {out} Critique -> {out}")
+                self.judge_llm.train(" ".join(corpus_parts), epochs=2, lr=0.1)
+
         self._trained = True
 
     def evaluate(self, number: int, rules: List[IRule]) -> FizzBuzzResult:
@@ -400,10 +434,24 @@ class FizzChatEngine(IRuleEngine):
             if docs:
                 context_doc = docs[0]
                 
-        prompt = f"{context_doc} ->"
-        output = self.llm.generate(prompt, temperature=0.7)
-        
-        self.billing.track_tokens(prompt, output)
+        if self.debate_mode:
+            prompt1 = f"Proposer {number} ->"
+            proposer_output = self.proposer_llm.generate(prompt1, temperature=0.7)
+            
+            prompt2 = f"Devil {number} {proposer_output} ->"
+            devil_output = self.devil_advocate_llm.generate(prompt2, temperature=0.7)
+            
+            prompt3 = f"Judge {number} {proposer_output} {devil_output} ->"
+            output = self.judge_llm.generate(prompt3, temperature=0.7)
+            
+            self.billing.track_tokens(prompt1, proposer_output)
+            self.billing.track_tokens(prompt2, devil_output)
+            self.billing.track_tokens(prompt3, output)
+            prompt = prompt3
+        else:
+            prompt = f"{context_doc} ->"
+            output = self.llm.generate(prompt, temperature=0.7)
+            self.billing.track_tokens(prompt, output)
         
         if random.random() < 0.05:
             output = random.choice(["Bazz", "Fuzz", "FizzBizz", "AI_ERROR"])

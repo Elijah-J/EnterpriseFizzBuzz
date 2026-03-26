@@ -102,6 +102,7 @@ class EvaluationStrategy(Enum):
     MACHINE_LEARNING = auto()
     QUANTUM = auto()
     FIZZCHAT = "fizzchat"
+    FIZZCHAT_DEBATE = "fizzchat_debate"
 
 
 class LogLevel(Enum):

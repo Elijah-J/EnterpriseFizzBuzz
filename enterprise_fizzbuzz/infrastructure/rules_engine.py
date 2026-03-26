@@ -218,6 +218,10 @@ class RuleEngineFactory:
         from enterprise_fizzbuzz.infrastructure.fizzchat import FizzChatEngine
         cls._engines[EvaluationStrategy.FIZZCHAT] = FizzChatEngine
         return FizzChatEngine
+    @classmethod
+    def _load_fizzchat_debate_engine(cls) -> type[IRuleEngine]:
+        from enterprise_fizzbuzz.infrastructure.fizzchat import FizzChatEngine
+        return lambda: FizzChatEngine(debate_mode=True)
 
     @classmethod
     def create(cls, strategy: EvaluationStrategy) -> IRuleEngine:
@@ -227,9 +231,14 @@ class RuleEngineFactory:
             engine_class = cls._load_ml_engine()
         elif strategy == EvaluationStrategy.FIZZCHAT and engine_class is None:
             engine_class = cls._load_fizzchat_engine()
+        elif strategy == EvaluationStrategy.FIZZCHAT_DEBATE and engine_class is None:
+            # For debate mode, we use a lambda to return the instantiated engine with the flag
+            return cls._load_fizzchat_debate_engine()()
+
         if engine_class is None:
             logger.warning(
                 "Unknown strategy %s, falling back to STANDARD", strategy
             )
-            engine_class = StandardRuleEngine
+            engine_class = StandardEngine
+
         return engine_class()

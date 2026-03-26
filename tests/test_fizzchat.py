@@ -203,3 +203,60 @@ def test_fizzchat_engine_uses_cache(engine):
     # Now miss the cache
     engine.evaluate(3, [])
     assert engine.billing.current_budget < 1000
+
+def test_fizzchat_debate_mode():
+    """Test the Multi-Agent Debate System."""
+    billing = FizzChatBillingEngine(starting_budget=1000)
+    eng = FizzChatEngine(billing=billing, debate_mode=True)
+    
+    import random
+    from unittest.mock import patch
+    original_random = random.random
+    random.random = lambda: 1.0  # never trigger random RLHF error
+    
+    try:
+        # Mock _ensure_trained so it doesn't take 5 minutes to run
+        eng.proposer_llm = LLM()
+        eng.proposer_llm.vocab = {"<PAD>":0, "<UNK>":1, "FizzBuzz":2, "Fizz":3, "Buzz":4, "15":5, "3":6}
+        eng.proposer_llm.inv_vocab = {v:k for k,v in eng.proposer_llm.vocab.items()}
+        
+        eng.devil_advocate_llm = LLM()
+        eng.devil_advocate_llm.vocab = eng.proposer_llm.vocab.copy()
+        eng.devil_advocate_llm.inv_vocab = {v:k for k,v in eng.devil_advocate_llm.vocab.items()}
+        
+        eng.judge_llm = LLM()
+        eng.judge_llm.vocab = eng.proposer_llm.vocab.copy()
+        eng.judge_llm.inv_vocab = {v:k for k,v in eng.judge_llm.vocab.items()}
+        
+        eng._trained = True # Bypass the massive training loop
+        eng.guard = PromptInjectionGuard()
+        eng.chroma = ChromaDB()
+        eng.chroma.add(["number 15 rule FizzBuzz", "number 3 rule Fizz"], [{"k":"v"}]*2, ["15","3"])
+        
+        with patch.object(eng.proposer_llm, 'generate', return_value="FizzBuzz") as mock_prop, \
+             patch.object(eng.devil_advocate_llm, 'generate', return_value="Critique") as mock_dev, \
+             patch.object(eng.judge_llm, 'generate', return_value="FizzBuzz") as mock_judge:
+
+            # 15 should return FizzBuzz
+            result = eng.evaluate(15, [])
+            assert result.output == "FizzBuzz"
+            assert result.number == 15
+            
+            # Assert all three LLMs were invoked
+            assert mock_prop.call_count >= 1
+            assert mock_dev.call_count >= 1
+            assert mock_judge.call_count >= 1
+
+        with patch.object(eng.proposer_llm, 'generate', return_value="Fizz") as mock_prop, \
+             patch.object(eng.devil_advocate_llm, 'generate', return_value="Critique") as mock_dev, \
+             patch.object(eng.judge_llm, 'generate', return_value="Fizz") as mock_judge:
+                 
+            # 3 should return Fizz
+            result = eng.evaluate(3, [])
+            assert result.output == "Fizz"
+            assert result.number == 3
+        
+        # Models should have been called and budget deducted
+        assert eng.billing.current_budget < 1000
+    finally:
+        random.random = original_random
