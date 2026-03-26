@@ -11,7 +11,8 @@ from enterprise_fizzbuzz.infrastructure.fizzchat import (
     FizzChatBillingEngine,
     PromptInjectionGuard,
     QuotaExceededException,
-    SecurityException
+    SecurityException,
+    FizzCache
 )
 
 def test_tfidf_vectorizer_explicit():
@@ -173,3 +174,32 @@ def test_prompt_injection_guard():
     for prompt in malicious_prompts:
         with pytest.raises(SecurityException):
             guard.analyze_query(prompt)
+
+def test_fizzcache_hit_and_miss():
+    """Test semantic caching engine storing and matching high/low similarity."""
+    cache = FizzCache()
+    cache.set("number 3", "Fizz")
+    
+    # High similarity match (exact)
+    assert cache.get("number 3") == "Fizz"
+    
+    # Miss
+    assert cache.get("number 5") is None
+
+def test_fizzchat_engine_uses_cache(engine):
+    """Test FizzChatEngine uses the cache to return results without LLM/billing."""
+    cache = FizzCache()
+    cache.set("number 15", "FizzBuzz")
+    
+    engine.cache = cache
+    engine.billing.current_budget = 1000
+    
+    result = engine.evaluate(15, [])
+    assert result.output == "FizzBuzz"
+    assert result.number == 15
+    # Should not have deducted from budget because it hit cache
+    assert engine.billing.current_budget == 1000
+    
+    # Now miss the cache
+    engine.evaluate(3, [])
+    assert engine.billing.current_budget < 1000

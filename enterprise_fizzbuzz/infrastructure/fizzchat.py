@@ -292,6 +292,41 @@ class PromptInjectionGuard:
     def analyze_query(self, prompt: Union[str, int]) -> bool:
         return self.scan(prompt)
 
+class FizzCache:
+    """Semantic caching engine for FizzChat."""
+    def __init__(self):
+        self.vectorizer = TFIDFVectorizer()
+        self.cached_queries = []
+        self.cached_responses = []
+        self.vectors = []
+
+    def get(self, query: str) -> Optional[str]:
+        if not self.cached_queries:
+            return None
+            
+        q_vec = self.vectorizer.transform([query])[0]
+        
+        best_score = 0.0
+        best_idx = -1
+        
+        for i, d_vec in enumerate(self.vectors):
+            score = cosine_similarity(q_vec, d_vec)
+            if score > best_score:
+                best_score = score
+                best_idx = i
+                
+        if best_score > 0.95:
+            logger.info("[CACHE HIT] Saved 1000 tokens.")
+            return self.cached_responses[best_idx]
+            
+        return None
+
+    def set(self, query: str, response: str):
+        self.cached_queries.append(query)
+        self.cached_responses.append(response)
+        self.vectorizer.fit(self.cached_queries)
+        self.vectors = self.vectorizer.transform(self.cached_queries)
+
 class FizzChatEngine(IRuleEngine):
     """
     FizzBuzz LLM RAG Pipeline (FizzChat).
@@ -300,11 +335,12 @@ class FizzChatEngine(IRuleEngine):
     Perceptron LLM to classify whether the number is Fizz, Buzz, or FizzBuzz. Includes an 
     RLHF mechanism utilizing the canonical StandardEngine for autonomous model fine-tuning.
     """
-    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None, billing: Optional[FizzChatBillingEngine] = None, guard: Optional[PromptInjectionGuard] = None):
+    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None, billing: Optional[FizzChatBillingEngine] = None, guard: Optional[PromptInjectionGuard] = None, cache: Optional[FizzCache] = None):
         self.chroma = chroma or ChromaDB()
         self.llm = llm or LLM(n_gram_size=4)
         self.billing = billing or FizzChatBillingEngine()
         self.guard = guard or PromptInjectionGuard()
+        self.cache = cache
         self._trained = False
 
     def _ensure_trained(self):
@@ -345,6 +381,17 @@ class FizzChatEngine(IRuleEngine):
         
         query = f"number {number}"
         self.guard.scan(query)
+        
+        if self.cache:
+            cached_result = self.cache.get(query)
+            if cached_result:
+                elapsed = time.perf_counter_ns() - start
+                return FizzBuzzResult(
+                    number=number,
+                    output=cached_result,
+                    matched_rules=[],
+                    processing_time_ns=elapsed,
+                )
         
         context_res = self.chroma.query([query], n_results=1)
         context_doc = ""
