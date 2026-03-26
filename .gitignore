@@ -10,6 +10,7 @@ build/
 
 # Orchestration artifacts
 CLAUDE.md
+GEMINI.md
 PLAN.md
 RESEARCH_REPORT.md
 FORMAT_AUDIT_REPORT.md

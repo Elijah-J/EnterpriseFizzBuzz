@@ -325,6 +325,40 @@ class MLStrategyAdapter(StrategyPort):
 
 
 # ============================================================
+# FizzChat Strategy Adapter
+# ============================================================
+
+class FizzChatStrategyAdapter(StrategyPort):
+    """Anti-Corruption Layer adapter for the FizzChatEngine."""
+
+    def __init__(self, engine: IRuleEngine, rules: list[IRule]) -> None:
+        self._engine = engine
+        self._rules = rules
+
+    def classify(self, number: int) -> EvaluationResult:
+        result = self._engine.evaluate(number, self._rules)
+        output = result.output
+
+        if output == "FizzBuzz":
+            classification = FizzBuzzClassification.FIZZBUZZ
+        elif output == "Fizz":
+            classification = FizzBuzzClassification.FIZZ
+        elif output == "Buzz":
+            classification = FizzBuzzClassification.BUZZ
+        else:
+            classification = FizzBuzzClassification.PLAIN
+
+        return EvaluationResult(
+            number=number,
+            classification=classification,
+            strategy_name=self.get_strategy_name(),
+        )
+
+    def get_strategy_name(self) -> str:
+        return "FizzChatStrategy"
+
+
+# ============================================================
 # Strategy Adapter Factory
 # ============================================================
 
@@ -398,6 +432,9 @@ class StrategyAdapterFactory:
                 ambiguity_margin=ambiguity_margin,
                 reference_strategy=reference,
             )
+
+        elif strategy == EvaluationStrategy.FIZZCHAT:
+            return FizzChatStrategyAdapter(engine, rules)
 
         else:
             logger.warning(

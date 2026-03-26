@@ -101,6 +101,7 @@ class EvaluationStrategy(Enum):
     PARALLEL_ASYNC = auto()
     MACHINE_LEARNING = auto()
     QUANTUM = auto()
+    FIZZCHAT = "fizzchat"
 
 
 class LogLevel(Enum):
