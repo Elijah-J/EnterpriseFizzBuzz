@@ -260,6 +260,20 @@ class QuotaExceededException(Exception):
 class SecurityException(Exception):
     pass
 
+class CarbonFootprintExceededException(Exception):
+    pass
+
+class FizzChatCarbonOffsetEngine:
+    def __init__(self, initial_credits: float = 100.0):
+        self.carbon_credits = initial_credits
+
+    def track_emission(self, llm_instance: LLM, num_tokens_generated: int):
+        flops = num_tokens_generated * llm_instance.hidden_dim * llm_instance.embed_dim * 2
+        joules = flops * 1.5e-9
+        self.carbon_credits -= joules
+        if self.carbon_credits < 0:
+            raise CarbonFootprintExceededException("Carbon footprint exceeded")
+
 class FizzChatBillingEngine:
     def __init__(self, starting_budget: float = 1000.0):
         self.starting_budget = starting_budget
@@ -335,13 +349,14 @@ class FizzChatEngine(IRuleEngine):
     Perceptron LLM to classify whether the number is Fizz, Buzz, or FizzBuzz. Includes an 
     RLHF mechanism utilizing the canonical StandardEngine for autonomous model fine-tuning.
     """
-    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None, billing: Optional[FizzChatBillingEngine] = None, guard: Optional[PromptInjectionGuard] = None, cache: Optional[FizzCache] = None, debate_mode: bool = False):
+    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None, billing: Optional[FizzChatBillingEngine] = None, guard: Optional[PromptInjectionGuard] = None, cache: Optional[FizzCache] = None, debate_mode: bool = False, eco_engine: Optional[FizzChatCarbonOffsetEngine] = None):
         self.chroma = chroma or ChromaDB()
         self.llm = llm or LLM(n_gram_size=4)
         self.billing = billing or FizzChatBillingEngine()
         self.guard = guard or PromptInjectionGuard()
         self.cache = cache
         self.debate_mode = debate_mode
+        self.eco_engine = eco_engine
         self._trained = False
         if self.debate_mode:
             self.proposer_llm = LLM(n_gram_size=4)
@@ -447,11 +462,17 @@ class FizzChatEngine(IRuleEngine):
             self.billing.track_tokens(prompt1, proposer_output)
             self.billing.track_tokens(prompt2, devil_output)
             self.billing.track_tokens(prompt3, output)
+            if self.eco_engine:
+                self.eco_engine.track_emission(self.proposer_llm, len(proposer_output.split()))
+                self.eco_engine.track_emission(self.devil_advocate_llm, len(devil_output.split()))
+                self.eco_engine.track_emission(self.judge_llm, len(output.split()))
             prompt = prompt3
         else:
             prompt = f"{context_doc} ->"
             output = self.llm.generate(prompt, temperature=0.7)
             self.billing.track_tokens(prompt, output)
+            if self.eco_engine:
+                self.eco_engine.track_emission(self.llm, len(output.split()))
         
         if random.random() < 0.05:
             output = random.choice(["Bazz", "Fuzz", "FizzBizz", "AI_ERROR"])

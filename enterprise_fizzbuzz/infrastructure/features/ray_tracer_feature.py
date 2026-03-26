@@ -93,6 +93,11 @@ class RayTracerFeature(FeatureDescriptor):
                 f"Render time: {middleware.render_time_ms:.1f} ms\n"
             )
 
+        try:
+            dash_width = config.raytrace_dashboard_width
+        except Exception:
+            dash_width = 72
+
         if getattr(args, "raytrace_dashboard", False):
             parts.append(RayTraceDashboard.render(
                 tracer=middleware.tracer,
@@ -101,7 +106,7 @@ class RayTracerFeature(FeatureDescriptor):
                 height=middleware._height,
                 render_time_ms=middleware.render_time_ms,
                 output_path=getattr(args, "raytrace_output", None),
-                dashboard_width=config.raytrace_dashboard_width,
+                dashboard_width=dash_width,
             ))
         elif getattr(args, "raytrace_dashboard", False):
             parts.append("\n  FizzTrace not enabled. Use --raytrace to enable.\n")

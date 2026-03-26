@@ -12,7 +12,9 @@ from enterprise_fizzbuzz.infrastructure.fizzchat import (
     PromptInjectionGuard,
     QuotaExceededException,
     SecurityException,
-    FizzCache
+    FizzCache,
+    FizzChatCarbonOffsetEngine,
+    CarbonFootprintExceededException
 )
 
 def test_tfidf_vectorizer_explicit():
@@ -260,3 +262,19 @@ def test_fizzchat_debate_mode():
         assert eng.billing.current_budget < 1000
     finally:
         random.random = original_random
+
+def test_fizzchat_carbon_offset_deduction():
+    llm = LLM()
+    # Mocking compilation to ensure hidden_dim and embed_dim are set, though they are set in __init__
+    engine = FizzChatCarbonOffsetEngine(initial_credits=100.0)
+    engine.track_emission(llm, 100)
+    assert engine.carbon_credits < 100.0
+
+def test_fizzchat_carbon_footprint_exceeded():
+    llm = LLM()
+    # 10 tokens * 32 * 16 * 2 = 10240 flops
+    # 10240 * 1.5e-9 = 0.00001536
+    # so we need tiny initial credits
+    engine = FizzChatCarbonOffsetEngine(initial_credits=0.0)
+    with pytest.raises(CarbonFootprintExceededException):
+        engine.track_emission(llm, 10)
