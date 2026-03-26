@@ -254,6 +254,44 @@ class LLM:
         return " ".join(generated)
 
 
+class QuotaExceededException(Exception):
+    pass
+
+class SecurityException(Exception):
+    pass
+
+class FizzChatBillingEngine:
+    def __init__(self, starting_budget: float = 1000.0):
+        self.starting_budget = starting_budget
+        self.current_budget = starting_budget
+        
+    def charge(self, input_tokens: int, output_tokens: int):
+        # Assuming 1 token = 1 unit for now, as per test comments
+        cost = input_tokens + output_tokens
+        self.current_budget -= cost
+        if self.current_budget < 0:
+            raise QuotaExceededException("Quota exceeded")
+            
+    def track_tokens(self, prompt: str, response: str):
+        in_tokens = len(prompt.split())
+        out_tokens = len(response.split())
+        self.charge(in_tokens, out_tokens)
+        
+    def approve_budget_increase(self, additional_amount: float, approver: str = ""):
+        self.current_budget += additional_amount
+
+class PromptInjectionGuard:
+    def scan(self, prompt: Union[str, int]) -> bool:
+        if not isinstance(prompt, str):
+            return True
+        lower_prompt = prompt.lower()
+        if any(bad_word in lower_prompt for bad_word in ["ignore", "system", "prompt"]):
+            raise SecurityException("Prompt injection detected")
+        return True
+        
+    def analyze_query(self, prompt: Union[str, int]) -> bool:
+        return self.scan(prompt)
+
 class FizzChatEngine(IRuleEngine):
     """
     FizzBuzz LLM RAG Pipeline (FizzChat).
@@ -262,9 +300,11 @@ class FizzChatEngine(IRuleEngine):
     Perceptron LLM to classify whether the number is Fizz, Buzz, or FizzBuzz. Includes an 
     RLHF mechanism utilizing the canonical StandardEngine for autonomous model fine-tuning.
     """
-    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None):
+    def __init__(self, chroma: Optional[ChromaDB] = None, llm: Optional[LLM] = None, billing: Optional[FizzChatBillingEngine] = None, guard: Optional[PromptInjectionGuard] = None):
         self.chroma = chroma or ChromaDB()
         self.llm = llm or LLM(n_gram_size=4)
+        self.billing = billing or FizzChatBillingEngine()
+        self.guard = guard or PromptInjectionGuard()
         self._trained = False
 
     def _ensure_trained(self):
@@ -304,6 +344,8 @@ class FizzChatEngine(IRuleEngine):
         start = time.perf_counter_ns()
         
         query = f"number {number}"
+        self.guard.scan(query)
+        
         context_res = self.chroma.query([query], n_results=1)
         context_doc = ""
         if isinstance(context_res, dict) and "documents" in context_res and context_res["documents"]:
@@ -313,6 +355,8 @@ class FizzChatEngine(IRuleEngine):
                 
         prompt = f"{context_doc} ->"
         output = self.llm.generate(prompt, temperature=0.7)
+        
+        self.billing.track_tokens(prompt, output)
         
         if random.random() < 0.05:
             output = random.choice(["Bazz", "Fuzz", "FizzBizz", "AI_ERROR"])
