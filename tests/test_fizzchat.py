@@ -75,16 +75,18 @@ def engine():
     """Instantiate the FizzChatEngine with real dependencies."""
     db = ChromaDB()
     db.add(
-        documents=["3 Fizz", "5 Buzz", "15 FizzBuzz"], 
-        metadatas=[{"k": "v"}, {"k": "v"}, {"k": "v"}], 
-        ids=["1", "2", "3"]
+        documents=["number 3 rule Fizz", "number 5 rule Buzz", "number 15 rule FizzBuzz", "number 2 rule Plain", "number 98 rule Plain"], 
+        metadatas=[{"k": "v"}] * 5, 
+        ids=["1", "2", "3", "4", "5"]
     )
     
-    llm = LLM(n_gram_size=1, temperature=0.0)
-    # Train LLM to just output Fizz, Buzz, FizzBuzz deterministically for simple prompts
-    llm.train("Evaluate FizzBuzz for 3? Fizz Evaluate FizzBuzz for 5? Buzz Evaluate FizzBuzz for 15? FizzBuzz Evaluate FizzBuzz for 2? 2 Evaluate FizzBuzz for 98? 98 ")
+    llm = LLM(n_gram_size=4, temperature=0.0)
+    # Train LLM to output Fizz, Buzz, FizzBuzz deterministically
+    llm.train("number 3 rule Fizz -> Fizz number 5 rule Buzz -> Buzz number 15 rule FizzBuzz -> FizzBuzz number 2 rule Plain -> 2 number 98 rule Plain -> 98 ", epochs=150)
     
-    return FizzChatEngine(chroma=db, llm=llm)
+    eng = FizzChatEngine(chroma=db, llm=llm)
+    eng._trained = True
+    return eng
 
 def test_implements_iruleengine(engine):
     """Verify that FizzChatEngine implements IRuleEngine."""
@@ -110,14 +112,16 @@ def test_fizzchat_correct_returns(engine, number, expected_output):
 def test_rlhf_bob_correction():
     """Verify the RLHF mechanism where Bob corrects an LLM hallucination."""
     db = ChromaDB()
-    llm = LLM(n_gram_size=1, temperature=0.0)
+    db.add(["number 3 rule Fizz"], [{"k": "v"}], ["1"])
+    llm = LLM(n_gram_size=4, temperature=0.0)
     # Train the LLM to output garbage so that it triggers RLHF
-    llm.train("Evaluate FizzBuzz for 3? Bazz ")
+    llm.train("number 3 rule Fizz -> Bazz ", epochs=50)
     
-    engine = FizzChatEngine(chroma=db, llm=llm)
+    eng = FizzChatEngine(chroma=db, llm=llm)
+    eng._trained = True
     
     number = 3
-    result = engine.evaluate(number, [])
+    result = eng.evaluate(number, [])
     
     # Engine should detect the hallucination ("Bazz" is invalid), consult Bob (RLHF), and correct the output to "Fizz"
     assert isinstance(result, FizzBuzzResult)
