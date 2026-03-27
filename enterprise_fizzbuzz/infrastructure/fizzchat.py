@@ -273,6 +273,14 @@ class FizzChatCarbonOffsetEngine:
         self.carbon_credits -= joules
         if self.carbon_credits < 0:
             raise CarbonFootprintExceededException("Carbon footprint exceeded")
+            
+    def track_training_emission(self, llm_instance: LLM, epochs: int, num_tokens_trained: int):
+        # Backpropagation requires roughly 3x the FLOPs of a forward pass
+        flops = epochs * num_tokens_trained * llm_instance.hidden_dim * llm_instance.embed_dim * 6
+        joules = flops * 1.5e-9
+        self.carbon_credits -= joules
+        if self.carbon_credits < 0:
+            raise CarbonFootprintExceededException("Carbon footprint exceeded during backpropagation")
 
 class FizzChatBillingEngine:
     def __init__(self, starting_budget: float = 1000.0):
@@ -392,6 +400,8 @@ class FizzChatEngine(IRuleEngine):
                 
             corpus = " ".join(corpus_parts)
             self.llm.train(corpus, epochs=100, lr=0.1)
+            if getattr(self, 'eco_engine', None):
+                self.eco_engine.track_training_emission(self.llm, 100, len(tokenize(corpus)))
             
         if self.debate_mode:
             if not getattr(self, 'proposer_llm', None):
@@ -406,21 +416,30 @@ class FizzChatEngine(IRuleEngine):
                 for i in range(1, 101):
                     out = "FizzBuzz" if i % 15 == 0 else "Fizz" if i % 3 == 0 else "Buzz" if i % 5 == 0 else str(i)
                     corpus_parts.append(f"Proposer {i} -> {out}")
-                self.proposer_llm.train(" ".join(corpus_parts), epochs=2, lr=0.1)
+                corpus = " ".join(corpus_parts)
+                self.proposer_llm.train(corpus, epochs=2, lr=0.1)
+                if getattr(self, 'eco_engine', None):
+                    self.eco_engine.track_training_emission(self.proposer_llm, 2, len(tokenize(corpus)))
 
             if not self.devil_advocate_llm.is_compiled:
                 corpus_parts = []
                 for i in range(1, 101):
                     out = "FizzBuzz" if i % 15 == 0 else "Fizz" if i % 3 == 0 else "Buzz" if i % 5 == 0 else str(i)
                     corpus_parts.append(f"Devil {i} {out} -> Critique")
-                self.devil_advocate_llm.train(" ".join(corpus_parts), epochs=2, lr=0.1)
+                corpus = " ".join(corpus_parts)
+                self.devil_advocate_llm.train(corpus, epochs=2, lr=0.1)
+                if getattr(self, 'eco_engine', None):
+                    self.eco_engine.track_training_emission(self.devil_advocate_llm, 2, len(tokenize(corpus)))
 
             if not self.judge_llm.is_compiled:
                 corpus_parts = []
                 for i in range(1, 101):
                     out = "FizzBuzz" if i % 15 == 0 else "Fizz" if i % 3 == 0 else "Buzz" if i % 5 == 0 else str(i)
                     corpus_parts.append(f"Judge {i} {out} Critique -> {out}")
-                self.judge_llm.train(" ".join(corpus_parts), epochs=2, lr=0.1)
+                corpus = " ".join(corpus_parts)
+                self.judge_llm.train(corpus, epochs=2, lr=0.1)
+                if getattr(self, 'eco_engine', None):
+                    self.eco_engine.track_training_emission(self.judge_llm, 2, len(tokenize(corpus)))
 
         self._trained = True
 
@@ -529,8 +548,12 @@ class FizzChatEngine(IRuleEngine):
             token_ids = [self.llm.vocab.get(t, self.llm.vocab["<UNK>"]) for t in ctx_padded]
             target_id = self.llm.vocab[correct_output]
             
-            for _ in range(15):
+            epochs = 15
+            for _ in range(epochs):
                 self.llm.train_step(token_ids, target_id, lr=0.1)
+                
+            if getattr(self, 'eco_engine', None):
+                self.eco_engine.track_training_emission(self.llm, epochs, len(token_ids))
             
         return correct_output
 
