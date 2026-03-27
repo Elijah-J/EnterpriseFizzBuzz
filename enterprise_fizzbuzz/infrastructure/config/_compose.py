@@ -48,6 +48,7 @@ from .mixins.fizzimage import FizzimageConfigMixin
 from .mixins.fizzkube import FizzkubeConfigMixin
 from .mixins.fizzkubev2 import Fizzkubev2ConfigMixin
 from .mixins.fizzlang import FizzlangConfigMixin
+from .mixins.fizzmail import FizzmailConfigMixin
 from .mixins.fizzlsp import FizzlspConfigMixin
 from .mixins.fizzlife import FizzlifeConfigMixin
 from .mixins.fizznet import FizznetConfigMixin
@@ -171,6 +172,7 @@ class ConfigurationManager(
     FizzkubeConfigMixin,
     Fizzkubev2ConfigMixin,
     FizzlangConfigMixin,
+    FizzmailConfigMixin,
     FizzlspConfigMixin,
     FizzlifeConfigMixin,
     FizznetConfigMixin,

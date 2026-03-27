@@ -6,6 +6,15 @@ All notable changes to the Enterprise FizzBuzz Platform are documented in this f
 
 ## [Unreleased]
 ### Added
+- **FizzMail SMTP/IMAP Email Server**
+  - RFC 5321-compliant SMTP server with STARTTLS encryption and AUTH support (PLAIN, LOGIN, CRAM-MD5)
+  - SPF, DKIM, and DMARC validation for inbound and outbound message authentication
+  - Greylisting and RBL (Real-time Blackhole List) integration for spam mitigation
+  - Message queue with exponential backoff retry and configurable relay/smart host routing
+  - RFC 3501-compliant IMAP server with FETCH, SEARCH, STORE, UID, and IDLE command support
+  - Maildir storage backend with per-user quota enforcement
+  - 20 new CLI flags for SMTP/IMAP configuration and operational control
+  - FizzMailMiddleware at priority 113 for email-mediated FizzBuzz result delivery
 - **FizzChat LLM Pipeline**
   - NanoLLM & TF-IDF Vector Database (RAG) for semantic FizzBuzz divisibility evaluation
   - RLHF (Reinforcement Learning from Human Feedback) with automatic fine-tuning via SGD
