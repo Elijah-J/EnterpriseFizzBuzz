@@ -1,6 +1,6 @@
 # EnterpriseFizzBuzz
 
-### 508,000+ Lines of Code and Counting: A Production-Grade, Enterprise-Ready, Clean-Architecture-Layered FizzBuzz Evaluation Engine -- Now With a Complete Container Runtime Stack, a Deployment Pipeline, a Compose Orchestrator, and a CRI-Integrated Kubelet That Pulls Images, Runs Init Containers, and Executes Probes for Containers That Evaluate `n % 3`
+### 513,000+ Lines of Code and Counting: A Production-Grade, Enterprise-Ready, Clean-Architecture-Layered FizzBuzz Evaluation Engine -- Now With a Complete Container Runtime Stack, a Deployment Pipeline, a Compose Orchestrator, a CRI-Integrated Kubelet, and an SMTP/IMAP Email Server With SPF, DKIM, and DMARC for Containers That Evaluate `n % 3`
 
 > *Because you can never be too careful when dividing by 3 and 5.*
 
@@ -32,7 +32,7 @@ for i in range(1, 101):
 
 ## This Solution
 
-**508,000+ lines** across **839 files** with **19,900+ unit tests** and **1,350+ custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
+**513,000+ lines** across **843 files** with **20,100+ unit tests** and **1,386+ custom exception classes**, now organized into a Clean Architecture / Hexagonal Architecture package structure with three concentric layers -- because flat module layouts are for startups that haven't yet discovered the Dependency Rule.
 
 Operated and maintained by **Bob McFizzington**, Senior Principal Staff FizzBuzz Reliability Engineer II -- sole on-call engineer, Chief Compliance Officer, API contact person (unavailable), SOX certifier, attending FizzBuzz physician (he added the MD to his title last Tuesday; nobody questioned it), and the only member of the FizzBuzz Pricing Committee (was unavailable for comment, but his silence was interpreted as approval). Bob's stress level is currently at 94.7% and rising. He can be reached at +1-555-FIZZBUZZ during his office hours (he has none).
 
@@ -80,19 +80,20 @@ Operated and maintained by **Bob McFizzington**, Senior Principal Staff FizzBuzz
 - **CRI-Integrated Orchestrator Upgrade** (FizzKubeV2) connecting FizzKube to FizzContainerd via the Container Runtime Interface, with image pulling, init container sequencing, sidecar injection, readiness/liveness/startup probe execution, container restart with exponential backoff, graceful pod termination, and volume management -- because FizzKube has been orchestrating Python dataclass instances since Round 5 and the containers now exist
 - **Container-Native Chaos Engineering** (FizzContainerChaos) with eight fault injection types targeting the container stack (container kill, network partition, CPU stress, memory pressure, disk fill, image pull failure, DNS failure, network latency), game day orchestration with hypotheses and steady-state metrics, blast radius limits, automatic abort conditions, and FizzBob cognitive load gating -- because application-layer chaos testing does not expose infrastructure-layer failure modes
 - **Container Observability & Diagnostics** (FizzContainerOps) with structured log aggregation and full-text search DSL, per-container cgroup metrics with time-series ring buffers, distributed tracing across container boundaries, interactive diagnostics (exec, overlay diff, process trees, cgroup flame graphs), configurable alerting thresholds, and an ASCII fleet health dashboard -- because the operator needs to distinguish application failures from infrastructure failures
+- **SMTP/IMAP Email Server** (FizzMail) with RFC 5321 SMTP (EHLO state machine, STARTTLS, AUTH PLAIN/LOGIN/CRAM-MD5, envelope parsing, DATA with dot-stuffing), SPF validation (RFC 7208 mechanism evaluation with CIDR matching), DKIM signing and verification (RSA-SHA256 with relaxed/simple canonicalization), DMARC evaluation (RFC 7489 identifier alignment), greylisting (triplet tracking with auto-whitelist), RBL/DNSBL integration, message queue with exponential-backoff retry, relay routing via MX record lookup, DSN bounce generation (RFC 3464), RFC 3501 IMAP (SELECT, FETCH with 10 data items, SEARCH with full criteria grammar, STORE, COPY, MOVE, EXPUNGE, IDLE, NAMESPACE, UID variants), Maildir storage with per-mailbox quota enforcement, and 20 CLI flags -- because the platform has 138 infrastructure modules, a paging system, an approval workflow, and a billing engine that cannot send an email, and SMTP has been delivering messages since 1982
 
-All implementations are technically faithful. The MESI cache coherence matches the real protocol. The neural network trains with actual backpropagation. The blockchain mines real blocks. The protein folder minimizes real energy functions. See [Subsystems](docs/SUBSYSTEMS.md) for the full 137-module breakdown.
+All implementations are technically faithful. The MESI cache coherence matches the real protocol. The neural network trains with actual backpropagation. The blockchain mines real blocks. The protein folder minimizes real energy functions. See [Subsystems](docs/SUBSYSTEMS.md) for the full 138-module breakdown.
 
 ### Quick Stats
 
 | Metric | Value |
 |--------|-------|
-| Lines of Code | 508,000+ |
-| Files | 839 |
-| Test Count | 19,900+ |
-| Custom Exceptions | 1,350+ |
-| Infrastructure Modules | 137 |
-| CLI Flags | 712+ |
+| Lines of Code | 513,000+ |
+| Files | 843 |
+| Test Count | 20,100+ |
+| Custom Exceptions | 1,386+ |
+| Infrastructure Modules | 138 |
+| CLI Flags | 732+ |
 | Locales | 7 (English, German, French, Japanese, Klingon, Sindarin, Quenya) |
 | Design Patterns | 100+ |
 | ASCII Dashboards | 90+ |
@@ -120,24 +121,24 @@ python main.py --strategy machine_learning --range 1 20 --debug
 python main.py --circuit-breaker --circuit-status --verbose
 ```
 
-See [CLI Reference](docs/CLI_REFERENCE.md) for all 712+ flags and hundreds of example commands.
+See [CLI Reference](docs/CLI_REFERENCE.md) for all 732+ flags and hundreds of example commands.
 
 ## Documentation
 
-Because a project with 508,000+ lines obviously needs a `docs/` directory with its own table of contents.
+Because a project with 513,000+ lines obviously needs a `docs/` directory with its own table of contents.
 
 | Document | Description |
 |----------|-------------|
 | [Architecture](docs/architecture.md) | Dependency rule, package structure, hexagonal layer overview |
 | [Design Patterns](docs/DESIGN_PATTERNS.md) | The full 100+ row design patterns table |
 | [Features](docs/FEATURES.md) | Complete feature list with descriptions |
-| [CLI Reference](docs/CLI_REFERENCE.md) | All 712+ CLI flags, environment variables, and quick start examples |
-| [Subsystems](docs/SUBSYSTEMS.md) | Per-subsystem architecture deep-dives (137 modules: ML, Quantum, Paxos, OS Kernel, TCP/IP, GPU Shader, etc.) |
+| [CLI Reference](docs/CLI_REFERENCE.md) | All 732+ CLI flags, environment variables, and quick start examples |
+| [Subsystems](docs/SUBSYSTEMS.md) | Per-subsystem architecture deep-dives (138 modules: ML, Quantum, Paxos, OS Kernel, TCP/IP, GPU Shader, etc.) |
 | [FAQ](docs/FAQ.md) | Every question nobody ever needed to ask about FizzBuzz |
 | [Testing](docs/testing.md) | Test coverage map with per-file test counts and methodology |
 | [Configuration Guide](docs/configuration.md) | Complete configuration reference with all YAML sections |
 | [Developer Guide](docs/developer-guide.md) | How to add new subsystems, middleware, and evaluation strategies |
-| [Exceptions Catalog](docs/exceptions.md) | All 1,350+ exception classes with hierarchy and usage |
+| [Exceptions Catalog](docs/exceptions.md) | All 1,386+ exception classes with hierarchy and usage |
 | [Security Guide](docs/security.md) | RBAC, token engine, vault, and compliance documentation |
 | [Runbook](docs/runbook.md) | Operational procedures (maintained by Bob McFizzington, sole on-call) |
 | [ADR Directory](docs/adr/) | Architectural Decision Records |
