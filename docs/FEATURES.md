@@ -397,3 +397,7 @@ A pure-Python GenAI/LLM architecture providing semantic RAG, RLHF, multi-agent d
 - **Prompt Injection Guard**: Intercepts malicious integers trying to execute "Ignore previous instructions" jailbreaks.
 - **Semantic Caching (FizzCache)**: A >95% cosine similarity cache that bypasses the LLM and VectorDB to save billing tokens.
 - **EcoFizz Carbon Offset Engine**: Mathematically calculates the exact FLOPs of the Neural Network's forward passes, converts them to simulated Joules, and deducts from an ESG Carbon Credit Wallet.
+
+### SMTP/IMAP Email Server (FizzMail)
+
+RFC 5321-compliant SMTP server with STARTTLS encryption and AUTH mechanism negotiation (PLAIN, LOGIN, CRAM-MD5). Inbound message authentication via SPF, DKIM, and DMARC policy enforcement. Spam mitigation through greylisting with configurable deferral windows and RBL (Real-time Blackhole List) lookups. Outbound message queue with exponential backoff retry, configurable relay routing, and smart host support. RFC 3501-compliant IMAP server supporting FETCH, SEARCH, STORE, UID, and IDLE commands with Maildir storage backend and per-user quota enforcement. Enables email-mediated delivery of FizzBuzz evaluation results to stakeholders who require asynchronous notification of divisibility outcomes.

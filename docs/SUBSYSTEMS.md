@@ -67,6 +67,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzOCI OCI-Compliant Container Runtime Architecture](#fizzoci-oci-compliant-container-runtime-architecture)
 - [FizzRegistry OCI Distribution-Compliant Image Registry Architecture](#fizzregistry-oci-distribution-compliant-image-registry-architecture)
 - [FizzCNI Container Network Interface Architecture](#fizzcni-container-network-interface-architecture)
+- [FizzMail SMTP/IMAP Email Server Architecture](#fizzmail-smtpimap-email-server-architecture)
 
 ---
 
@@ -6239,3 +6240,88 @@ The FizzChat subsystem replaces the mathematically sound `%` operator with a pro
 | Fine-tuning | SGD based on Bob's tears |
 | Token limits | Strictly enforced corporate budget |
 | ESG compliance | 100% Carbon Neutral FizzBuzz |
+
+---
+
+## FizzMail SMTP/IMAP Email Server Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzmail.py`
+**Lines:** ~4,785
+**Tests:** 267
+
+FizzMail implements a standards-compliant email server providing both SMTP (RFC 5321) and IMAP (RFC 3501) services for asynchronous delivery of FizzBuzz evaluation results. The SMTP server handles inbound and outbound mail with STARTTLS encryption, AUTH mechanism negotiation (PLAIN, LOGIN, CRAM-MD5), and a multi-layer sender verification pipeline (SPF, DKIM, DMARC). Spam mitigation is provided by greylisting with configurable deferral windows and RBL lookups against real-time blackhole lists. Outbound messages enter a persistent queue with exponential backoff retry, configurable relay routing, and smart host support. The IMAP server supports FETCH, SEARCH, STORE, UID, and IDLE commands against a Maildir storage backend with per-user quota enforcement.
+
+```
+              Inbound Mail                         Outbound Mail
+                  |                                     |
+                  v                                     v
+          +---------------+                    +----------------+
+          | SMTP Listener |                    | Message Queue  |
+          | (STARTTLS)    |                    | (Exp. Backoff) |
+          +-------+-------+                    +--------+-------+
+                  |                                     |
+                  v                                     v
+          +---------------+                    +----------------+
+          | AUTH Engine   |                    | DKIM Signer    |
+          | PLAIN/LOGIN/  |                    | (Ed25519)      |
+          | CRAM-MD5      |                    +--------+-------+
+          +-------+-------+                            |
+                  |                                     v
+                  v                             +----------------+
+          +---------------+                    | Relay / Smart  |
+          | SPF Check     |                    | Host Router    |
+          +-------+-------+                    +----------------+
+                  |
+                  v
+          +---------------+
+          | DKIM Verify   |
+          +-------+-------+
+                  |
+                  v
+          +---------------+
+          | DMARC Align   |
+          +-------+-------+
+                  |
+                  v
+          +---------------+
+          | Greylist /    |
+          | RBL Filter    |
+          +-------+-------+
+                  |
+                  v
+          +---------------+
+          | Maildir Store |
+          | (Quota Enf.)  |
+          +---------------+
+                  |
+                  v
+          +---------------+
+          | IMAP Server   |
+          | FETCH/SEARCH/ |
+          | STORE/UID/    |
+          | IDLE          |
+          +---------------+
+```
+
+**Key components:**
+- **SMTPServer** — RFC 5321 listener with EHLO/HELO negotiation, STARTTLS upgrade, and pipelined command processing.
+- **AuthEngine** — Supports PLAIN, LOGIN, and CRAM-MD5 SASL mechanisms with pluggable credential backends.
+- **SPFValidator** — Parses SPF TXT records and evaluates sender IP against authorized mechanisms (ip4, ip6, a, mx, include, redirect).
+- **DKIMSigner / DKIMVerifier** — Ed25519-based DKIM signing for outbound messages and signature verification for inbound messages per RFC 6376.
+- **DMARCEvaluator** — Evaluates DMARC alignment between SPF/DKIM domains and the RFC 5322 From header, applying p=none/quarantine/reject policies.
+- **GreylistEngine** — Tracks (sender, recipient, IP) triplets and defers first-seen senders for a configurable window before accepting delivery.
+- **RBLChecker** — Queries configurable DNS-based blackhole lists to reject mail from known spam sources.
+- **MessageQueue** — Persistent outbound queue with exponential backoff retry (configurable max attempts), relay routing, and smart host forwarding.
+- **MaildirStore** — Per-user Maildir (new/cur/tmp) storage with atomic delivery, quota tracking, and message flag persistence.
+- **IMAPServer** — RFC 3501 listener supporting FETCH (BODY, ENVELOPE, FLAGS), SEARCH (subject, from, date, flags), STORE (flag updates), UID variants, and IDLE push notifications.
+- **FizzMailMiddleware** — Priority 113 middleware that optionally delivers evaluation results via email to configured recipients.
+
+| Spec | Value |
+|------|-------|
+| SMTP RFC | 5321 |
+| IMAP RFC | 3501 |
+| Auth mechanisms | PLAIN, LOGIN, CRAM-MD5 |
+| DKIM algorithm | Ed25519 |
+| Storage format | Maildir |
+| CLI flags | 20 |
+| Middleware priority | 113 |

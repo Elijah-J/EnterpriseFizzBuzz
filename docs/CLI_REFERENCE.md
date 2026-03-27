@@ -1416,6 +1416,26 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --fizzcontainerops-flamegraph CONTAINER  Generate a cgroup-scoped flame graph for a container
 --fizzcontainerops-dashboard  Launch the ASCII container fleet health dashboard
 --fizzcontainerops-alerts    List active metric alert rules with current status
+--fizzmail                   Enable FizzMail SMTP/IMAP email server for evaluation result delivery
+--fizzmail-smtp-port PORT    Set SMTP listener port (default: 2525)
+--fizzmail-imap-port PORT    Set IMAP listener port (default: 1143)
+--fizzmail-domain DOMAIN     Set mail server domain for HELO/EHLO and envelope addressing
+--fizzmail-tls               Enable STARTTLS for SMTP and IMAP connections
+--fizzmail-auth              Require AUTH (PLAIN/LOGIN/CRAM-MD5) before accepting mail
+--fizzmail-dkim-sign         Sign outbound messages with DKIM (Ed25519)
+--fizzmail-dkim-verify       Verify DKIM signatures on inbound messages
+--fizzmail-spf               Enable SPF policy checking on inbound mail
+--fizzmail-dmarc             Enable DMARC alignment verification on inbound mail
+--fizzmail-greylist          Enable greylisting with configurable deferral window
+--fizzmail-rbl               Enable RBL (Real-time Blackhole List) lookups for sender IP filtering
+--fizzmail-quota BYTES       Set per-user Maildir storage quota in bytes
+--fizzmail-retry-max N       Set maximum retry attempts for deferred messages (default: 5)
+--fizzmail-relay HOST:PORT   Configure an external relay for outbound message delivery
+--fizzmail-smart-host HOST   Route all outbound mail through a smart host
+--fizzmail-send TO SUBJECT BODY  Send a FizzBuzz evaluation result via email
+--fizzmail-list-mailboxes    List all Maildir mailboxes and message counts
+--fizzmail-search QUERY      Search mailbox messages by subject, sender, or date range
+--fizzmail-idle MAILBOX      Open an IMAP IDLE connection and stream new message notifications
 ```
 
 ## Environment Variables
