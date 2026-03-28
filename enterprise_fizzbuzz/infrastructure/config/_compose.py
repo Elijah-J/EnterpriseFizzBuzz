@@ -18,6 +18,7 @@ from .mixins.cache import CacheConfigMixin
 from .mixins.capability_security import CapabilitySecurityConfigMixin
 from .mixins.cdc import CdcConfigMixin
 from .mixins.chaos import ChaosConfigMixin
+from .mixins.fizzchaosv2 import Fizzchaosv2ConfigMixin
 from .mixins.circuit_breaker import CircuitBreakerConfigMixin
 from .mixins.circuit_sim import CircuitSimConfigMixin
 from .mixins.clock_sync import ClockSyncConfigMixin
@@ -172,6 +173,7 @@ class ConfigurationManager(
     CapabilitySecurityConfigMixin,
     CdcConfigMixin,
     ChaosConfigMixin,
+    Fizzchaosv2ConfigMixin,
     CircuitBreakerConfigMixin,
     CircuitSimConfigMixin,
     ClockSyncConfigMixin,
