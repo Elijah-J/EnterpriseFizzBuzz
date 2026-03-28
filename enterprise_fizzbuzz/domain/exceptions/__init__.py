@@ -190,6 +190,12 @@ from enterprise_fizzbuzz.domain.exceptions.fizzoptics import *  # noqa: F401,F40
 from enterprise_fizzbuzz.domain.exceptions.fizzparticlephysics import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzepidemiology import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzclimate import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzneuroscience import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzvolcanology import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzcrystallography import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzacoustics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizztribology import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizztelescope import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
@@ -1853,4 +1859,54 @@ __all__ = [
     "IceSheetError",
     "FeedbackLoopError",
     "ClimateMiddlewareError",
+    # FizzNeuroscience
+    "FizzNeuroscienceError",
+    "MembranePotentialError",
+    "IonChannelError",
+    "SynapticTransmissionError",
+    "NeuralCircuitError",
+    "ActionPotentialError",
+    "IntegrationStepError",
+    "NeuroscienceMiddlewareError",
+    # FizzVolcanology
+    "FizzVolcanologyError",
+    "MagmaChamberError",
+    "LavaViscosityError",
+    "EruptionTypeError",
+    "PyroclasticFlowError",
+    "VEIClassificationError",
+    "VolcanologyMiddlewareError",
+    # FizzCrystallography
+    "FizzCrystallographyError",
+    "BravaisLatticeError",
+    "MillerIndicesError",
+    "BraggConditionError",
+    "StructureFactorError",
+    "UnitCellError",
+    "CrystallographyMiddlewareError",
+    # FizzAcoustics
+    "FizzAcousticsError",
+    "SoundPropagationError",
+    "RoomAcousticsError",
+    "ImpedanceMismatchError",
+    "StandingWaveError",
+    "HelmholtzResonanceError",
+    "AcousticsMiddlewareError",
+    # FizzTribology
+    "FizzTribologyError",
+    "CoulombFrictionError",
+    "HertzianContactError",
+    "WearModelError",
+    "LubricationRegimeError",
+    "SurfaceRoughnessError",
+    "TribologyMiddlewareError",
+    # FizzTelescope
+    "FizzTelescopeError",
+    "MountTrackingError",
+    "FieldRotationError",
+    "AutoguidingError",
+    "PlateSolveError",
+    "CatalogLookupError",
+    "CoordinateError",
+    "TelescopeMiddlewareError",
 ]
