@@ -125,6 +125,41 @@ from enterprise_fizzbuzz.domain.exceptions.fizzadmit import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzlsp import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzsearch import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzsystemd import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzarrow import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizznvme import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzxdp import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzbtf import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzpaxosv2 import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzcuda import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzvirtio import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzebpfmap import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzavx import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizztpm import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizziommu import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzusb import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzpcie import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzefi import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzspdk import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzdpdk import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzsgx import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzhypervisor import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizznuma import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzrdma import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzinfiniband import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzcxl import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzsmartnic import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzfpga import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzquantumv2 import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzphotonic import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzneuromorphic import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzhomomorphic import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzzkp import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzdna import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzholographic import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzmemristor import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzoptane import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzreservoir import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzanneal import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
@@ -1285,4 +1320,247 @@ __all__ = [
     "TransientUnitError",
     "BootFailureError",
     "SystemdMiddlewareError",
+    # FizzArrow
+    "FizzArrowError",
+    "FizzArrowSchemaError",
+    "FizzArrowBatchError",
+    "FizzArrowBatchNotFoundError",
+    "FizzArrowColumnNotFoundError",
+    "FizzArrowTypeMismatchError",
+    "FizzArrowAggregationError",
+    "FizzArrowFilterError",
+    "FizzArrowNullBitmapError",
+    "FizzArrowEmptyBatchError",
+    "FizzArrowRowCountMismatchError",
+    "FizzArrowUnsupportedOperationError",
+    "FizzArrowMiddlewareError",
+    "FizzArrowDashboardError",
+    "FizzArrowDuplicateColumnError",
+    # FizzNVMe
+    "FizzNVMeError",
+    "FizzNVMeNamespaceError",
+    "FizzNVMeNamespaceNotFoundError",
+    "FizzNVMeQueueError",
+    "FizzNVMeQueueNotFoundError",
+    "FizzNVMeQueueFullError",
+    "FizzNVMeCommandError",
+    "FizzNVMeInvalidLBAError",
+    "FizzNVMeDataSizeMismatchError",
+    "FizzNVMeControllerError",
+    "FizzNVMeReadUnwrittenError",
+    "FizzNVMeDuplicateNamespaceError",
+    "FizzNVMeDuplicateQueueError",
+    "FizzNVMeMiddlewareError",
+    "FizzNVMeDashboardError",
+    # FizzCUDA
+    "CUDAError",
+    "CUDADeviceNotFoundError",
+    "CUDAKernelLaunchError",
+    "CUDAMemoryError",
+    "CUDAStreamError",
+    "CUDAInvalidBlockDimError",
+    "CUDASharedMemoryExceededError",
+    "CUDASynchronizationError",
+    # FizzVirtIO
+    "VirtIOError",
+    "VirtIODeviceNotFoundError",
+    "VirtIOQueueFullError",
+    "VirtIODescriptorChainError",
+    "VirtIORingError",
+    "VirtIODeviceStatusError",
+    "VirtIOFeatureNegotiationError",
+    "VirtIOBusError",
+    # FizzEBPFMap
+    "EBPFMapError",
+    "EBPFMapNotFoundError",
+    "EBPFMapFullError",
+    "EBPFMapKeyError",
+    "EBPFMapKeySizeError",
+    "EBPFMapValueSizeError",
+    "EBPFRingBufferError",
+    "EBPFLPMTrieError",
+    # FizzAVX
+    "AVXError",
+    "AVXRegisterError",
+    "AVXLaneError",
+    "AVXWidthMismatchError",
+    "AVXMaskError",
+    "AVXShuffleError",
+    "AVXAlignmentError",
+    "AVXUnsupportedOperationError",
+    # FizzTPM
+    "TPMError",
+    "TPMPCRError",
+    "TPMSealError",
+    "TPMUnsealError",
+    "TPMAttestationError",
+    "TPMNVRAMError",
+    "TPMAuthorizationError",
+    "TPMRandomError",
+    # FizzIOMMU
+    "IOMMUError",
+    "IOMMUPageFaultError",
+    "IOMMUDeviceNotFoundError",
+    "IOMMUPermissionError",
+    "IOMMUMappingError",
+    "IOMMUInterruptRemapError",
+    "IOMMUPageTableError",
+    "IOMMUIsolationViolationError",
+    # FizzUSB
+    "USBError",
+    "USBEnumerationError",
+    "USBTransferError",
+    "USBDescriptorError",
+    "USBEndpointError",
+    "USBBandwidthError",
+    "USBStallError",
+    "USBTimeoutError",
+    # FizzPCIe
+    "PCIeError",
+    "PCIeConfigSpaceError",
+    "PCIeBARError",
+    "PCIeInterruptError",
+    "PCIeLinkTrainingError",
+    "PCIeTLPError",
+    "PCIeCompletionTimeoutError",
+    "PCIeDeviceNotFoundError",
+    # FizzEFI
+    "EFIError",
+    "EFIBootServiceError",
+    "EFIRuntimeServiceError",
+    "EFIVariableError",
+    "EFIDriverLoadError",
+    "EFISecureBootError",
+    "EFIBootManagerError",
+    "EFIProtocolError",
+    # FizzSPDK
+    "SPDKError",
+    "SPDKBdevError",
+    "SPDKIOChannelError",
+    "SPDKNVMeError",
+    "SPDKDMAError",
+    "SPDKPollerError",
+    "SPDKTargetError",
+    "SPDKIOPSBudgetError",
+    # FizzDPDK
+    "DPDKError",
+    "DPDKPortError",
+    "DPDKMbufPoolError",
+    "DPDKRingError",
+    "DPDKFlowError",
+    "DPDKRSSError",
+    "DPDKTxError",
+    "DPDKRxError",
+    # FizzSGX
+    "SGXError",
+    "SGXEnclaveCreationError",
+    "SGXECallError",
+    "SGXOCallError",
+    "SGXSealError",
+    "SGXAttestationError",
+    "SGXMemoryError",
+    "SGXMeasurementError",
+    # FizzHypervisor
+    "HypervisorError",
+    "VMCreationError",
+    "VCPUSchedulingError",
+    "EPTViolationError",
+    "VMCSError",
+    "VMExitError",
+    "MemoryVirtualizationError",
+    "VMLifecycleError",
+    # FizzNUMA
+    "NUMAError",
+    "NUMANodeError",
+    "NUMADistanceError",
+    "NUMAPlacementError",
+    "NUMAAffinityError",
+    "NUMAMigrationError",
+    "NUMATopologyError",
+    # FizzRDMA
+    "RDMAError",
+    "RDMAMemoryRegionError",
+    "RDMAProtectionDomainError",
+    "RDMAQueuePairError",
+    "RDMACompletionError",
+    "RDMASendError",
+    "RDMAReadError",
+    "RDMAWriteError",
+    # FizzInfiniBand
+    "InfiniBandError",
+    "IBSubnetManagerError",
+    "IBLIDAssignmentError",
+    "IBPathRoutingError",
+    "IBServiceLevelError",
+    "IBPartitionKeyError",
+    "IBMulticastError",
+    "IBGIDError",
+    # FizzCXL
+    "CXLError",
+    "CXLDeviceError",
+    "CXLMemoryPoolError",
+    "CXLCoherencyError",
+    "CXLHDMDecoderError",
+    "CXLBackInvalidationError",
+    "CXLFlitError",
+    "CXLBISnpError",
+    # FizzSmartNIC
+    "SmartNICError",
+    "SmartNICProgramError",
+    "SmartNICFlowTableError",
+    "SmartNICAccelerationError",
+    "SmartNICClassificationError",
+    "SmartNICChecksumError",
+    "SmartNICQueueError",
+    "SmartNICFirmwareError",
+    # FizzDNA
+    "FizzDNAError",
+    "DNAEncodingError",
+    "DNADecodingError",
+    "GCContentImbalanceError",
+    "ECCChecksumError",
+    "HomopolymerRunError",
+    "DNAStorageCapacityError",
+    "DNAMiddlewareError",
+    # FizzHolographic
+    "FizzHolographicError",
+    "HologramWriteError",
+    "HologramReadError",
+    "AngularMultiplexingError",
+    "ReferenceBeamError",
+    "DiffractionEfficiencyError",
+    "CrystalSaturationError",
+    "HolographicMiddlewareError",
+    # FizzMemristor
+    "FizzMemristorError",
+    "CrossbarDimensionError",
+    "ResistanceStateError",
+    "SneakPathError",
+    "DeviceEnduranceError",
+    "AnalogPrecisionError",
+    "MemristorMiddlewareError",
+    # FizzOptane
+    "FizzOptaneError",
+    "DAXMappingError",
+    "PersistenceBarrierError",
+    "CrashConsistencyError",
+    "PMEMAllocatorError",
+    "TransactionAbortError",
+    "OptaneMiddlewareError",
+    # FizzReservoir
+    "FizzReservoirError",
+    "SpectralRadiusError",
+    "ReservoirDimensionError",
+    "ReadoutTrainingError",
+    "EchoStateViolationError",
+    "InputScalingError",
+    "ReservoirMiddlewareError",
+    # FizzAnneal
+    "FizzAnnealError",
+    "QUBOFormulationError",
+    "IsingModelError",
+    "AnnealingScheduleError",
+    "SolutionSamplingError",
+    "EnergyLandscapeError",
+    "AnnealMiddlewareError",
 ]
