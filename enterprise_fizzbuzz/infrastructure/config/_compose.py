@@ -39,6 +39,7 @@ from .mixins.datalog import DatalogConfigMixin
 from .mixins.dependent_types import DependentTypesConfigMixin
 from .mixins.fizzdebugger2 import Fizzdebugger2ConfigMixin
 from .mixins.fizzdilifecycle import FizzdilifecycleConfigMixin
+from .mixins.fizzhealthaggregator import FizzhealthaggregatorConfigMixin
 from .mixins.digital_twin import DigitalTwinConfigMixin
 from .mixins.distributed_locks import DistributedLocksConfigMixin
 from .mixins.fizzdrift import FizzdriftConfigMixin
@@ -211,6 +212,7 @@ class ConfigurationManager(
     DependentTypesConfigMixin,
     Fizzdebugger2ConfigMixin,
     FizzdilifecycleConfigMixin,
+    FizzhealthaggregatorConfigMixin,
     DigitalTwinConfigMixin,
     DistributedLocksConfigMixin,
     FizzdriftConfigMixin,
