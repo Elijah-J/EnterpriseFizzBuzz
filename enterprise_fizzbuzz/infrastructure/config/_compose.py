@@ -17,6 +17,7 @@ from .mixins.blue_green import BlueGreenConfigMixin
 from .mixins.bob import BobConfigMixin
 from .mixins.cache import CacheConfigMixin
 from .mixins.capability_security import CapabilitySecurityConfigMixin
+from .mixins.fizzcapacityplanner import FizzcapacityplannerConfigMixin
 from .mixins.cdc import CdcConfigMixin
 from .mixins.chaos import ChaosConfigMixin
 from .mixins.fizzchaosv2 import Fizzchaosv2ConfigMixin
@@ -27,6 +28,8 @@ from .mixins.codec import CodecConfigMixin
 from .mixins.columnar import ColumnarConfigMixin
 from .mixins.compliance import ComplianceConfigMixin
 from .mixins.compliance_chatbot import ComplianceChatbotConfigMixin
+from .mixins.fizzcompliancv2 import Fizzcompliancv2ConfigMixin
+from .mixins.fizzcostoptimizer import FizzcostoptimizerConfigMixin
 from .mixins.fizzconfig2 import Fizzconfig2ConfigMixin
 from .mixins.crdt import CrdtConfigMixin
 from .mixins.cross_compiler import CrossCompilerConfigMixin
@@ -179,6 +182,7 @@ class ConfigurationManager(
     BobConfigMixin,
     CacheConfigMixin,
     CapabilitySecurityConfigMixin,
+    FizzcapacityplannerConfigMixin,
     CdcConfigMixin,
     ChaosConfigMixin,
     Fizzchaosv2ConfigMixin,
@@ -189,6 +193,8 @@ class ConfigurationManager(
     ColumnarConfigMixin,
     ComplianceConfigMixin,
     ComplianceChatbotConfigMixin,
+    Fizzcompliancv2ConfigMixin,
+    FizzcostoptimizerConfigMixin,
     Fizzconfig2ConfigMixin,
     CrdtConfigMixin,
     CrossCompilerConfigMixin,
