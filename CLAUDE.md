@@ -59,14 +59,14 @@ Root-level `.py` files are re-export stubs (e.g., `cache.py` re-exports from `en
 
 | Metric | Value |
 |--------|-------|
-| Lines of Code | ~636,000+ |
-| Python Files | 1,599+ |
-| Test Count | ~27,800+ |
-| Custom Exceptions | 1,860+ |
-| Infrastructure Modules | 265 |
-| CLI Flags | 914+ |
-| Commits | 417+ |
-| Brainstorm Rounds Completed | 39 (Round 39 COMPLETE — all 6 of 6 done) |
+| Lines of Code | ~643,000+ |
+| Python Files | 1,635+ |
+| Test Count | ~28,300+ |
+| Custom Exceptions | 1,900+ |
+| Infrastructure Modules | 271 |
+| CLI Flags | 926+ |
+| Commits | 419+ |
+| Brainstorm Rounds Completed | 40 (Round 40 COMPLETE — all 6 of 6 done) |
 
 ### Autonomous Orchestration
 
@@ -82,7 +82,7 @@ Each step uses a **separate agent**. Steps are never combined. The cycle repeats
 
 ### Roadmaps
 
-- `roadmaps/BRAINSTORM_REPORT.md` — feature backlog (current: Round 39 COMPLETE — all 6 of 6 done)
+- `roadmaps/BRAINSTORM_REPORT.md` — feature backlog (current: Round 40 COMPLETE — all 6 of 6 done)
 - `roadmaps/QA_E2E_ROADMAP.md` — QA items (completed)
 - `roadmaps/FORMAT_ROADMAP.md` — formatting audit (completed)
 - `roadmaps/CURATION_AUDIT.md` — module curation audit (completed)
