@@ -113,6 +113,7 @@ from .mixins.i18n import I18nConfigMixin
 from .mixins.ip_office import IpOfficeConfigMixin
 from .mixins.ipc import IpcConfigMixin
 from .mixins.ir import IrConfigMixin
+from .mixins.fizzincident import FizzincidentConfigMixin
 from .mixins.jit import JitConfigMixin
 from .mixins.kernel import KernelConfigMixin
 from .mixins.knowledge_graph import KnowledgeGraphConfigMixin
@@ -278,6 +279,7 @@ class ConfigurationManager(
     IpOfficeConfigMixin,
     IpcConfigMixin,
     IrConfigMixin,
+    FizzincidentConfigMixin,
     JitConfigMixin,
     KernelConfigMixin,
     KnowledgeGraphConfigMixin,
