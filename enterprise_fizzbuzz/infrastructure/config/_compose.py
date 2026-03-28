@@ -36,6 +36,7 @@ from .mixins.feature_flags import FeatureFlagsConfigMixin
 from .mixins.federated_learning import FederatedLearningConfigMixin
 from .mixins.finops import FinopsConfigMixin
 from .mixins.fizzcgroup import FizzcgroupConfigMixin
+from .mixins.fizzci import FizzciConfigMixin
 from .mixins.fizzcni import FizzcniConfigMixin
 from .mixins.fizzcompose import FizzcomposeConfigMixin
 from .mixins.fizzcontainerchaos import FizzcontainerchaosConfigMixin
@@ -160,6 +161,7 @@ class ConfigurationManager(
     FederatedLearningConfigMixin,
     FinopsConfigMixin,
     FizzcgroupConfigMixin,
+    FizzciConfigMixin,
     FizzcniConfigMixin,
     FizzcomposeConfigMixin,
     FizzcontainerchaosConfigMixin,

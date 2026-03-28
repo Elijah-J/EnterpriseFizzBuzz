@@ -68,6 +68,7 @@ Detailed architecture documentation for every subsystem in the Enterprise FizzBu
 - [FizzRegistry OCI Distribution-Compliant Image Registry Architecture](#fizzregistry-oci-distribution-compliant-image-registry-architecture)
 - [FizzCNI Container Network Interface Architecture](#fizzcni-container-network-interface-architecture)
 - [FizzMail SMTP/IMAP Email Server Architecture](#fizzmail-smtpimap-email-server-architecture)
+- [FizzCI Continuous Integration Pipeline Engine Architecture](#fizzci-continuous-integration-pipeline-engine-architecture)
 
 ---
 
