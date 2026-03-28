@@ -120,6 +120,7 @@ from .mixins.load_testing import LoadTestingConfigMixin
 from .mixins.mapreduce import MapreduceConfigMixin
 from .mixins.metrics import MetricsConfigMixin
 from .mixins.migration import MigrationConfigMixin
+from .mixins.fizzmigration2 import Fizzmigration2ConfigMixin
 from .mixins.migrations import MigrationsConfigMixin
 from .mixins.ml import MlConfigMixin
 from .mixins.model_check import ModelCheckConfigMixin
@@ -284,6 +285,7 @@ class ConfigurationManager(
     MapreduceConfigMixin,
     MetricsConfigMixin,
     MigrationConfigMixin,
+    Fizzmigration2ConfigMixin,
     MigrationsConfigMixin,
     MlConfigMixin,
     ModelCheckConfigMixin,
