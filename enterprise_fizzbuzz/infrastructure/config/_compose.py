@@ -50,6 +50,8 @@ from .mixins.fizzidl import FizzidlConfigMixin
 from .mixins.fizzsemver import FizzsemverConfigMixin
 from .mixins.fizzbpf import FizzbpfConfigMixin
 from .mixins.fizzwaf import FizzwafConfigMixin
+from .mixins.fizzetcd import FizzetcdConfigMixin
+from .mixins.fizzpgwire import FizzpgwireConfigMixin
 from .mixins.digital_twin import DigitalTwinConfigMixin
 from .mixins.distributed_locks import DistributedLocksConfigMixin
 from .mixins.fizzdrift import FizzdriftConfigMixin
@@ -233,6 +235,8 @@ class ConfigurationManager(
     FizzsemverConfigMixin,
     FizzbpfConfigMixin,
     FizzwafConfigMixin,
+    FizzetcdConfigMixin,
+    FizzpgwireConfigMixin,
     DigitalTwinConfigMixin,
     DistributedLocksConfigMixin,
     FizzdriftConfigMixin,
