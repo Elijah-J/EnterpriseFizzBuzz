@@ -63,8 +63,8 @@ from .mixins.fizzzfs import FizzzfsConfigMixin
 from .mixins.fizzwasi import FizzwasiConfigMixin
 from .mixins.fizzmpsc import FizzmpscConfigMixin
 from .mixins.fizzlsm import FizzlsmConfigMixin
-from .mixins.fizzarrow import FizzarrowConfigMixin
-from .mixins.fizznvme import FizznvmeConfigMixin
+from .mixins.fizzarrow import FizzArrowConfigMixin
+from .mixins.fizznvme import FizzNVMeConfigMixin
 from .mixins.fizzxdp import FizzxdpConfigMixin
 from .mixins.fizzbtf import FizzbtfConfigMixin
 from .mixins.fizzpaxosv2 import Fizzpaxosv2ConfigMixin
@@ -265,8 +265,8 @@ class ConfigurationManager(
     FizzwasiConfigMixin,
     FizzmpscConfigMixin,
     FizzlsmConfigMixin,
-    FizzarrowConfigMixin,
-    FizznvmeConfigMixin,
+    FizzArrowConfigMixin,
+    FizzNVMeConfigMixin,
     FizzxdpConfigMixin,
     FizzbtfConfigMixin,
     Fizzpaxosv2ConfigMixin,
