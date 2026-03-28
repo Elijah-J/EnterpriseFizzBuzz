@@ -32,6 +32,7 @@ from .mixins.cross_compiler import CrossCompilerConfigMixin
 from .mixins.data_pipeline import DataPipelineConfigMixin
 from .mixins.datalog import DatalogConfigMixin
 from .mixins.dependent_types import DependentTypesConfigMixin
+from .mixins.fizzdebugger2 import Fizzdebugger2ConfigMixin
 from .mixins.digital_twin import DigitalTwinConfigMixin
 from .mixins.distributed_locks import DistributedLocksConfigMixin
 from .mixins.dr import DrConfigMixin
@@ -188,6 +189,7 @@ class ConfigurationManager(
     DataPipelineConfigMixin,
     DatalogConfigMixin,
     DependentTypesConfigMixin,
+    Fizzdebugger2ConfigMixin,
     DigitalTwinConfigMixin,
     DistributedLocksConfigMixin,
     DrConfigMixin,
