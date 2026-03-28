@@ -74,6 +74,7 @@ from .mixins.fizzlsp import FizzlspConfigMixin
 from .mixins.fizzlife import FizzlifeConfigMixin
 from .mixins.fizzmetricsv2 import Fizzmetricsv2ConfigMixin
 from .mixins.fizznet import FizznetConfigMixin
+from .mixins.fizznetworkpolicy import FizznetworkpolicyConfigMixin
 from .mixins.fizznotebook import FizznotebookConfigMixin
 from .mixins.fizzpolicy import FizzpolicyConfigMixin
 from .mixins.fizzns import FizznsConfigMixin
@@ -235,6 +236,7 @@ class ConfigurationManager(
     FizzlspConfigMixin,
     FizzlifeConfigMixin,
     FizznetConfigMixin,
+    FizznetworkpolicyConfigMixin,
     FizznotebookConfigMixin,
     FizzpolicyConfigMixin,
     FizznsConfigMixin,
