@@ -51,6 +51,7 @@ from .mixins.fizzcontainerops import FizzcontaineropsConfigMixin
 from .mixins.fizzadmit import FizzadmitConfigMixin
 from .mixins.fizzdap import FizzdapConfigMixin
 from .mixins.fizzdeploy import FizzdeployConfigMixin
+from .mixins.fizzi18nv2 import Fizzi18nv2ConfigMixin
 from .mixins.fizzimage import FizzimageConfigMixin
 from .mixins.fizzkube import FizzkubeConfigMixin
 from .mixins.fizzkubev2 import Fizzkubev2ConfigMixin
@@ -192,6 +193,7 @@ class ConfigurationManager(
     FizzadmitConfigMixin,
     FizzdapConfigMixin,
     FizzdeployConfigMixin,
+    Fizzi18nv2ConfigMixin,
     FizzimageConfigMixin,
     FizzkubeConfigMixin,
     Fizzkubev2ConfigMixin,
