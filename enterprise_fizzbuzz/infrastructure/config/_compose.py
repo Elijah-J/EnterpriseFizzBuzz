@@ -75,6 +75,7 @@ from .mixins.fizzsandbox import FizzsandboxConfigMixin
 from .mixins.fizzsql import FizzsqlConfigMixin
 from .mixins.fizzssh import FizzsshConfigMixin
 from .mixins.fizzsystemd import FizzsystemdConfigMixin
+from .mixins.fizztelemetry import FizztelemetryConfigMixin
 from .mixins.fizzstream import FizzstreamConfigMixin
 from .mixins.fizzwal import FizzwalConfigMixin
 from .mixins.flame import FlameConfigMixin
@@ -215,6 +216,7 @@ class ConfigurationManager(
     FizzsqlConfigMixin,
     FizzsshConfigMixin,
     FizzsystemdConfigMixin,
+    FizztelemetryConfigMixin,
     FizzstreamConfigMixin,
     FizzwalConfigMixin,
     FlameConfigMixin,
