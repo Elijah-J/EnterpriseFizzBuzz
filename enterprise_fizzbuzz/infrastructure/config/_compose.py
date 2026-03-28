@@ -40,6 +40,7 @@ from .mixins.event_sourcing import EventSourcingConfigMixin
 from .mixins.fbaas import FbaasConfigMixin
 from .mixins.feature_flags import FeatureFlagsConfigMixin
 from .mixins.federated_learning import FederatedLearningConfigMixin
+from .mixins.fizzfeatureflagv2 import Fizzfeatureflagv2ConfigMixin
 from .mixins.finops import FinopsConfigMixin
 from .mixins.fizzcgroup import FizzcgroupConfigMixin
 from .mixins.fizzblock import FizzblockConfigMixin
@@ -195,6 +196,7 @@ class ConfigurationManager(
     FbaasConfigMixin,
     FeatureFlagsConfigMixin,
     FederatedLearningConfigMixin,
+    Fizzfeatureflagv2ConfigMixin,
     FinopsConfigMixin,
     FizzcgroupConfigMixin,
     FizzblockConfigMixin,
