@@ -55,6 +55,7 @@ from .mixins.fizzadmit import FizzadmitConfigMixin
 from .mixins.fizzdatalake import FizzdatalakeConfigMixin
 from .mixins.fizzdap import FizzdapConfigMixin
 from .mixins.fizzdeploy import FizzdeployConfigMixin
+from .mixins.fizzeventmesh import FizzeventmeshConfigMixin
 from .mixins.fizzi18nv2 import Fizzi18nv2ConfigMixin
 from .mixins.fizzimage import FizzimageConfigMixin
 from .mixins.fizzk8soperator import Fizzk8soperatorConfigMixin
@@ -82,6 +83,7 @@ from .mixins.fizzregistry import FizzregistryConfigMixin
 from .mixins.fizzsandbox import FizzsandboxConfigMixin
 from .mixins.fizzsmtp2 import Fizzsmtp2ConfigMixin
 from .mixins.fizzsql import FizzsqlConfigMixin
+from .mixins.fizzsecurityscanner import FizzsecurityscannerConfigMixin
 from .mixins.fizzssh import FizzsshConfigMixin
 from .mixins.fizzsystemd import FizzsystemdConfigMixin
 from .mixins.fizztelemetry import FizztelemetryConfigMixin
@@ -206,6 +208,7 @@ class ConfigurationManager(
     FizzdatalakeConfigMixin,
     FizzdapConfigMixin,
     FizzdeployConfigMixin,
+    FizzeventmeshConfigMixin,
     Fizzi18nv2ConfigMixin,
     FizzimageConfigMixin,
     Fizzk8soperatorConfigMixin,
@@ -231,6 +234,7 @@ class ConfigurationManager(
     Fizzratev2ConfigMixin,
     FizzregistryConfigMixin,
     FizzsandboxConfigMixin,
+    FizzsecurityscannerConfigMixin,
     Fizzsmtp2ConfigMixin,
     FizzsqlConfigMixin,
     FizzsshConfigMixin,
