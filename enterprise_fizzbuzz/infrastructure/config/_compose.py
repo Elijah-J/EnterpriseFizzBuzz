@@ -5,6 +5,7 @@ from .mixins.ab_testing import AbTestingConfigMixin
 from .mixins.alloc import AllocConfigMixin
 from .mixins.api_gateway import ApiGatewayConfigMixin
 from .mixins.approval import ApprovalConfigMixin
+from .mixins.fizzauth2 import Fizzauth2ConfigMixin
 from .mixins.archaeology import ArchaeologyConfigMixin
 from .mixins.audit_dashboard import AuditDashboardConfigMixin
 from .mixins.billing import BillingConfigMixin
@@ -134,6 +135,7 @@ class ConfigurationManager(
     AllocConfigMixin,
     ApiGatewayConfigMixin,
     ApprovalConfigMixin,
+    Fizzauth2ConfigMixin,
     ArchaeologyConfigMixin,
     AuditDashboardConfigMixin,
     BillingConfigMixin,
