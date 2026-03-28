@@ -56,6 +56,7 @@ from .mixins.fizzsmt import FizzsmtConfigMixin
 from .mixins.fizzcrisv import FizzrisvConfigMixin
 from .mixins.fizzffi import FizzffiConfigMixin
 from .mixins.fizzdtrace import FizzdtraceConfigMixin
+from .mixins.fizzgrpc import FizzgrpcConfigMixin
 from .mixins.digital_twin import DigitalTwinConfigMixin
 from .mixins.distributed_locks import DistributedLocksConfigMixin
 from .mixins.fizzdrift import FizzdriftConfigMixin
@@ -245,6 +246,7 @@ class ConfigurationManager(
     FizzrisvConfigMixin,
     FizzffiConfigMixin,
     FizzdtraceConfigMixin,
+    FizzgrpcConfigMixin,
     DigitalTwinConfigMixin,
     DistributedLocksConfigMixin,
     FizzdriftConfigMixin,
