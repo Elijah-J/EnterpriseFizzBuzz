@@ -230,22 +230,22 @@ class TestHealthExceptions:
 
     def test_liveness_probe_failed_error(self):
         from exceptions import LivenessProbeFailedError
-        e = LivenessProbeFailedError("FizzBuzz", "Fizz")
-        assert "EFP-HC01" in str(e)
-        assert e.expected == "FizzBuzz"
-        assert e.actual == "Fizz"
+        e = LivenessProbeFailedError("container-1", 3, 3)
+        assert "EFP-KV213" in str(e) or e.error_code == "EFP-KV213"
+        assert e.context["consecutive_failures"] == 3
+        assert e.context["threshold"] == 3
 
     def test_readiness_probe_failed_error(self):
         from exceptions import ReadinessProbeFailedError
-        e = ReadinessProbeFailedError(["cache", "sla"])
-        assert "EFP-HC02" in str(e)
-        assert e.failing_subsystems == ["cache", "sla"]
+        e = ReadinessProbeFailedError("container-1", 3, 3)
+        assert "EFP-KV212" in str(e) or e.error_code == "EFP-KV212"
+        assert e.context["consecutive_failures"] == 3
 
     def test_startup_probe_failed_error(self):
         from exceptions import StartupProbeFailedError
-        e = StartupProbeFailedError(["engine_created", "service_built"])
-        assert "EFP-HC03" in str(e)
-        assert e.pending_milestones == ["engine_created", "service_built"]
+        e = StartupProbeFailedError("container-1", 30.0)
+        assert "EFP-KV214" in str(e) or e.error_code == "EFP-KV214"
+        assert e.context["elapsed_seconds"] == 30.0
 
     def test_self_healing_failed_error(self):
         from exceptions import SelfHealingFailedError

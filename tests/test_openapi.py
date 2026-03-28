@@ -702,10 +702,10 @@ class TestOpenAPIExceptions(unittest.TestCase):
         self.assertEqual(err.scheme_name, "OAuth2")
 
     def test_tag_not_found_error(self):
-        """TagNotFoundError should have EFP-OA11."""
-        err = TagNotFoundError("Undefined")
-        self.assertEqual(err.error_code, "EFP-OA11")
-        self.assertEqual(err.tag_name, "Undefined")
+        """TagNotFoundError should have EFP-REG09."""
+        err = TagNotFoundError("test-repo", "Undefined")
+        self.assertEqual(err.error_code, "EFP-REG09")
+        self.assertEqual(err.context["tag"], "Undefined")
 
 
 class TestOpenAPIEventTypes(unittest.TestCase):

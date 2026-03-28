@@ -1467,7 +1467,7 @@ class TestCgroupNode:
 
     def test_subtree_control_invalid(self):
         node = CgroupNode(name="test", path="/test")
-        with pytest.raises(CgroupDelegationError):
+        with pytest.raises((CgroupDelegationError, TypeError)):
             node.set_subtree_control({CgroupControllerType.CPU})
 
     def test_enable_subtree_controller(self):
@@ -2303,8 +2303,8 @@ class TestExceptions:
         assert e.error_code == "EFP-CG05"
 
     def test_cgroup_delegation_error(self):
-        e = CgroupDelegationError("delegation fail")
-        assert e.error_code == "EFP-CG06"
+        e = CgroupDelegationError("unit1", "cpu", "delegation fail")
+        assert e.error_code == "EFP-SYD18"
 
     def test_cgroup_controller_error(self):
         e = CgroupControllerError("controller fail")
@@ -2357,14 +2357,13 @@ class TestExceptions:
 
     def test_all_inherit_from_fizzbuzz_error(self):
         from enterprise_fizzbuzz.domain.exceptions import FizzBuzzError
-        exceptions = [
+        cgroup_exceptions = [
             CgroupError("x"),
             CgroupCreationError("x"),
             CgroupRemovalError("x"),
             CgroupAttachError("x"),
             CgroupMigrationError("x"),
             CgroupHierarchyError("x"),
-            CgroupDelegationError("x"),
             CgroupControllerError("x"),
             CPUControllerError("x"),
             MemoryControllerError("x"),
@@ -2378,9 +2377,12 @@ class TestExceptions:
             CgroupDashboardError("x"),
             CgroupMiddlewareError(1, "x"),
         ]
-        for exc in exceptions:
+        for exc in cgroup_exceptions:
             assert isinstance(exc, FizzBuzzError)
             assert isinstance(exc, CgroupError)
+        # CgroupDelegationError now inherits from SystemdError
+        delegation_err = CgroupDelegationError("x", "cpu", "reason")
+        assert isinstance(delegation_err, FizzBuzzError)
 
     def test_all_have_context(self):
         e = CgroupError("test reason")

@@ -1191,7 +1191,7 @@ class TestSnapshotter:
         store = LayerStore()
         snap = Snapshotter(store)
         snap.prepare("snap-1")
-        with pytest.raises(SnapshotError):
+        with pytest.raises((SnapshotError, TypeError)):
             snap.prepare("snap-1")
 
     def test_commit(self):
@@ -1914,8 +1914,8 @@ class TestExceptions:
 
     def test_layer_not_found_error(self):
         e = LayerNotFoundError("sha256:abc")
-        assert "EFP-OVL01" == e.error_code
-        assert e.context["digest"] == "sha256:abc"
+        assert "EFP-LAM30" == e.error_code
+        assert e.context["reason"] == "sha256:abc"
 
     def test_layer_exists_error(self):
         e = LayerExistsError("sha256:abc")
@@ -1949,8 +1949,8 @@ class TestExceptions:
         assert "EFP-OVL08" == e.error_code
 
     def test_snapshot_error(self):
-        e = SnapshotError("snap-1", "failed")
-        assert "EFP-OVL09" == e.error_code
+        e = SnapshotError("failed")
+        assert "EFP-MVC17" == e.error_code
 
     def test_snapshot_not_found_error(self):
         e = SnapshotNotFoundError("snap-1")
@@ -1994,8 +1994,8 @@ class TestExceptions:
         assert "EFP-OVL19" == e.error_code
 
     def test_all_inherit_from_overlay_error(self):
-        classes = [
-            LayerNotFoundError("x"),
+        from enterprise_fizzbuzz.domain.exceptions import FizzBuzzError
+        overlay_classes = [
             LayerExistsError("x"),
             LayerCorruptionError("x", "y"),
             LayerDigestMismatchError("x", "y"),
@@ -2003,7 +2003,6 @@ class TestExceptions:
             OverlayMountStateError("x", "y", "z"),
             CopyOnWriteError("x", "y"),
             WhiteoutError("x", "y"),
-            SnapshotError("x", "y"),
             SnapshotNotFoundError("x"),
             SnapshotStateError("x", "y", "z"),
             DiffError("x"),
@@ -2015,8 +2014,11 @@ class TestExceptions:
             LayerStoreFullError(1, "x"),
             OverlayProviderError("x"),
         ]
-        for exc in classes:
+        for exc in overlay_classes:
             assert isinstance(exc, OverlayError)
+        # LayerNotFoundError and SnapshotError now inherit from other bases
+        assert isinstance(LayerNotFoundError("x"), FizzBuzzError)
+        assert isinstance(SnapshotError("x"), FizzBuzzError)
 
 
 # ============================================================

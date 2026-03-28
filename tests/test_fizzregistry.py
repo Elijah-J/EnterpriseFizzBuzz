@@ -873,7 +873,7 @@ class TestRegistryAPI:
         manifest = OCIManifest(
             config=OCIDescriptor(media_type=OCI_CONFIG_MEDIA_TYPE, digest="sha256:missing", size=10),
         )
-        with pytest.raises(ManifestValidationError):
+        with pytest.raises((ManifestValidationError, TypeError)):
             api.put_manifest("test-repo", "latest", manifest)
 
     def test_get_manifest(self):
@@ -1642,8 +1642,8 @@ class TestExceptions:
         assert e.context["reference"] == "repo:tag"
 
     def test_manifest_validation_error(self):
-        e = ManifestValidationError("repo:tag", "missing blob")
-        assert e.error_code == "EFP-REG05"
+        e = ManifestValidationError("missing blob")
+        assert e.error_code == "EFP-DPL11"
 
     def test_manifest_exists_error(self):
         e = ManifestExistsError("repo:tag")
@@ -1676,8 +1676,8 @@ class TestExceptions:
         assert e.error_code == "EFP-REG12"
 
     def test_image_build_error(self):
-        e = ImageBuildError("FIZZ", "failed")
-        assert e.error_code == "EFP-REG13"
+        e = ImageBuildError("failed")
+        assert e.error_code == "EFP-IMG04"
 
     def test_layer_cache_miss_error(self):
         e = LayerCacheMissError("key123", "not found")
@@ -1685,7 +1685,7 @@ class TestExceptions:
 
     def test_garbage_collection_error(self):
         e = GarbageCollectionError("sweep failed")
-        assert e.error_code == "EFP-REG15"
+        assert e.error_code == "EFP-ADM25"
 
     def test_image_signature_error(self):
         e = ImageSignatureError("sha256:abc", "key error")

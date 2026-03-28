@@ -34,7 +34,7 @@ from enterprise_fizzbuzz.infrastructure.virtual_fs import (
     SysProvider,
     create_fizzfs,
 )
-from enterprise_fizzbuzz.domain.exceptions import (
+from enterprise_fizzbuzz.domain.exceptions.virtual_fs import (
     FileDescriptorError,
     FileDescriptorLimitError,
     FileExistsError_,

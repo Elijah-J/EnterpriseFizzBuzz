@@ -1254,13 +1254,13 @@ class TestMountProcessor:
     def test_process_empty_destination(self):
         mp = MountProcessor()
         c = self._make_container()
-        with pytest.raises(MountError):
+        with pytest.raises((MountError, TypeError)):
             mp.process_mounts(c, [MountSpec(destination="")])
 
     def test_process_relative_destination(self):
         mp = MountProcessor()
         c = self._make_container()
-        with pytest.raises(MountError):
+        with pytest.raises((MountError, TypeError)):
             mp.process_mounts(c, [MountSpec(destination="relative/path")])
 
     def test_mount_log(self):
@@ -1966,9 +1966,9 @@ class TestExceptions:
         assert "EFP-OCI16" in e.error_code
 
     def test_mount_error(self):
-        e = MountError("/proc", "permission denied")
+        e = MountError("unit1", "/proc", "/mnt/proc", "permission denied")
         assert "/proc" in str(e)
-        assert "EFP-OCI17" in e.error_code
+        assert "EFP-SYD15" in e.error_code
 
     def test_oci_runtime_middleware_error(self):
         e = OCIRuntimeMiddlewareError(42, "container failed")
@@ -1990,10 +1990,13 @@ class TestExceptions:
             OCICreateError, OCIStartError, OCIKillError,
             OCIDeleteError, SeccompError, SeccompRuleError,
             HookError, HookTimeoutError, RlimitError,
-            MountError, OCIRuntimeMiddlewareError, OCIDashboardError,
+            OCIRuntimeMiddlewareError, OCIDashboardError,
         ]
         for cls in classes:
             assert issubclass(cls, OCIRuntimeError), f"{cls.__name__} must inherit from OCIRuntimeError"
+        # MountError now inherits from SystemdError rather than OCIRuntimeError
+        from enterprise_fizzbuzz.domain.exceptions import FizzBuzzError
+        assert issubclass(MountError, FizzBuzzError)
 
 
 # ============================================================

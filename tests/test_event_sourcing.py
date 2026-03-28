@@ -991,8 +991,8 @@ class TestEventSourcingExceptions:
         assert "EFP-ES06" in str(err)
 
     def test_projection_error(self):
-        err = ProjectionError("StatsProjection", "EvalCompleted", "division by zero")
-        assert "EFP-ES07" in str(err)
+        err = ProjectionError("StatsProjection", 0.0, 0.0, "division by zero")
+        assert "EFP-CRT01" in str(err)
 
     def test_temporal_query_error(self):
         err = TemporalQueryError("2026-01-01T00:00:00Z", "no events before this time")

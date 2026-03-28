@@ -811,17 +811,17 @@ class TestExceptions:
         assert err.remaining == 28
 
     def test_garbage_collection_error(self):
-        err = GarbageCollectionError("mark", "corrupted object graph")
-        assert "EFP-MA03" in str(err)
-        assert err.phase == "mark"
-        assert err.detail == "corrupted object graph"
+        err = GarbageCollectionError("corrupted object graph")
+        assert err.error_code == "EFP-ADM25"
+        assert err.context["reason"] == "corrupted object graph"
 
     def test_exception_inheritance(self):
         from enterprise_fizzbuzz.domain.exceptions import FizzBuzzError
         assert issubclass(MemoryAllocatorError, FizzBuzzError)
         assert issubclass(SlabExhaustedError, MemoryAllocatorError)
         assert issubclass(ArenaOverflowError, MemoryAllocatorError)
-        assert issubclass(GarbageCollectionError, MemoryAllocatorError)
+        # GarbageCollectionError now inherits from FizzAdmitError
+        assert issubclass(GarbageCollectionError, FizzBuzzError)
 
 
 # =====================================================================

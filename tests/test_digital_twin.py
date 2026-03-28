@@ -811,9 +811,9 @@ class TestDigitalTwinExceptions:
 
     def test_monte_carlo_convergence_error(self):
         """Test MonteCarloConvergenceError."""
-        err = MonteCarloConvergenceError(1000, 0.5)
-        assert "EFP-DT03" in str(err)
-        assert err.n_simulations == 1000
+        err = MonteCarloConvergenceError(1000, 0.5, 0.01)
+        assert "EFP-ECN03" in str(err)
+        assert err.context["iterations"] == 1000
 
     def test_what_if_parse_error(self):
         """Test WhatIfScenarioParseError."""

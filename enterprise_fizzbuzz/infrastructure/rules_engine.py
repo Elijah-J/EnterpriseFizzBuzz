@@ -239,6 +239,6 @@ class RuleEngineFactory:
             logger.warning(
                 "Unknown strategy %s, falling back to STANDARD", strategy
             )
-            engine_class = StandardEngine
+            engine_class = StandardRuleEngine
 
         return engine_class()

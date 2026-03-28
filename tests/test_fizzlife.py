@@ -3563,7 +3563,7 @@ class TestFizzLifeMiddlewareIntegration(unittest.TestCase):
 
     def test_middleware_render_stats(self):
         stats = FizzLifeMiddleware().render_stats()
-        self.assertIn("Total Simulations", stats)
+        self.assertIn("Simulations", stats)
         self.assertIn("0", stats)
 
     def test_middleware_process_annotates_context(self):

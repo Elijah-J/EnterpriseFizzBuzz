@@ -112,8 +112,8 @@ class TestRepositoryExceptions:
         assert "EFP-RP02" == err.error_code
 
     def test_rollback_error(self):
-        err = RollbackError("disk full", backend="filesystem")
-        assert "EFP-RP03" == err.error_code
+        err = RollbackError("disk full")
+        assert "EFP-DPL15" == err.error_code
 
 
 # ============================================================

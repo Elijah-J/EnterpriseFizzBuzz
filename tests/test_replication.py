@@ -1020,7 +1020,7 @@ class TestReplicationExceptions:
     def test_replication_error_base(self):
         err = ReplicationError("test error")
         assert "test error" in str(err)
-        assert err.error_code == "EFP-RP00"
+        assert err.error_code == "EFP-S336"
 
     def test_wal_corruption_error(self):
         err = ReplicationWALCorruptionError(42, "bad checksum")

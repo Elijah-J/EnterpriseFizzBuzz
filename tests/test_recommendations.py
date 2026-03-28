@@ -679,12 +679,10 @@ class TestRecommendationExceptions:
     """Tests for the recommendation exception hierarchy."""
 
     def test_cold_start_error(self):
-        err = ColdStartError("user1", 1, 5)
+        err = ColdStartError("user1 has insufficient evaluations")
         assert "user1" in str(err)
-        assert err.error_code == "EFP-RE01"
-        assert err.user_id == "user1"
-        assert err.evaluated_count == 1
-        assert err.minimum_required == 5
+        assert err.error_code == "EFP-LAM13"
+        assert err.context["reason"] == "user1 has insufficient evaluations"
 
     def test_similarity_computation_error(self):
         err = SimilarityComputationError("vec_a", "vec_b", "zero norm")
@@ -707,9 +705,10 @@ class TestRecommendationExceptions:
         assert err.error_code == "EFP-RE00"
 
     def test_exception_hierarchy(self):
-        assert issubclass(ColdStartError, RecommendationError)
+        from enterprise_fizzbuzz.domain.exceptions import FizzBuzzError
+        # ColdStartError now inherits from FizzLambdaError rather than RecommendationError
+        assert issubclass(ColdStartError, FizzBuzzError)
         assert issubclass(SimilarityComputationError, RecommendationError)
         assert issubclass(FilterBlendingError, RecommendationError)
         assert issubclass(RecommendationExplanationError, RecommendationError)
-        from enterprise_fizzbuzz.domain.exceptions import FizzBuzzError
         assert issubclass(RecommendationError, FizzBuzzError)
