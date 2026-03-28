@@ -121,6 +121,7 @@ from .mixins.typeset import TypesetConfigMixin
 from .mixins.vault import VaultConfigMixin
 from .mixins.vcs import VcsConfigMixin
 from .mixins.vm import VmConfigMixin
+from .mixins.fizzwindow import FizzwindowConfigMixin
 from .mixins.webhooks import WebhooksConfigMixin
 from .mixins.zspec import ZspecConfigMixin
 
@@ -247,6 +248,7 @@ class ConfigurationManager(
     VaultConfigMixin,
     VcsConfigMixin,
     VmConfigMixin,
+    FizzwindowConfigMixin,
     WebhooksConfigMixin,
     ZspecConfigMixin,
 ):
