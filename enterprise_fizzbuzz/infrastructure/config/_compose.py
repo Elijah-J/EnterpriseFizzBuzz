@@ -216,6 +216,12 @@ from .mixins.fizzrdma import FizzrdmaConfigMixin
 from .mixins.fizzinfiniband import FizzinfinibandConfigMixin
 from .mixins.fizzcxl import FizzcxlConfigMixin
 from .mixins.fizzsmartnic import FizzsmartnicConfigMixin
+from .mixins.fizzfpga import FizzfpgaConfigMixin
+from .mixins.fizzquantumv2 import Fizzquantumv2ConfigMixin
+from .mixins.fizzphotonic import FizzphotonicConfigMixin
+from .mixins.fizzneuromorphic import FizzneuromorphicConfigMixin
+from .mixins.fizzhomomorphic import FizzhomomorphicConfigMixin
+from .mixins.fizzzkp import FizzzkpConfigMixin
 
 
 class ConfigurationManager(
@@ -435,6 +441,12 @@ class ConfigurationManager(
     FizzinfinibandConfigMixin,
     FizzcxlConfigMixin,
     FizzsmartnicConfigMixin,
+    FizzfpgaConfigMixin,
+    Fizzquantumv2ConfigMixin,
+    FizzphotonicConfigMixin,
+    FizzneuromorphicConfigMixin,
+    FizzhomomorphicConfigMixin,
+    FizzzkpConfigMixin,
 ):
     """Enterprise FizzBuzz Platform Configuration Manager.
 
