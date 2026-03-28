@@ -24,6 +24,7 @@ from .mixins.codec import CodecConfigMixin
 from .mixins.columnar import ColumnarConfigMixin
 from .mixins.compliance import ComplianceConfigMixin
 from .mixins.compliance_chatbot import ComplianceChatbotConfigMixin
+from .mixins.fizzconfig2 import Fizzconfig2ConfigMixin
 from .mixins.crdt import CrdtConfigMixin
 from .mixins.cross_compiler import CrossCompilerConfigMixin
 from .mixins.data_pipeline import DataPipelineConfigMixin
@@ -166,6 +167,7 @@ class ConfigurationManager(
     ColumnarConfigMixin,
     ComplianceConfigMixin,
     ComplianceChatbotConfigMixin,
+    Fizzconfig2ConfigMixin,
     CrdtConfigMixin,
     CrossCompilerConfigMixin,
     DataPipelineConfigMixin,
