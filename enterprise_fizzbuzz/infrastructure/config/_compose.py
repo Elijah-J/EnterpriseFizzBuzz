@@ -137,6 +137,7 @@ from .mixins.replication import ReplicationConfigMixin
 from .mixins.schema_evolution import SchemaEvolutionConfigMixin
 from .mixins.self_modifying import SelfModifyingConfigMixin
 from .mixins.service_mesh import ServiceMeshConfigMixin
+from .mixins.fizzservicecatalog import FizzservicecatalogConfigMixin
 from .mixins.sla import SlaConfigMixin
 from .mixins.sli import SliConfigMixin
 from .mixins.succession import SuccessionConfigMixin
@@ -289,6 +290,7 @@ class ConfigurationManager(
     SchemaEvolutionConfigMixin,
     SelfModifyingConfigMixin,
     ServiceMeshConfigMixin,
+    FizzservicecatalogConfigMixin,
     SlaConfigMixin,
     SliConfigMixin,
     SuccessionConfigMixin,
