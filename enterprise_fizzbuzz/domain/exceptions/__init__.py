@@ -160,6 +160,12 @@ from enterprise_fizzbuzz.domain.exceptions.fizzmemristor import *  # noqa: F401,
 from enterprise_fizzbuzz.domain.exceptions.fizzoptane import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzreservoir import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzanneal import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzbrainwave import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzswarm import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzcellular import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzfractal import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzchaostheory import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizztopology import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
@@ -1563,4 +1569,52 @@ __all__ = [
     "SolutionSamplingError",
     "EnergyLandscapeError",
     "AnnealMiddlewareError",
+    # FizzBrainwave
+    "FizzBrainwaveError",
+    "EEGSignalError",
+    "ArtifactRejectionError",
+    "SpectralDecompositionError",
+    "MentalStateClassificationError",
+    "NeuralDecodingError",
+    "BrainwaveMiddlewareError",
+    # FizzSwarm
+    "FizzSwarmError",
+    "PheromoneEvaporationError",
+    "ParticleVelocityDivergenceError",
+    "SwarmConvergenceError",
+    "StigmergyError",
+    "ForagerAllocationError",
+    "SwarmMiddlewareError",
+    # FizzCellular
+    "FizzCellularError",
+    "InvalidRuleNumberError",
+    "GridDimensionError",
+    "StateEvolutionError",
+    "PatternDetectionError",
+    "BoundaryConditionError",
+    "CellularMiddlewareError",
+    # FizzFractal
+    "FizzFractalError",
+    "MandelbrotDivergenceError",
+    "JuliaSetError",
+    "LSystemGrammarError",
+    "FractalDimensionError",
+    "IterationDepthError",
+    "FractalMiddlewareError",
+    # FizzChaos
+    "FizzChaosTheoryError",
+    "LorenzAttractorError",
+    "LogisticMapError",
+    "LyapunovExponentError",
+    "BifurcationError",
+    "StrangeAttractorError",
+    "ChaosTheoryMiddlewareError",
+    # FizzTopology
+    "FizzTopologyError",
+    "SimplicialComplexError",
+    "FiltrationError",
+    "BettiNumberError",
+    "PersistenceDiagramError",
+    "VietorisRipsError",
+    "TopologyMiddlewareError",
 ]
