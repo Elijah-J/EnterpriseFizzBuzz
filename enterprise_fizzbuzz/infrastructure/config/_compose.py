@@ -61,6 +61,7 @@ from .mixins.fizzns import FizznsConfigMixin
 from .mixins.fizzoci import FizzociConfigMixin
 from .mixins.fizzoverlay import FizzoverlayConfigMixin
 from .mixins.fizzpm import FizzpmConfigMixin
+from .mixins.fizzqueue import FizzqueueConfigMixin
 from .mixins.fizzregistry import FizzregistryConfigMixin
 from .mixins.fizzsql import FizzsqlConfigMixin
 from .mixins.fizzssh import FizzsshConfigMixin
@@ -191,6 +192,7 @@ class ConfigurationManager(
     FizzociConfigMixin,
     FizzoverlayConfigMixin,
     FizzpmConfigMixin,
+    FizzqueueConfigMixin,
     FizzregistryConfigMixin,
     FizzsqlConfigMixin,
     FizzsshConfigMixin,
