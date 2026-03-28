@@ -21,6 +21,7 @@ from .mixins.fizzcapacityplanner import FizzcapacityplannerConfigMixin
 from .mixins.cdc import CdcConfigMixin
 from .mixins.chaos import ChaosConfigMixin
 from .mixins.fizzchaosv2 import Fizzchaosv2ConfigMixin
+from .mixins.fizzchangemanagement import FizzchangemanagementConfigMixin
 from .mixins.circuit_breaker import CircuitBreakerConfigMixin
 from .mixins.circuit_sim import CircuitSimConfigMixin
 from .mixins.clock_sync import ClockSyncConfigMixin
@@ -188,6 +189,7 @@ class ConfigurationManager(
     CdcConfigMixin,
     ChaosConfigMixin,
     Fizzchaosv2ConfigMixin,
+    FizzchangemanagementConfigMixin,
     CircuitBreakerConfigMixin,
     CircuitSimConfigMixin,
     ClockSyncConfigMixin,
