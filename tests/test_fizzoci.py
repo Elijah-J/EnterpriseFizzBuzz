@@ -104,6 +104,9 @@ from enterprise_fizzbuzz.domain.exceptions import (
     SeccompError,
     SeccompRuleError,
 )
+from enterprise_fizzbuzz.domain.exceptions.oci_runtime import (
+    MountError as OCIMountError,
+)
 from config import _SingletonMeta
 from models import EventType, FizzBuzzResult, ProcessingContext
 
@@ -1254,13 +1257,13 @@ class TestMountProcessor:
     def test_process_empty_destination(self):
         mp = MountProcessor()
         c = self._make_container()
-        with pytest.raises((MountError, TypeError)):
+        with pytest.raises(OCIMountError):
             mp.process_mounts(c, [MountSpec(destination="")])
 
     def test_process_relative_destination(self):
         mp = MountProcessor()
         c = self._make_container()
-        with pytest.raises((MountError, TypeError)):
+        with pytest.raises(OCIMountError):
             mp.process_mounts(c, [MountSpec(destination="relative/path")])
 
     def test_mount_log(self):

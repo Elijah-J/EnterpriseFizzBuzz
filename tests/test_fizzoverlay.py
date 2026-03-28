@@ -92,6 +92,9 @@ from enterprise_fizzbuzz.domain.exceptions import (
     TarCompressionError,
     WhiteoutError,
 )
+from enterprise_fizzbuzz.domain.exceptions.overlay_fs import (
+    SnapshotError as OverlaySnapshotError,
+)
 from config import _SingletonMeta
 from models import EventType, FizzBuzzResult, ProcessingContext
 
@@ -1191,7 +1194,7 @@ class TestSnapshotter:
         store = LayerStore()
         snap = Snapshotter(store)
         snap.prepare("snap-1")
-        with pytest.raises((SnapshotError, TypeError)):
+        with pytest.raises(OverlaySnapshotError):
             snap.prepare("snap-1")
 
     def test_commit(self):

@@ -50,13 +50,13 @@ from enterprise_fizzbuzz.domain.exceptions import (
     OverlayMountError,
     OverlayMountStateError,
     OverlayProviderError,
-    SnapshotError,
     SnapshotNotFoundError,
     SnapshotStateError,
     TarArchiveError,
     TarCompressionError,
     WhiteoutError,
 )
+from enterprise_fizzbuzz.domain.exceptions.overlay_fs import SnapshotError
 from enterprise_fizzbuzz.domain.interfaces import IMiddleware
 from enterprise_fizzbuzz.domain.models import (
     EventType,

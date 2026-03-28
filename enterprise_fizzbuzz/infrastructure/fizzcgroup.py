@@ -98,7 +98,6 @@ from enterprise_fizzbuzz.domain.exceptions import (
     CgroupControllerError,
     CgroupCreationError,
     CgroupDashboardError,
-    CgroupDelegationError,
     CgroupError,
     CgroupHierarchyError,
     CgroupManagerError,
@@ -113,6 +112,9 @@ from enterprise_fizzbuzz.domain.exceptions import (
     OOMKillerError,
     PIDsControllerError,
     ResourceAccountantError,
+)
+from enterprise_fizzbuzz.domain.exceptions.cgroups import (
+    CgroupDelegationError,
 )
 from enterprise_fizzbuzz.domain.interfaces import IMiddleware
 from enterprise_fizzbuzz.domain.models import ProcessingContext

@@ -110,6 +110,9 @@ from enterprise_fizzbuzz.domain.exceptions import (
     TagNotFoundError,
     VulnerabilityScanError,
 )
+from enterprise_fizzbuzz.domain.exceptions.container_registry import (
+    ManifestValidationError as RegistryManifestValidationError,
+)
 from config import _SingletonMeta
 from models import EventType, FizzBuzzResult, ProcessingContext
 
@@ -873,7 +876,7 @@ class TestRegistryAPI:
         manifest = OCIManifest(
             config=OCIDescriptor(media_type=OCI_CONFIG_MEDIA_TYPE, digest="sha256:missing", size=10),
         )
-        with pytest.raises((ManifestValidationError, TypeError)):
+        with pytest.raises(RegistryManifestValidationError):
             api.put_manifest("test-repo", "latest", manifest)
 
     def test_get_manifest(self):

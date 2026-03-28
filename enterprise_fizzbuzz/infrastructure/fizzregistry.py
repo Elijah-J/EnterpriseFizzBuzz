@@ -49,7 +49,6 @@ from enterprise_fizzbuzz.domain.exceptions import (
     LayerCacheMissError,
     ManifestExistsError,
     ManifestNotFoundError,
-    ManifestValidationError,
     RegistryDashboardError,
     RegistryError,
     RegistryMiddlewareError,
@@ -58,6 +57,9 @@ from enterprise_fizzbuzz.domain.exceptions import (
     TagLimitError,
     TagNotFoundError,
     VulnerabilityScanError,
+)
+from enterprise_fizzbuzz.domain.exceptions.container_registry import (
+    ManifestValidationError,
 )
 from enterprise_fizzbuzz.domain.interfaces import IMiddleware
 from enterprise_fizzbuzz.domain.models import (

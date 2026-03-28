@@ -39,7 +39,6 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 from enterprise_fizzbuzz.domain.exceptions import (
     HookError,
     HookTimeoutError,
-    MountError,
     OCIBundleError,
     OCIConfigError,
     OCIConfigSchemaError,
@@ -58,6 +57,7 @@ from enterprise_fizzbuzz.domain.exceptions import (
     SeccompError,
     SeccompRuleError,
 )
+from enterprise_fizzbuzz.domain.exceptions.oci_runtime import MountError
 from enterprise_fizzbuzz.domain.interfaces import IMiddleware
 from enterprise_fizzbuzz.domain.models import (
     EventType,

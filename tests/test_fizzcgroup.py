@@ -96,6 +96,9 @@ from enterprise_fizzbuzz.domain.exceptions import (
     PIDsControllerError,
     ResourceAccountantError,
 )
+from enterprise_fizzbuzz.domain.exceptions.cgroups import (
+    CgroupDelegationError as CgroupsDelegationError,
+)
 from config import _SingletonMeta
 from enterprise_fizzbuzz.infrastructure.fizzcgroup import _CgroupManagerMeta
 from models import FizzBuzzResult, ProcessingContext
@@ -1467,7 +1470,7 @@ class TestCgroupNode:
 
     def test_subtree_control_invalid(self):
         node = CgroupNode(name="test", path="/test")
-        with pytest.raises((CgroupDelegationError, TypeError)):
+        with pytest.raises(CgroupsDelegationError):
             node.set_subtree_control({CgroupControllerType.CPU})
 
     def test_enable_subtree_controller(self):
