@@ -41,6 +41,8 @@ from .mixins.fizzdebugger2 import Fizzdebugger2ConfigMixin
 from .mixins.fizzdilifecycle import FizzdilifecycleConfigMixin
 from .mixins.fizzhealthaggregator import FizzhealthaggregatorConfigMixin
 from .mixins.fizzschemacontract import FizzschemacontractConfigMixin
+from .mixins.fizzrunbook import FizzrunbookConfigMixin
+from .mixins.fizzquota import FizzquotaConfigMixin
 from .mixins.digital_twin import DigitalTwinConfigMixin
 from .mixins.distributed_locks import DistributedLocksConfigMixin
 from .mixins.fizzdrift import FizzdriftConfigMixin
@@ -215,6 +217,8 @@ class ConfigurationManager(
     FizzdilifecycleConfigMixin,
     FizzhealthaggregatorConfigMixin,
     FizzschemacontractConfigMixin,
+    FizzrunbookConfigMixin,
+    FizzquotaConfigMixin,
     DigitalTwinConfigMixin,
     DistributedLocksConfigMixin,
     FizzdriftConfigMixin,
