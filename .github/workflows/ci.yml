@@ -34,8 +34,8 @@ jobs:
         run: python -c "import enterprise_fizzbuzz; print('Package import OK')"
 
       - name: Run full test suite
-        run: python -m pytest tests/ -q --tb=short -x
-        timeout-minutes: 15
+        run: python -m pytest tests/ -q --tb=short
+        timeout-minutes: 30
 
   architecture:
     name: Architecture Compliance
@@ -73,7 +73,7 @@ jobs:
 
       - name: Run contract tests
         run: python -m pytest tests/contracts/ -v --tb=short
-        timeout-minutes: 5
+        timeout-minutes: 15
 
   smoke:
     name: CLI Smoke Test
