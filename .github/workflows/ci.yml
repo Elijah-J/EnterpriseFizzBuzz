@@ -1,0 +1,102 @@
+name: Enterprise FizzBuzz CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Suite (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Verify package imports
+        run: python -c "import enterprise_fizzbuzz; print('Package import OK')"
+
+      - name: Run full test suite
+        run: python -m pytest tests/ -q --tb=short -x
+        timeout-minutes: 15
+
+  architecture:
+    name: Architecture Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Run architecture tests
+        run: python -m pytest tests/test_architecture.py -v --tb=short
+        timeout-minutes: 5
+
+  contracts:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyyaml
+
+      - name: Run contract tests
+        run: python -m pytest tests/contracts/ -v --tb=short
+        timeout-minutes: 5
+
+  smoke:
+    name: CLI Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Run FizzBuzz engine
+        run: python -m enterprise_fizzbuzz --range 1 100 --format plain
+        timeout-minutes: 2
+
+      - name: Verify output correctness
+        run: |
+          output=$(python -m enterprise_fizzbuzz --range 1 15 --format plain 2>/dev/null)
+          echo "$output"
+          echo "$output" | grep -q "FizzBuzz" || (echo "FAIL: Missing FizzBuzz" && exit 1)
+          echo "Smoke test passed"
