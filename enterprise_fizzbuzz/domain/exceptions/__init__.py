@@ -166,6 +166,12 @@ from enterprise_fizzbuzz.domain.exceptions.fizzcellular import *  # noqa: F401,F
 from enterprise_fizzbuzz.domain.exceptions.fizzfractal import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzchaostheory import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizztopology import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzastronomy import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzgenomics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzweather import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzeconomics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzlinguistics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzmusic import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
@@ -1617,4 +1623,58 @@ __all__ = [
     "PersistenceDiagramError",
     "VietorisRipsError",
     "TopologyMiddlewareError",
+    # FizzAstronomy
+    "FizzAstronomyError",
+    "InvalidOrbitalElementsError",
+    "EphemerisComputationError",
+    "NBodyIntegrationError",
+    "CoordinateTransformError",
+    "KeplerEquationError",
+    "CelestialBodyNotFoundError",
+    "AstronomyMiddlewareError",
+    # FizzGenomics
+    "FizzGenomicsError",
+    "InvalidSequenceError",
+    "AlignmentError",
+    "CodonTranslationError",
+    "ORFDetectionError",
+    "PhylogeneticTreeError",
+    "BLASTSearchError",
+    "GenomicsMiddlewareError",
+    # FizzWeather
+    "FizzWeatherError",
+    "NavierStokesError",
+    "PressureSystemError",
+    "TemperatureGradientError",
+    "PrecipitationError",
+    "CoriolisError",
+    "GridResolutionError",
+    "WeatherMiddlewareError",
+    # FizzEconomics
+    "FizzEconomicsError",
+    "MarketEquilibriumError",
+    "BlackScholesError",
+    "MonteCarloConvergenceError",
+    "RiskMetricError",
+    "SupplyDemandError",
+    "PortfolioError",
+    "EconomicsMiddlewareError",
+    # FizzLinguistics
+    "FizzLinguisticsError",
+    "TokenizationError",
+    "POSTaggingError",
+    "DependencyParseError",
+    "NERError",
+    "SentimentAnalysisError",
+    "PerplexityError",
+    "LinguisticsMiddlewareError",
+    # FizzMusic
+    "FizzMusicError",
+    "InvalidPitchError",
+    "ChordRecognitionError",
+    "KeyDetectionError",
+    "ScaleGenerationError",
+    "MIDISequenceError",
+    "HarmonicAnalysisError",
+    "MusicMiddlewareError",
 ]
