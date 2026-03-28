@@ -178,6 +178,12 @@ from enterprise_fizzbuzz.domain.exceptions.fizzchemistry import *  # noqa: F401,
 from enterprise_fizzbuzz.domain.exceptions.fizzforensics import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzrobotics import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzquantumchem import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzocean import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzseismology import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzpaleontology import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzcryptanalysis import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzsignalproc import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzgametheory import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
@@ -1733,4 +1739,58 @@ __all__ = [
     "ElectronIntegralError",
     "EnergyMinimizationError",
     "QuantumChemMiddlewareError",
+    # FizzOcean
+    "FizzOceanError",
+    "ThermohalineError",
+    "SalinityError",
+    "EkmanTransportError",
+    "UpwellingError",
+    "ENSOError",
+    "CurrentVelocityError",
+    "OceanMiddlewareError",
+    # FizzSeismology
+    "FizzSeismologyError",
+    "VelocityModelError",
+    "RayTracingError",
+    "MagnitudeError",
+    "FocalMechanismError",
+    "TravelTimeError",
+    "WaveformError",
+    "SeismologyMiddlewareError",
+    # FizzPaleontology
+    "FizzPaleontologyError",
+    "TaxonomicError",
+    "ExtinctionEventError",
+    "PhylogeneticError",
+    "BiostratigraphyError",
+    "MorphometricError",
+    "StratigraphicAgeError",
+    "PaleontologyMiddlewareError",
+    # FizzCryptanalysis
+    "FizzCryptanalysisError",
+    "FrequencyAnalysisError",
+    "KasiskiError",
+    "IndexOfCoincidenceError",
+    "KnownPlaintextError",
+    "DifferentialCryptanalysisError",
+    "CipherIdentificationError",
+    "CryptanalysisMiddlewareError",
+    # FizzSignalProc
+    "FizzSignalProcError",
+    "FFTError",
+    "FilterDesignError",
+    "FilterStabilityError",
+    "WindowError",
+    "SampleRateError",
+    "ConvolutionError",
+    "SignalProcMiddlewareError",
+    # FizzGameTheory
+    "FizzGameTheoryError",
+    "NashEquilibriumError",
+    "MinimaxError",
+    "PayoffMatrixError",
+    "EvolutionaryStabilityError",
+    "MechanismDesignError",
+    "AuctionError",
+    "GameTheoryMiddlewareError",
 ]
