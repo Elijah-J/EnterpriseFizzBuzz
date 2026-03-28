@@ -78,6 +78,7 @@ from .mixins.fizzqueue import FizzqueueConfigMixin
 from .mixins.fizzratev2 import Fizzratev2ConfigMixin
 from .mixins.fizzregistry import FizzregistryConfigMixin
 from .mixins.fizzsandbox import FizzsandboxConfigMixin
+from .mixins.fizzsmtp2 import Fizzsmtp2ConfigMixin
 from .mixins.fizzsql import FizzsqlConfigMixin
 from .mixins.fizzssh import FizzsshConfigMixin
 from .mixins.fizzsystemd import FizzsystemdConfigMixin
@@ -226,6 +227,7 @@ class ConfigurationManager(
     Fizzratev2ConfigMixin,
     FizzregistryConfigMixin,
     FizzsandboxConfigMixin,
+    Fizzsmtp2ConfigMixin,
     FizzsqlConfigMixin,
     FizzsshConfigMixin,
     FizzsystemdConfigMixin,
