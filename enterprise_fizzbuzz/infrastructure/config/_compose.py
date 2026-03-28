@@ -136,6 +136,7 @@ from .mixins.query_optimizer import QueryOptimizerConfigMixin
 from .mixins.rate_limiting import RateLimitingConfigMixin
 from .mixins.raytrace import RaytraceConfigMixin
 from .mixins.rbac import RbacConfigMixin
+from .mixins.fizzrbacv2 import Fizzrbacv2ConfigMixin
 from .mixins.recommendation import RecommendationConfigMixin
 from .mixins.regex_engine import RegexEngineConfigMixin
 from .mixins.replication import ReplicationConfigMixin
@@ -294,6 +295,7 @@ class ConfigurationManager(
     RateLimitingConfigMixin,
     RaytraceConfigMixin,
     RbacConfigMixin,
+    Fizzrbacv2ConfigMixin,
     RecommendationConfigMixin,
     RegexEngineConfigMixin,
     ReplicationConfigMixin,
