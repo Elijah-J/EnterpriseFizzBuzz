@@ -81,6 +81,7 @@ from .mixins.fizzsystemd import FizzsystemdConfigMixin
 from .mixins.fizztelemetry import FizztelemetryConfigMixin
 from .mixins.fizzstream import FizzstreamConfigMixin
 from .mixins.fizzwal import FizzwalConfigMixin
+from .mixins.fizzworkflow import FizzworkflowConfigMixin
 from .mixins.flame import FlameConfigMixin
 from .mixins.formal_verification import FormalVerificationConfigMixin
 from .mixins.gc import GcConfigMixin
@@ -283,6 +284,7 @@ class ConfigurationManager(
     VcsConfigMixin,
     VmConfigMixin,
     FizzwindowConfigMixin,
+    FizzworkflowConfigMixin,
     WebhooksConfigMixin,
     ZspecConfigMixin,
 ):
