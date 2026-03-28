@@ -731,7 +731,7 @@ class AlertManager:
         """
         now = time.monotonic()
         with self._lock:
-            last = self._last_alert_time.get(slo_name, 0.0)
+            last = self._last_alert_time.get(slo_name, -float("inf"))
             if (now - last) < self._cooldown_seconds:
                 logger.debug(
                     "Alert for SLO '%s' suppressed by cooldown (%ds remaining)",
