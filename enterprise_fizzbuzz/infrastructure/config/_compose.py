@@ -44,6 +44,7 @@ from .mixins.fizzci import FizzciConfigMixin
 from .mixins.fizzcni import FizzcniConfigMixin
 from .mixins.fizzcompose import FizzcomposeConfigMixin
 from .mixins.fizzcontainerchaos import FizzcontainerchaosConfigMixin
+from .mixins.fizzcron import FizzcronConfigMixin
 from .mixins.fizzcontainerd import FizzcontainerdConfigMixin
 from .mixins.fizzcontainerops import FizzcontaineropsConfigMixin
 from .mixins.fizzadmit import FizzadmitConfigMixin
@@ -180,6 +181,7 @@ class ConfigurationManager(
     FizzcniConfigMixin,
     FizzcomposeConfigMixin,
     FizzcontainerchaosConfigMixin,
+    FizzcronConfigMixin,
     FizzcontainerdConfigMixin,
     FizzcontaineropsConfigMixin,
     FizzadmitConfigMixin,
