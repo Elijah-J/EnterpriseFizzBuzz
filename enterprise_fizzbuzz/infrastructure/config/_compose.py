@@ -40,6 +40,7 @@ from .mixins.dependent_types import DependentTypesConfigMixin
 from .mixins.fizzdebugger2 import Fizzdebugger2ConfigMixin
 from .mixins.digital_twin import DigitalTwinConfigMixin
 from .mixins.distributed_locks import DistributedLocksConfigMixin
+from .mixins.fizzdrift import FizzdriftConfigMixin
 from .mixins.dr import DrConfigMixin
 from .mixins.elf import ElfConfigMixin
 from .mixins.event_sourcing import EventSourcingConfigMixin
@@ -118,6 +119,7 @@ from .mixins.fizzincident import FizzincidentConfigMixin
 from .mixins.jit import JitConfigMixin
 from .mixins.kernel import KernelConfigMixin
 from .mixins.knowledge_graph import KnowledgeGraphConfigMixin
+from .mixins.fizzlineage import FizzlineageConfigMixin
 from .mixins.load_testing import LoadTestingConfigMixin
 from .mixins.mapreduce import MapreduceConfigMixin
 from .mixins.metrics import MetricsConfigMixin
@@ -156,6 +158,7 @@ from .mixins.sla import SlaConfigMixin
 from .mixins.sli import SliConfigMixin
 from .mixins.succession import SuccessionConfigMixin
 from .mixins.synth import SynthConfigMixin
+from .mixins.fizztoil import FizztoilConfigMixin
 from .mixins.theorem_prover import TheoremProverConfigMixin
 from .mixins.time_travel import TimeTravelConfigMixin
 from .mixins.typeset import TypesetConfigMixin
@@ -208,6 +211,7 @@ class ConfigurationManager(
     Fizzdebugger2ConfigMixin,
     DigitalTwinConfigMixin,
     DistributedLocksConfigMixin,
+    FizzdriftConfigMixin,
     DrConfigMixin,
     ElfConfigMixin,
     EventSourcingConfigMixin,
@@ -285,6 +289,7 @@ class ConfigurationManager(
     JitConfigMixin,
     KernelConfigMixin,
     KnowledgeGraphConfigMixin,
+    FizzlineageConfigMixin,
     LoadTestingConfigMixin,
     MapreduceConfigMixin,
     MetricsConfigMixin,
@@ -323,6 +328,7 @@ class ConfigurationManager(
     SliConfigMixin,
     SuccessionConfigMixin,
     SynthConfigMixin,
+    FizztoilConfigMixin,
     TheoremProverConfigMixin,
     TimeTravelConfigMixin,
     TypesetConfigMixin,
