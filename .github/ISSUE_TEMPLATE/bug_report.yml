@@ -1,0 +1,120 @@
+name: Bug Report
+description: Report a defect in the EnterpriseFizzBuzz platform
+title: "[BUG] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for filing a bug report against the EnterpriseFizzBuzz platform.
+
+        Please verify your issue is not caused by the Quantum Simulator's negative speedup, the Chaos Monkey's intentional fault injection, or the Self-Modifying Code Engine's stochastic mutations. These are documented behaviors and do not constitute defects.
+
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Subsystem Affected
+      description: Which subsystem is exhibiting the defect?
+      options:
+        - Blockchain
+        - Neural Network
+        - Quantum Simulator
+        - Operating System Kernel
+        - Compliance Framework
+        - Container Orchestration (FizzKube)
+        - Paxos Consensus
+        - Raft Consensus
+        - Smart Contract VM
+        - Protein Folding Simulator
+        - Ray Tracer
+        - TCP/IP Network Stack
+        - GPU Shader Compiler
+        - x86 Bootloader
+        - H.264 Video Codec
+        - TeX Typesetting Engine
+        - Microkernel IPC
+        - Garbage Collector
+        - PKI Certificate Authority
+        - GraphQL Federation Gateway
+        - Data Lake
+        - Event Mesh
+        - Security Scanner
+        - Capacity Planner
+        - Cost Optimizer
+        - Data Lineage Tracker
+        - SRE Toil Budget Analyzer
+        - SMTP/IMAP Email Server
+        - Continuous Integration Pipeline
+        - Bob McFizzington's Stress Level
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Classify the operational impact of this defect.
+      options:
+        - "P0 - Modulo arithmetic has ceased to function"
+        - "P1 - Bob's stress level exceeded 100%"
+        - "P2 - Compliance paradox detected"
+        - "P3 - Merely architectural"
+        - "P4 - Cosmetic"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Provide a minimal, deterministic sequence of steps that reproduces the defect.
+      placeholder: |
+        1. Run `python -m enterprise_fizzbuzz --range 1 100 --format plain`
+        2. Observe that ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: Describe the correct behavior as defined by the platform's architectural contracts.
+      placeholder: "The modulo operator should return 0 for multiples of 3."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: Describe the observed behavior, including any exception classes raised, dashboard anomalies, or compliance violations.
+      placeholder: "The Quantum Simulator returned a superposition of Fizz and Buzz simultaneously."
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: Output of `python --version`.
+      placeholder: "Python 3.13.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: The host operating system (not the FizzBuzz Operating System Kernel).
+      placeholder: "Ubuntu 24.04 / macOS 15.1 / Windows 11"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Attach logs, ASCII dashboard screenshots, blockchain ledger excerpts, or SOX audit trail entries as needed.
+    validations:
+      required: false

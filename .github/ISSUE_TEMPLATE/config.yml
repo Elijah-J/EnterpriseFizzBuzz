@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Consult the FAQ
+    url: https://github.com/YOUR_ORG/EnterpriseFizzBuzz/blob/main/docs/FAQ.md
+    about: "Unstructured issues violate the platform's ITIL v4 governance framework. Please use a template. If your question is covered by the FAQ, you may find your answer there before filing an issue."

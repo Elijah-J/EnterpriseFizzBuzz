@@ -1,0 +1,99 @@
+name: Feature Request
+description: Propose a new feature or enhancement to the EnterpriseFizzBuzz platform
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before submitting a feature request, please review the existing 185 subsystems documented in [docs/SUBSYSTEMS.md](../../docs/SUBSYSTEMS.md) to confirm that the requested capability does not already exist within the platform's current architecture.
+
+  - type: input
+    id: subsystem-name
+    attributes:
+      label: Proposed Subsystem Name
+      description: Follow the established FizzXxx naming convention (e.g., FizzVault, FizzKube, FizzMail).
+      placeholder: "FizzSomething"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: Provide a detailed description of the proposed feature, including its architectural justification and the specific gap it addresses in the platform's current capabilities.
+    validations:
+      required: true
+
+  - type: input
+    id: estimated-lines
+    attributes:
+      label: Estimated Lines of Code
+      description: "Minimum 2,000. Features below this threshold do not meet the platform's complexity baseline and should be implemented as middleware or configuration options instead."
+      placeholder: "4,500"
+    validations:
+      required: true
+
+  - type: input
+    id: exception-classes
+    attributes:
+      label: Number of New Exception Classes
+      description: Every failure mode requires a dedicated exception class. Estimate accordingly.
+      placeholder: "12"
+    validations:
+      required: true
+
+  - type: input
+    id: cli-flags
+    attributes:
+      label: Number of New CLI Flags
+      description: Each subsystem is expected to contribute CLI flags proportional to its operational surface area.
+      placeholder: "8"
+    validations:
+      required: true
+
+  - type: textarea
+    id: integrations
+    attributes:
+      label: Existing Subsystem Integrations
+      description: List which of the existing 185 subsystems this feature integrates with, and describe the nature of each integration (event bus subscription, middleware hook, contract dependency, etc.).
+      placeholder: |
+        - FizzVault: Secret retrieval for API keys
+        - FizzMetrics: Prometheus-compatible gauge registration
+        - FizzCompliance: SOX audit trail integration
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Pre-Submission Verification
+      options:
+        - label: "I confirm this feature cannot be accomplished by the existing 185 subsystems"
+          required: true
+        - label: "I have reviewed the CLI Reference and confirmed no existing flag addresses this use case"
+          required: false
+        - label: "I have reviewed the FAQ and confirmed this is not a frequently asked question"
+          required: false
+
+  - type: dropdown
+    id: cognitive-load-impact
+    attributes:
+      label: Estimated Impact on Bob McFizzington's Cognitive Load
+      description: Assessed using the NASA-TLX six-dimensional workload model. Bob's current cognitive load is at 94.7% and the Operator Cognitive Load Modeling subsystem will reject changes that push it beyond safe thresholds.
+      options:
+        - "Negligible (< 0.1% increase)"
+        - "Minor (0.1% - 0.5% increase)"
+        - "Moderate (0.5% - 1.0% increase)"
+        - "Significant (1.0% - 2.0% increase)"
+        - "Critical (> 2.0% increase — requires Bob's explicit approval)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Include architectural diagrams, ASCII dashboard mockups, regulatory references, or links to relevant ADRs.
+    validations:
+      required: false

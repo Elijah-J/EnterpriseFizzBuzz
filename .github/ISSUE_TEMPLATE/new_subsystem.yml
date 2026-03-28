@@ -1,0 +1,117 @@
+name: New Subsystem Proposal
+description: Propose a new infrastructure subsystem for the EnterpriseFizzBuzz platform
+title: "[SUBSYSTEM] "
+labels: ["subsystem-proposal", "architecture", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New subsystem proposals are reviewed by the Change Advisory Board (membership: Bob McFizzington) and must demonstrate clear architectural justification. The platform currently operates 185 infrastructure modules; each addition increases operational surface area and Bob's on-call burden.
+
+  - type: input
+    id: subsystem-name
+    attributes:
+      label: Subsystem Name
+      description: "Must follow the FizzXxx naming convention (e.g., FizzVault, FizzKube, FizzMail). The prefix 'Fizz' is mandatory per ADR-007."
+      placeholder: "FizzSomething"
+    validations:
+      required: true
+
+  - type: textarea
+    id: justification
+    attributes:
+      label: Architectural Justification
+      description: Explain the architectural gap this subsystem addresses. Reference specific design principles, compliance requirements, or operational deficiencies that necessitate its existence.
+      placeholder: "The platform currently lacks a dedicated subsystem for ... which creates a gap in ..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: clean-architecture-layer
+    attributes:
+      label: Clean Architecture Layer
+      description: Which layer of the hexagonal architecture will this subsystem reside in? The Dependency Rule requires that dependencies point inward only.
+      options:
+        - "Domain (models, enums, exceptions, abstract interfaces)"
+        - "Application (services, ports, use cases)"
+        - "Infrastructure (implementations, adapters, subsystems)"
+    validations:
+      required: true
+
+  - type: input
+    id: estimated-test-count
+    attributes:
+      label: Estimated Test Count
+      description: "The platform maintains a test-to-module ratio consistent with its quality standards. Include unit tests, contract tests, and integration tests."
+      placeholder: "150"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: ascii-dashboard
+    attributes:
+      label: ASCII Dashboard Design
+      description: Will this subsystem include an ASCII dashboard? The platform currently has 90+ ASCII dashboards and maintains visual consistency across all operational surfaces.
+      options:
+        - "Yes — ASCII dashboard included in proposal"
+        - "No — subsystem does not require operational visualization"
+    validations:
+      required: true
+
+  - type: textarea
+    id: regulatory-frameworks
+    attributes:
+      label: Regulatory Frameworks Impacted
+      description: "List all regulatory frameworks this subsystem interacts with (e.g., SOX, GDPR, HIPAA, PCI-DSS, ITIL v4, COBIT 2019). Note any new compliance paradoxes introduced."
+      placeholder: |
+        - SOX: Audit trail requirements for all state mutations
+        - GDPR: Data subject access requests for any PII processed
+        - HIPAA: Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: existing-modules
+    attributes:
+      label: Why can't this be solved by the existing 185 modules?
+      description: "Provide a detailed explanation of why the platform's current 185 infrastructure modules are insufficient. Reference specific modules by name and explain why each is inadequate for the proposed functionality."
+      placeholder: |
+        FizzCache provides caching but does not support ...
+        FizzEventMesh provides event routing but lacks ...
+        The gap between these modules creates an unaddressed architectural concern in ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: integration-points
+    attributes:
+      label: Integration Points
+      description: List all existing subsystems this proposal integrates with, including event bus topics, middleware hooks, CLI flags, and configuration sections.
+    validations:
+      required: true
+
+  - type: input
+    id: estimated-lines
+    attributes:
+      label: Estimated Lines of Code
+      description: "Minimum 2,000 lines. Proposals below this threshold should be submitted as feature requests instead."
+      placeholder: "5,000"
+    validations:
+      required: true
+
+  - type: input
+    id: exception-classes
+    attributes:
+      label: Number of New Exception Classes
+      description: Each failure mode requires a dedicated exception class with proper hierarchy placement.
+      placeholder: "15"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Include architectural diagrams, ASCII dashboard mockups, protocol specifications, or references to industry standards.
+    validations:
+      required: false
