@@ -172,6 +172,12 @@ from enterprise_fizzbuzz.domain.exceptions.fizzweather import *  # noqa: F401,F4
 from enterprise_fizzbuzz.domain.exceptions.fizzeconomics import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzlinguistics import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzmusic import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzarchaeology2 import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzcartography import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzchemistry import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzforensics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzrobotics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzquantumchem import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
@@ -1677,4 +1683,54 @@ __all__ = [
     "MIDISequenceError",
     "HarmonicAnalysisError",
     "MusicMiddlewareError",
+    # FizzArchaeology2
+    "FizzArchaeology2Error",
+    "CarbonDatingError",
+    "StratigraphicError",
+    "ArtifactClassificationError",
+    "ExcavationGridError",
+    "ProvenanceError",
+    "Archaeology2MiddlewareError",
+    # FizzCartography
+    "FizzCartographyError",
+    "ProjectionError",
+    "TileRenderError",
+    "GeoJSONParseError",
+    "CoordinateSystemError",
+    "FeatureLayerError",
+    "CartographyMiddlewareError",
+    # FizzChemistry
+    "FizzChemistryError",
+    "ElementNotFoundError",
+    "ReactionBalanceError",
+    "ElectronConfigurationError",
+    "MolecularBondError",
+    "VSEPRGeometryError",
+    "EnthalpyError",
+    "ChemistryMiddlewareError",
+    # FizzForensics
+    "FizzForensicsError",
+    "DiskImageError",
+    "FileCarveError",
+    "HashVerificationError",
+    "TimelineError",
+    "ChainOfCustodyError",
+    "MetadataExtractionError",
+    "ForensicsMiddlewareError",
+    # FizzRobotics
+    "FizzRoboticsError",
+    "InverseKinematicsError",
+    "PathPlanningError",
+    "PIDControlError",
+    "CollisionError",
+    "JointLimitError",
+    "RoboticsMiddlewareError",
+    # FizzQuantumChem
+    "FizzQuantumChemError",
+    "SCFConvergenceError",
+    "BasisSetError",
+    "MolecularOrbitalError",
+    "ElectronIntegralError",
+    "EnergyMinimizationError",
+    "QuantumChemMiddlewareError",
 ]

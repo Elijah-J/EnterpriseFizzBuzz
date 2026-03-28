@@ -234,6 +234,12 @@ from .mixins.fizzcellular import FizzcellularConfigMixin
 from .mixins.fizzfractal import FizzfractalConfigMixin
 from .mixins.fizzchaostheory import FizzchaostheoryConfigMixin
 from .mixins.fizztopology import FizztopologyConfigMixin
+from .mixins.fizzarchaeology2 import Fizzarchaeology2ConfigMixin
+from .mixins.fizzcartography import FizzcartographyConfigMixin
+from .mixins.fizzchemistry import FizzchemistryConfigMixin
+from .mixins.fizzforensics import FizzforensicsConfigMixin
+from .mixins.fizzrobotics import FizzroboticsConfigMixin
+from .mixins.fizzquantumchem import FizzquantumchemConfigMixin
 
 
 class ConfigurationManager(
@@ -471,6 +477,12 @@ class ConfigurationManager(
     FizzfractalConfigMixin,
     FizzchaostheoryConfigMixin,
     FizztopologyConfigMixin,
+    Fizzarchaeology2ConfigMixin,
+    FizzcartographyConfigMixin,
+    FizzchemistryConfigMixin,
+    FizzforensicsConfigMixin,
+    FizzroboticsConfigMixin,
+    FizzquantumchemConfigMixin,
 ):
     """Enterprise FizzBuzz Platform Configuration Manager.
 
