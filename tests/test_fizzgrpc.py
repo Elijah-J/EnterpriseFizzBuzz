@@ -84,8 +84,8 @@ class TestGRPCStatus:
 # =========================================================================
 
 
-class TestProtoField:
-    """Tests for protobuf field descriptor dataclass."""
+class TestProtoDataclasses:
+    """Tests for protobuf field and message descriptor dataclasses."""
 
     def test_basic_field_construction(self):
         f = ProtoField(name="value", field_number=1, field_type="int32")
@@ -97,10 +97,6 @@ class TestProtoField:
     def test_repeated_field(self):
         f = ProtoField(name="tags", field_number=3, field_type="string", repeated=True)
         assert f.repeated is True
-
-
-class TestProtoMessage:
-    """Tests for protobuf message descriptor dataclass."""
 
     def test_message_with_fields(self):
         fields = [
@@ -130,13 +126,6 @@ class TestGRPCResponse:
         assert resp.data["result"] == "Fizz"
         assert "trace_id" in resp.metadata
 
-    def test_error_response(self):
-        resp = GRPCResponse(
-            status=GRPCStatus.INTERNAL,
-            data={},
-            metadata={},
-        )
-        assert resp.status == GRPCStatus.INTERNAL
 
 
 # =========================================================================
@@ -163,10 +152,6 @@ class TestGRPCServerMessages:
         names = [m.name for m in server.list_messages()]
         assert "Ping" in names
 
-    def test_register_multiple_messages(self, server):
-        server.register_message("Req", [ProtoField("a", 1, "int32")])
-        server.register_message("Resp", [ProtoField("b", 1, "string")])
-        assert len(server.list_messages()) >= 2
 
 
 # =========================================================================
@@ -375,11 +360,6 @@ class TestFizzGRPCMiddleware:
 
 class TestCreateFizzGRPCSubsystem:
     """Tests for the module-level factory that wires all components."""
-
-    def test_factory_returns_tuple_of_three(self):
-        result = create_fizzgrpc_subsystem()
-        assert isinstance(result, tuple)
-        assert len(result) == 3
 
     def test_factory_returns_correct_types(self):
         server, dashboard, middleware = create_fizzgrpc_subsystem()

@@ -72,7 +72,7 @@ class TestConstants:
 # TestReleaseState
 # ---------------------------------------------------------------------------
 
-class TestReleaseState:
+class TestEnums:
     def test_all_states_present(self):
         """The ReleaseState enum must expose all lifecycle phases."""
         expected = {"DRAFT", "CANDIDATE", "DEPLOYING", "DEPLOYED", "ROLLED_BACK"}
@@ -156,16 +156,11 @@ class TestAddChange:
 
 class TestFinalize:
     def test_finalize_transitions_to_candidate(self, manager, draft_release):
-        """Finalizing a draft release promotes it to CANDIDATE state."""
+        """Finalizing a draft release promotes it to CANDIDATE state and returns a Release."""
         manager.add_change(draft_release.release_id, "Required change")
         release = manager.finalize(draft_release.release_id)
-        assert release.state == ReleaseState.CANDIDATE
-
-    def test_finalize_returns_release(self, manager, draft_release):
-        """Finalize must return the updated Release object."""
-        manager.add_change(draft_release.release_id, "Some change")
-        release = manager.finalize(draft_release.release_id)
         assert isinstance(release, Release)
+        assert release.state == ReleaseState.CANDIDATE
 
 
 # ---------------------------------------------------------------------------
@@ -210,12 +205,8 @@ class TestRollback:
     def test_rollback_sets_rolled_back_state(self, manager, deployed_dev_release):
         """Rolling back a deployed release transitions to ROLLED_BACK."""
         release = manager.rollback(deployed_dev_release.release_id)
-        assert release.state == ReleaseState.ROLLED_BACK
-
-    def test_rollback_returns_release(self, manager, deployed_dev_release):
-        """Rollback must return the updated Release object."""
-        release = manager.rollback(deployed_dev_release.release_id)
         assert isinstance(release, Release)
+        assert release.state == ReleaseState.ROLLED_BACK
 
 
 # ---------------------------------------------------------------------------

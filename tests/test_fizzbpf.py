@@ -329,12 +329,9 @@ class TestFizzBPFDashboard:
 class TestFizzBPFMiddleware:
     """Tests for the FizzBPF middleware integration."""
 
-    def test_middleware_name(self, engine):
+    def test_middleware_name_and_priority(self, engine):
         mw = FizzBPFMiddleware(engine)
         assert mw.get_name() == "fizzbpf"
-
-    def test_middleware_priority(self, engine):
-        mw = FizzBPFMiddleware(engine)
         assert mw.get_priority() == 218
 
     def test_middleware_passes_through(self, engine):
@@ -358,13 +355,11 @@ class TestFizzBPFMiddleware:
 class TestCreateFizzBPFSubsystem:
     """Tests for the create_fizzbpf_subsystem factory."""
 
-    def test_returns_tuple_of_three(self):
+    def test_returns_engine_dashboard_middleware_tuple(self):
         result = create_fizzbpf_subsystem()
         assert isinstance(result, tuple)
         assert len(result) == 3
-
-    def test_returns_engine_dashboard_middleware(self):
-        eng, dash, mw = create_fizzbpf_subsystem()
+        eng, dash, mw = result
         assert isinstance(eng, ProbeEngine)
         assert isinstance(dash, FizzBPFDashboard)
         assert isinstance(mw, FizzBPFMiddleware)

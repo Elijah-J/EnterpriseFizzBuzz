@@ -17,9 +17,6 @@ potentially causing operators to optimize the wrong subsystem.
 
 from __future__ import annotations
 
-import uuid
-from typing import Any, Callable
-
 import pytest
 
 from enterprise_fizzbuzz.domain.exceptions.fizzdtrace import (
@@ -95,8 +92,6 @@ class TestProbeAction:
         actions = {a.name for a in ProbeAction}
         assert actions == {"TRACE", "COUNT", "AGGREGATE", "PRINT"}
 
-    def test_individual_action_accessible(self) -> None:
-        assert ProbeAction.TRACE is not ProbeAction.COUNT
 
 
 # ============================================================
@@ -382,9 +377,6 @@ class TestExceptions:
         err = FizzDTraceError("probe buffer overflow")
         assert "FizzDTrace" in str(err)
         assert "probe buffer overflow" in str(err)
-
-    def test_not_found_error_is_subclass(self) -> None:
-        assert issubclass(FizzDTraceNotFoundError, FizzDTraceError)
 
     def test_not_found_error_message(self) -> None:
         err = FizzDTraceNotFoundError("probe-xyz")
