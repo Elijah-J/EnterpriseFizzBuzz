@@ -246,6 +246,12 @@ from .mixins.fizzpaleontology import FizzpaleontologyConfigMixin
 from .mixins.fizzcryptanalysis import FizzcryptanalysisConfigMixin
 from .mixins.fizzsignalproc import FizzsignalprocConfigMixin
 from .mixins.fizzgametheory import FizzgametheoryConfigMixin
+from .mixins.fizzmaterialscience import FizzmaterialscienceConfigMixin
+from .mixins.fizzfluiddynamics import FizzfluiddynamicsConfigMixin
+from .mixins.fizzoptics import FizzopticsConfigMixin
+from .mixins.fizzparticlephysics import FizzparticlephysicsConfigMixin
+from .mixins.fizzepidemiology import FizzepidemiologyConfigMixin
+from .mixins.fizzclimate import FizzclimateConfigMixin
 
 
 class ConfigurationManager(
@@ -495,6 +501,12 @@ class ConfigurationManager(
     FizzcryptanalysisConfigMixin,
     FizzsignalprocConfigMixin,
     FizzgametheoryConfigMixin,
+    FizzmaterialscienceConfigMixin,
+    FizzfluiddynamicsConfigMixin,
+    FizzopticsConfigMixin,
+    FizzparticlephysicsConfigMixin,
+    FizzepidemiologyConfigMixin,
+    FizzclimateConfigMixin,
 ):
     """Enterprise FizzBuzz Platform Configuration Manager.
 

@@ -184,6 +184,12 @@ from enterprise_fizzbuzz.domain.exceptions.fizzpaleontology import *  # noqa: F4
 from enterprise_fizzbuzz.domain.exceptions.fizzcryptanalysis import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzsignalproc import *  # noqa: F401,F403
 from enterprise_fizzbuzz.domain.exceptions.fizzgametheory import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzmaterialscience import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzfluiddynamics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzoptics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzparticlephysics import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzepidemiology import *  # noqa: F401,F403
+from enterprise_fizzbuzz.domain.exceptions.fizzclimate import *  # noqa: F401,F403
 
 # Explicit __all__ for IDE support and import * safety.
 __all__ = [
@@ -1793,4 +1799,58 @@ __all__ = [
     "MechanismDesignError",
     "AuctionError",
     "GameTheoryMiddlewareError",
+    # FizzMaterialScience
+    "FizzMaterialScienceError",
+    "LatticeConstructionError",
+    "StressStrainError",
+    "PhaseDiagramError",
+    "ThermalConductivityError",
+    "YoungModulusError",
+    "AlloyCompositionError",
+    "MaterialScienceMiddlewareError",
+    # FizzFluidDynamics
+    "FizzFluidDynamicsError",
+    "NavierStokesConvergenceError",
+    "ReynoldsNumberError",
+    "TurbulenceModelError",
+    "BoundaryLayerError",
+    "CFLViolationError",
+    "DragLiftError",
+    "FluidDynamicsMiddlewareError",
+    # FizzOptics
+    "FizzOpticsError",
+    "SnellLawError",
+    "ThinLensError",
+    "AberrationError",
+    "MTFError",
+    "OpticalPathError",
+    "RayTraceError",
+    "OpticsMiddlewareError",
+    # FizzParticlePhysics
+    "FizzParticlePhysicsError",
+    "ParticleNotFoundError",
+    "DecayChannelError",
+    "CrossSectionError",
+    "FeynmanDiagramError",
+    "InvariantMassError",
+    "ConservationViolationError",
+    "ParticlePhysicsMiddlewareError",
+    # FizzEpidemiology
+    "FizzEpidemiologyError",
+    "ReproductionNumberError",
+    "CompartmentError",
+    "ContactTracingError",
+    "VaccinationStrategyError",
+    "HerdImmunityError",
+    "SEIRParameterError",
+    "EpidemiologyMiddlewareError",
+    # FizzClimate
+    "FizzClimateError",
+    "RadiativeForcingError",
+    "GreenhouseGasError",
+    "CarbonCycleError",
+    "TemperatureProjectionError",
+    "IceSheetError",
+    "FeedbackLoopError",
+    "ClimateMiddlewareError",
 ]
