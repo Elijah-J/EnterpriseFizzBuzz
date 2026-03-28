@@ -56,6 +56,7 @@ from .mixins.fizzdap import FizzdapConfigMixin
 from .mixins.fizzdeploy import FizzdeployConfigMixin
 from .mixins.fizzi18nv2 import Fizzi18nv2ConfigMixin
 from .mixins.fizzimage import FizzimageConfigMixin
+from .mixins.fizzk8soperator import Fizzk8soperatorConfigMixin
 from .mixins.fizzkube import FizzkubeConfigMixin
 from .mixins.fizzkubev2 import Fizzkubev2ConfigMixin
 from .mixins.fizzgraphql import FizzgraphqlConfigMixin
@@ -205,6 +206,7 @@ class ConfigurationManager(
     FizzdeployConfigMixin,
     Fizzi18nv2ConfigMixin,
     FizzimageConfigMixin,
+    Fizzk8soperatorConfigMixin,
     FizzkubeConfigMixin,
     Fizzkubev2ConfigMixin,
     FizzgraphqlConfigMixin,
