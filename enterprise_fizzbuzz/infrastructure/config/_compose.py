@@ -4,6 +4,7 @@ from ._base import _BaseConfigurationManager
 from .mixins.ab_testing import AbTestingConfigMixin
 from .mixins.alloc import AllocConfigMixin
 from .mixins.api_gateway import ApiGatewayConfigMixin
+from .mixins.fizzapigateway2 import Fizzapigateway2ConfigMixin
 from .mixins.approval import ApprovalConfigMixin
 from .mixins.fizzbackup import FizzbackupConfigMixin
 from .mixins.fizzauth2 import Fizzauth2ConfigMixin
@@ -151,6 +152,7 @@ class ConfigurationManager(
     AbTestingConfigMixin,
     AllocConfigMixin,
     ApiGatewayConfigMixin,
+    Fizzapigateway2ConfigMixin,
     ApprovalConfigMixin,
     Fizzauth2ConfigMixin,
     FizzbackupConfigMixin,
