@@ -1416,6 +1416,19 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --fizzcontainerops-flamegraph CONTAINER  Generate a cgroup-scoped flame graph for a container
 --fizzcontainerops-dashboard  Launch the ASCII container fleet health dashboard
 --fizzcontainerops-alerts    List active metric alert rules with current status
+--fizzci                     Enable FizzCI: continuous integration pipeline engine with DAG execution and matrix builds
+--fizzci-run PIPELINE        Run a named pipeline (e.g., fizzbuzz-ci)
+--fizzci-trigger EVENT       Trigger a pipeline via simulated webhook event (push, pull_request, tag)
+--fizzci-status              Display current pipeline execution status
+--fizzci-logs PIPELINE/JOB   Display logs for a specific job (format: pipeline/job)
+--fizzci-artifacts           List all stored artifacts across pipeline runs
+--fizzci-pipelines           List all registered pipeline definitions
+--fizzci-history             Display pipeline execution history
+--fizzci-cache-clear         Clear the build cache
+--fizzci-matrix PIPELINE     Preview matrix expansion for a pipeline without executing
+--fizzci-dry-run PIPELINE    Dry-run a pipeline: parse, expand, and visualize DAG without executing
+--fizzci-retry RUN_ID        Retry a failed pipeline run by run ID
+--fizzci-template NAME       Display a pipeline template definition
 --fizzmail                   Enable FizzMail SMTP/IMAP email server for evaluation result delivery
 --fizzmail-smtp-port PORT    Set SMTP listener port (default: 2525)
 --fizzmail-imap-port PORT    Set IMAP listener port (default: 1143)
@@ -1436,6 +1449,359 @@ python main.py --optimize --optimizer-dashboard --compliance --compliance-dashbo
 --fizzmail-list-mailboxes    List all Maildir mailboxes and message counts
 --fizzmail-search QUERY      Search mailbox messages by subject, sender, or date range
 --fizzmail-idle MAILBOX      Open an IMAP IDLE connection and stream new message notifications
+
+# FizzSSH -- SSH Remote Access Server
+--fizzssh                    Enable FizzSSH: SSH server for remote administration of the FizzBuzz platform
+--fizzssh-port PORT          Set SSH listener port (default: 2222)
+--fizzssh-host-key PATH      Path to host key file (Ed25519 or RSA)
+--fizzssh-authorized-keys PATH  Path to authorized_keys file for public key authentication
+
+# FizzWindow -- Terminal Window Manager
+--fizzwindow                 Enable FizzWindow: tiling window manager for ASCII dashboard composition
+--fizzwindow-layout LAYOUT   Window layout: hsplit, vsplit, tabbed, floating (default: hsplit)
+--fizzwindow-focus WINDOW    Set initial focus to a named window
+
+# FizzBlock -- Block Storage Engine
+--fizzblock                  Enable FizzBlock: block-level storage with journaling and deduplication
+--fizzblock-size BYTES       Block size in bytes (default: 4096)
+--fizzblock-stats            Display block device statistics (allocation, deduplication ratio, IOPS)
+--fizzblock-journal          Display the block journal for crash consistency verification
+
+# FizzCDN -- Content Delivery Network
+--fizzcdn                    Enable FizzCDN: edge caching and geographic content delivery for FizzBuzz results
+--fizzcdn-edges N            Number of simulated edge nodes (default: 5)
+--fizzcdn-ttl SECONDS        Cache TTL at edge nodes (default: 300)
+--fizzcdn-purge PATTERN      Purge cached content matching the given pattern
+--fizzcdn-stats              Display CDN statistics (hit rates per edge, bandwidth, geographic distribution)
+
+# FizzAuth2 -- OAuth 2.0 / OpenID Connect Provider
+--fizzauth2                  Enable FizzAuth2: OAuth 2.0 authorization server with OIDC support
+--fizzauth2-client-register NAME  Register a new OAuth client with the given name
+--fizzauth2-token-issue CLIENT_ID  Issue an access token for the specified client
+--fizzauth2-introspect TOKEN Introspect a token (RFC 7662)
+--fizzauth2-revoke TOKEN     Revoke a token (RFC 7009)
+--fizzauth2-discovery        Display the OpenID Connect discovery document
+
+# FizzQueue -- AMQP Message Queue
+--fizzqueue                  Enable FizzQueue: AMQP 0-9-1 message broker with exchange routing and consumer acknowledgment
+--fizzqueue-exchanges        List all exchanges with type, bindings, and message rates
+--fizzqueue-queues            List all queues with consumer count, message depth, and dead letter configuration
+--fizzqueue-publish EXCHANGE ROUTING_KEY MESSAGE  Publish a message to an exchange
+--fizzqueue-consume QUEUE     Consume messages from a queue with acknowledgment
+--fizzqueue-dashboard         Display the FizzQueue ASCII dashboard with exchange topology and queue depths
+
+# FizzNotebook -- Computational Notebook Engine
+--fizznotebook               Enable FizzNotebook: Jupyter-style computational notebook for interactive FizzBuzz exploration
+--fizznotebook-open PATH     Open a .fizznb notebook file for execution
+--fizznotebook-run PATH      Execute all cells in a notebook non-interactively
+--fizznotebook-export PATH FORMAT  Export a notebook to format (html, pdf, py)
+--fizznotebook-new PATH      Create a new empty notebook at the given path
+
+# FizzBackup -- Backup & Replication Engine
+--fizzbackup                 Enable FizzBackup: multi-strategy backup and replication engine
+--fizzbackup-mode MODE       Backup mode: full, incremental, differential (default: incremental)
+--fizzbackup-replicate TARGET  Enable cross-region replication to the specified target
+--fizzbackup-verify ID       Verify a backup by performing restore-and-compare
+--fizzbackup-schedule CRON   Schedule recurring backups with cron expression
+--fizzbackup-encrypt         Enable backup encryption with envelope encryption
+
+# FizzProfiler -- Performance Profiler
+--fizzprofiler               Enable FizzProfiler: sampling-based performance profiler with flame graph generation
+--fizzprofiler-rate HZ       Sampling rate in Hz (default: 100)
+--fizzprofiler-output FORMAT Output format: ascii, svg, json (default: ascii)
+--fizzprofiler-diff RUN_A RUN_B  Generate differential flame graph between two profiling runs
+--fizzprofiler-hotpath       Display the top 10 hot paths by cumulative CPU time
+--fizzprofiler-memory        Enable memory allocation tracking alongside CPU profiling
+
+# FizzPKI -- Public Key Infrastructure
+--fizzpki                    Enable FizzPKI: X.509 PKI certificate authority with chain-of-trust management
+--fizzpki-init-ca            Initialize the root CA with a self-signed certificate
+--fizzpki-issue SUBJECT      Issue an end-entity certificate with the given subject
+--fizzpki-revoke SERIAL      Revoke a certificate by serial number
+--fizzpki-crl                Generate and display the Certificate Revocation List
+--fizzpki-ocsp SERIAL        Query the OCSP responder for certificate status
+--fizzpki-chain SERIAL       Display the full chain of trust for a certificate
+
+# FizzGraphQL -- GraphQL Federation Gateway
+--fizzgraphql                Enable FizzGraphQL: GraphQL execution engine with federation across subsystem subgraphs
+--fizzgraphql-query QUERY    Execute a GraphQL query (e.g., '{ evaluation(n: 15) { classification } }')
+--fizzgraphql-introspect     Display the federated schema via introspection
+--fizzgraphql-playground      Launch the GraphQL playground for interactive query development
+--fizzgraphql-complexity     Display query complexity analysis for the last executed query
+--fizzgraphql-subscriptions  List active GraphQL subscriptions
+
+# FizzCron -- Scheduled Task Engine
+--fizzcron                   Enable FizzCron: cron-compatible job scheduler for periodic FizzBuzz maintenance tasks
+--fizzcron-list              List all registered cron jobs with next execution time
+--fizzcron-run JOB           Manually trigger a cron job by name
+--fizzcron-history JOB       Display execution history for a specific job
+--fizzcron-schedule JOB EXPR Register a new cron job with the given cron expression
+
+# FizzML2 -- Advanced ML Pipeline
+--fizzml2                    Enable FizzML2: MLOps pipeline with model registry, hyperparameter tuning, and A/B serving
+--fizzml2-registry           Display the model registry with all versions and promotion status
+--fizzml2-tune EXPERIMENT    Run hyperparameter tuning for a named experiment
+--fizzml2-promote MODEL VERSION STAGE  Promote a model version to a lifecycle stage (staging, production, archived)
+--fizzml2-serve              Display active model serving configuration with traffic split
+--fizzml2-explain N          Generate feature importance explanation for the classification of number N
+--fizzml2-drift              Run data drift detection against the current production model
+
+# FizzAudit -- Comprehensive Audit Trail Engine
+--fizzaudit                  Enable FizzAudit: centralized audit trail with hash-chained integrity and regulatory reporting
+--fizzaudit-query EXPR       Query audit records with filter expression
+--fizzaudit-export FORMAT    Export audit trail (json, csv, pdf)
+--fizzaudit-retention        Display retention policy status per audit category
+--fizzaudit-verify           Verify audit trail integrity via SHA-256 hash chain validation
+--fizzaudit-report FRAMEWORK Generate regulatory evidence package (sox, gdpr, hipaa)
+
+# FizzSandbox -- Execution Sandbox
+--fizzsandbox                Enable FizzSandbox: capability-based execution sandbox for untrusted code
+--fizzsandbox-policy POLICY  Sandbox policy: permissive, standard, strict (default: standard)
+--fizzsandbox-limits         Display current resource limits (CPU time, memory, file descriptors)
+--fizzsandbox-capabilities   List granted capabilities for the current sandbox session
+--fizzsandbox-audit          Display sandbox access audit log
+
+# FizzTelemetry -- Unified Telemetry Pipeline
+--fizztelemetry              Enable FizzTelemetry: OpenTelemetry Collector-style unified telemetry pipeline
+--fizztelemetry-receivers    List active telemetry receivers (OTLP, Prometheus, StatsD)
+--fizztelemetry-processors   List configured telemetry processors with pipeline ordering
+--fizztelemetry-exporters    List configured telemetry exporters and their destinations
+--fizztelemetry-pipeline     Display the full telemetry pipeline topology
+--fizztelemetry-stats        Display telemetry pipeline throughput statistics
+
+# FizzI18nV2 -- Internationalization V2
+--fizzi18nv2                 Enable FizzI18nV2: ICU message format, CLDR pluralization, and advanced locale support
+--fizzi18nv2-locale LOCALE   Set locale with full BCP 47 tag support (e.g., qya-Latn-QA)
+--fizzi18nv2-fallback CHAIN  Set locale fallback chain (comma-separated)
+--fizzi18nv2-formats         Display available format patterns for the current locale
+--fizzi18nv2-plurals N       Display pluralization rules applied to number N in the current locale
+
+# FizzConfig2 -- Configuration Management V2
+--fizzconfig2                Enable FizzConfig2: hierarchical configuration with schema validation and encryption
+--fizzconfig2-env ENV        Select configuration environment (development, staging, production)
+--fizzconfig2-validate       Validate configuration against JSON Schema Draft 2020-12
+--fizzconfig2-decrypt KEY    Decrypt encrypted configuration values with the given key
+--fizzconfig2-diff ENV_A ENV_B  Display configuration diff between two environments
+--fizzconfig2-blame KEY      Display change history for a specific configuration key
+
+# FizzRateV2 -- Advanced Rate Limiting
+--fizzratev2                 Enable FizzRateV2: distributed rate limiting with adaptive throttling
+--fizzratev2-quota TENANT LIMIT  Set per-tenant rate limit quota
+--fizzratev2-pool POOL LIMIT    Configure a shared rate limit pool
+--fizzratev2-adaptive        Enable adaptive rate limiting based on system load
+--fizzratev2-analytics       Display rate limiting analytics with usage forecasting
+--fizzratev2-headers         Include RFC 6585 rate limit response headers in output
+
+# FizzWorkflow -- Workflow Orchestration Engine
+--fizzworkflow               Enable FizzWorkflow: BPMN-inspired workflow orchestration for multi-step evaluation processes
+--fizzworkflow-deploy DEFINITION  Deploy a workflow definition
+--fizzworkflow-start WORKFLOW     Start a new workflow instance
+--fizzworkflow-status INSTANCE    Display workflow instance execution status
+--fizzworkflow-tasks              List pending human tasks (assigned to Bob)
+--fizzworkflow-complete TASK      Complete a pending human task
+
+# FizzCache2 -- Distributed Cache V2
+--fizzcache2                 Enable FizzCache2: distributed caching with consistent hashing and replication
+--fizzcache2-topology        Display cache cluster topology with virtual node distribution
+--fizzcache2-replication N   Set replication factor (default: 3)
+--fizzcache2-pattern PATTERN Access pattern: cache-aside, read-through, write-behind (default: cache-aside)
+--fizzcache2-near-cache      Enable near-cache with local invalidation
+--fizzcache2-analytics       Display cache analytics with hit rate prediction
+
+# FizzMetricsV2 -- Advanced Metrics Pipeline
+--fizzmetricsv2              Enable FizzMetricsV2: dimensional metrics with PromQL query support
+--fizzmetricsv2-query PROMQL Execute a PromQL query against collected metrics
+--fizzmetricsv2-rules        List configured recording and alerting rules
+--fizzmetricsv2-federate     Display federation endpoints and scraped targets
+--fizzmetricsv2-exemplars    Display exemplar storage linking metrics to distributed traces
+--fizzmetricsv2-dashboard    Display the advanced metrics dashboard with PromQL query results
+
+# FizzAPIGateway2 -- API Gateway V2
+--fizzapigateway2            Enable FizzAPIGateway2: plugin-based API gateway with advanced routing
+--fizzapigateway2-routes     List configured routes with matching rules and upstream targets
+--fizzapigateway2-plugins    List active gateway plugins with execution order
+--fizzapigateway2-analytics  Display API analytics with latency percentiles and error rates
+--fizzapigateway2-websocket  Enable WebSocket proxying for real-time evaluation streaming
+--fizzapigateway2-grpc       Enable gRPC transcoding for protocol bridge access
+--fizzapigateway2-compose    Enable API composition for multi-subsystem response aggregation
+
+# FizzSMTP2 -- Enhanced SMTP Relay
+--fizzsmtp2                  Enable FizzSMTP2: enhanced SMTP relay with templates and delivery analytics
+--fizzsmtp2-template NAME    Use a named email template for FizzBuzz result delivery
+--fizzsmtp2-analytics        Display delivery analytics with per-recipient engagement metrics
+--fizzsmtp2-bounces          Display bounce classification report (hard, soft, policy)
+--fizzsmtp2-unsubscribe      Process unsubscribe requests via RFC 8058 List-Unsubscribe
+
+# FizzK8sOperator -- Kubernetes Operator
+--fizzk8soperator            Enable FizzK8sOperator: Kubernetes operator with CRD reconciliation and admission webhooks
+--fizzk8soperator-crds       List registered Custom Resource Definitions
+--fizzk8soperator-reconcile  Display reconciliation loop status and event queue depth
+--fizzk8soperator-webhooks   Display admission webhook configuration and invocation history
+--fizzk8soperator-leader     Display leader election status for HA operator deployment
+--fizzk8soperator-resources  List all managed FizzBuzz custom resources with status
+
+# FizzDataLake -- Data Lake
+--fizzdatalake               Enable FizzDataLake: lakehouse-architecture data lake with columnar storage and time-travel
+--fizzdatalake-tables        List all managed tables with partition counts and row statistics
+--fizzdatalake-query SQL     Execute a SQL query against the data lake catalog
+--fizzdatalake-compact TABLE Run compaction on a table to optimize read performance
+--fizzdatalake-snapshot TABLE  List table snapshots for time-travel queries
+--fizzdatalake-travel TABLE SNAPSHOT_ID  Execute a time-travel query against a specific table snapshot
+
+# FizzEventMesh -- Event Mesh
+--fizzeventmesh              Enable FizzEventMesh: unified event mesh with topic routing, CQRS projections, and protocol bridging
+--fizzeventmesh-topics       List all mesh topics with subscription counts and throughput
+--fizzeventmesh-projections  List CQRS projections with materialized view status
+--fizzeventmesh-replay TOPIC OFFSET  Replay events from a topic starting at the given offset
+--fizzeventmesh-bridge       Display protocol bridge status (Kafka <-> AMQP translation)
+--fizzeventmesh-schemas      Display schema registry with compatibility check results
+
+# FizzSecurityScanner -- Security Scanner
+--fizzsecurityscanner        Enable FizzSecurityScanner: SAST, dependency audit, and OWASP rule evaluation
+--fizzsecurityscanner-scan   Run a full security scan across all source files
+--fizzsecurityscanner-deps   Run dependency vulnerability audit with CVE correlation
+--fizzsecurityscanner-secrets  Run secret detection with entropy analysis
+--fizzsecurityscanner-owasp  Run OWASP Top 10 rule evaluation against REST endpoints
+--fizzsecurityscanner-report Generate security posture report with remediation priorities
+
+# FizzServiceCatalog -- Service Catalog
+--fizzservicecatalog         Enable FizzServiceCatalog: service registry with dependency mapping and maturity scoring
+--fizzservicecatalog-list    List all registered services with ownership and SLA tier
+--fizzservicecatalog-deps SERVICE  Display dependency graph for a named service
+--fizzservicecatalog-maturity  Display service maturity assessment across all modules
+--fizzservicecatalog-runbooks  List linked runbooks for all services
+
+# FizzChaosV2 -- Chaos Engineering V2
+--fizzchaosv2                Enable FizzChaosV2: structured chaos experimentation with hypothesis verification
+--fizzchaosv2-schedule CRON EXPERIMENT  Schedule recurring chaos experiments
+--fizzchaosv2-verify EXPERIMENT  Verify steady-state hypothesis for an experiment
+--fizzchaosv2-compose EXPERIMENTS  Compose multiple fault types into a single experiment (comma-separated)
+--fizzchaosv2-maturity       Display chaos engineering maturity model assessment
+--fizzchaosv2-calendar       Display the chaos experiment calendar with freeze windows
+
+# FizzFeatureFlagV2 -- Advanced Feature Flags
+--fizzfeatureflagv2          Enable FizzFeatureFlagV2: multi-variate flags with targeting and analytics
+--fizzfeatureflagv2-target FLAG RULES  Set targeting rules for a flag (JSON format)
+--fizzfeatureflagv2-analytics FLAG  Display exposure and conversion analytics for a flag
+--fizzfeatureflagv2-stale    Detect stale flags that should be cleaned up
+--fizzfeatureflagv2-prerequisites FLAG  Display prerequisite flag dependencies
+--fizzfeatureflagv2-experiment FLAG EXPERIMENT  Link a flag to an A/B test experiment
+
+# FizzDebugger2 -- Debug Adapter Protocol V2
+--fizzdebugger2              Enable FizzDebugger2: DAP-compliant debug adapter for IDE integration
+--fizzdebugger2-port PORT    Debug adapter server port (default: 4711)
+--fizzdebugger2-break LOCATION  Set a breakpoint (line:N, function:name, condition:expr)
+--fizzdebugger2-attach       Attach to a running evaluation session for live debugging
+--fizzdebugger2-watch EXPR   Add a watch expression for live evaluation
+--fizzdebugger2-threads      Display thread management status
+
+# FizzLoadBalancerV2 -- Layer 7 Load Balancer
+--fizzloadbalancerv2         Enable FizzLoadBalancerV2: Layer 7 load balancer with health-check-based backend management
+--fizzloadbalancerv2-algo ALGO  Load balancing algorithm: wrr, leastconn, consistent-hash, random (default: wrr)
+--fizzloadbalancerv2-backends  List registered backends with health status and connection counts
+--fizzloadbalancerv2-sticky   Enable sticky sessions via cookie injection
+--fizzloadbalancerv2-drain BACKEND  Drain connections from a backend before deregistration
+--fizzloadbalancerv2-analytics  Display load distribution analytics with latency percentiles
+
+# FizzSecretsV2 -- Secrets Management V2
+--fizzsecretsv2              Enable FizzSecretsV2: dynamic secret generation with rotation and versioning
+--fizzsecretsv2-generate TYPE  Generate a dynamic secret (db-credential, api-key, certificate)
+--fizzsecretsv2-rotate PATH   Rotate a secret at the given path with zero-downtime credential update
+--fizzsecretsv2-versions PATH  List secret versions with creation timestamps
+--fizzsecretsv2-policy PATH POLICY  Set access policy for a secret path
+--fizzsecretsv2-sync ENV      Synchronize secrets to a target environment
+
+# FizzRBACV2 -- Attribute-Based Access Control
+--fizzrbacv2                 Enable FizzRBACV2: ABAC with policy decision/enforcement points and XACML policies
+--fizzrbacv2-evaluate SUBJECT RESOURCE ACTION  Evaluate an access control decision
+--fizzrbacv2-certify         Run an access certification campaign
+--fizzrbacv2-escalation      Display privilege escalation detection report
+--fizzrbacv2-analytics       Display access analytics with least-privilege scoring
+--fizzrbacv2-jit SUBJECT RESOURCE DURATION  Provision just-in-time access with automatic expiry
+
+# FizzAPM -- Application Performance Management
+--fizzapm                    Enable FizzAPM: distributed transaction tracing, service maps, and Apdex scoring
+--fizzapm-service-map        Display the auto-generated service dependency map
+--fizzapm-errors             Display error tracking dashboard with automatic grouping
+--fizzapm-slow-transactions  Display slow transaction analysis with bottleneck identification
+--fizzapm-apdex              Display Apdex scores per service endpoint
+--fizzapm-deployments        Display deployment tracking with performance regression markers
+
+# FizzNetworkPolicy -- Network Policy Engine
+--fizznetworkpolicy          Enable FizzNetworkPolicy: Kubernetes-style network policy enforcement
+--fizznetworkpolicy-list     List active network policies with pod selectors and rule counts
+--fizznetworkpolicy-audit    Display network policy audit log with allow/deny decisions
+--fizznetworkpolicy-default-deny  Enable default-deny posture for all pod traffic
+--fizznetworkpolicy-simulate POLICY  Simulate policy evaluation without enforcement
+
+# FizzCapacityPlanner -- Capacity Planning Engine
+--fizzcapacityplanner        Enable FizzCapacityPlanner: resource forecasting and saturation modeling
+--fizzcapacityplanner-forecast RESOURCE  Forecast resource utilization (cpu, memory, disk, network)
+--fizzcapacityplanner-saturation  Display saturation point estimates with headroom thresholds
+--fizzcapacityplanner-whatif SCENARIO  Run a what-if capacity scenario simulation
+--fizzcapacityplanner-reserve RESOURCE AMOUNT  Reserve resource capacity with overbooking protection
+--fizzcapacityplanner-report  Generate capacity planning report with trend visualization
+
+# FizzComplianceV2 -- Extended Compliance Framework
+--fizzcompliancev2           Enable FizzComplianceV2: SOC 2, ISO 27001, PCI DSS, and NIST CSF compliance
+--fizzcompliancev2-framework FRAMEWORK  Select compliance framework: soc2, iso27001, pcidss, nist-csf (default: all)
+--fizzcompliancev2-evidence  Run automated evidence collection across all controls
+--fizzcompliancev2-gaps      Display compliance gap analysis with remediation tracking
+--fizzcompliancev2-impact REGULATION  Assess regulatory change impact on current compliance posture
+--fizzcompliancev2-report    Generate executive compliance summary report
+
+# FizzCostOptimizer -- Cost Optimization Engine
+--fizzcostoptimizer          Enable FizzCostOptimizer: rightsizing, waste detection, and savings recommendations
+--fizzcostoptimizer-rightsize  Generate rightsizing recommendations based on utilization history
+--fizzcostoptimizer-idle      Detect idle resources with automated cleanup suggestions
+--fizzcostoptimizer-savings   Analyze commitment plan savings (reserved, savings plan, spot)
+--fizzcostoptimizer-waste     Display waste elimination scoring across cost categories
+--fizzcostoptimizer-forecast  Generate budget forecast with confidence intervals
+
+# FizzMigration2 -- Database Migration V2
+--fizzmigration2             Enable FizzMigration2: schema versioning with DAG resolution and auto-generated migrations
+--fizzmigration2-status      Display migration status with pending/applied/failed migrations
+--fizzmigration2-up          Apply all pending forward migrations
+--fizzmigration2-down N      Rollback the last N migrations with automatic rollback on failure
+--fizzmigration2-diff        Generate auto-migration from schema snapshot diff
+--fizzmigration2-dry-run     Preview migration SQL without executing
+
+# FizzIncident -- Incident Management Platform
+--fizzincident               Enable FizzIncident: full incident lifecycle management from detection to retrospective
+--fizzincident-declare SEVERITY TITLE  Declare a new incident with severity (P1-P5) and title
+--fizzincident-status        Display active incidents with commander assignment and timeline
+--fizzincident-statuspage    Display the public status page with component health
+--fizzincident-retro INCIDENT_ID  Start post-incident review workflow for the given incident
+--fizzincident-metrics       Display incident metrics (MTTA, MTTD, MTTR, MTTF)
+
+# FizzChangeManagement -- Change Management System
+--fizzchangemgmt             Enable FizzChangeManagement: ITIL v4 change enablement with calendar and risk assessment
+--fizzchangemgmt-submit TITLE DESCRIPTION  Submit a change request (RFC)
+--fizzchangemgmt-calendar    Display the change calendar with freeze windows and scheduled changes
+--fizzchangemgmt-risk RFC_ID Assess change risk with automated scoring
+--fizzchangemgmt-review RFC_ID  Trigger CAB review for a change request
+--fizzchangemgmt-success-rate  Display change success rate with trend analysis
+
+# FizzLineage -- Data Lineage Tracker
+--fizzlineage                Enable FizzLineage: column-level data lineage with impact analysis and regulatory provenance
+--fizzlineage-trace ENTITY   Trace end-to-end lineage for a data entity
+--fizzlineage-impact ENTITY  Run impact analysis for upstream/downstream dependencies
+--fizzlineage-graph          Display the lineage dependency graph with topological visualization
+--fizzlineage-provenance ENTITY  Export regulatory provenance chain for GDPR Article 30 compliance
+
+# FizzToil -- SRE Toil Budget Analyzer
+--fizztoil                   Enable FizzToil: SRE handbook-compliant toil classification and budget enforcement
+--fizztoil-classify          Classify all operational tasks by toil characteristics
+--fizztoil-budget            Display toil budget status (current: 94.7%, target: 50%)
+--fizztoil-opportunities     Display automation opportunities ranked by estimated time savings
+--fizztoil-report            Generate quarterly toil trend report
+
+# FizzDrift -- Configuration Drift Detector
+--fizzdrift                  Enable FizzDrift: continuous drift detection with remediation playbooks
+--fizzdrift-scan             Run a drift scan comparing declared vs. actual configuration
+--fizzdrift-remediate        Generate remediation playbook for detected drift
+--fizzdrift-severity         Display drift severity scoring across all modules
+--fizzdrift-history          Display historical drift events with correlation to change history
 ```
 
 ## Environment Variables

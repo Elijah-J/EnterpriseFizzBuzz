@@ -6326,3 +6326,112 @@ FizzMail implements a standards-compliant email server providing both SMTP (RFC 
 | Storage format | Maildir |
 | CLI flags | 20 |
 | Middleware priority | 113 |
+
+---
+
+## FizzCI Continuous Integration Pipeline Engine Architecture
+
+**Module:** `enterprise_fizzbuzz/infrastructure/fizzci.py`
+**Lines:** ~2,433
+**Tests:** 132
+
+FizzCI implements a production-grade continuous integration pipeline engine for the Enterprise FizzBuzz Platform. Pipelines are defined as YAML documents specifying stages, jobs, steps, triggers, variables, matrix parameters, artifacts, caching, retry policies, conditions, and secrets. The `PipelineParser` validates and deserializes pipeline definitions into a structured object model. The `DAGBuilder` constructs a directed acyclic graph from stage dependency declarations, performing topological sort via Kahn's algorithm and detecting cycles before execution begins. Stages execute sequentially according to the DAG order; jobs within a stage execute in parallel up to a configurable concurrency limit. The `MatrixExpander` generates the Cartesian product of matrix parameters, expanding a single job definition into multiple parameterized job instances -- enabling, for example, a test job to run across Python 3.11, 3.12, and 3.13 in a single pipeline definition. The `ConditionalEvaluator` evaluates branch filters, path filters, and manual gates to determine whether stages and jobs should execute or be skipped. The `SecretInjector` resolves secret references from FizzVault and injects them into step environments without logging plaintext values. The `ArtifactManager` handles upload and download of build artifacts between stages with content-addressable storage, size limits, and metadata tracking. The `BuildCache` provides content-addressable caching of build dependencies keyed by cache key and content hash, with configurable TTL and maximum size. The `LogStreamer` captures real-time step output into per-job ring buffers for live streaming and historical retrieval. The `StepExecutor` runs individual step commands with timeout enforcement, secret masking in logs, and variable interpolation. The `JobRunner` orchestrates step execution within a job, handling retries (fixed, exponential, or linear backoff), artifact upload, cache restore/save, and result aggregation. The `PipelineExecutor` orchestrates stage execution across the DAG, managing parallel job dispatch, conditional evaluation, and run-level status rollup. The `WebhookTriggerHandler` matches incoming webhook events (push, pull_request, tag, schedule, manual) against pipeline trigger configurations and initiates matching pipeline runs. The `PipelineTemplateEngine` provides reusable workflow templates that can be referenced and parameterized across pipeline definitions. The `PipelineHistory` maintains a bounded history of pipeline runs with per-run stage and job results. The `PipelineVisualizer` renders ASCII DAG diagrams of pipeline stage dependencies. The `StatusReporter` formats pipeline run results into human-readable status reports. Three default pipelines are registered at startup: `fizzbuzz-ci` (lint → test [3x matrix] → build), `fizzbuzz-deploy` (validate → deploy with secret injection), and `fizzbuzz-nightly` (full test suite on schedule).
+
+```
+          Webhook Event (push / PR / tag / schedule / manual)
+                         |
+                         v
+              +---------------------+
+              | WebhookTriggerHandler|
+              | (event matching)    |
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              | PipelineParser      |
+              | (YAML → model)      |
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              | DAGBuilder          |
+              | (Kahn's toposort)   |
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              | ConditionalEvaluator|
+              | (branch/path/gate)  |
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              | MatrixExpander      |
+              | (Cartesian product) |
+              +----------+----------+
+                         |
+                         v
+              +---------------------+
+              | PipelineExecutor    |
+              | (stage → parallel   |
+              |  job dispatch)      |
+              +----------+----------+
+                         |
+            +------------+------------+
+            |            |            |
+            v            v            v
+      +-----------+ +-----------+ +-----------+
+      | JobRunner | | JobRunner | | JobRunner |
+      | (retry,   | | (retry,   | | (retry,   |
+      |  cache,   | |  cache,   | |  cache,   |
+      |  artifact)| |  artifact)| |  artifact)|
+      +-----+-----+ +-----+-----+ +-----+-----+
+            |            |            |
+            v            v            v
+      +-----------+ +-----------+ +-----------+
+      |StepExecutor|StepExecutor|StepExecutor|
+      | (timeout, | | (timeout, | | (timeout, |
+      |  secrets, | |  secrets, | |  secrets, |
+      |  logging) | |  logging) | |  logging) |
+      +-----------+ +-----------+ +-----------+
+```
+
+**Key components:**
+- **PipelineParser** — Validates YAML pipeline definitions and deserializes into `PipelineDefinition` with stages, jobs, steps, triggers, variables, matrix, artifacts, cache, retry, conditions, and secrets.
+- **DAGBuilder** — Constructs a directed acyclic graph from stage `depends_on` declarations, performs topological sort via Kahn's algorithm, and raises `FizzCIDAGCycleError` on circular dependencies.
+- **MatrixExpander** — Generates Cartesian product of matrix parameters, expanding job definitions into parameterized instances with variable interpolation.
+- **ConditionalEvaluator** — Evaluates branch filters, path filters, and manual gate conditions to determine stage/job execution eligibility.
+- **SecretInjector** — Resolves secret references from FizzVault, injects into step environments, and masks values in log output.
+- **ArtifactManager** — Content-addressable artifact storage with upload, download, listing, size enforcement, and per-run/per-job metadata.
+- **BuildCache** — Content-addressable build dependency cache with key-based lookup, TTL expiration, size limits, and hit/miss metrics.
+- **LogStreamer** — Per-job ring buffer log capture with real-time streaming and historical retrieval.
+- **StepExecutor** — Individual step command execution with timeout enforcement, secret masking, variable interpolation, and simulated duration modeling.
+- **JobRunner** — Orchestrates steps within a job: cache restore, step execution, artifact upload, cache save, retry on failure (fixed/exponential/linear backoff).
+- **PipelineExecutor** — Orchestrates stages across the DAG: conditional evaluation, parallel job dispatch, matrix expansion, status rollup.
+- **WebhookTriggerHandler** — Matches webhook events against pipeline trigger configurations and initiates pipeline runs.
+- **PipelineTemplateEngine** — Reusable workflow templates with parameter substitution and template inheritance.
+- **PipelineHistory** — Bounded run history with per-run stage/job results and retrieval by ID.
+- **PipelineVisualizer** — ASCII DAG rendering of pipeline stage dependencies.
+- **StatusReporter** — Human-readable formatting of pipeline run results and summary tables.
+- **PipelineEngine** — Top-level orchestrator: pipeline registration, execution, webhook dispatch, template management, history, and metrics.
+- **FizzCIDashboard** — ASCII dashboard with engine status, registered pipelines, cache utilization, artifact inventory, and recent run history.
+- **FizzCIMiddleware** — Priority 122 middleware injecting pipeline engine metrics into the processing context.
+
+| Spec | Value |
+|------|-------|
+| Pipeline format | YAML |
+| DAG algorithm | Kahn's topological sort |
+| Default max parallel jobs | 8 |
+| Default job timeout | 3,600s (1 hour) |
+| Default step timeout | 600s (10 minutes) |
+| Default max retries | 3 |
+| Retry strategies | Fixed, Exponential, Linear |
+| Artifact max size | 100 MB |
+| Cache max size | 1 GB |
+| Cache TTL | 86,400s (24 hours) |
+| Trigger events | push, pull_request, tag, schedule, manual |
+| Default pipelines | 3 (fizzbuzz-ci, fizzbuzz-deploy, fizzbuzz-nightly) |
+| Exception classes | 35 (EFP-FCI series) |
+| Event types | 7 |
+| CLI flags | 13 |
+| Middleware priority | 122 |

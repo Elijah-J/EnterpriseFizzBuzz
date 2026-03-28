@@ -6,6 +6,24 @@ All notable changes to the Enterprise FizzBuzz Platform are documented in this f
 
 ## [Unreleased]
 ### Added
+- **FizzCI Continuous Integration Pipeline Engine**
+  - YAML pipeline definitions with DAG-based stage execution via Kahn's topological sort
+  - Parallel job execution within stages with configurable concurrency limits
+  - Matrix builds expanding jobs across arbitrary parameter axes (e.g., Python 3.11/3.12/3.13)
+  - Artifact passing between stages with content-addressable storage and size enforcement
+  - Build caching with content-addressable keys, configurable TTL, and size limits
+  - Conditional execution via branch filters, path filters, and manual gates
+  - Secret injection from FizzVault with automatic log masking
+  - Webhook triggers (push, pull_request, tag, schedule, manual) with event matching
+  - Retry policies with fixed, exponential, and linear backoff strategies
+  - Pipeline templates and reusable workflows with parameter substitution
+  - Real-time log streaming with per-job ring buffers
+  - ASCII pipeline DAG visualization and dashboard
+  - Three default pipelines: fizzbuzz-ci, fizzbuzz-deploy, fizzbuzz-nightly
+  - 35 new exception classes (FizzCI series) for pipeline failure modes
+  - 7 new EventType entries for pipeline lifecycle event tracking
+  - FizzCIMiddleware at priority 122 for pipeline engine context injection
+  - 13 new CLI flags for pipeline management, execution, and visualization
 - **FizzMail SMTP/IMAP Email Server**
   - RFC 5321-compliant SMTP server with STARTTLS encryption and AUTH support (PLAIN, LOGIN, CRAM-MD5)
   - SPF, DKIM, and DMARC validation for inbound and outbound message authentication
