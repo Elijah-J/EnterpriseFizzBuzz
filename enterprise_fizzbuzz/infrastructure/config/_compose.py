@@ -210,6 +210,12 @@ from .mixins.vm import VmConfigMixin
 from .mixins.fizzwindow import FizzwindowConfigMixin
 from .mixins.webhooks import WebhooksConfigMixin
 from .mixins.zspec import ZspecConfigMixin
+from .mixins.fizzhypervisor import FizzhypervisorConfigMixin
+from .mixins.fizznuma import FizznumaConfigMixin
+from .mixins.fizzrdma import FizzrdmaConfigMixin
+from .mixins.fizzinfiniband import FizzinfinibandConfigMixin
+from .mixins.fizzcxl import FizzcxlConfigMixin
+from .mixins.fizzsmartnic import FizzsmartnicConfigMixin
 
 
 class ConfigurationManager(
@@ -423,6 +429,12 @@ class ConfigurationManager(
     FizzworkflowConfigMixin,
     WebhooksConfigMixin,
     ZspecConfigMixin,
+    FizzhypervisorConfigMixin,
+    FizznumaConfigMixin,
+    FizzrdmaConfigMixin,
+    FizzinfinibandConfigMixin,
+    FizzcxlConfigMixin,
+    FizzsmartnicConfigMixin,
 ):
     """Enterprise FizzBuzz Platform Configuration Manager.
 
