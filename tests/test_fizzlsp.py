@@ -1070,7 +1070,7 @@ class TestRename:
         if parsed and parsed.get("result"):
             changes = parsed["result"].get("changes", {})
             # Should have changes for the document
-            assert len(changes) >= 0
+            assert len(changes) > 0
 
     def test_rename_rule_all_occurrences(self, server_with_doc):
         server, uri = server_with_doc
@@ -1380,7 +1380,7 @@ class TestDocumentSymbols:
         if parsed and parsed.get("result"):
             symbols = parsed["result"]
             rule_names = [s.get("name", "") for s in symbols if s.get("kind") == SymbolKind.FUNCTION.value]
-            assert len(rule_names) >= 0
+            assert len(rule_names) > 0
 
     def test_document_symbols_let_bindings(self, server_with_doc):
         server, uri = server_with_doc
@@ -1393,7 +1393,7 @@ class TestDocumentSymbols:
         if parsed and parsed.get("result"):
             symbols = parsed["result"]
             variable_names = [s.get("name", "") for s in symbols if s.get("kind") == SymbolKind.VARIABLE.value]
-            assert len(variable_names) >= 0
+            assert len(variable_names) > 0
 
     def test_document_symbols_evaluate(self, server_with_doc):
         server, uri = server_with_doc

@@ -428,7 +428,7 @@ class TestMutationOperators:
         # May or may not apply depending on random choice
         if applied:
             # AST structure should have changed
-            assert True  # Just checking no crash
+            assert standard_ast.fingerprint() != fp_before
 
     def test_duplicate_subtree_adds_child(self, standard_ast: RuleAST):
         rng = random.Random(42)

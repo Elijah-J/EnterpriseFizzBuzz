@@ -284,11 +284,11 @@ class TestGRPCServerSerialization:
         assert decoded["label"] == "buzz"
 
     def test_serialize_unknown_message_raises(self, server):
-        with pytest.raises((FizzGRPCNotFoundError, FizzGRPCError, KeyError)):
+        with pytest.raises(FizzGRPCNotFoundError):
             server.serialize("NoSuchMessage", {"x": 1})
 
     def test_deserialize_unknown_message_raises(self, server):
-        with pytest.raises((FizzGRPCNotFoundError, FizzGRPCError, KeyError)):
+        with pytest.raises(FizzGRPCNotFoundError):
             server.deserialize("NoSuchMessage", b"\x00")
 
 
