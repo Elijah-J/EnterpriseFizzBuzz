@@ -42,6 +42,7 @@ from .mixins.finops import FinopsConfigMixin
 from .mixins.fizzcgroup import FizzcgroupConfigMixin
 from .mixins.fizzblock import FizzblockConfigMixin
 from .mixins.fizzcdn import FizzcdnConfigMixin
+from .mixins.fizzcache2 import Fizzcache2ConfigMixin
 from .mixins.fizzci import FizzciConfigMixin
 from .mixins.fizzcni import FizzcniConfigMixin
 from .mixins.fizzcompose import FizzcomposeConfigMixin
@@ -62,6 +63,7 @@ from .mixins.fizzmail import FizzmailConfigMixin
 from .mixins.fizzml2 import Fizzml2ConfigMixin
 from .mixins.fizzlsp import FizzlspConfigMixin
 from .mixins.fizzlife import FizzlifeConfigMixin
+from .mixins.fizzmetricsv2 import Fizzmetricsv2ConfigMixin
 from .mixins.fizznet import FizznetConfigMixin
 from .mixins.fizznotebook import FizznotebookConfigMixin
 from .mixins.fizzpolicy import FizzpolicyConfigMixin
@@ -187,6 +189,7 @@ class ConfigurationManager(
     FizzcgroupConfigMixin,
     FizzblockConfigMixin,
     FizzcdnConfigMixin,
+    Fizzcache2ConfigMixin,
     FizzciConfigMixin,
     FizzcniConfigMixin,
     FizzcomposeConfigMixin,
@@ -204,6 +207,7 @@ class ConfigurationManager(
     FizzgraphqlConfigMixin,
     FizzlangConfigMixin,
     FizzmailConfigMixin,
+    Fizzmetricsv2ConfigMixin,
     Fizzml2ConfigMixin,
     FizzlspConfigMixin,
     FizzlifeConfigMixin,
