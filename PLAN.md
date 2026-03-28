@@ -1,545 +1,950 @@
-# PLAN.md -- FizzCI: Continuous Integration Pipeline Engine
+# PLAN.md -- FizzSSH: SSH Protocol Server
 
 ## Overview
 
-The Enterprise FizzBuzz Platform maintains a version control system (FizzVCS), a deployment pipeline, a container runtime (FizzOCI), a secrets vault (FizzVault), and 19,900+ tests -- yet possesses no automated mechanism to validate correctness before release. Every merge today is an act of faith. FizzCI closes this gap by providing a production-grade continuous integration pipeline engine that parses YAML pipeline definitions, constructs a DAG of stages and jobs, executes them with parallelism within stages, manages artifacts between stages, evaluates conditional execution rules, injects secrets, caches build outputs, and reports status -- all within the platform's middleware architecture.
+The Enterprise FizzBuzz Platform provides TCP/IP networking, DNS resolution,
+TLS-capable reverse proxying, and a full container orchestration stack -- yet offers no
+mechanism for secure, authenticated remote access to platform resources.  Operators
+wishing to inspect FizzBuzz computation state, execute administrative commands, or
+transfer configuration files must resort to insecure ad-hoc channels.
 
-Architecture reference: GitHub Actions, GitLab CI/CD, Jenkins Pipeline, Tekton Pipelines, Dagger CI.
+FizzSSH fills this gap by implementing the SSH-2 protocol (RFC 4253) as a simulated
+in-process server.  It provides encrypted transport, multiple key exchange algorithms,
+server host key authentication, three client authentication methods, multiplexed channels
+with flow control, interactive shell sessions, remote command execution, SFTP file
+operations, TCP/IP port forwarding, SCP transfers, session recording, rate limiting, and
+configurable banner messages.
 
-## File Manifest
+Architecture reference: OpenSSH, Dropbear, libssh, RFC 4251 (Architecture), RFC 4252
+(Authentication), RFC 4253 (Transport), RFC 4254 (Connection), RFC 4256
+(Keyboard-Interactive).
 
-| File | Purpose |
-|------|---------|
-| `enterprise_fizzbuzz/infrastructure/fizzci.py` | Main implementation (~3,500 lines) |
-| `tests/test_fizzci.py` | Test suite (~500 tests) |
-| `enterprise_fizzbuzz/domain/exceptions/fizzci.py` | Exception hierarchy (EFP-CI00 .. EFP-CI34) |
-| `enterprise_fizzbuzz/infrastructure/config/mixins/fizzci.py` | Configuration mixin properties |
-| `enterprise_fizzbuzz/infrastructure/features/fizzci_feature.py` | Feature descriptor for auto-wiring |
-| `fizzci.py` | Backward-compatibility re-export stub (root level) |
+## Files to Create/Modify
 
-## Exception Hierarchy (EFP-CI00 .. EFP-CI34)
+| File | Action | Description |
+|------|--------|-------------|
+| `enterprise_fizzbuzz/infrastructure/fizzssh.py` | CREATE | Main module (~3,500 lines) |
+| `enterprise_fizzbuzz/domain/exceptions/fizzssh.py` | CREATE | Exception hierarchy (~35 exception classes) |
+| `enterprise_fizzbuzz/infrastructure/config/mixins/fizzssh.py` | CREATE | Configuration mixin properties |
+| `enterprise_fizzbuzz/infrastructure/features/fizzssh_feature.py` | CREATE | Feature descriptor with CLI flags |
+| `fizzssh.py` | CREATE | Backward-compatible re-export stub |
+| `tests/test_fizzssh.py` | CREATE | Test suite (~250+ tests) |
+| `enterprise_fizzbuzz/__main__.py` | MODIFY | Wire FizzSSH subsystem, add CLI flags |
+| `enterprise_fizzbuzz/infrastructure/config/mixins/__init__.py` | MODIFY | Register mixin |
+| `enterprise_fizzbuzz/infrastructure/features/__init__.py` | MODIFY | Register feature descriptor |
+| `enterprise_fizzbuzz/domain/exceptions/__init__.py` | MODIFY | Register exceptions |
 
-All exceptions inherit from `FizzBuzzError` via `_base`.
+## Phase 1: Foundation (~400 lines)
 
-| Code | Class | Trigger |
-|------|-------|---------|
-| EFP-CI00 | `FizzCIError` | Base exception for all CI errors |
-| EFP-CI01 | `FizzCIPipelineParseError` | Malformed YAML pipeline definition |
-| EFP-CI02 | `FizzCIPipelineNotFoundError` | Referenced pipeline does not exist |
-| EFP-CI03 | `FizzCIPipelineValidationError` | Semantic validation failure (e.g., undefined stage reference) |
-| EFP-CI04 | `FizzCIDAGCycleError` | Cycle detected in stage/job dependency graph |
-| EFP-CI05 | `FizzCIDAGNodeError` | Invalid node reference in DAG |
-| EFP-CI06 | `FizzCIStageError` | Stage-level execution failure |
-| EFP-CI07 | `FizzCIStageTimeoutError` | Stage exceeded its timeout |
-| EFP-CI08 | `FizzCIJobError` | Job-level execution failure |
-| EFP-CI09 | `FizzCIJobTimeoutError` | Job exceeded its timeout |
-| EFP-CI10 | `FizzCIStepError` | Step-level execution failure |
-| EFP-CI11 | `FizzCIStepTimeoutError` | Step exceeded its timeout |
-| EFP-CI12 | `FizzCIArtifactError` | Artifact upload/download failure |
-| EFP-CI13 | `FizzCIArtifactNotFoundError` | Referenced artifact does not exist |
-| EFP-CI14 | `FizzCIArtifactCorruptionError` | Artifact checksum mismatch |
-| EFP-CI15 | `FizzCIBuildCacheError` | Build cache read/write failure |
-| EFP-CI16 | `FizzCIBuildCacheMissError` | Cache key not found |
-| EFP-CI17 | `FizzCIBuildCacheEvictionError` | Eviction failure during LRU cleanup |
-| EFP-CI18 | `FizzCISecretInjectionError` | Secret not found or injection failed |
-| EFP-CI19 | `FizzCISecretAccessDeniedError` | Caller lacks permission to read secret |
-| EFP-CI20 | `FizzCIConditionError` | Conditional expression evaluation failure |
-| EFP-CI21 | `FizzCIBranchFilterError` | Branch filter pattern is invalid |
-| EFP-CI22 | `FizzCIPathFilterError` | Path filter pattern is invalid |
-| EFP-CI23 | `FizzCIManualGateError` | Manual gate approval timeout or rejection |
-| EFP-CI24 | `FizzCIMatrixError` | Matrix expansion failure |
-| EFP-CI25 | `FizzCIMatrixDimensionError` | Matrix dimension exceeds maximum |
-| EFP-CI26 | `FizzCIRetryExhaustedError` | All retry attempts exhausted |
-| EFP-CI27 | `FizzCIWebhookError` | Webhook processing failure |
-| EFP-CI28 | `FizzCIWebhookAuthError` | Webhook signature verification failed |
-| EFP-CI29 | `FizzCITemplateError` | Pipeline template resolution failure |
-| EFP-CI30 | `FizzCITemplateNotFoundError` | Referenced template does not exist |
-| EFP-CI31 | `FizzCITemplateRecursionError` | Template include cycle detected |
-| EFP-CI32 | `FizzCILogStreamError` | Log streaming failure |
-| EFP-CI33 | `FizzCIStatusReportError` | Status reporting failure |
-| EFP-CI34 | `FizzCIConfigError` | Configuration validation failure |
+### 1.1 Exception Hierarchy (`domain/exceptions/fizzssh.py`)
 
-## Configuration Mixin Properties
+Base class `FizzSSHError(FizzBuzzError)` with error code prefix `EFP-SSH`.
 
-The `FizzciConfigMixin` class exposes the following properties from `config.yaml` under the `fizzci:` key:
+Exception classes (~35):
 
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `fizzci_enabled` | `bool` | `False` | Whether FizzCI is enabled |
-| `fizzci_max_parallel_jobs` | `int` | `4` | Maximum concurrent jobs per stage |
-| `fizzci_default_timeout` | `int` | `3600` | Default job timeout in seconds |
-| `fizzci_stage_timeout` | `int` | `7200` | Default stage timeout in seconds |
-| `fizzci_pipeline_timeout` | `int` | `14400` | Default pipeline timeout in seconds |
-| `fizzci_artifact_storage_path` | `str` | `".fizzci/artifacts"` | Artifact storage directory |
-| `fizzci_cache_storage_path` | `str` | `".fizzci/cache"` | Build cache directory |
-| `fizzci_cache_max_size_mb` | `int` | `1024` | Maximum cache size in MB |
-| `fizzci_max_retry_attempts` | `int` | `3` | Default retry attempts for failed jobs |
-| `fizzci_retry_backoff_base` | `float` | `2.0` | Exponential backoff base for retries |
-| `fizzci_webhook_secret` | `str` | `None` | HMAC secret for webhook signature verification |
-| `fizzci_max_matrix_combinations` | `int` | `64` | Maximum expanded matrix jobs |
-| `fizzci_max_history_entries` | `int` | `1000` | Maximum pipeline run history entries |
-| `fizzci_log_buffer_size` | `int` | `4096` | Per-job log buffer size in lines |
-| `fizzci_dashboard_width` | `int` | `120` | ASCII dashboard rendering width |
+- `FizzSSHError` -- base (EFP-SSH00)
+- `SSHProtocolError` -- generic protocol violation (EFP-SSH01)
+- `SSHTransportError` -- transport layer failure (EFP-SSH02)
+- `SSHPacketError` -- malformed packet (EFP-SSH03)
+- `SSHMACError` -- MAC verification failure (EFP-SSH04)
+- `SSHEncryptionError` -- encryption/decryption failure (EFP-SSH05)
+- `SSHKeyExchangeError` -- key exchange failure (EFP-SSH06)
+- `SSHDHGroupError` -- DH group parameter error (EFP-SSH07)
+- `SSHECDHError` -- ECDH exchange failure (EFP-SSH08)
+- `SSHHostKeyError` -- host key management error (EFP-SSH09)
+- `SSHHostKeyNotFoundError` -- requested host key type unavailable (EFP-SSH10)
+- `SSHAuthenticationError` -- authentication failure (EFP-SSH11)
+- `SSHPasswordAuthError` -- password auth rejected (EFP-SSH12)
+- `SSHPublicKeyAuthError` -- public key auth rejected (EFP-SSH13)
+- `SSHKeyboardInteractiveError` -- keyboard-interactive auth failure (EFP-SSH14)
+- `SSHAuthorizedKeyError` -- authorized_keys parse/lookup error (EFP-SSH15)
+- `SSHChannelError` -- channel lifecycle error (EFP-SSH16)
+- `SSHChannelOpenError` -- channel open refused (EFP-SSH17)
+- `SSHChannelEOFError` -- unexpected channel EOF (EFP-SSH18)
+- `SSHChannelCloseError` -- channel close failure (EFP-SSH19)
+- `SSHFlowControlError` -- window size violation (EFP-SSH20)
+- `SSHSessionError` -- session channel error (EFP-SSH21)
+- `SSHPTYError` -- PTY allocation failure (EFP-SSH22)
+- `SSHExecError` -- remote command execution error (EFP-SSH23)
+- `SSHSFTPError` -- SFTP subsystem error (EFP-SSH24)
+- `SSHSFTPFileNotFoundError` -- SFTP target not found (EFP-SSH25)
+- `SSHSFTPPermissionError` -- SFTP permission denied (EFP-SSH26)
+- `SSHPortForwardError` -- port forwarding failure (EFP-SSH27)
+- `SSHLocalForwardError` -- local tunnel failure (EFP-SSH28)
+- `SSHRemoteForwardError` -- remote tunnel failure (EFP-SSH29)
+- `SSHSCPError` -- SCP transfer error (EFP-SSH30)
+- `SSHSessionRecordingError` -- audit recording failure (EFP-SSH31)
+- `SSHRateLimitError` -- connection rate exceeded (EFP-SSH32)
+- `SSHBannerError` -- banner delivery failure (EFP-SSH33)
+- `SSHMaxSessionsError` -- session limit exceeded (EFP-SSH34)
 
-## CLI Flags (13 flags)
+### 1.2 Constants and Enums
+
+```python
+# SSH-2 protocol constants (RFC 4253 Section 12)
+SSH_MSG_DISCONNECT = 1
+SSH_MSG_IGNORE = 2
+SSH_MSG_UNIMPLEMENTED = 3
+SSH_MSG_DEBUG = 4
+SSH_MSG_SERVICE_REQUEST = 5
+SSH_MSG_SERVICE_ACCEPT = 6
+SSH_MSG_KEXINIT = 20
+SSH_MSG_NEWKEYS = 21
+SSH_MSG_KEXDH_INIT = 30
+SSH_MSG_KEXDH_REPLY = 31
+SSH_MSG_USERAUTH_REQUEST = 50
+SSH_MSG_USERAUTH_FAILURE = 51
+SSH_MSG_USERAUTH_SUCCESS = 52
+SSH_MSG_USERAUTH_BANNER = 53
+SSH_MSG_USERAUTH_PK_OK = 60
+SSH_MSG_USERAUTH_INFO_REQUEST = 60
+SSH_MSG_USERAUTH_INFO_RESPONSE = 61
+SSH_MSG_GLOBAL_REQUEST = 80
+SSH_MSG_REQUEST_SUCCESS = 81
+SSH_MSG_REQUEST_FAILURE = 82
+SSH_MSG_CHANNEL_OPEN = 90
+SSH_MSG_CHANNEL_OPEN_CONFIRMATION = 91
+SSH_MSG_CHANNEL_OPEN_FAILURE = 92
+SSH_MSG_CHANNEL_WINDOW_ADJUST = 93
+SSH_MSG_CHANNEL_DATA = 94
+SSH_MSG_CHANNEL_EXTENDED_DATA = 95
+SSH_MSG_CHANNEL_EOF = 96
+SSH_MSG_CHANNEL_CLOSE = 97
+SSH_MSG_CHANNEL_REQUEST = 98
+SSH_MSG_CHANNEL_SUCCESS = 99
+SSH_MSG_CHANNEL_FAILURE = 100
+
+# Disconnect reason codes (RFC 4253 Section 11.1)
+SSH_DISCONNECT_HOST_NOT_ALLOWED_TO_CONNECT = 1
+SSH_DISCONNECT_PROTOCOL_ERROR = 2
+SSH_DISCONNECT_KEY_EXCHANGE_FAILED = 3
+SSH_DISCONNECT_RESERVED = 4
+SSH_DISCONNECT_MAC_ERROR = 5
+SSH_DISCONNECT_COMPRESSION_ERROR = 6
+SSH_DISCONNECT_SERVICE_NOT_AVAILABLE = 7
+SSH_DISCONNECT_PROTOCOL_VERSION_NOT_SUPPORTED = 8
+SSH_DISCONNECT_HOST_KEY_NOT_VERIFIABLE = 9
+SSH_DISCONNECT_CONNECTION_LOST = 10
+SSH_DISCONNECT_BY_APPLICATION = 11
+SSH_DISCONNECT_TOO_MANY_CONNECTIONS = 12
+SSH_DISCONNECT_AUTH_CANCELLED_BY_USER = 13
+SSH_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE = 14
+SSH_DISCONNECT_ILLEGAL_USER_NAME = 15
+```
+
+Enums:
+
+- `SSHState` -- `INITIAL`, `VERSION_EXCHANGE`, `KEY_EXCHANGE`, `AUTHENTICATED`, `CONNECTED`, `DISCONNECTED`
+- `KeyExchangeAlgorithm` -- `DIFFIE_HELLMAN_GROUP14_SHA256`, `DIFFIE_HELLMAN_GROUP16_SHA512`, `DIFFIE_HELLMAN_GROUP_EXCHANGE_SHA256`, `ECDH_SHA2_NISTP256`, `CURVE25519_SHA256`
+- `HostKeyAlgorithm` -- `SSH_ED25519`, `SSH_RSA`, `RSA_SHA2_256`, `RSA_SHA2_512`
+- `CipherAlgorithm` -- `AES128_CTR`, `AES192_CTR`, `AES256_CTR`, `AES128_GCM`, `AES256_GCM`, `CHACHA20_POLY1305`
+- `MACAlgorithm` -- `HMAC_SHA2_256`, `HMAC_SHA2_512`, `HMAC_SHA2_256_ETM`, `HMAC_SHA2_512_ETM`
+- `CompressionAlgorithm` -- `NONE`, `ZLIB`, `ZLIB_OPENSSH`
+- `AuthMethod` -- `PASSWORD`, `PUBLIC_KEY`, `KEYBOARD_INTERACTIVE`
+- `ChannelType` -- `SESSION`, `DIRECT_TCPIP`, `FORWARDED_TCPIP`
+- `ChannelState` -- `OPENING`, `OPEN`, `EOF_SENT`, `EOF_RECEIVED`, `CLOSING`, `CLOSED`
+- `SFTPOperation` -- `OPEN`, `CLOSE`, `READ`, `WRITE`, `STAT`, `FSTAT`, `LSTAT`, `OPENDIR`, `READDIR`, `REMOVE`, `MKDIR`, `RMDIR`, `RENAME`, `SYMLINK`, `READLINK`, `REALPATH`
+- `TerminalMode` -- `VINTR`, `VQUIT`, `VERASE`, `VKILL`, `VEOF`, `VEOL`, `VEOL2`, `VSTART`, `VSTOP`, `VSUSP`, `ECHO`, `ECHOE`, `ECHOK`, `ECHOCTL`, `ISIG`, `ICANON`, `IXON`, `IXOFF`, `OPOST`, `CS7`, `CS8`, `TTY_OP_END`
+
+### 1.3 Dataclasses
+
+```python
+@dataclass
+class FizzSSHConfig:
+    host: str = "127.0.0.1"
+    port: int = 2222
+    host_key_algorithms: List[HostKeyAlgorithm]
+    kex_algorithms: List[KeyExchangeAlgorithm]
+    ciphers: List[CipherAlgorithm]
+    macs: List[MACAlgorithm]
+    compression: List[CompressionAlgorithm]
+    password_auth_enabled: bool = True
+    pubkey_auth_enabled: bool = True
+    keyboard_interactive_enabled: bool = False
+    sftp_enabled: bool = True
+    port_forwarding_enabled: bool = True
+    session_recording_enabled: bool = False
+    max_sessions: int = 256
+    idle_timeout: float = 3600.0
+    auth_max_attempts: int = 6
+    banner_message: Optional[str] = None
+    rate_limit_max_connections: int = 100
+    rate_limit_window_seconds: float = 60.0
+
+@dataclass
+class SSHKeyPair:
+    algorithm: HostKeyAlgorithm
+    public_key: bytes
+    private_key: bytes
+    fingerprint_sha256: str
+    fingerprint_md5: str
+    comment: str = ""
+    created_at: float
+
+@dataclass
+class SSHSession:
+    session_id: str
+    client_address: Tuple[str, int]
+    server_address: Tuple[str, int]
+    state: SSHState
+    username: Optional[str]
+    auth_method: Optional[AuthMethod]
+    channels: Dict[int, 'SSHChannel']
+    kex_algorithm: Optional[KeyExchangeAlgorithm]
+    cipher_algorithm: Optional[CipherAlgorithm]
+    mac_algorithm: Optional[MACAlgorithm]
+    compression: Optional[CompressionAlgorithm]
+    session_key: Optional[bytes]
+    sequence_number_client: int = 0
+    sequence_number_server: int = 0
+    bytes_sent: int = 0
+    bytes_received: int = 0
+    connected_at: float
+    last_activity: float
+    client_version: str = ""
+    server_version: str = "SSH-2.0-FizzSSH_1.0"
+
+@dataclass
+class SSHChannel:
+    channel_id: int
+    remote_channel_id: int
+    channel_type: ChannelType
+    state: ChannelState
+    initial_window_size: int = 2097152  # 2MB
+    max_packet_size: int = 32768
+    local_window_size: int = 2097152
+    remote_window_size: int = 2097152
+    data_buffer: bytes = b""
+    pty_allocated: bool = False
+    pty_term: str = ""
+    pty_width: int = 80
+    pty_height: int = 24
+    pty_modes: Dict[TerminalMode, int]
+    environment: Dict[str, str]
+    exec_command: Optional[str] = None
+    subsystem: Optional[str] = None
+    exit_status: Optional[int] = None
+
+@dataclass
+class SSHPacket:
+    packet_length: int
+    padding_length: int
+    payload: bytes
+    padding: bytes
+    mac: bytes
+    sequence_number: int
+
+@dataclass
+class PortForwardBinding:
+    bind_address: str
+    bind_port: int
+    destination_address: str
+    destination_port: int
+    direction: str  # "local" or "remote"
+    active: bool = True
+    bytes_forwarded: int = 0
+
+@dataclass
+class SFTPHandle:
+    handle_id: str
+    path: str
+    is_directory: bool
+    read_offset: int = 0
+    write_offset: int = 0
+    flags: int = 0
+    opened_at: float
+
+@dataclass
+class SessionRecording:
+    session_id: str
+    username: str
+    client_address: str
+    connected_at: float
+    disconnected_at: Optional[float]
+    auth_method: str
+    events: List[Dict[str, Any]]  # timestamp, event_type, data
+    bytes_transmitted: int = 0
+    commands_executed: List[str]
+```
+
+## Phase 2: Protocol Core (~1,000 lines)
+
+### 2.1 SSHTransport
+
+The transport layer implements the SSH-2 binary packet protocol (RFC 4253 Section 6).
+
+Responsibilities:
+- Version string exchange (`SSH-2.0-FizzSSH_1.0`)
+- Binary packet framing: 4-byte packet_length, 1-byte padding_length, payload, padding, MAC
+- Packet serialization/deserialization with proper SSH data type encoding (byte, uint32, string, mpint, name-list)
+- Encryption envelope: encrypt payload+padding, compute MAC over sequence_number+unencrypted_packet
+- Sequence number tracking (separate client-to-server and server-to-client counters, 32-bit wrapping)
+- Re-keying after 1GB transferred or 1 hour elapsed
+- `SSH_MSG_IGNORE` and `SSH_MSG_DISCONNECT` handling
+
+Key methods:
+- `encode_packet(msg_type: int, payload: bytes, session: SSHSession) -> bytes`
+- `decode_packet(data: bytes, session: SSHSession) -> SSHPacket`
+- `encode_string(s: str) -> bytes` -- uint32 length prefix + UTF-8 bytes
+- `encode_mpint(n: int) -> bytes` -- SSH mpint encoding
+- `decode_mpint(data: bytes, offset: int) -> Tuple[int, int]`
+- `encode_name_list(names: List[str]) -> bytes`
+- `compute_mac(key: bytes, sequence_number: int, packet: bytes, algorithm: MACAlgorithm) -> bytes`
+- `verify_mac(key: bytes, sequence_number: int, packet: bytes, mac: bytes, algorithm: MACAlgorithm) -> bool`
+- `encrypt_payload(key: bytes, iv: bytes, plaintext: bytes, algorithm: CipherAlgorithm) -> bytes`
+- `decrypt_payload(key: bytes, iv: bytes, ciphertext: bytes, algorithm: CipherAlgorithm) -> bytes`
+- `check_rekey_needed(session: SSHSession) -> bool`
+
+### 2.2 KeyExchange
+
+Implements SSH-2 key exchange (RFC 4253 Section 7, RFC 4419 for DH group exchange).
+
+**Diffie-Hellman Group Exchange:**
+1. Client sends `SSH_MSG_KEX_DH_GEX_REQUEST` with min/preferred/max group sizes
+2. Server selects a safe prime group and sends `SSH_MSG_KEX_DH_GEX_GROUP` (p, g)
+3. Client generates random x, computes e = g^x mod p, sends `SSH_MSG_KEXDH_INIT`
+4. Server generates random y, computes f = g^y mod p, K = e^y mod p
+5. Server computes exchange hash H = HASH(V_C || V_S || I_C || I_S || K_S || min || n || max || p || g || e || f || K)
+6. Server signs H with host key, sends `SSH_MSG_KEXDH_REPLY` (K_S, f, sig)
+7. Both derive session keys from K and H
+
+**ECDH-Curve25519:**
+1. Both sides generate ephemeral Curve25519 key pairs
+2. Client sends public key Q_C in `SSH_MSG_KEX_ECDH_INIT`
+3. Server sends public key Q_S and signed exchange hash in `SSH_MSG_KEX_ECDH_REPLY`
+4. Shared secret K = ECDH(Q_C, Q_S) using Curve25519 scalar multiplication
+5. Session keys derived via HASH(K || H || session_id || letter) for each direction
+
+Key derivation produces six keys: initial IV client-to-server, initial IV server-to-client,
+encryption key C2S, encryption key S2C, MAC key C2S, MAC key S2C.
+
+Key methods:
+- `negotiate_algorithms(client_kexinit: bytes, server_kexinit: bytes) -> NegotiatedAlgorithms`
+- `perform_dh_group_exchange(session: SSHSession) -> bytes`
+- `perform_ecdh_curve25519(session: SSHSession) -> bytes`
+- `derive_session_keys(shared_secret: int, exchange_hash: bytes, session_id: bytes) -> SessionKeys`
+- `generate_dh_parameters(group_size: int) -> Tuple[int, int]`
+- `curve25519_scalar_mult(private: bytes, public: bytes) -> bytes` (simulated)
+
+### 2.3 HostKeyManager
+
+Manages server host keys for multiple algorithms.
+
+Responsibilities:
+- Generate Ed25519 and RSA key pairs (simulated using hashlib-based deterministic generation)
+- Store and retrieve host keys by algorithm
+- Sign exchange hashes during key exchange
+- Verify signatures (for client-side simulation)
+- Compute key fingerprints (SHA-256 and MD5)
+- Serialize keys in SSH wire format (ssh-ed25519, ssh-rsa)
+
+Key methods:
+- `generate_host_key(algorithm: HostKeyAlgorithm) -> SSHKeyPair`
+- `get_host_key(algorithm: HostKeyAlgorithm) -> SSHKeyPair`
+- `sign(private_key: bytes, data: bytes, algorithm: HostKeyAlgorithm) -> bytes`
+- `verify(public_key: bytes, data: bytes, signature: bytes, algorithm: HostKeyAlgorithm) -> bool`
+- `fingerprint(public_key: bytes) -> str` -- base64-encoded SHA-256
+- `serialize_public_key(key: SSHKeyPair) -> bytes` -- SSH wire format
+
+### 2.4 ClientAuthenticator
+
+Implements the three authentication methods defined by RFC 4252.
+
+**Password Authentication:**
+- Client sends `SSH_MSG_USERAUTH_REQUEST` with method "password" and cleartext password
+- Server verifies against stored credential database (salted + hashed with SHA-512)
+- Supports password change requests
+
+**Public Key Authentication:**
+- Client sends `SSH_MSG_USERAUTH_REQUEST` with method "publickey", algorithm name, and public key blob
+- Server checks if public key is in authorized_keys for the user
+- If query-only (has_signature=false), server responds with `SSH_MSG_USERAUTH_PK_OK`
+- If has_signature=true, server verifies the signature over the session ID + request fields
+- Supports Ed25519 and RSA key types
+
+**Keyboard-Interactive (RFC 4256):**
+- Server sends `SSH_MSG_USERAUTH_INFO_REQUEST` with prompts
+- Client responds with `SSH_MSG_USERAUTH_INFO_RESPONSE`
+- Supports multi-round challenge-response (e.g., TOTP simulation)
+
+Key methods:
+- `authenticate(session: SSHSession, request: bytes) -> AuthResult`
+- `verify_password(username: str, password: str) -> bool`
+- `verify_public_key(username: str, key_blob: bytes, signature: Optional[bytes], signed_data: bytes) -> bool`
+- `keyboard_interactive_challenge(username: str, round_num: int) -> List[str]`
+- `keyboard_interactive_respond(username: str, responses: List[str]) -> bool`
+
+### 2.5 AuthorizedKeysStore
+
+Parses and manages OpenSSH-format authorized_keys files.
+
+Format: `algorithm base64-key comment`
+
+Supports:
+- Multiple keys per user
+- Key options parsing (command=, from=, no-pty, etc.)
+- Wildcard hostname matching in `from=` restrictions
+- Key revocation
+
+Key methods:
+- `load_authorized_keys(username: str, data: str) -> List[AuthorizedKey]`
+- `is_authorized(username: str, algorithm: str, key_blob: bytes) -> bool`
+- `add_key(username: str, key: AuthorizedKey) -> None`
+- `remove_key(username: str, fingerprint: str) -> None`
+- `get_key_options(username: str, fingerprint: str) -> Dict[str, Any]`
+
+## Phase 3: Channels and Services (~1,000 lines)
+
+### 3.1 ChannelMultiplexer
+
+Manages the lifecycle of multiplexed channels over a single SSH connection (RFC 4254).
+
+Responsibilities:
+- Channel open/confirm/reject with reason codes
+- Channel ID allocation (local and remote)
+- Flow control via sliding window (`SSH_MSG_CHANNEL_WINDOW_ADJUST`)
+- Data routing to appropriate channel handlers
+- Channel EOF and close sequencing (half-close semantics)
+- Extended data (stderr) handling
+
+Key methods:
+- `open_channel(session: SSHSession, channel_type: ChannelType, initial_window: int, max_packet: int) -> SSHChannel`
+- `confirm_channel(session: SSHSession, channel: SSHChannel) -> bytes`
+- `reject_channel(session: SSHSession, channel_id: int, reason_code: int, description: str) -> bytes`
+- `send_data(session: SSHSession, channel: SSHChannel, data: bytes) -> bytes`
+- `send_extended_data(session: SSHSession, channel: SSHChannel, data_type: int, data: bytes) -> bytes`
+- `adjust_window(session: SSHSession, channel: SSHChannel, bytes_to_add: int) -> bytes`
+- `close_channel(session: SSHSession, channel: SSHChannel) -> bytes`
+- `handle_channel_data(session: SSHSession, channel: SSHChannel, data: bytes) -> None`
+
+### 3.2 SessionChannel
+
+Handles interactive shell sessions with PTY allocation.
+
+Responsibilities:
+- PTY allocation with terminal type (xterm, vt100, etc.), dimensions, and terminal modes
+- Shell request processing
+- Environment variable passing
+- Terminal window resize (`SSH_MSG_CHANNEL_REQUEST` "window-change")
+- Signal forwarding (INT, QUIT, TERM, KILL, etc.)
+- Exit status reporting
+
+Key methods:
+- `allocate_pty(channel: SSHChannel, term: str, width: int, height: int, modes: Dict[TerminalMode, int]) -> None`
+- `start_shell(session: SSHSession, channel: SSHChannel) -> None`
+- `set_environment(channel: SSHChannel, name: str, value: str) -> None`
+- `resize_window(channel: SSHChannel, width: int, height: int) -> None`
+- `send_signal(channel: SSHChannel, signal_name: str) -> None`
+- `process_input(session: SSHSession, channel: SSHChannel, data: bytes) -> bytes`
+
+### 3.3 ExecChannel
+
+Handles single remote command execution.
+
+- Parses command string
+- Simulates execution against FizzBuzz platform commands
+- Returns stdout, stderr, exit status
+- Built-in commands: `fizzbuzz <n>`, `status`, `uptime`, `whoami`, `help`, `config show`, `metrics`
+
+Key methods:
+- `execute(session: SSHSession, channel: SSHChannel, command: str) -> ExecResult`
+- `parse_command(command: str) -> Tuple[str, List[str]]`
+
+### 3.4 SFTPSubsystem
+
+Implements the SFTP protocol (RFC 4254 subsystem "sftp") for file operations.
+
+The SFTP subsystem operates over an SSH channel and provides a virtual filesystem
+rooted at the FizzBuzz platform's data directory.
+
+Packet types:
+- SSH_FXP_INIT / SSH_FXP_VERSION (version negotiation, version 3)
+- SSH_FXP_OPEN / SSH_FXP_CLOSE / SSH_FXP_READ / SSH_FXP_WRITE
+- SSH_FXP_STAT / SSH_FXP_FSTAT / SSH_FXP_LSTAT
+- SSH_FXP_OPENDIR / SSH_FXP_READDIR
+- SSH_FXP_REMOVE / SSH_FXP_MKDIR / SSH_FXP_RMDIR
+- SSH_FXP_RENAME / SSH_FXP_SYMLINK / SSH_FXP_READLINK / SSH_FXP_REALPATH
+- SSH_FXP_STATUS / SSH_FXP_HANDLE / SSH_FXP_DATA / SSH_FXP_NAME / SSH_FXP_ATTRS
+
+Status codes: SSH_FX_OK, SSH_FX_EOF, SSH_FX_NO_SUCH_FILE, SSH_FX_PERMISSION_DENIED,
+SSH_FX_FAILURE, SSH_FX_BAD_MESSAGE, SSH_FX_OP_UNSUPPORTED.
+
+Virtual filesystem provides:
+- `/config/` -- platform configuration files
+- `/logs/` -- computation logs
+- `/data/` -- FizzBuzz output data
+- `/keys/` -- authorized keys (read-only)
+
+Key methods:
+- `handle_sftp_packet(session: SSHSession, channel: SSHChannel, packet: bytes) -> bytes`
+- `sftp_open(path: str, flags: int, attrs: Dict) -> SFTPHandle`
+- `sftp_close(handle: SFTPHandle) -> None`
+- `sftp_read(handle: SFTPHandle, offset: int, length: int) -> bytes`
+- `sftp_write(handle: SFTPHandle, offset: int, data: bytes) -> int`
+- `sftp_stat(path: str) -> SFTPAttrs`
+- `sftp_opendir(path: str) -> SFTPHandle`
+- `sftp_readdir(handle: SFTPHandle) -> List[SFTPEntry]`
+- `sftp_remove(path: str) -> None`
+- `sftp_mkdir(path: str, attrs: Dict) -> None`
+- `sftp_rmdir(path: str) -> None`
+- `sftp_rename(old_path: str, new_path: str) -> None`
+- `sftp_realpath(path: str) -> str`
+
+### 3.5 PortForwarder
+
+Implements TCP/IP port forwarding (tunneling) per RFC 4254 Sections 7.1 and 7.2.
+
+**Local forwarding** (client connects to local port, traffic tunnels to remote host):
+- Client sends `SSH_MSG_GLOBAL_REQUEST` "tcpip-forward" with bind address and port
+- Server confirms, opens `forwarded-tcpip` channels for inbound connections
+
+**Remote forwarding** (remote port on server forwards to client-side destination):
+- Client sends `SSH_MSG_CHANNEL_OPEN` "direct-tcpip" with destination address and port
+- Server opens channel, data flows bidirectionally
+
+Both directions support:
+- Multiple concurrent forwarding bindings
+- Binding to specific addresses or wildcard (0.0.0.0)
+- Bytes-forwarded accounting per binding
+
+Key methods:
+- `request_local_forward(session: SSHSession, bind_addr: str, bind_port: int) -> PortForwardBinding`
+- `cancel_local_forward(session: SSHSession, bind_addr: str, bind_port: int) -> None`
+- `open_direct_tcpip(session: SSHSession, dest_addr: str, dest_port: int, orig_addr: str, orig_port: int) -> SSHChannel`
+- `forward_data(binding: PortForwardBinding, data: bytes) -> bytes`
+- `list_active_forwards(session: SSHSession) -> List[PortForwardBinding]`
+
+### 3.6 SCPHandler
+
+Implements the SCP (Secure Copy Protocol) for simple file transfers.
+
+SCP protocol (legacy, operates over exec channel):
+- `scp -t <path>` (sink mode -- receive files)
+- `scp -f <path>` (source mode -- send files)
+
+Protocol messages:
+- `C<mode> <size> <filename>` -- file header
+- `D<mode> 0 <dirname>` -- directory entry
+- `E` -- end of directory
+- `T<mtime> 0 <atime> 0` -- timestamps (optional)
+- `\x00` -- OK, `\x01` -- warning, `\x02` -- error
+
+Key methods:
+- `handle_scp(session: SSHSession, channel: SSHChannel, command: str) -> None`
+- `scp_send_file(channel: SSHChannel, path: str, data: bytes, mode: int) -> None`
+- `scp_receive_file(channel: SSHChannel) -> Tuple[str, bytes, int]`
+- `scp_send_directory(channel: SSHChannel, path: str, entries: List) -> None`
+
+## Phase 4: Integration (~600 lines)
+
+### 4.1 SessionRecorder
+
+Records all session activity for compliance audit trails.
+
+Each recording captures:
+- Session metadata (user, client address, auth method, timestamps)
+- All channel data events with millisecond timestamps
+- Commands executed
+- Files transferred (names and sizes, not contents)
+- Window resize events
+- Total bytes transmitted
+
+Supports replay by emitting events in chronological order with timing information.
+
+Key methods:
+- `start_recording(session: SSHSession) -> SessionRecording`
+- `record_event(recording: SessionRecording, event_type: str, data: Any) -> None`
+- `stop_recording(recording: SessionRecording) -> None`
+- `get_recording(session_id: str) -> SessionRecording`
+- `replay(recording: SessionRecording) -> Iterator[Tuple[float, str, Any]]`
+- `export_recording(recording: SessionRecording, format: str) -> str` (JSON or text)
+
+### 4.2 ConnectionRateLimiter
+
+Sliding-window rate limiter for incoming SSH connections.
+
+- Tracks connection attempts per source address within configurable window
+- Rejects connections exceeding threshold with `SSH_DISCONNECT_TOO_MANY_CONNECTIONS`
+- Separate limits for authentication failures per address
+- Exponential backoff for repeated failures
+
+Key methods:
+- `check_rate_limit(client_address: str) -> bool`
+- `record_connection(client_address: str) -> None`
+- `record_auth_failure(client_address: str) -> None`
+- `get_stats() -> Dict[str, Any]`
+- `reset(client_address: Optional[str] = None) -> None`
+
+### 4.3 BannerManager
+
+Manages pre-authentication and post-authentication banner messages.
+
+- Pre-auth banner sent via `SSH_MSG_USERAUTH_BANNER` before auth completes
+- Post-auth MOTD delivered after successful authentication
+- Dynamic banners with template variables: `{hostname}`, `{version}`, `{time}`, `{sessions}`
+- Banner rotation (multiple banners, selected round-robin or randomly)
+
+Default banner:
+```
+  =====================================================================
+  =  Enterprise FizzBuzz Platform - FizzSSH Secure Access             =
+  =  Authorized access only. All sessions are recorded.               =
+  =====================================================================
+```
+
+Key methods:
+- `get_pre_auth_banner() -> str`
+- `get_post_auth_motd(session: SSHSession) -> str`
+- `set_banner(banner: str) -> None`
+- `add_banner_rotation(banners: List[str]) -> None`
+
+### 4.4 FizzSSHDashboard
+
+Provides real-time visibility into the SSH server's operational state.
+
+Dashboard data:
+- Active sessions (count, per-user, per-address)
+- Authentication statistics (success/failure rates, methods used)
+- Channel statistics (open channels by type, data throughput)
+- Port forwarding status (active bindings, bytes forwarded)
+- Rate limiter status (blocked addresses, current rates)
+- Key exchange statistics (algorithms negotiated, re-key counts)
+- SFTP operations (files transferred, bytes moved)
+- Session recordings (count, total size)
+
+Key methods:
+- `get_dashboard_data() -> Dict[str, Any]`
+- `get_active_sessions() -> List[Dict[str, Any]]`
+- `get_auth_statistics() -> Dict[str, Any]`
+- `get_transfer_statistics() -> Dict[str, Any]`
+
+### 4.5 FizzSSHMiddleware
+
+Integrates FizzSSH into the Enterprise FizzBuzz middleware pipeline.
+
+When enabled, appends SSH server status information to FizzBuzz output and makes
+the platform accessible via SSH for remote computation requests.
+
+Key methods:
+- `process(value: int, current_result: str) -> str`
+- `get_status() -> Dict[str, Any]`
+
+### 4.6 Factory Function
+
+```python
+def create_fizzssh_subsystem(config: FizzSSHConfig) -> Dict[str, Any]:
+    """Factory function to wire all FizzSSH components."""
+    host_key_manager = HostKeyManager()
+    # Generate default host keys
+    host_key_manager.generate_host_key(HostKeyAlgorithm.SSH_ED25519)
+    host_key_manager.generate_host_key(HostKeyAlgorithm.SSH_RSA)
+
+    transport = SSHTransport(config)
+    key_exchange = KeyExchange(config, host_key_manager)
+    authorized_keys = AuthorizedKeysStore()
+    authenticator = ClientAuthenticator(config, authorized_keys)
+    multiplexer = ChannelMultiplexer(config)
+    session_channel = SessionChannel()
+    exec_channel = ExecChannel()
+    sftp = SFTPSubsystem(config)
+    port_forwarder = PortForwarder(config)
+    scp_handler = SCPHandler()
+    recorder = SessionRecorder(config)
+    rate_limiter = ConnectionRateLimiter(config)
+    banner = BannerManager(config)
+    dashboard = FizzSSHDashboard(...)
+    middleware = FizzSSHMiddleware(...)
+
+    return {
+        "transport": transport,
+        "key_exchange": key_exchange,
+        "host_key_manager": host_key_manager,
+        "authenticator": authenticator,
+        "authorized_keys": authorized_keys,
+        "multiplexer": multiplexer,
+        "session_channel": session_channel,
+        "exec_channel": exec_channel,
+        "sftp": sftp,
+        "port_forwarder": port_forwarder,
+        "scp_handler": scp_handler,
+        "recorder": recorder,
+        "rate_limiter": rate_limiter,
+        "banner": banner,
+        "dashboard": dashboard,
+        "middleware": middleware,
+    }
+```
+
+## CLI Flags
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--fizzci` | `store_true` | `False` | Enable FizzCI and show the pipeline dashboard |
-| `--fizzci-run` | `str` | `None` | Run a named pipeline (e.g., `--fizzci-run fizzbuzz-ci`) |
-| `--fizzci-trigger` | `str` | `None` | Simulate a webhook trigger event (format: `event_type,ref,commit_sha`) |
-| `--fizzci-status` | `str` | `None` | Show status of a pipeline run by ID |
-| `--fizzci-logs` | `str` | `None` | Stream logs for a job (format: `run_id/job_name`) |
-| `--fizzci-artifacts` | `str` | `None` | List or download artifacts (format: `run_id` or `run_id/artifact_name`) |
-| `--fizzci-pipelines` | `store_true` | `False` | List all registered pipeline definitions |
-| `--fizzci-history` | `store_true` | `False` | Show pipeline run history |
-| `--fizzci-cache-clear` | `store_true` | `False` | Clear the build cache |
-| `--fizzci-matrix` | `str` | `None` | Preview matrix expansion for a pipeline |
-| `--fizzci-dry-run` | `str` | `None` | Parse and validate a pipeline without executing it |
-| `--fizzci-retry` | `str` | `None` | Retry a failed pipeline run by ID |
-| `--fizzci-template` | `str` | `None` | Show a pipeline template definition |
+| `--fizzssh` | store_true | False | Enable FizzSSH secure shell server |
+| `--fizzssh-port` | int | 2222 | SSH server listen port |
+| `--fizzssh-host-key` | str | None | Path to host key file (PEM format) |
+| `--fizzssh-authorized-keys` | str | None | Path to authorized_keys file |
+| `--fizzssh-password-auth` | store_true | True | Enable password authentication |
+| `--fizzssh-pubkey-auth` | store_true | True | Enable public key authentication |
+| `--fizzssh-sftp` | store_true | True | Enable SFTP subsystem |
+| `--fizzssh-port-forwarding` | store_true | True | Enable TCP/IP port forwarding |
+| `--fizzssh-session-recording` | store_true | False | Enable session recording for audit compliance |
+| `--fizzssh-banner` | str | None | Custom pre-authentication banner message |
+| `--fizzssh-max-sessions` | int | 256 | Maximum concurrent SSH sessions |
+| `--fizzssh-idle-timeout` | float | 3600.0 | Session idle timeout in seconds |
+| `--fizzssh-rate-limit` | int | 100 | Maximum connections per minute per source address |
+
+## Configuration Mixin Properties
+
+```python
+class FizzsshConfigMixin:
+    fizzssh_enabled: bool
+    fizzssh_port: int
+    fizzssh_host_key_path: Optional[str]
+    fizzssh_authorized_keys_path: Optional[str]
+    fizzssh_password_auth: bool
+    fizzssh_pubkey_auth: bool
+    fizzssh_sftp_enabled: bool
+    fizzssh_port_forwarding: bool
+    fizzssh_session_recording: bool
+    fizzssh_banner: Optional[str]
+    fizzssh_max_sessions: int
+    fizzssh_idle_timeout: float
+    fizzssh_rate_limit: int
+```
 
 ## Feature Descriptor
 
-`FizzCIFeature` in `enterprise_fizzbuzz/infrastructure/features/fizzci_feature.py`:
-
-- `name = "fizzci"`
-- `description = "Continuous integration pipeline engine with DAG execution, matrix builds, artifact passing, and build caching"`
-- `middleware_priority = 121`
-- `is_enabled()`: Returns `True` if any fizzci flag is active
-- `create()`: Imports and calls `create_fizzci_subsystem()` from the main module
-- `render()`: Dispatches to the appropriate rendering method based on active flags
-
-## Implementation Phases
-
-### Phase 1: Foundation (~500 lines)
-
-**Scope**: Module docstring, imports, constants, enums, all dataclasses, and event type registration.
-
-**Module docstring**: Describes FizzCI as the platform's continuous integration pipeline engine implementing YAML-driven pipeline definitions, DAG-based stage ordering with Kahn's topological sort, parallel job execution within stages, content-addressable artifact storage, content-addressable build caching with LRU eviction, conditional execution via branch filters and path filters and manual gates, secret injection from FizzVault, matrix build expansion, retry policies with exponential backoff, webhook triggers from FizzVCS, real-time log streaming, pipeline templates and reusable workflows, and ASCII pipeline visualization.
-
-**Imports**: `__future__.annotations`, `base64`, `copy`, `hashlib`, `json`, `logging`, `math`, `os`, `random`, `re`, `struct`, `threading`, `time`, `uuid`, `zlib`, `collections.OrderedDict`, `collections.defaultdict`, `dataclasses.dataclass`, `dataclasses.field`, `datetime.datetime`, `datetime.timedelta`, `datetime.timezone`, `enum.Enum`, `enum.auto`, `typing` (standard set), plus domain exceptions and interfaces (`IMiddleware`, `EventType`, `FizzBuzzResult`, `ProcessingContext`).
-
-**Event types** (registered via `EventType.register()`):
-- `FIZZCI_PIPELINE_STARTED`
-- `FIZZCI_PIPELINE_COMPLETED`
-- `FIZZCI_PIPELINE_FAILED`
-- `FIZZCI_STAGE_STARTED`
-- `FIZZCI_STAGE_COMPLETED`
-- `FIZZCI_JOB_STARTED`
-- `FIZZCI_JOB_COMPLETED`
-- `FIZZCI_JOB_FAILED`
-- `FIZZCI_JOB_RETRIED`
-- `FIZZCI_ARTIFACT_UPLOADED`
-- `FIZZCI_ARTIFACT_DOWNLOADED`
-- `FIZZCI_CACHE_HIT`
-- `FIZZCI_CACHE_MISS`
-- `FIZZCI_WEBHOOK_RECEIVED`
-
-**Enums**:
-- `PipelineStatus`: PENDING, QUEUED, RUNNING, SUCCESS, FAILED, CANCELLED, SKIPPED, TIMED_OUT
-- `JobStatus`: PENDING, QUEUED, RUNNING, SUCCESS, FAILED, CANCELLED, SKIPPED, TIMED_OUT, RETRYING
-- `StepStatus`: PENDING, RUNNING, SUCCESS, FAILED, SKIPPED, TIMED_OUT
-- `StageStatus`: PENDING, RUNNING, SUCCESS, FAILED, CANCELLED, SKIPPED, TIMED_OUT
-- `TriggerType`: PUSH, PULL_REQUEST, TAG, SCHEDULE, MANUAL, WEBHOOK, API
-- `ConditionType`: BRANCH, PATH, MANUAL_GATE, EXPRESSION, ALWAYS, NEVER
-- `ArtifactType`: FILE, DIRECTORY, ARCHIVE
-- `RetryStrategy`: FIXED, EXPONENTIAL, LINEAR
-
-**Dataclasses** (all frozen where appropriate):
-- `RetryPolicy`: `max_attempts: int`, `strategy: RetryStrategy`, `delay_seconds: float`, `backoff_base: float`, `max_delay_seconds: float`
-- `ConditionSpec`: `condition_type: ConditionType`, `pattern: str`, `negate: bool`
-- `ArtifactSpec`: `name: str`, `path: str`, `artifact_type: ArtifactType`, `retention_days: int`
-- `MatrixConfig`: `parameters: Dict[str, List[Any]]`, `include: List[Dict]`, `exclude: List[Dict]`, `max_combinations: int`
-- `SecretRef`: `name: str`, `vault_key: str`, `env_var: str`
-- `StepDefinition`: `name: str`, `command: str`, `working_directory: str`, `environment: Dict[str, str]`, `timeout_seconds: int`, `continue_on_error: bool`, `condition: Optional[ConditionSpec]`
-- `ServiceDefinition`: `name: str`, `image: str`, `ports: List[int]`, `environment: Dict[str, str]`
-- `JobDefinition`: `name: str`, `steps: List[StepDefinition]`, `needs: List[str]`, `matrix: Optional[MatrixConfig]`, `services: List[ServiceDefinition]`, `artifacts_upload: List[ArtifactSpec]`, `artifacts_download: List[str]`, `secrets: List[SecretRef]`, `retry: RetryPolicy`, `timeout_seconds: int`, `condition: Optional[ConditionSpec]`, `environment: Dict[str, str]`, `container: Optional[str]`
-- `StageDefinition`: `name: str`, `jobs: List[JobDefinition]`, `needs: List[str]`, `condition: Optional[ConditionSpec]`, `timeout_seconds: int`
-- `PipelineDefinition`: `name: str`, `stages: List[StageDefinition]`, `triggers: List[TriggerSpec]`, `environment: Dict[str, str]`, `timeout_seconds: int`, `version: str`
-- `TriggerSpec`: `trigger_type: TriggerType`, `branches: List[str]`, `paths: List[str]`, `tags: List[str]`, `cron: Optional[str]`
-- `PipelineTemplate`: `name: str`, `description: str`, `parameters: Dict[str, Any]`, `definition: PipelineDefinition`
-- `StepResult`: `step: str`, `status: StepStatus`, `exit_code: int`, `output: str`, `duration_seconds: float`, `started_at: datetime`, `finished_at: Optional[datetime]`
-- `JobResult`: `job: str`, `status: JobStatus`, `step_results: List[StepResult]`, `attempt: int`, `duration_seconds: float`, `started_at: datetime`, `finished_at: Optional[datetime]`, `matrix_values: Optional[Dict[str, Any]]`
-- `StageResult`: `stage: str`, `status: StageStatus`, `job_results: List[JobResult]`, `duration_seconds: float`, `started_at: datetime`, `finished_at: Optional[datetime]`
-- `PipelineRun`: `run_id: str`, `pipeline_name: str`, `status: PipelineStatus`, `stage_results: List[StageResult]`, `trigger: TriggerSpec`, `started_at: datetime`, `finished_at: Optional[datetime]`, `duration_seconds: float`, `commit_sha: str`, `branch: str`, `artifacts: Dict[str, bytes]`, `logs: Dict[str, List[str]]`
-- `CacheEntry`: `key: str`, `content_hash: str`, `data: bytes`, `size_bytes: int`, `created_at: datetime`, `last_accessed: datetime`, `hit_count: int`
-- `WebhookPayload`: `event_type: str`, `ref: str`, `commit_sha: str`, `branch: str`, `author: str`, `message: str`, `timestamp: datetime`, `signature: str`, `paths_changed: List[str]`
-
-**Constants**:
-- `FIZZCI_VERSION = "1.0.0"`
-- `FIZZCI_DEFAULT_TIMEOUT = 3600`
-- `FIZZCI_MAX_PARALLEL_JOBS = 4`
-- `FIZZCI_MAX_MATRIX_COMBINATIONS = 64`
-- `FIZZCI_CACHE_MAX_SIZE_MB = 1024`
-- `FIZZCI_LOG_BUFFER_SIZE = 4096`
-- `FIZZCI_DASHBOARD_WIDTH = 120`
-
-### Phase 2: Core Engine (~1,200 lines)
-
-**PipelineParser** (~200 lines):
-- `parse(yaml_str: str) -> PipelineDefinition`: Parses a YAML string into a validated `PipelineDefinition`. Handles the full grammar: `name`, `triggers`, `environment`, `stages` (each with `jobs`, `needs`, `condition`), `jobs` (each with `steps`, `matrix`, `services`, `artifacts`, `secrets`, `retry`, `timeout`, `condition`, `container`), `steps` (each with `name`, `run`, `working-directory`, `env`, `timeout-minutes`, `continue-on-error`, `if`).
-- `_parse_triggers(data: Dict) -> List[TriggerSpec]`
-- `_parse_stages(data: Dict) -> List[StageDefinition]`
-- `_parse_jobs(data: Dict) -> List[JobDefinition]`
-- `_parse_steps(data: List) -> List[StepDefinition]`
-- `_parse_matrix(data: Dict) -> MatrixConfig`
-- `_parse_retry(data: Dict) -> RetryPolicy`
-- `_parse_condition(data: Any) -> ConditionSpec`
-- `_parse_artifacts(data: Dict) -> List[ArtifactSpec]`
-- `_parse_secrets(data: List) -> List[SecretRef]`
-- `validate(definition: PipelineDefinition) -> List[str]`: Semantic validation -- checks for undefined stage references in `needs`, circular dependencies, duplicate names, missing required fields, matrix dimension limits.
-
-**DAGBuilder** (~150 lines):
-- `build(stages: List[StageDefinition]) -> List[List[StageDefinition]]`: Constructs a directed acyclic graph from stage `needs` declarations and returns a topologically sorted list of execution tiers (stages that can run in parallel within the same tier).
-- Uses Kahn's algorithm for topological sorting, consistent with the existing IoC container's cycle detection.
-- `_build_adjacency(stages) -> Dict[str, Set[str]]`
-- `_compute_in_degrees(adjacency) -> Dict[str, int]`
-- `_topological_sort(adjacency, in_degrees) -> List[str]`: Raises `FizzCIDAGCycleError` if a cycle is detected.
-- `_tier_assignment(sorted_nodes, adjacency) -> List[List[str]]`: Groups nodes into execution tiers such that all dependencies of a tier are in earlier tiers.
-- `build_job_dag(jobs: List[JobDefinition]) -> List[List[JobDefinition]]`: Same logic but for job-level `needs` within a stage.
-
-**MatrixExpander** (~120 lines):
-- `expand(job: JobDefinition) -> List[JobDefinition]`: Takes a job with a `MatrixConfig` and expands it into concrete jobs, one per parameter combination. Applies `include` additions and `exclude` removals. Each expanded job's name is suffixed with the parameter values (e.g., `test (python=3.11, os=linux)`).
-- `_cartesian_product(parameters: Dict[str, List]) -> List[Dict[str, Any]]`
-- `_apply_includes(combinations, includes) -> List[Dict]`
-- `_apply_excludes(combinations, excludes) -> List[Dict]`
-- Raises `FizzCIMatrixDimensionError` if total combinations exceed `max_combinations`.
-
-**ConditionalEvaluator** (~130 lines):
-- `evaluate(condition: ConditionSpec, context: Dict) -> bool`: Evaluates whether a stage/job/step should execute given the current pipeline context (branch, changed paths, manual approval status).
-- `_evaluate_branch(pattern: str, branch: str) -> bool`: Glob-style branch matching.
-- `_evaluate_path(pattern: str, changed_paths: List[str]) -> bool`: Glob-style path matching.
-- `_evaluate_manual_gate(gate_name: str, approvals: Dict) -> bool`: Checks approval status.
-- `_evaluate_expression(expr: str, context: Dict) -> bool`: Simple expression evaluator for `${{ }}` syntax supporting `success()`, `failure()`, `always()`, `cancelled()`, variable references, boolean operators.
-- `_evaluate_always() -> bool`: Always returns True.
-- `_evaluate_never() -> bool`: Always returns False.
-- Handles negation via `ConditionSpec.negate`.
-
-**ArtifactManager** (~150 lines):
-- Content-addressable storage: artifacts are stored by SHA-256 hash of their contents.
-- `upload(run_id: str, artifact: ArtifactSpec, data: bytes) -> str`: Stores artifact data, returns content hash.
-- `download(run_id: str, artifact_name: str) -> bytes`: Retrieves artifact by name, verifies integrity.
-- `list_artifacts(run_id: str) -> List[Dict]`: Lists all artifacts for a run with metadata.
-- `_compute_hash(data: bytes) -> str`: SHA-256 content hash.
-- `_store: Dict[str, Dict[str, Tuple[str, bytes, ArtifactSpec]]]`: In-memory storage indexed by run_id then artifact name.
-- Raises `FizzCIArtifactNotFoundError` on missing artifacts, `FizzCIArtifactCorruptionError` on hash mismatch.
-
-**BuildCache** (~180 lines):
-- Content-addressable build cache with LRU eviction.
-- `get(key: str) -> Optional[bytes]`: Retrieves cached data by key, updates access time and hit count. Returns `None` on miss.
-- `put(key: str, data: bytes) -> str`: Stores data, returns content hash. Triggers eviction if cache exceeds `max_size_mb`.
-- `invalidate(key: str) -> bool`: Removes a specific cache entry.
-- `clear() -> int`: Clears entire cache, returns number of entries removed.
-- `stats() -> Dict`: Returns hit rate, total size, entry count, eviction count.
-- `_evict_lru() -> None`: Evicts least-recently-used entries until cache is within size limits.
-- `_compute_cache_key(inputs: Dict) -> str`: Computes deterministic cache key from a dictionary of inputs using sorted-key JSON serialization and SHA-256.
-- `_entries: OrderedDict[str, CacheEntry]`: LRU-ordered storage.
-- `_total_size_bytes: int`, `_hit_count: int`, `_miss_count: int`, `_eviction_count: int`
-
-**SecretInjector** (~100 lines):
-- `inject(secrets: List[SecretRef], environment: Dict[str, str]) -> Dict[str, str]`: Resolves secret references from the platform's FizzVault (or simulated vault) and injects them into the job environment.
-- `_resolve_from_vault(vault_key: str) -> str`: Attempts to import and call FizzVault. If unavailable, falls back to environment variables with `FIZZCI_SECRET_` prefix.
-- `_mask_in_logs(value: str) -> str`: Returns a masked version for log output (`***`).
-- `_masked_values: Set[str]`: Tracks all secret values for log masking.
-- Raises `FizzCISecretInjectionError` if a required secret cannot be resolved, `FizzCISecretAccessDeniedError` if access policy denies it.
-
-**LogStreamer** (~120 lines):
-- Real-time buffered log output per job.
-- `LogBuffer`: Ring buffer of configurable size per job.
-  - `append(line: str)`: Adds a line, evicts oldest if buffer full.
-  - `get_lines(offset: int = 0) -> List[str]`: Returns lines from offset.
-  - `get_all() -> List[str]`: Returns all buffered lines.
-  - `size() -> int`: Current line count.
-- `LogStreamer`:
-  - `create_buffer(job_id: str) -> LogBuffer`: Creates a new log buffer for a job.
-  - `write(job_id: str, line: str)`: Writes a line to the job's buffer with timestamp prefix.
-  - `read(job_id: str, offset: int = 0) -> List[str]`: Reads lines from offset.
-  - `read_all(job_id: str) -> List[str]`: Reads all lines.
-  - `format_output(job_id: str) -> str`: Formats the log buffer for display with ANSI-free timestamps.
-  - `_buffers: Dict[str, LogBuffer]`
-
-### Phase 3: Execution (~1,200 lines)
-
-**StepExecutor** (~120 lines):
-- `execute(step: StepDefinition, environment: Dict[str, str], log_streamer: LogStreamer, job_id: str) -> StepResult`: Executes a single step by simulating command execution. Captures output, measures duration, handles timeouts and `continue_on_error`.
-- `_simulate_command(command: str, env: Dict) -> Tuple[int, str]`: Simulates command execution. For known FizzBuzz commands (e.g., `python -m pytest`, `python -m enterprise_fizzbuzz`), produces realistic output. For unknown commands, produces a generic success output.
-- `_check_timeout(started: datetime, timeout: int)`: Raises `FizzCIStepTimeoutError` if exceeded.
-
-**JobRunner** (~250 lines):
-- `run(job: JobDefinition, environment: Dict[str, str], artifact_manager: ArtifactManager, secret_injector: SecretInjector, build_cache: BuildCache, log_streamer: LogStreamer, run_id: str) -> JobResult`: Executes a job's steps sequentially.
-  1. Injects secrets into environment.
-  2. Downloads required artifacts from previous stages.
-  3. Checks build cache for cache hit.
-  4. Executes each step via `StepExecutor`.
-  5. Uploads output artifacts.
-  6. Updates build cache on success.
-  7. Handles retry policy on failure: re-executes the entire job up to `retry.max_attempts` with the configured backoff strategy.
-- `_compute_job_cache_key(job: JobDefinition, env: Dict) -> str`
-- `_apply_retry_delay(attempt: int, policy: RetryPolicy) -> float`: Computes delay based on strategy (fixed, exponential, linear).
-- `_should_retry(result: JobResult, policy: RetryPolicy) -> bool`
-
-**StageExecutor** (~200 lines):
-- `execute(stage: StageDefinition, environment: Dict, artifact_manager: ArtifactManager, secret_injector: SecretInjector, build_cache: BuildCache, log_streamer: LogStreamer, run_id: str) -> StageResult`: Executes all jobs within a stage. Jobs without mutual `needs` dependencies run in parallel (simulated via threading). Jobs are grouped into tiers via `DAGBuilder.build_job_dag()`.
-- `_execute_tier(jobs: List[JobDefinition], ...) -> List[JobResult]`: Runs a tier of independent jobs in parallel using `threading.Thread`.
-- `_check_stage_timeout(started: datetime, timeout: int)`
-- Handles `fail-fast` semantics: if any job in a tier fails and the stage is not configured to `continue-on-error`, remaining tiers are cancelled.
-
-**PipelineExecutor** (~300 lines):
-- `execute(definition: PipelineDefinition, trigger: TriggerSpec, context: Dict) -> PipelineRun`: Top-level orchestrator.
-  1. Assigns a `run_id` (UUID).
-  2. Builds the stage DAG via `DAGBuilder.build()`.
-  3. Evaluates pipeline-level conditions.
-  4. Iterates through stage tiers:
-     a. For each tier, evaluates stage-level conditions.
-     b. Expands matrix jobs via `MatrixExpander`.
-     c. Delegates to `StageExecutor.execute()`.
-     d. Collects results.
-  5. Computes final pipeline status from stage results.
-  6. Records in `PipelineHistory`.
-  7. Fires events via `EventType`.
-- `dry_run(definition: PipelineDefinition) -> Dict`: Validates and returns the execution plan without running.
-- `cancel(run_id: str) -> bool`: Cancels a running pipeline.
-- `retry(run_id: str) -> PipelineRun`: Re-executes a failed pipeline from the first failed stage.
-
-**WebhookTriggerHandler** (~150 lines):
-- `handle(payload: WebhookPayload) -> Optional[PipelineRun]`: Processes an incoming webhook from FizzVCS.
-  1. Verifies HMAC-SHA256 signature.
-  2. Matches event type and ref against registered pipeline triggers.
-  3. Evaluates branch and path filters.
-  4. If matched, constructs a `TriggerSpec` and invokes `PipelineExecutor.execute()`.
-- `register_pipeline(definition: PipelineDefinition)`: Registers a pipeline for webhook matching.
-- `_verify_signature(payload: str, signature: str, secret: str) -> bool`: HMAC-SHA256 verification.
-- `_match_trigger(trigger: TriggerSpec, payload: WebhookPayload) -> bool`
-- `_match_branch_pattern(pattern: str, branch: str) -> bool`: Supports glob patterns (`main`, `release/*`, `feature/**`).
-- `_match_path_pattern(pattern: str, paths: List[str]) -> bool`: Supports glob patterns.
-
-**StatusReporter** (~100 lines):
-- `report(run: PipelineRun) -> str`: Generates a human-readable status report.
-- `summary(run: PipelineRun) -> Dict`: Returns structured status summary.
-- `_format_duration(seconds: float) -> str`: Formats duration as `1m 23s`.
-- `_format_status_badge(status: PipelineStatus) -> str`: Returns ASCII status badge (`[PASS]`, `[FAIL]`, `[SKIP]`, etc.).
-- `_stage_summary(result: StageResult) -> str`
-- `_job_summary(result: JobResult) -> str`
-
-**PipelineHistory** (~100 lines):
-- In-memory storage of pipeline run history with LRU eviction.
-- `record(run: PipelineRun)`: Stores a completed run.
-- `get(run_id: str) -> Optional[PipelineRun]`: Retrieves by ID.
-- `list_runs(pipeline_name: Optional[str] = None, limit: int = 50) -> List[PipelineRun]`: Lists runs, optionally filtered by pipeline name.
-- `stats() -> Dict`: Returns aggregate statistics (total runs, success rate, average duration, most-failed stage).
-- `_runs: OrderedDict[str, PipelineRun]`
-- `_max_entries: int`
-
-**PipelineTemplateEngine** (~100 lines):
-- `register(template: PipelineTemplate)`: Registers a reusable template.
-- `resolve(name: str, parameters: Dict[str, Any]) -> PipelineDefinition`: Resolves a template by name, substituting parameters into the definition.
-- `list_templates() -> List[PipelineTemplate]`
-- `_templates: Dict[str, PipelineTemplate]`
-- `_substitute(definition: PipelineDefinition, params: Dict) -> PipelineDefinition`: Deep-copies the definition and substitutes `${{ parameters.X }}` placeholders.
-- Raises `FizzCITemplateNotFoundError` on unknown template, `FizzCITemplateRecursionError` if template references form a cycle.
-
-### Phase 4: Integration (~600 lines)
-
-**PipelineVisualizer** (~180 lines):
-- `render_dag(definition: PipelineDefinition) -> str`: Renders the pipeline's stage DAG as an ASCII diagram.
-- `render_run(run: PipelineRun) -> str`: Renders a completed run with status indicators.
-- `_node_box(name: str, status: Optional[str] = None, width: int = 20) -> List[str]`: Draws a single node box.
-- `_connect_tiers(tiers: List[List[str]], arrows: List[Tuple[str, str]]) -> str`: Connects tier nodes with ASCII arrows.
-- `_status_indicator(status) -> str`: Maps status to symbol (checkmark, cross, dash, spinner).
-- Output format example:
-  ```
-  +----------------+
-  |  build [PASS]  |
-  +-------+--------+
-          |
-     +----+----+
-     |         |
-  +--+------+  +--+------+
-  | test-py |  | test-js |
-  |  [PASS] |  |  [PASS] |
-  +----+----+  +----+----+
-       |            |
-       +-----+------+
-             |
-  +----------+----------+
-  |    deploy [PASS]    |
-  +---------------------+
-  ```
-
-**FizzCIDashboard** (~150 lines):
-- `render(executor: PipelineExecutor, history: PipelineHistory, width: int = 120) -> str`: Renders a comprehensive ASCII dashboard.
-- Sections:
-  - Header: FizzCI version, uptime, registered pipelines count.
-  - Recent Runs: Table of last 10 runs with pipeline name, status, duration, commit SHA.
-  - Cache Stats: Hit rate, total size, entry count.
-  - Active Pipelines: Currently running pipelines with progress bars.
-  - Registered Pipelines: List of all pipeline definitions with trigger summaries.
-- `_render_header(width) -> str`
-- `_render_recent_runs(history, width) -> str`
-- `_render_cache_stats(cache, width) -> str`
-- `_render_active(executor, width) -> str`
-- `_render_pipelines(executor, width) -> str`
-- `_progress_bar(current, total, width) -> str`
-
-**FizzCIMiddleware** (~100 lines):
-- Implements `IMiddleware` interface.
-- `process(number: int, result: FizzBuzzResult, context: ProcessingContext) -> FizzBuzzResult`: Enriches the result with CI metadata if a pipeline is running. Fires CI-related events through the event bus.
-- `render_dashboard() -> str`: Delegates to `FizzCIDashboard.render()`.
-- `render_status(run_id: str) -> str`: Delegates to `StatusReporter.report()`.
-- `render_logs(specifier: str) -> str`: Parses `run_id/job_name` and returns formatted logs.
-- `render_artifacts(specifier: str) -> str`: Lists or shows artifact details.
-- `render_pipelines() -> str`: Lists registered pipelines.
-- `render_history() -> str`: Delegates to history.
-- `render_matrix_preview(pipeline_name: str) -> str`: Shows expanded matrix.
-- `render_dry_run(pipeline_name: str) -> str`: Shows validation result.
-- `render_run_result(pipeline_name: str) -> str`: Runs and returns result.
-- `render_trigger_result(specifier: str) -> str`: Simulates webhook.
-- `render_retry_result(run_id: str) -> str`: Retries and returns result.
-- `render_template(name: str) -> str`: Shows template definition.
-- `render_cache_clear() -> str`: Clears cache and returns summary.
-
-**create_fizzci_subsystem() factory** (~70 lines):
-- Instantiates and wires all components:
-  1. `ArtifactManager`
-  2. `BuildCache` (with configured max size)
-  3. `SecretInjector`
-  4. `LogStreamer` (with configured buffer size)
-  5. `DAGBuilder`
-  6. `MatrixExpander`
-  7. `ConditionalEvaluator`
-  8. `PipelineParser`
-  9. `StepExecutor`
-  10. `JobRunner`
-  11. `StageExecutor`
-  12. `PipelineExecutor`
-  13. `WebhookTriggerHandler`
-  14. `StatusReporter`
-  15. `PipelineHistory`
-  16. `PipelineTemplateEngine`
-  17. `PipelineVisualizer`
-  18. `FizzCIDashboard`
-  19. `FizzCIMiddleware`
-- Registers two default pipeline definitions:
-  - `fizzbuzz-ci`: lint stage -> test stage (with matrix: python=[3.10, 3.11, 3.12]) -> build stage
-  - `fizzbuzz-deploy`: build stage -> staging deploy stage (with manual gate) -> production deploy stage (with manual gate)
-- Registers two default pipeline templates:
-  - `python-library`: Parameterized CI template for Python libraries
-  - `deploy-service`: Parameterized deploy template with environment promotion
-- Returns `(pipeline_executor, middleware)`
-
-**Default Pipeline Definitions** (embedded YAML strings ~100 lines):
-- `FIZZBUZZ_CI_PIPELINE`: A complete CI pipeline demonstrating all features.
-- `FIZZBUZZ_DEPLOY_PIPELINE`: A deployment pipeline demonstrating manual gates and conditional execution.
-
-## Backward-Compatibility Stub
-
-`fizzci.py` at repo root:
-
 ```python
-"""Backward-compatibility re-export stub for FizzCI."""
-from enterprise_fizzbuzz.infrastructure.fizzci import *  # noqa: F401,F403
+class FizzSSHFeature(FeatureDescriptor):
+    name = "fizzssh"
+    description = "SSH-2 protocol server with encrypted transport, key exchange, client authentication, channel multiplexing, SFTP, and port forwarding"
+    middleware_priority = 138
+    cli_flags = [...]  # 13 flags as listed above
 ```
 
-## Test Plan (~500 tests)
+## Test Plan (~250+ tests)
 
-All tests in `tests/test_fizzci.py`. Uses `pytest` with per-file fixtures. No `conftest.py`.
+### Transport Tests (~40)
+- Packet encoding/decoding round-trip
+- SSH data type encoding (string, mpint, name-list, uint32, byte)
+- Packet framing with correct padding (multiple of 8, minimum 4)
+- MAC computation and verification for each MAC algorithm
+- Encryption/decryption for each cipher algorithm
+- Sequence number wrapping at 2^32
+- Re-key threshold detection (bytes and time)
+- Version string parsing and validation
+- Malformed packet rejection
+- Oversized packet rejection (>35000 bytes)
 
-### Test Organization
+### Key Exchange Tests (~35)
+- Algorithm negotiation (matching first common algorithm)
+- Algorithm negotiation failure (no common algorithm)
+- DH group14 key exchange simulation
+- DH group16 key exchange simulation
+- DH group exchange with custom group sizes
+- ECDH-Curve25519 key exchange simulation
+- Session key derivation produces six distinct keys
+- Exchange hash computation matches expected value
+- Host key signature verification during KEX
+- Re-keying produces new session keys
 
-| Test Class | Count | Component |
-|------------|-------|-----------|
-| `TestPipelineStatus` | 10 | Enum transitions and properties |
-| `TestJobStatus` | 10 | Enum transitions and properties |
-| `TestStepStatus` | 8 | Enum transitions and properties |
-| `TestStageStatus` | 8 | Enum transitions and properties |
-| `TestTriggerType` | 7 | Trigger type enum completeness |
-| `TestConditionType` | 6 | Condition type enum completeness |
-| `TestRetryPolicy` | 10 | Retry policy dataclass validation |
-| `TestMatrixConfig` | 8 | Matrix config dataclass validation |
-| `TestArtifactSpec` | 8 | Artifact spec dataclass |
-| `TestStepDefinition` | 10 | Step definition dataclass |
-| `TestJobDefinition` | 12 | Job definition dataclass |
-| `TestStageDefinition` | 10 | Stage definition dataclass |
-| `TestPipelineDefinition` | 10 | Pipeline definition dataclass |
-| `TestPipelineParser` | 35 | YAML parsing, validation, error cases |
-| `TestDAGBuilder` | 25 | Topological sort, cycle detection, tier assignment |
-| `TestMatrixExpander` | 20 | Cartesian product, include/exclude, dimension limits |
-| `TestConditionalEvaluator` | 30 | Branch/path/gate/expression evaluation, negation |
-| `TestArtifactManager` | 25 | Upload, download, integrity, not-found errors |
-| `TestBuildCache` | 30 | Get, put, LRU eviction, stats, clear, size limits |
-| `TestSecretInjector` | 15 | Injection, masking, vault fallback, access errors |
-| `TestLogStreamer` | 15 | Buffer, append, read, overflow, format |
-| `TestStepExecutor` | 20 | Step execution, timeout, continue-on-error |
-| `TestJobRunner` | 30 | Job execution, retry, artifacts, secrets, cache |
-| `TestStageExecutor` | 25 | Parallel jobs, fail-fast, timeout, conditions |
-| `TestPipelineExecutor` | 30 | Full pipeline execution, dry-run, cancel, retry |
-| `TestWebhookTriggerHandler` | 20 | Signature verification, matching, triggering |
-| `TestStatusReporter` | 15 | Status report formatting, badges, durations |
-| `TestPipelineHistory` | 15 | Record, get, list, stats, LRU eviction |
-| `TestPipelineTemplateEngine` | 15 | Register, resolve, substitution, recursion detection |
-| `TestPipelineVisualizer` | 15 | DAG rendering, run rendering, box drawing |
-| `TestFizzCIDashboard` | 10 | Dashboard rendering, sections, formatting |
-| `TestFizzCIMiddleware` | 15 | IMiddleware contract, rendering delegation |
-| `TestCreateFizzCISubsystem` | 8 | Factory function, default pipelines, wiring |
-| `TestDefaultPipelines` | 8 | Default pipeline definitions parse and validate |
-| **Total** | **~503** | |
+### Host Key Tests (~25)
+- Ed25519 key generation produces valid key pair
+- RSA key generation produces valid key pair
+- Key fingerprint computation (SHA-256 and MD5)
+- Public key serialization in SSH wire format
+- Sign and verify round-trip for Ed25519
+- Sign and verify round-trip for RSA
+- Key retrieval by algorithm type
+- Multiple host keys stored simultaneously
+- Invalid algorithm rejection
+- Key persistence across sessions
 
-### Key Test Patterns
+### Authentication Tests (~40)
+- Password auth success with valid credentials
+- Password auth failure with wrong password
+- Password auth failure with unknown user
+- Password auth disabled when config says so
+- Public key auth success with authorized key
+- Public key auth query (no signature) returns PK_OK
+- Public key auth failure with unauthorized key
+- Public key auth failure with invalid signature
+- Public key auth disabled when config says so
+- Keyboard-interactive single-round success
+- Keyboard-interactive multi-round challenge
+- Keyboard-interactive failure
+- Auth attempt counting and lockout after max_attempts
+- Multiple auth method fallback
+- Banner sent before auth
+- Service request for ssh-userauth accepted
+- Service request for unknown service rejected
 
-- **DAG cycle detection**: Construct graphs with known cycles, verify `FizzCIDAGCycleError` is raised with the cycle path.
-- **Matrix expansion**: Verify Cartesian product correctness with multi-dimensional matrices, include/exclude filtering, and dimension limits.
-- **Retry policies**: Verify exponential backoff timing, attempt counting, and exhaustion.
-- **Build cache LRU**: Insert entries exceeding max size, verify oldest are evicted, verify access order updates.
-- **Artifact integrity**: Upload artifacts, corrupt stored data, verify `FizzCIArtifactCorruptionError` on download.
-- **Webhook signature**: Verify HMAC-SHA256 signatures with known test vectors, verify rejection of invalid signatures.
-- **Conditional evaluation**: Test branch globs, path globs, expression parsing, negation, always/never.
-- **Pipeline execution end-to-end**: Parse a YAML pipeline, execute it, verify all stages/jobs/steps produce expected results.
-- **Template substitution**: Register templates with parameters, resolve with values, verify substitution in all nested fields.
-- **Log streaming**: Write lines from multiple concurrent jobs, verify isolation and ordering.
+### Authorized Keys Tests (~20)
+- Parse single authorized key line
+- Parse multiple keys
+- Parse keys with comments
+- Parse keys with options (command=, from=, no-pty)
+- Wildcard hostname matching in from= option
+- Key lookup by fingerprint
+- Add and remove keys
+- Empty authorized_keys handling
+- Malformed line handling (skip, don't crash)
+- Duplicate key detection
 
-### Fixture Strategy
+### Channel Tests (~35)
+- Open session channel
+- Open direct-tcpip channel
+- Channel confirmation with correct IDs
+- Channel rejection with reason code
+- Multiple channels on same session
+- Channel ID allocation (sequential)
+- Window size tracking on send
+- Window adjust increases remote window
+- Data rejected when window exhausted
+- Extended data (stderr) routing
+- Channel EOF sequencing (half-close)
+- Channel close sequencing
+- Data buffering before channel open confirmation
+- Max packet size enforcement
 
-- `@pytest.fixture` for `pipeline_parser`, `dag_builder`, `matrix_expander`, `conditional_evaluator`, `artifact_manager`, `build_cache`, `secret_injector`, `log_streamer`, `step_executor`, `job_runner`, `stage_executor`, `pipeline_executor`, `webhook_handler`, `status_reporter`, `pipeline_history`, `template_engine`, `visualizer`, `dashboard`, `middleware`.
-- `@pytest.fixture` for `sample_pipeline_yaml`: A complete YAML pipeline definition used across multiple test classes.
-- `@pytest.fixture` for `sample_pipeline_definition`: Pre-parsed `PipelineDefinition` object.
-- `@pytest.fixture` for `sample_webhook_payload`: A valid webhook payload with correct HMAC signature.
-- Singleton reset via `_SingletonMeta.reset()` where applicable.
+### Session Channel Tests (~20)
+- PTY allocation with terminal type and dimensions
+- Terminal mode setting (individual modes)
+- Shell request processing
+- Environment variable setting
+- Window resize event handling
+- Signal forwarding (INT, TERM, KILL)
+- Exit status reporting
+- Input processing produces output
+- Session without PTY (no terminal)
 
-## Documentation Updates
+### Exec Channel Tests (~15)
+- Execute `fizzbuzz <n>` returns correct output
+- Execute `status` returns server status
+- Execute `whoami` returns authenticated username
+- Execute `help` returns command list
+- Execute unknown command returns error with exit status 127
+- Command with arguments parsed correctly
+- Exit status propagation
+- Stderr output for errors
 
-After implementation, update the following files:
-- `README.md`: Add FizzCI to the subsystem overview table.
-- `FEATURES.md`: Add FizzCI feature description.
-- `SUBSYSTEMS.md`: Add FizzCI subsystem entry with component list.
-- `CLI_REFERENCE.md`: Add all 13 CLI flags with descriptions and examples.
-- `CHANGELOG.md`: Add FizzCI entry under the next version.
-- `CLAUDE.md`: Update infrastructure module count, CLI flag count, test count, and line count.
-- `config.yaml`: Add `fizzci:` section with all configuration defaults.
+### SFTP Tests (~30)
+- Version negotiation (client sends INIT, server responds VERSION)
+- Open file for reading
+- Open file for writing
+- Read file contents
+- Write file contents
+- Close file handle
+- Stat file returns correct attributes
+- Opendir and readdir enumerate directory contents
+- Mkdir creates new directory
+- Rmdir removes empty directory
+- Remove deletes file
+- Rename moves file
+- Realpath resolves to absolute path
+- Permission denied for unauthorized paths
+- File not found error
+- Handle lifecycle (open, use, close)
+- Multiple concurrent handles
+- Invalid handle rejection
+- Virtual filesystem root enforcement (no path traversal)
+
+### Port Forwarding Tests (~15)
+- Local forward binding creation
+- Local forward cancellation
+- Remote forward (direct-tcpip) channel open
+- Data forwarding through tunnel
+- Bytes-forwarded accounting
+- Multiple concurrent forwards
+- Port forwarding disabled when config says so
+- Wildcard bind address
+- Duplicate binding rejection
+
+### SCP Tests (~10)
+- Send single file
+- Receive single file
+- File mode preservation
+- Directory transfer
+- Timestamp preservation
+- Error propagation (file not found)
+- Large file transfer (chunked)
+
+### Session Recording Tests (~15)
+- Recording starts on session open
+- Events captured with timestamps
+- Command execution events recorded
+- Channel data events recorded
+- Recording stops on session close
+- Recording retrieval by session ID
+- Replay produces events in order with timing
+- Export to JSON format
+- Export to text format
+- Recording disabled when config says so
+
+### Rate Limiting Tests (~10)
+- Connections within limit accepted
+- Connections exceeding limit rejected
+- Sliding window expiry allows new connections
+- Auth failure tracking
+- Exponential backoff applied
+- Per-address isolation
+- Stats reporting
+- Rate limiter reset
+
+### Banner Tests (~8)
+- Default banner content
+- Custom banner override
+- Template variable substitution ({hostname}, {version}, {time})
+- Banner rotation (round-robin)
+- Pre-auth banner delivery timing
+- Post-auth MOTD delivery
+- Empty banner suppression
+
+### Dashboard Tests (~8)
+- Active session count
+- Auth statistics aggregation
+- Channel statistics
+- Transfer statistics
+- Rate limiter status
+- Dashboard data structure completeness
+
+### Integration Tests (~10)
+- Factory function creates all components
+- Middleware processes FizzBuzz value with SSH status
+- Full connection lifecycle: version exchange, KEX, auth, channel, data, close
+- Session timeout disconnection
+- Graceful disconnect sequencing
+- Config mixin properties read correctly
+
+### Edge Cases (~5)
+- Zero-length payload packet
+- Maximum channel count per session
+- Concurrent sessions at max limit
+- Re-key during data transfer
+- Disconnect during key exchange
 
 ## Implementation Order
 
-The implementation agent should proceed in this exact order:
+1. Create `enterprise_fizzbuzz/domain/exceptions/fizzssh.py` -- exception hierarchy
+2. Create `enterprise_fizzbuzz/infrastructure/fizzssh.py` -- Phase 1 (constants, enums, dataclasses), then Phase 2, then Phase 3, then Phase 4
+3. Create `enterprise_fizzbuzz/infrastructure/config/mixins/fizzssh.py` -- config mixin
+4. Create `enterprise_fizzbuzz/infrastructure/features/fizzssh_feature.py` -- feature descriptor
+5. Create `fizzssh.py` -- backward-compat stub
+6. Create `tests/test_fizzssh.py` -- full test suite
+7. Modify `enterprise_fizzbuzz/__main__.py` -- wire subsystem and CLI flags
+8. Modify `enterprise_fizzbuzz/infrastructure/config/mixins/__init__.py` -- register mixin
+9. Modify `enterprise_fizzbuzz/infrastructure/features/__init__.py` -- register feature
+10. Modify `enterprise_fizzbuzz/domain/exceptions/__init__.py` -- register exceptions
 
-1. **Exceptions file** (`enterprise_fizzbuzz/domain/exceptions/fizzci.py`) -- 35 exception classes.
-2. **Config mixin** (`enterprise_fizzbuzz/infrastructure/config/mixins/fizzci.py`) -- 16 properties.
-3. **Feature descriptor** (`enterprise_fizzbuzz/infrastructure/features/fizzci_feature.py`) -- feature auto-wiring.
-4. **Main module Phase 1** (`enterprise_fizzbuzz/infrastructure/fizzci.py`) -- Foundation: docstring, imports, constants, enums, dataclasses (~500 lines).
-5. **Main module Phase 2** -- Core engine classes appended to fizzci.py (~1,200 lines).
-6. **Main module Phase 3** -- Execution classes appended to fizzci.py (~1,200 lines).
-7. **Main module Phase 4** -- Integration classes, factory, default pipelines appended to fizzci.py (~600 lines).
-8. **Backward-compat stub** (`fizzci.py` at repo root).
-9. **Tests** (`tests/test_fizzci.py`) -- ~500 tests covering all components.
-10. **Documentation updates** -- README, FEATURES, SUBSYSTEMS, CLI_REFERENCE, CHANGELOG.
-
-## Estimated Totals
+## Estimated Scope
 
 | Artifact | Lines |
 |----------|-------|
-| `fizzci.py` (main module) | ~3,500 |
-| `test_fizzci.py` | ~4,500 |
-| Exception file | ~350 |
-| Config mixin | ~160 |
-| Feature descriptor | ~110 |
-| Backward-compat stub | ~3 |
-| **Total new code** | **~8,620** |
+| `fizzssh.py` (infrastructure) | ~3,500 |
+| `fizzssh.py` (exceptions) | ~400 |
+| `fizzssh.py` (config mixin) | ~120 |
+| `fizzssh_feature.py` | ~80 |
+| `fizzssh.py` (compat stub) | ~3 |
+| `test_fizzssh.py` | ~3,000 |
+| Wiring modifications | ~50 |
+| **Total** | **~7,150** |
