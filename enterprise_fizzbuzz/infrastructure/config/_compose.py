@@ -9,6 +9,7 @@ from .mixins.fizzbackup import FizzbackupConfigMixin
 from .mixins.fizzauth2 import Fizzauth2ConfigMixin
 from .mixins.archaeology import ArchaeologyConfigMixin
 from .mixins.audit_dashboard import AuditDashboardConfigMixin
+from .mixins.fizzaudit import FizzauditConfigMixin
 from .mixins.billing import BillingConfigMixin
 from .mixins.blue_green import BlueGreenConfigMixin
 from .mixins.bob import BobConfigMixin
@@ -147,6 +148,7 @@ class ConfigurationManager(
     FizzbackupConfigMixin,
     ArchaeologyConfigMixin,
     AuditDashboardConfigMixin,
+    FizzauditConfigMixin,
     BillingConfigMixin,
     BlueGreenConfigMixin,
     BobConfigMixin,
