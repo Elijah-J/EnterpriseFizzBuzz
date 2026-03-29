@@ -21,6 +21,7 @@ import importlib
 import inspect
 import pkgutil
 import sys
+import warnings
 from abc import abstractmethod
 from pathlib import Path
 from typing import Callable
@@ -150,6 +151,12 @@ def _make_standard_rules():
     ]
 
 
+# Exceptions that indicate programmer errors — broken signatures, missing
+# attributes, undefined names. These must NEVER be silenced because they
+# reveal real bugs in middleware constructors.
+_PROGRAMMER_ERRORS = (TypeError, AttributeError, NameError)
+
+
 def _try_instantiate(cls: type) -> IMiddleware | None:
     """Attempt to instantiate a middleware class with sensible defaults.
 
@@ -157,9 +164,15 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
     a ComplianceFramework, a PaxosCluster, etc.). This factory provides
     the minimal dependencies each middleware needs by reading their actual
     constructors and supplying the right objects. If it cannot be
-    instantiated, it returns None — the middleware escapes the process()
-    contract test but not the name/priority tests, because those are
-    too important to skip.
+    instantiated due to environmental factors (missing config files,
+    database connections, or external service dependencies), it returns
+    None — the middleware escapes the process() contract test but not
+    the name/priority tests, because those are too important to skip.
+
+    Programmer errors — TypeError, AttributeError, and NameError — are
+    never caught. These indicate real bugs in constructor signatures,
+    missing attributes, or undefined names and must propagate immediately
+    so the test suite catches them.
     """
     name = cls.__name__
 
@@ -173,21 +186,42 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
     }:
         try:
             return cls()
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # MetricsMiddleware: optional registry + collector
     if name == "MetricsMiddleware":
         try:
             return cls()
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # TranslationMiddleware: optional locale_manager
     if name == "TranslationMiddleware":
         try:
             return cls(locale_manager=None)
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # CacheMiddleware: requires CacheStore
@@ -195,7 +229,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.cache import CacheStore
             return cls(cache_store=CacheStore())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # ChaosMiddleware: requires ChaosMonkey(severity=FaultSeverity.LEVEL_1)
@@ -204,7 +245,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
             from enterprise_fizzbuzz.infrastructure.chaos import ChaosMonkey, FaultSeverity
             # LEVEL_1 is lowest severity — minimal chaos injection
             return cls(chaos_monkey=ChaosMonkey(severity=FaultSeverity.LEVEL_1, seed=42))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # AuthorizationMiddleware: requires AuthContext from domain.models
@@ -216,7 +264,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 role=FizzBuzzRole.FIZZBUZZ_SUPERUSER,
             )
             return cls(auth_context=ctx)
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # ComplianceMiddleware: requires ComplianceFramework
@@ -224,7 +279,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.compliance import ComplianceFramework
             return cls(compliance_framework=ComplianceFramework())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # SLAMiddleware: requires SLAMonitor
@@ -232,7 +294,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.sla import SLAMonitor
             return cls(sla_monitor=SLAMonitor())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # FinOpsMiddleware: requires CostTracker(cost_registry, tax_engine, currency)
@@ -249,7 +318,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 tax_engine=FizzBuzzTaxEngine(),
                 currency=FizzBuckCurrency(),
             ))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # FBaaSMiddleware: requires Tenant, UsageMeter, BillingEngine
@@ -277,7 +353,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                     tenant_manager=TenantManager(),
                 ),
             )
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # FlagMiddleware: requires FlagStore
@@ -285,7 +368,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.feature_flags import FlagStore
             return cls(flag_store=FlagStore())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # EventSourcingMiddleware: requires CommandBus + EventStore (both no-arg)
@@ -298,7 +388,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
             store = EventStore()
             bus = CommandBus()
             return cls(command_bus=bus, event_store=store)
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # DRMiddleware: requires WriteAheadLog + BackupManager
@@ -309,7 +406,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 WriteAheadLog,
             )
             return cls(wal=WriteAheadLog(), backup_manager=BackupManager())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # RateLimiterMiddleware: requires QuotaManager(policy=RateLimitPolicy())
@@ -320,7 +424,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 RateLimitPolicy,
             )
             return cls(quota_manager=QuotaManager(policy=RateLimitPolicy()))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # ABTestingMiddleware: requires ExperimentRegistry
@@ -328,7 +439,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.ab_testing import ExperimentRegistry
             return cls(registry=ExperimentRegistry())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # GatewayMiddleware: requires APIGateway (complex constructor)
@@ -351,7 +469,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 key_manager=APIKeyManager(),
                 journal=RequestReplayJournal(),
             ))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # DeploymentMiddleware: requires DeploymentOrchestrator(rules=...)
@@ -359,35 +484,72 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.blue_green import DeploymentOrchestrator
             return cls(orchestrator=DeploymentOrchestrator(rules=_make_standard_rules()))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
-    # PipelineMiddleware: requires Pipeline (complex constructor)
+    # PipelineMiddleware: two implementations exist with the same class name.
+    # The data_pipeline version requires a Pipeline object; the cpu_pipeline
+    # version requires a PipelineSimulator. Disambiguate by module origin.
     if name == "PipelineMiddleware":
-        try:
-            from enterprise_fizzbuzz.infrastructure.data_pipeline import (
-                DAGExecutor,
-                Pipeline,
-                PipelineDAG,
-                SinkConnector,
-                SourceConnector,
-            )
-            dag = PipelineDAG()
-            return cls(pipeline=Pipeline(
-                source=SourceConnector(),
-                sink=SinkConnector(),
-                dag=dag,
-                executor=DAGExecutor(dag=dag),
-            ))
-        except Exception:
-            return None
+        if cls.__module__ == "enterprise_fizzbuzz.infrastructure.cpu_pipeline":
+            try:
+                from enterprise_fizzbuzz.infrastructure.cpu_pipeline import PipelineSimulator
+                return cls(simulator=PipelineSimulator())
+            except _PROGRAMMER_ERRORS:
+                raise
+            except Exception as exc:
+                warnings.warn(
+                    f"Could not instantiate {cls.__name__} (cpu_pipeline): "
+                    f"{type(exc).__name__}: {exc}",
+                    stacklevel=2,
+                )
+                return None
+        else:
+            try:
+                from enterprise_fizzbuzz.infrastructure.data_pipeline import (
+                    DAGExecutor,
+                    Pipeline,
+                    PipelineDAG,
+                    SinkConnector,
+                    SourceConnector,
+                )
+                dag = PipelineDAG()
+                return cls(pipeline=Pipeline(
+                    source=SourceConnector(),
+                    sink=SinkConnector(),
+                    dag=dag,
+                    executor=DAGExecutor(dag=dag),
+                ))
+            except _PROGRAMMER_ERRORS:
+                raise
+            except Exception as exc:
+                warnings.warn(
+                    f"Could not instantiate {cls.__name__} (data_pipeline): "
+                    f"{type(exc).__name__}: {exc}",
+                    stacklevel=2,
+                )
+                return None
 
     # GraphMiddleware: requires PropertyGraph (no-arg)
     if name == "GraphMiddleware":
         try:
             from enterprise_fizzbuzz.infrastructure.graph_db import PropertyGraph
             return cls(graph=PropertyGraph())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # KnowledgeGraphMiddleware: requires TripleStore + OWLClassHierarchy(store)
@@ -399,7 +561,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
             )
             store = TripleStore()
             return cls(store=store, hierarchy=OWLClassHierarchy(store=store))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # MQMiddleware: requires MessageBroker + Producer (both have defaults)
@@ -410,7 +579,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 Producer,
             )
             return cls(broker=MessageBroker(), producer=Producer())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # KernelMiddleware: requires FizzBuzzKernel(rules=...)
@@ -418,7 +594,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.os_kernel import FizzBuzzKernel
             return cls(kernel=FizzBuzzKernel(rules=_make_standard_rules()))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # PaxosMiddleware: requires PaxosCluster(num_nodes, rules)
@@ -426,7 +609,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.paxos import PaxosCluster
             return cls(cluster=PaxosCluster(num_nodes=3, rules=_make_standard_rules()))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # P2PMiddleware: requires P2PNetwork (all defaults)
@@ -434,7 +624,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.p2p_network import P2PNetwork
             return cls(network=P2PNetwork())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # QuantumMiddleware: requires QuantumFizzBuzzEngine(rules=...)
@@ -446,7 +643,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 {"divisor": 5, "label": "Buzz"},
             ]
             return cls(engine=QuantumFizzBuzzEngine(rules=rules_dicts))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # VaultMiddleware: requires VaultSealManager(shamir=ShamirSecretSharing())
@@ -457,7 +661,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 VaultSealManager,
             )
             return cls(seal_manager=VaultSealManager(shamir=ShamirSecretSharing()))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # OptimizerMiddleware: requires Optimizer (all optional)
@@ -465,7 +676,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.query_optimizer import Optimizer
             return cls(optimizer=Optimizer())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # SelfModifyingMiddleware: requires SelfModifyingEngine (complex constructor)
@@ -497,7 +715,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 safety_guard=guard,
                 seed=42,
             ))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # MeshMiddleware: requires MeshControlPlane (complex constructor)
@@ -516,7 +741,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 fault_injector=NetworkFaultInjector(),
                 canary_router=CanaryRouter(),
             ))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # TimeTravelMiddleware: requires Timeline (all defaults)
@@ -524,7 +756,14 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
         try:
             from enterprise_fizzbuzz.infrastructure.time_travel import Timeline
             return cls(timeline=Timeline())
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
     # FederatedMiddleware: requires FederatedServer(clients, aggregator)
@@ -550,13 +789,30 @@ def _try_instantiate(cls: type) -> IMiddleware | None:
                 clients=clients,
                 aggregator=FedAvgAggregator(),
             ))
-        except Exception:
+        except _PROGRAMMER_ERRORS:
+            raise
+        except Exception as exc:
+            warnings.warn(
+                f"Could not instantiate {cls.__name__}: "
+                f"{type(exc).__name__}: {exc}",
+                stacklevel=2,
+            )
             return None
 
-    # Fallback: try no-arg constructor
+    # Fallback: try no-arg constructor. TypeError is expected here because
+    # many middleware classes require constructor arguments that this fallback
+    # does not provide. AttributeError and NameError still propagate because
+    # they indicate real defects in the class definition itself.
     try:
         return cls()
-    except Exception:
+    except (AttributeError, NameError):
+        raise
+    except Exception as exc:
+        warnings.warn(
+            f"Could not instantiate {cls.__name__}: "
+            f"{type(exc).__name__}: {exc}",
+            stacklevel=2,
+        )
         return None
 
 

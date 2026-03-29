@@ -1747,7 +1747,7 @@ class PipelineMiddleware(IMiddleware):
         return next_handler(context)
 
     def get_name(self) -> str:
-        return "PipelineMiddleware"
+        return "CPUPipelineMiddleware"
 
     def get_priority(self) -> int:
         return 850
