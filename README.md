@@ -265,6 +265,10 @@ The platform is operated 24/7 by Bob McFizzington. The on-call rotation schedule
 - An appreciation for enterprise architecture
 - Bob McFizzington (unavailable)
 
+## Acknowledgments
+
+EnterpriseFizzBuzz builds on the foundational work of [FizzBuzzEnterpriseEdition](https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition), which first demonstrated that FizzBuzz is a problem deserving of enterprise-grade architecture. Where FizzBuzzEnterpriseEdition proved that abstraction layers are never deep enough, EnterpriseFizzBuzz extends this insight to its logical conclusion: that no number of infrastructure subsystems is sufficient to evaluate `n % 3` with the confidence the business requires.
+
 ## License
 
 MIT
