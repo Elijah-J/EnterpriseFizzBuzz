@@ -1045,7 +1045,7 @@ class TestPipelineMiddleware:
     def test_get_name(self):
         sim = PipelineSimulator()
         mw = PipelineMiddleware(sim)
-        assert mw.get_name() == "PipelineMiddleware"
+        assert mw.get_name() == "CPUPipelineMiddleware"
 
     def test_aggregate_stats_initial(self):
         sim = PipelineSimulator()
