@@ -2,7 +2,7 @@
 
 # Features
 
-The complete feature list of the Enterprise FizzBuzz Platform -- every subsystem, every dashboard, every component.
+The complete feature list of the Enterprise FizzBuzz Platform -- 185 infrastructure modules, every subsystem, every dashboard, every component.
 
 ## Features
 

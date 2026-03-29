@@ -2,7 +2,7 @@
 
 # CLI Reference
 
-All CLI flags, environment variables, and quick start examples for the Enterprise FizzBuzz Platform.
+All 900+ CLI flags, environment variables, and quick start examples for the Enterprise FizzBuzz Platform.
 
 ## Quick Start
 
