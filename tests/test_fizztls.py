@@ -65,11 +65,11 @@ class TestTLSVersion:
 
     def test_tls_1_2_exists(self):
         """TLS 1.2 support is required for backward compatibility with legacy modules."""
-        assert TLSVersion.TLS_1_2 is not None
+        assert TLSVersion.TLS_1_2.value == "tls_1_2"
 
     def test_tls_1_3_exists(self):
         """TLS 1.3 is the preferred protocol version for all new sessions."""
-        assert TLSVersion.TLS_1_3 is not None
+        assert TLSVersion.TLS_1_3.value == "tls_1_3"
 
     def test_versions_are_distinct(self):
         """Version confusion between 1.2 and 1.3 would cause cipher mismatch errors."""
@@ -86,15 +86,15 @@ class TestCipherSuite:
 
     def test_aes_128_gcm(self):
         """AES-128-GCM provides authenticated encryption with minimal overhead."""
-        assert CipherSuite.AES_128_GCM_SHA256 is not None
+        assert CipherSuite.AES_128_GCM_SHA256.value == "TLS_AES_128_GCM_SHA256"
 
     def test_aes_256_gcm(self):
         """AES-256-GCM offers higher security margin for sensitive FizzBuzz data."""
-        assert CipherSuite.AES_256_GCM_SHA384 is not None
+        assert CipherSuite.AES_256_GCM_SHA384.value == "TLS_AES_256_GCM_SHA384"
 
     def test_chacha20_poly1305(self):
         """ChaCha20-Poly1305 is essential for deployments without AES-NI support."""
-        assert CipherSuite.CHACHA20_POLY1305_SHA256 is not None
+        assert CipherSuite.CHACHA20_POLY1305_SHA256.value == "TLS_CHACHA20_POLY1305_SHA256"
 
 
 # ============================================================

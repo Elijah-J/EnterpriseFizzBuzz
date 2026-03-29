@@ -702,11 +702,11 @@ class TestFinOpsEventTypes:
     """Tests that all FinOps event types are registered."""
 
     def test_finops_event_types_exist(self):
-        assert EventType.FINOPS_COST_RECORDED is not None
-        assert EventType.FINOPS_TAX_APPLIED is not None
-        assert EventType.FINOPS_INVOICE_GENERATED is not None
-        assert EventType.FINOPS_BUDGET_WARNING is not None
-        assert EventType.FINOPS_BUDGET_EXCEEDED is not None
-        assert EventType.FINOPS_EXCHANGE_RATE_UPDATED is not None
-        assert EventType.FINOPS_SAVINGS_PLAN_COMPUTED is not None
-        assert EventType.FINOPS_DASHBOARD_RENDERED is not None
+        assert EventType.FINOPS_COST_RECORDED.name == "FINOPS_COST_RECORDED"
+        assert EventType.FINOPS_TAX_APPLIED.name == "FINOPS_TAX_APPLIED"
+        assert EventType.FINOPS_INVOICE_GENERATED.name == "FINOPS_INVOICE_GENERATED"
+        assert EventType.FINOPS_BUDGET_WARNING.name == "FINOPS_BUDGET_WARNING"
+        assert EventType.FINOPS_BUDGET_EXCEEDED.name == "FINOPS_BUDGET_EXCEEDED"
+        assert EventType.FINOPS_EXCHANGE_RATE_UPDATED.name == "FINOPS_EXCHANGE_RATE_UPDATED"
+        assert EventType.FINOPS_SAVINGS_PLAN_COMPUTED.name == "FINOPS_SAVINGS_PLAN_COMPUTED"
+        assert EventType.FINOPS_DASHBOARD_RENDERED.name == "FINOPS_DASHBOARD_RENDERED"

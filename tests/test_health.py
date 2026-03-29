@@ -85,13 +85,13 @@ def health_registry():
 
 class TestProbeType:
     def test_liveness_exists(self):
-        assert ProbeType.LIVENESS is not None
+        assert ProbeType.LIVENESS.name == "LIVENESS"
 
     def test_readiness_exists(self):
-        assert ProbeType.READINESS is not None
+        assert ProbeType.READINESS.name == "READINESS"
 
     def test_startup_exists(self):
-        assert ProbeType.STARTUP is not None
+        assert ProbeType.STARTUP.name == "STARTUP"
 
     def test_all_values_unique(self):
         values = [p.value for p in ProbeType]
@@ -100,19 +100,19 @@ class TestProbeType:
 
 class TestHealthStatus:
     def test_up_exists(self):
-        assert HealthStatus.UP is not None
+        assert HealthStatus.UP.name == "UP"
 
     def test_down_exists(self):
-        assert HealthStatus.DOWN is not None
+        assert HealthStatus.DOWN.name == "DOWN"
 
     def test_degraded_exists(self):
-        assert HealthStatus.DEGRADED is not None
+        assert HealthStatus.DEGRADED.name == "DEGRADED"
 
     def test_existential_crisis_exists(self):
-        assert HealthStatus.EXISTENTIAL_CRISIS is not None
+        assert HealthStatus.EXISTENTIAL_CRISIS.name == "EXISTENTIAL_CRISIS"
 
     def test_unknown_exists(self):
-        assert HealthStatus.UNKNOWN is not None
+        assert HealthStatus.UNKNOWN.name == "UNKNOWN"
 
     def test_all_values_unique(self):
         values = [s.value for s in HealthStatus]
@@ -193,28 +193,28 @@ class TestHealthReport:
 
 class TestHealthEventTypes:
     def test_health_check_started(self):
-        assert EventType.HEALTH_CHECK_STARTED is not None
+        assert EventType.HEALTH_CHECK_STARTED.name == "HEALTH_CHECK_STARTED"
 
     def test_health_check_completed(self):
-        assert EventType.HEALTH_CHECK_COMPLETED is not None
+        assert EventType.HEALTH_CHECK_COMPLETED.name == "HEALTH_CHECK_COMPLETED"
 
     def test_health_liveness_passed(self):
-        assert EventType.HEALTH_LIVENESS_PASSED is not None
+        assert EventType.HEALTH_LIVENESS_PASSED.name == "HEALTH_LIVENESS_PASSED"
 
     def test_health_liveness_failed(self):
-        assert EventType.HEALTH_LIVENESS_FAILED is not None
+        assert EventType.HEALTH_LIVENESS_FAILED.name == "HEALTH_LIVENESS_FAILED"
 
     def test_health_readiness_passed(self):
-        assert EventType.HEALTH_READINESS_PASSED is not None
+        assert EventType.HEALTH_READINESS_PASSED.name == "HEALTH_READINESS_PASSED"
 
     def test_health_readiness_failed(self):
-        assert EventType.HEALTH_READINESS_FAILED is not None
+        assert EventType.HEALTH_READINESS_FAILED.name == "HEALTH_READINESS_FAILED"
 
     def test_health_startup_milestone(self):
-        assert EventType.HEALTH_STARTUP_MILESTONE is not None
+        assert EventType.HEALTH_STARTUP_MILESTONE.name == "HEALTH_STARTUP_MILESTONE"
 
     def test_health_self_heal_attempted(self):
-        assert EventType.HEALTH_SELF_HEAL_ATTEMPTED is not None
+        assert EventType.HEALTH_SELF_HEAL_ATTEMPTED.name == "HEALTH_SELF_HEAL_ATTEMPTED"
 
 
 # ============================================================

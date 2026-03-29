@@ -325,11 +325,10 @@ class TestJsonFormat:
         data = extract_json_block(result.stdout)
         assert len(data["results"]) == 15
 
-    @pytest.mark.skip(reason="--metadata flag is defined but not wired to JsonFormatter.include_metadata")
     def test_json_metadata_flag(self):
         """--metadata should include additional fields in JSON output.
-        Skipped because the flag exists in argparse but is never passed
-        to the formatter -- a classic enterprise oversight."""
+        The flag is wired through ConfigurationManager to the
+        JsonFormatter's include_metadata parameter."""
         result = run_cli("--range", "1", "5", "--format", "json", "--metadata")
         assert result.returncode == 0
         data = extract_json_block(result.stdout)

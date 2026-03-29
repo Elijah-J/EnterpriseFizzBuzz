@@ -624,10 +624,10 @@ class TestUnifiedAuditDashboard:
 
     def test_creation_with_defaults(self):
         dashboard = UnifiedAuditDashboard()
-        assert dashboard.aggregator is not None
-        assert dashboard.anomaly_detector is not None
-        assert dashboard.correlator is not None
-        assert dashboard.stream is not None
+        assert isinstance(dashboard.aggregator, EventAggregator)
+        assert isinstance(dashboard.anomaly_detector, AnomalyDetector)
+        assert isinstance(dashboard.correlator, TemporalCorrelator)
+        assert isinstance(dashboard.stream, EventStream)
 
     def test_aggregator_wired_to_anomaly_detector(self):
         dashboard = UnifiedAuditDashboard(enable_anomaly_detection=True)
@@ -895,7 +895,7 @@ class TestCorrelationID:
 
     def test_auto_generates_uuid(self):
         cid = CorrelationID()
-        assert cid.value is not None
+        assert isinstance(cid.value, str)
         assert len(cid.value) == 36  # UUID format
 
     def test_custom_value(self):
@@ -976,7 +976,7 @@ class TestObservabilityEvent:
             correlation_id=None,
             event_name="log.pipeline.info",
         )
-        assert event.correlation_id is not None
+        assert isinstance(event.correlation_id, CorrelationID)
 
     def test_default_metadata(self):
         event = ObservabilityEvent(

@@ -26,22 +26,22 @@ class TestEventTypeAttributeAccess:
     """Verify attribute-style access for registered event types."""
 
     def test_core_event_access(self):
-        assert EventType.SESSION_STARTED is not None
-        assert EventType.SESSION_ENDED is not None
-        assert EventType.ERROR_OCCURRED is not None
+        assert EventType.SESSION_STARTED.name == "SESSION_STARTED"
+        assert EventType.SESSION_ENDED.name == "SESSION_ENDED"
+        assert EventType.ERROR_OCCURRED.name == "ERROR_OCCURRED"
 
     def test_cache_event_access(self):
-        assert EventType.CACHE_HIT is not None
-        assert EventType.CACHE_MISS is not None
-        assert EventType.CACHE_EVICTION is not None
+        assert EventType.CACHE_HIT.name == "CACHE_HIT"
+        assert EventType.CACHE_MISS.name == "CACHE_MISS"
+        assert EventType.CACHE_EVICTION.name == "CACHE_EVICTION"
 
     def test_container_event_access(self):
-        assert EventType.CONTAINERD_DAEMON_STARTED is not None
-        assert EventType.KUBEV2_POD_CREATED is not None
+        assert EventType.CONTAINERD_DAEMON_STARTED.name == "CONTAINERD_DAEMON_STARTED"
+        assert EventType.KUBEV2_POD_CREATED.name == "KUBEV2_POD_CREATED"
 
     def test_fizzlife_event_access(self):
-        assert EventType.FIZZLIFE_SIMULATION_STARTED is not None
-        assert EventType.FIZZLIFE_DASHBOARD_RENDERED is not None
+        assert EventType.FIZZLIFE_SIMULATION_STARTED.name == "FIZZLIFE_SIMULATION_STARTED"
+        assert EventType.FIZZLIFE_DASHBOARD_RENDERED.name == "FIZZLIFE_DASHBOARD_RENDERED"
 
     def test_nonexistent_member_raises_attribute_error(self):
         with pytest.raises(AttributeError, match="EventType has no member"):

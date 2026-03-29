@@ -96,10 +96,10 @@ class TestEnums:
 
     def test_step_type_members(self):
         """StepType must expose MANUAL, AUTOMATED, CONDITIONAL, and NOTIFICATION."""
-        assert StepType.MANUAL is not None
-        assert StepType.AUTOMATED is not None
-        assert StepType.CONDITIONAL is not None
-        assert StepType.NOTIFICATION is not None
+        assert StepType.MANUAL.value == "manual"
+        assert StepType.AUTOMATED.value == "automated"
+        assert StepType.CONDITIONAL.value == "conditional"
+        assert StepType.NOTIFICATION.value == "notification"
 
     def test_execution_state_members(self):
         """ExecutionState must expose all six lifecycle states."""
@@ -109,9 +109,9 @@ class TestEnums:
 
     def test_runbook_status_members(self):
         """RunbookStatus must expose DRAFT, PUBLISHED, and DEPRECATED."""
-        assert RunbookStatus.DRAFT is not None
-        assert RunbookStatus.PUBLISHED is not None
-        assert RunbookStatus.DEPRECATED is not None
+        assert RunbookStatus.DRAFT.value == "draft"
+        assert RunbookStatus.PUBLISHED.value == "published"
+        assert RunbookStatus.DEPRECATED.value == "deprecated"
 
 
 # ============================================================================

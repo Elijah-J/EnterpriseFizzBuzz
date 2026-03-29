@@ -72,10 +72,10 @@ def full_fs():
 
 class TestFileType:
     def test_enum_members(self):
-        assert FileType.REGULAR is not None
-        assert FileType.DIRECTORY is not None
-        assert FileType.SYMLINK is not None
-        assert FileType.CHARDEV is not None
+        assert FileType.REGULAR.name == "REGULAR"
+        assert FileType.DIRECTORY.name == "DIRECTORY"
+        assert FileType.SYMLINK.name == "SYMLINK"
+        assert FileType.CHARDEV.name == "CHARDEV"
 
     def test_enum_values_are_distinct(self):
         values = [ft.value for ft in FileType]

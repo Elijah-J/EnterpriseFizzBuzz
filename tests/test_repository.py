@@ -123,10 +123,10 @@ class TestRepositoryExceptions:
 
 class TestRepositoryEventTypes:
     def test_repository_event_types_exist(self):
-        assert EventType.REPOSITORY_RESULT_ADDED is not None
-        assert EventType.REPOSITORY_COMMITTED is not None
-        assert EventType.REPOSITORY_ROLLED_BACK is not None
-        assert EventType.ROLLBACK_FILE_DELETED is not None
+        assert EventType.REPOSITORY_RESULT_ADDED.name == "REPOSITORY_RESULT_ADDED"
+        assert EventType.REPOSITORY_COMMITTED.name == "REPOSITORY_COMMITTED"
+        assert EventType.REPOSITORY_ROLLED_BACK.name == "REPOSITORY_ROLLED_BACK"
+        assert EventType.ROLLBACK_FILE_DELETED.name == "ROLLBACK_FILE_DELETED"
 
 
 # ============================================================

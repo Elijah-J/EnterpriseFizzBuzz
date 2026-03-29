@@ -101,16 +101,16 @@ class TestPortRight:
     """Validate the PortRight enumeration members."""
 
     def test_send_right_exists(self):
-        assert PortRight.SEND is not None
+        assert PortRight.SEND.name == "SEND"
 
     def test_receive_right_exists(self):
-        assert PortRight.RECEIVE is not None
+        assert PortRight.RECEIVE.name == "RECEIVE"
 
     def test_send_once_right_exists(self):
-        assert PortRight.SEND_ONCE is not None
+        assert PortRight.SEND_ONCE.name == "SEND_ONCE"
 
     def test_port_set_right_exists(self):
-        assert PortRight.PORT_SET is not None
+        assert PortRight.PORT_SET.name == "PORT_SET"
 
     def test_all_rights_are_distinct(self):
         rights = [PortRight.SEND, PortRight.RECEIVE, PortRight.SEND_ONCE, PortRight.PORT_SET]
@@ -129,10 +129,10 @@ class TestMessageEnums:
         assert len(MessageType) >= 8
 
     def test_evaluation_request_type(self):
-        assert MessageType.EVALUATION_REQUEST is not None
+        assert MessageType.EVALUATION_REQUEST.name == "EVALUATION_REQUEST"
 
     def test_evaluation_response_type(self):
-        assert MessageType.EVALUATION_RESPONSE is not None
+        assert MessageType.EVALUATION_RESPONSE.name == "EVALUATION_RESPONSE"
 
     def test_priority_ordering(self):
         assert MessagePriority.LOW.value < MessagePriority.NORMAL.value

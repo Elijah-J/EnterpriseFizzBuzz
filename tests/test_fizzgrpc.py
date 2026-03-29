@@ -63,7 +63,7 @@ class TestGRPCStatus:
     """Tests for gRPC status code enumeration following the standard canon."""
 
     def test_ok_status_exists(self):
-        assert GRPCStatus.OK is not None
+        assert GRPCStatus.OK.value == 0
 
     def test_all_standard_codes_present(self):
         expected = {

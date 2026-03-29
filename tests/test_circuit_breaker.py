@@ -87,9 +87,9 @@ def circuit_breaker(event_bus, backoff):
 
 class TestCircuitState:
     def test_enum_members_exist(self):
-        assert CircuitState.CLOSED is not None
-        assert CircuitState.OPEN is not None
-        assert CircuitState.HALF_OPEN is not None
+        assert CircuitState.CLOSED.name == "CLOSED"
+        assert CircuitState.OPEN.name == "OPEN"
+        assert CircuitState.HALF_OPEN.name == "HALF_OPEN"
 
     def test_enum_values_are_unique(self):
         values = [s.value for s in CircuitState]
@@ -656,11 +656,11 @@ class TestCircuitBreakerExceptions:
 
 class TestCircuitBreakerEventTypes:
     def test_new_event_types_exist(self):
-        assert EventType.CIRCUIT_BREAKER_STATE_CHANGED is not None
-        assert EventType.CIRCUIT_BREAKER_TRIPPED is not None
-        assert EventType.CIRCUIT_BREAKER_RECOVERED is not None
-        assert EventType.CIRCUIT_BREAKER_HALF_OPEN is not None
-        assert EventType.CIRCUIT_BREAKER_CALL_REJECTED is not None
+        assert EventType.CIRCUIT_BREAKER_STATE_CHANGED.name == "CIRCUIT_BREAKER_STATE_CHANGED"
+        assert EventType.CIRCUIT_BREAKER_TRIPPED.name == "CIRCUIT_BREAKER_TRIPPED"
+        assert EventType.CIRCUIT_BREAKER_RECOVERED.name == "CIRCUIT_BREAKER_RECOVERED"
+        assert EventType.CIRCUIT_BREAKER_HALF_OPEN.name == "CIRCUIT_BREAKER_HALF_OPEN"
+        assert EventType.CIRCUIT_BREAKER_CALL_REJECTED.name == "CIRCUIT_BREAKER_CALL_REJECTED"
 
 
 # ============================================================

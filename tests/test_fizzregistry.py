@@ -220,9 +220,9 @@ class TestEnums:
 
     def test_tag_state_members(self):
         assert len(TagState) == 3
-        assert TagState.ACTIVE is not None
-        assert TagState.DEPRECATED is not None
-        assert TagState.DELETED is not None
+        assert TagState.ACTIVE.name == "ACTIVE"
+        assert TagState.DEPRECATED.name == "DEPRECATED"
+        assert TagState.DELETED.name == "DELETED"
 
     def test_gc_phase_members(self):
         assert len(GCPhase) == 4
@@ -1717,52 +1717,52 @@ class TestEventTypes:
     """Validate registry EventType members."""
 
     def test_reg_blob_pushed(self):
-        assert EventType.REG_BLOB_PUSHED is not None
+        assert EventType.REG_BLOB_PUSHED.name == "REG_BLOB_PUSHED"
 
     def test_reg_blob_pulled(self):
-        assert EventType.REG_BLOB_PULLED is not None
+        assert EventType.REG_BLOB_PULLED.name == "REG_BLOB_PULLED"
 
     def test_reg_blob_deleted(self):
-        assert EventType.REG_BLOB_DELETED is not None
+        assert EventType.REG_BLOB_DELETED.name == "REG_BLOB_DELETED"
 
     def test_reg_manifest_pushed(self):
-        assert EventType.REG_MANIFEST_PUSHED is not None
+        assert EventType.REG_MANIFEST_PUSHED.name == "REG_MANIFEST_PUSHED"
 
     def test_reg_manifest_pulled(self):
-        assert EventType.REG_MANIFEST_PULLED is not None
+        assert EventType.REG_MANIFEST_PULLED.name == "REG_MANIFEST_PULLED"
 
     def test_reg_manifest_deleted(self):
-        assert EventType.REG_MANIFEST_DELETED is not None
+        assert EventType.REG_MANIFEST_DELETED.name == "REG_MANIFEST_DELETED"
 
     def test_reg_tag_created(self):
-        assert EventType.REG_TAG_CREATED is not None
+        assert EventType.REG_TAG_CREATED.name == "REG_TAG_CREATED"
 
     def test_reg_tag_deleted(self):
-        assert EventType.REG_TAG_DELETED is not None
+        assert EventType.REG_TAG_DELETED.name == "REG_TAG_DELETED"
 
     def test_reg_image_built(self):
-        assert EventType.REG_IMAGE_BUILT is not None
+        assert EventType.REG_IMAGE_BUILT.name == "REG_IMAGE_BUILT"
 
     def test_reg_layer_cached(self):
-        assert EventType.REG_LAYER_CACHED is not None
+        assert EventType.REG_LAYER_CACHED.name == "REG_LAYER_CACHED"
 
     def test_reg_gc_completed(self):
-        assert EventType.REG_GC_COMPLETED is not None
+        assert EventType.REG_GC_COMPLETED.name == "REG_GC_COMPLETED"
 
     def test_reg_image_signed(self):
-        assert EventType.REG_IMAGE_SIGNED is not None
+        assert EventType.REG_IMAGE_SIGNED.name == "REG_IMAGE_SIGNED"
 
     def test_reg_image_verified(self):
-        assert EventType.REG_IMAGE_VERIFIED is not None
+        assert EventType.REG_IMAGE_VERIFIED.name == "REG_IMAGE_VERIFIED"
 
     def test_reg_vuln_scanned(self):
-        assert EventType.REG_VULN_SCANNED is not None
+        assert EventType.REG_VULN_SCANNED.name == "REG_VULN_SCANNED"
 
     def test_reg_repo_created(self):
-        assert EventType.REG_REPO_CREATED is not None
+        assert EventType.REG_REPO_CREATED.name == "REG_REPO_CREATED"
 
     def test_reg_dashboard_rendered(self):
-        assert EventType.REG_DASHBOARD_RENDERED is not None
+        assert EventType.REG_DASHBOARD_RENDERED.name == "REG_DASHBOARD_RENDERED"
 
 
 # ============================================================

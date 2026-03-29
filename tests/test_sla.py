@@ -137,13 +137,13 @@ class TestSLOType:
         assert len(SLOType) == 3
 
     def test_latency_exists(self):
-        assert SLOType.LATENCY is not None
+        assert SLOType.LATENCY.name == "LATENCY"
 
     def test_accuracy_exists(self):
-        assert SLOType.ACCURACY is not None
+        assert SLOType.ACCURACY.name == "ACCURACY"
 
     def test_availability_exists(self):
-        assert SLOType.AVAILABILITY is not None
+        assert SLOType.AVAILABILITY.name == "AVAILABILITY"
 
 
 # ============================================================
@@ -178,13 +178,13 @@ class TestAlertStatus:
         assert len(AlertStatus) == 3
 
     def test_firing_exists(self):
-        assert AlertStatus.FIRING is not None
+        assert AlertStatus.FIRING.name == "FIRING"
 
     def test_acknowledged_exists(self):
-        assert AlertStatus.ACKNOWLEDGED is not None
+        assert AlertStatus.ACKNOWLEDGED.name == "ACKNOWLEDGED"
 
     def test_resolved_exists(self):
-        assert AlertStatus.RESOLVED is not None
+        assert AlertStatus.RESOLVED.name == "RESOLVED"
 
 
 # ============================================================
@@ -905,22 +905,22 @@ class TestSLIType:
         assert len(SLIType) == 6
 
     def test_availability(self):
-        assert SLIType.AVAILABILITY is not None
+        assert SLIType.AVAILABILITY.name == "AVAILABILITY"
 
     def test_latency(self):
-        assert SLIType.LATENCY is not None
+        assert SLIType.LATENCY.name == "LATENCY"
 
     def test_correctness(self):
-        assert SLIType.CORRECTNESS is not None
+        assert SLIType.CORRECTNESS.name == "CORRECTNESS"
 
     def test_freshness(self):
-        assert SLIType.FRESHNESS is not None
+        assert SLIType.FRESHNESS.name == "FRESHNESS"
 
     def test_durability(self):
-        assert SLIType.DURABILITY is not None
+        assert SLIType.DURABILITY.name == "DURABILITY"
 
     def test_compliance(self):
-        assert SLIType.COMPLIANCE is not None
+        assert SLIType.COMPLIANCE.name == "COMPLIANCE"
 
 
 # ============================================================

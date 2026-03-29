@@ -194,16 +194,16 @@ class TestCNIOperation:
     """Validate CNI operation enum."""
 
     def test_add(self):
-        assert CNIOperation.ADD is not None
+        assert CNIOperation.ADD.name == "ADD"
 
     def test_del(self):
-        assert CNIOperation.DEL is not None
+        assert CNIOperation.DEL.name == "DEL"
 
     def test_check(self):
-        assert CNIOperation.CHECK is not None
+        assert CNIOperation.CHECK.name == "CHECK"
 
     def test_version(self):
-        assert CNIOperation.VERSION is not None
+        assert CNIOperation.VERSION.name == "VERSION"
 
     def test_member_count(self):
         assert len(CNIOperation) == 4
@@ -232,13 +232,13 @@ class TestInterfaceState:
     """Validate interface state enum."""
 
     def test_down(self):
-        assert InterfaceState.DOWN is not None
+        assert InterfaceState.DOWN.name == "DOWN"
 
     def test_up(self):
-        assert InterfaceState.UP is not None
+        assert InterfaceState.UP.name == "UP"
 
     def test_deleted(self):
-        assert InterfaceState.DELETED is not None
+        assert InterfaceState.DELETED.name == "DELETED"
 
     def test_member_count(self):
         assert len(InterfaceState) == 3
@@ -248,13 +248,13 @@ class TestLeaseState:
     """Validate lease state enum."""
 
     def test_active(self):
-        assert LeaseState.ACTIVE is not None
+        assert LeaseState.ACTIVE.name == "ACTIVE"
 
     def test_expired(self):
-        assert LeaseState.EXPIRED is not None
+        assert LeaseState.EXPIRED.name == "EXPIRED"
 
     def test_released(self):
-        assert LeaseState.RELEASED is not None
+        assert LeaseState.RELEASED.name == "RELEASED"
 
     def test_member_count(self):
         assert len(LeaseState) == 3
@@ -264,10 +264,10 @@ class TestPolicyAction:
     """Validate policy action enum."""
 
     def test_allow(self):
-        assert PolicyAction.ALLOW is not None
+        assert PolicyAction.ALLOW.name == "ALLOW"
 
     def test_deny(self):
-        assert PolicyAction.DENY is not None
+        assert PolicyAction.DENY.name == "DENY"
 
     def test_member_count(self):
         assert len(PolicyAction) == 2
@@ -277,10 +277,10 @@ class TestPolicyDirection:
     """Validate policy direction enum."""
 
     def test_ingress(self):
-        assert PolicyDirection.INGRESS is not None
+        assert PolicyDirection.INGRESS.name == "INGRESS"
 
     def test_egress(self):
-        assert PolicyDirection.EGRESS is not None
+        assert PolicyDirection.EGRESS.name == "EGRESS"
 
     def test_member_count(self):
         assert len(PolicyDirection) == 2
@@ -290,19 +290,19 @@ class TestSTPPortState:
     """Validate STP port state enum."""
 
     def test_disabled(self):
-        assert STPPortState.DISABLED is not None
+        assert STPPortState.DISABLED.name == "DISABLED"
 
     def test_blocking(self):
-        assert STPPortState.BLOCKING is not None
+        assert STPPortState.BLOCKING.name == "BLOCKING"
 
     def test_listening(self):
-        assert STPPortState.LISTENING is not None
+        assert STPPortState.LISTENING.name == "LISTENING"
 
     def test_learning(self):
-        assert STPPortState.LEARNING is not None
+        assert STPPortState.LEARNING.name == "LEARNING"
 
     def test_forwarding(self):
-        assert STPPortState.FORWARDING is not None
+        assert STPPortState.FORWARDING.name == "FORWARDING"
 
     def test_member_count(self):
         assert len(STPPortState) == 5
@@ -1904,52 +1904,52 @@ class TestEventTypes:
     """Validate CNI EventType members."""
 
     def test_cni_container_added(self):
-        assert EventType.CNI_CONTAINER_ADDED is not None
+        assert EventType.CNI_CONTAINER_ADDED.name == "CNI_CONTAINER_ADDED"
 
     def test_cni_container_deleted(self):
-        assert EventType.CNI_CONTAINER_DELETED is not None
+        assert EventType.CNI_CONTAINER_DELETED.name == "CNI_CONTAINER_DELETED"
 
     def test_cni_container_checked(self):
-        assert EventType.CNI_CONTAINER_CHECKED is not None
+        assert EventType.CNI_CONTAINER_CHECKED.name == "CNI_CONTAINER_CHECKED"
 
     def test_cni_veth_created(self):
-        assert EventType.CNI_VETH_CREATED is not None
+        assert EventType.CNI_VETH_CREATED.name == "CNI_VETH_CREATED"
 
     def test_cni_veth_deleted(self):
-        assert EventType.CNI_VETH_DELETED is not None
+        assert EventType.CNI_VETH_DELETED.name == "CNI_VETH_DELETED"
 
     def test_cni_bridge_created(self):
-        assert EventType.CNI_BRIDGE_CREATED is not None
+        assert EventType.CNI_BRIDGE_CREATED.name == "CNI_BRIDGE_CREATED"
 
     def test_cni_ip_allocated(self):
-        assert EventType.CNI_IP_ALLOCATED is not None
+        assert EventType.CNI_IP_ALLOCATED.name == "CNI_IP_ALLOCATED"
 
     def test_cni_ip_released(self):
-        assert EventType.CNI_IP_RELEASED is not None
+        assert EventType.CNI_IP_RELEASED.name == "CNI_IP_RELEASED"
 
     def test_cni_lease_granted(self):
-        assert EventType.CNI_LEASE_GRANTED is not None
+        assert EventType.CNI_LEASE_GRANTED.name == "CNI_LEASE_GRANTED"
 
     def test_cni_lease_expired(self):
-        assert EventType.CNI_LEASE_EXPIRED is not None
+        assert EventType.CNI_LEASE_EXPIRED.name == "CNI_LEASE_EXPIRED"
 
     def test_cni_port_mapped(self):
-        assert EventType.CNI_PORT_MAPPED is not None
+        assert EventType.CNI_PORT_MAPPED.name == "CNI_PORT_MAPPED"
 
     def test_cni_port_unmapped(self):
-        assert EventType.CNI_PORT_UNMAPPED is not None
+        assert EventType.CNI_PORT_UNMAPPED.name == "CNI_PORT_UNMAPPED"
 
     def test_cni_dns_record_added(self):
-        assert EventType.CNI_DNS_RECORD_ADDED is not None
+        assert EventType.CNI_DNS_RECORD_ADDED.name == "CNI_DNS_RECORD_ADDED"
 
     def test_cni_dns_resolved(self):
-        assert EventType.CNI_DNS_RESOLVED is not None
+        assert EventType.CNI_DNS_RESOLVED.name == "CNI_DNS_RESOLVED"
 
     def test_cni_policy_evaluated(self):
-        assert EventType.CNI_POLICY_EVALUATED is not None
+        assert EventType.CNI_POLICY_EVALUATED.name == "CNI_POLICY_EVALUATED"
 
     def test_cni_dashboard_rendered(self):
-        assert EventType.CNI_DASHBOARD_RENDERED is not None
+        assert EventType.CNI_DASHBOARD_RENDERED.name == "CNI_DASHBOARD_RENDERED"
 
 
 # ============================================================

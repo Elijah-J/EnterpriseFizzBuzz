@@ -1111,10 +1111,10 @@ class TestPageState:
     """Tests for the PageState enum."""
 
     def test_all_states(self):
-        assert PageState.CLEAN is not None
-        assert PageState.DIRTY is not None
-        assert PageState.TRANSFERRED is not None
-        assert PageState.FAULTED is not None
+        assert PageState.CLEAN.name == "CLEAN"
+        assert PageState.DIRTY.name == "DIRTY"
+        assert PageState.TRANSFERRED.name == "TRANSFERRED"
+        assert PageState.FAULTED.name == "FAULTED"
 
 
 # ---------------------------------------------------------------------------

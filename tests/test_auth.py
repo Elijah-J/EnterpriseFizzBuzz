@@ -689,10 +689,10 @@ class TestAuthExceptions:
 
 class TestAuthEventTypes:
     def test_new_event_types_exist(self):
-        assert EventType.AUTHORIZATION_GRANTED is not None
-        assert EventType.AUTHORIZATION_DENIED is not None
-        assert EventType.TOKEN_VALIDATED is not None
-        assert EventType.TOKEN_VALIDATION_FAILED is not None
+        assert EventType.AUTHORIZATION_GRANTED.name == "AUTHORIZATION_GRANTED"
+        assert EventType.AUTHORIZATION_DENIED.name == "AUTHORIZATION_DENIED"
+        assert EventType.TOKEN_VALIDATED.name == "TOKEN_VALIDATED"
+        assert EventType.TOKEN_VALIDATION_FAILED.name == "TOKEN_VALIDATION_FAILED"
 
 
 # ============================================================
@@ -702,11 +702,11 @@ class TestAuthEventTypes:
 
 class TestFizzBuzzRole:
     def test_all_roles_exist(self):
-        assert FizzBuzzRole.ANONYMOUS is not None
-        assert FizzBuzzRole.FIZZ_READER is not None
-        assert FizzBuzzRole.BUZZ_ADMIN is not None
-        assert FizzBuzzRole.FIZZBUZZ_SUPERUSER is not None
-        assert FizzBuzzRole.NUMBER_AUDITOR is not None
+        assert FizzBuzzRole.ANONYMOUS.name == "ANONYMOUS"
+        assert FizzBuzzRole.FIZZ_READER.name == "FIZZ_READER"
+        assert FizzBuzzRole.BUZZ_ADMIN.name == "BUZZ_ADMIN"
+        assert FizzBuzzRole.FIZZBUZZ_SUPERUSER.name == "FIZZBUZZ_SUPERUSER"
+        assert FizzBuzzRole.NUMBER_AUDITOR.name == "NUMBER_AUDITOR"
 
     def test_roles_are_unique(self):
         values = [r.value for r in FizzBuzzRole]

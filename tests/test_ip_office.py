@@ -225,8 +225,14 @@ class TestTrademarkRegistry:
 
     def test_all_canonical_marks(self):
         registry = TrademarkRegistry()
-        assert registry.get("BUZZ") is not None
-        assert registry.get("FIZZBUZZ") is not None
+        buzz = registry.get("BUZZ")
+        assert buzz is not None
+        assert buzz.status == TrademarkStatus.REGISTERED
+        assert buzz.mark == "BUZZ"
+        fizzbuzz = registry.get("FIZZBUZZ")
+        assert fizzbuzz is not None
+        assert fizzbuzz.status == TrademarkStatus.REGISTERED
+        assert fizzbuzz.mark == "FIZZBUZZ"
 
     def test_apply_new_mark(self):
         registry = TrademarkRegistry()
@@ -460,7 +466,12 @@ class TestIPDisputeTribunal:
             "FizzBuzz Foundation", "Evil Corp", "trademark", "Fhyzz vs Fizz"
         )
         result = tribunal.adjudicate(case)
-        assert result.verdict is not None
+        assert result.verdict in (
+            DisputeVerdict.PLAINTIFF_WINS,
+            DisputeVerdict.DEFENDANT_WINS,
+            DisputeVerdict.SETTLED,
+            DisputeVerdict.DISMISSED,
+        )
         assert result.opinion != ""
         assert "BEFORE THE FIZZBUZZ INTELLECTUAL PROPERTY TRIBUNAL" in result.opinion
 

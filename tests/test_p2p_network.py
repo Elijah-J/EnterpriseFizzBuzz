@@ -865,13 +865,13 @@ class TestNodeState:
     """Tests for the NodeState enum."""
 
     def test_alive_state_exists(self):
-        assert NodeState.ALIVE is not None
+        assert NodeState.ALIVE.name == "ALIVE"
 
     def test_suspect_state_exists(self):
-        assert NodeState.SUSPECT is not None
+        assert NodeState.SUSPECT.name == "SUSPECT"
 
     def test_dead_state_exists(self):
-        assert NodeState.DEAD is not None
+        assert NodeState.DEAD.name == "DEAD"
 
     def test_three_states(self):
         """NodeState should have exactly 3 members."""
@@ -886,22 +886,22 @@ class TestP2PEventTypes:
     """Tests for P2P-related EventType entries."""
 
     def test_p2p_node_joined(self):
-        assert EventType.P2P_NODE_JOINED is not None
+        assert EventType.P2P_NODE_JOINED.name == "P2P_NODE_JOINED"
 
     def test_p2p_gossip_round_completed(self):
-        assert EventType.P2P_GOSSIP_ROUND_COMPLETED is not None
+        assert EventType.P2P_GOSSIP_ROUND_COMPLETED.name == "P2P_GOSSIP_ROUND_COMPLETED"
 
     def test_p2p_node_state_changed(self):
-        assert EventType.P2P_NODE_STATE_CHANGED is not None
+        assert EventType.P2P_NODE_STATE_CHANGED.name == "P2P_NODE_STATE_CHANGED"
 
     def test_p2p_dht_store(self):
-        assert EventType.P2P_DHT_STORE is not None
+        assert EventType.P2P_DHT_STORE.name == "P2P_DHT_STORE"
 
     def test_p2p_merkle_sync(self):
-        assert EventType.P2P_MERKLE_SYNC is not None
+        assert EventType.P2P_MERKLE_SYNC.name == "P2P_MERKLE_SYNC"
 
     def test_p2p_dashboard_rendered(self):
-        assert EventType.P2P_DASHBOARD_RENDERED is not None
+        assert EventType.P2P_DASHBOARD_RENDERED.name == "P2P_DASHBOARD_RENDERED"
 
 
 # ===========================================================================

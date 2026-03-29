@@ -783,7 +783,7 @@ class TestRegexMiddleware:
 
     def test_middleware_patterns_accessible(self):
         mw = RegexMiddleware()
-        assert mw.patterns is not None
+        assert isinstance(mw.patterns, FizzBuzzPatterns)
         assert mw.patterns.pattern_count == 7
 
     def test_middleware_enable_dashboard_flag(self):

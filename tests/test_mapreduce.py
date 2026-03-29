@@ -852,20 +852,20 @@ class TestEnums:
     """Verify enum definitions."""
 
     def test_task_status_values(self):
-        assert TaskStatus.PENDING is not None
-        assert TaskStatus.RUNNING is not None
-        assert TaskStatus.COMPLETED is not None
-        assert TaskStatus.FAILED is not None
-        assert TaskStatus.SPECULATIVE is not None
+        assert TaskStatus.PENDING.name == "PENDING"
+        assert TaskStatus.RUNNING.name == "RUNNING"
+        assert TaskStatus.COMPLETED.name == "COMPLETED"
+        assert TaskStatus.FAILED.name == "FAILED"
+        assert TaskStatus.SPECULATIVE.name == "SPECULATIVE"
 
     def test_job_state_values(self):
-        assert JobState.SUBMITTED is not None
-        assert JobState.SPLITTING is not None
-        assert JobState.MAPPING is not None
-        assert JobState.SHUFFLING is not None
-        assert JobState.REDUCING is not None
-        assert JobState.COMPLETED is not None
-        assert JobState.FAILED is not None
+        assert JobState.SUBMITTED.name == "SUBMITTED"
+        assert JobState.SPLITTING.name == "SPLITTING"
+        assert JobState.MAPPING.name == "MAPPING"
+        assert JobState.SHUFFLING.name == "SHUFFLING"
+        assert JobState.REDUCING.name == "REDUCING"
+        assert JobState.COMPLETED.name == "COMPLETED"
+        assert JobState.FAILED.name == "FAILED"
 
 
 # ============================================================

@@ -90,16 +90,16 @@ class TestHealthStatus:
     """Validate the HealthStatus enumeration values exist and are distinct."""
 
     def test_healthy_exists(self):
-        assert HealthStatus.HEALTHY is not None
+        assert HealthStatus.HEALTHY.value == "healthy"
 
     def test_degraded_exists(self):
-        assert HealthStatus.DEGRADED is not None
+        assert HealthStatus.DEGRADED.value == "degraded"
 
     def test_unhealthy_exists(self):
-        assert HealthStatus.UNHEALTHY is not None
+        assert HealthStatus.UNHEALTHY.value == "unhealthy"
 
     def test_unknown_exists(self):
-        assert HealthStatus.UNKNOWN is not None
+        assert HealthStatus.UNKNOWN.value == "unknown"
 
     def test_all_statuses_are_distinct(self):
         statuses = [

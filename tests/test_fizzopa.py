@@ -64,15 +64,15 @@ class TestPolicyResult:
 
     def test_allow_exists(self):
         """The ALLOW result must be defined for permissive policies."""
-        assert PolicyResult.ALLOW is not None
+        assert PolicyResult.ALLOW.value == "allow"
 
     def test_deny_exists(self):
         """The DENY result must be defined for restrictive policies."""
-        assert PolicyResult.DENY is not None
+        assert PolicyResult.DENY.value == "deny"
 
     def test_undecided_exists(self):
         """The UNDECIDED result must be defined for non-matching rules."""
-        assert PolicyResult.UNDECIDED is not None
+        assert PolicyResult.UNDECIDED.value == "undecided"
 
     def test_three_members(self):
         """Exactly three result states must exist — no more, no fewer."""

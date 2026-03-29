@@ -908,10 +908,10 @@ class TestCPUMode:
     """Tests for the CPUMode enum."""
 
     def test_real_mode_exists(self):
-        assert CPUMode.REAL_MODE is not None
+        assert CPUMode.REAL_MODE.name == "REAL_MODE"
 
     def test_protected_mode_exists(self):
-        assert CPUMode.PROTECTED_MODE is not None
+        assert CPUMode.PROTECTED_MODE.name == "PROTECTED_MODE"
 
     def test_long_mode_exists(self):
-        assert CPUMode.LONG_MODE is not None
+        assert CPUMode.LONG_MODE.name == "LONG_MODE"

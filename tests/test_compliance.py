@@ -795,38 +795,38 @@ class TestComplianceModels:
 
     def test_compliance_regime_values(self):
         """All three regimes should exist."""
-        assert ComplianceRegime.SOX is not None
-        assert ComplianceRegime.GDPR is not None
-        assert ComplianceRegime.HIPAA is not None
+        assert ComplianceRegime.SOX.name == "SOX"
+        assert ComplianceRegime.GDPR.name == "GDPR"
+        assert ComplianceRegime.HIPAA.name == "HIPAA"
 
     def test_compliance_verdict_values(self):
         """All verdict types should exist."""
-        assert ComplianceVerdict.COMPLIANT is not None
-        assert ComplianceVerdict.NON_COMPLIANT is not None
-        assert ComplianceVerdict.PARTIALLY_COMPLIANT is not None
-        assert ComplianceVerdict.UNDER_REVIEW is not None
-        assert ComplianceVerdict.PARADOX_DETECTED is not None
+        assert ComplianceVerdict.COMPLIANT.name == "COMPLIANT"
+        assert ComplianceVerdict.NON_COMPLIANT.name == "NON_COMPLIANT"
+        assert ComplianceVerdict.PARTIALLY_COMPLIANT.name == "PARTIALLY_COMPLIANT"
+        assert ComplianceVerdict.UNDER_REVIEW.name == "UNDER_REVIEW"
+        assert ComplianceVerdict.PARADOX_DETECTED.name == "PARADOX_DETECTED"
 
     def test_data_classification_values(self):
         """All classification levels should exist."""
-        assert DataClassificationLevel.PUBLIC is not None
-        assert DataClassificationLevel.INTERNAL is not None
-        assert DataClassificationLevel.CONFIDENTIAL is not None
-        assert DataClassificationLevel.SECRET is not None
-        assert DataClassificationLevel.TOP_SECRET_FIZZBUZZ is not None
+        assert DataClassificationLevel.PUBLIC.name == "PUBLIC"
+        assert DataClassificationLevel.INTERNAL.name == "INTERNAL"
+        assert DataClassificationLevel.CONFIDENTIAL.name == "CONFIDENTIAL"
+        assert DataClassificationLevel.SECRET.name == "SECRET"
+        assert DataClassificationLevel.TOP_SECRET_FIZZBUZZ.name == "TOP_SECRET_FIZZBUZZ"
 
     def test_gdpr_erasure_status_values(self):
         """All erasure statuses should exist."""
-        assert GDPRErasureStatus.REQUESTED is not None
-        assert GDPRErasureStatus.PARADOX_ENCOUNTERED is not None
-        assert GDPRErasureStatus.CERTIFICATE_ISSUED is not None
+        assert GDPRErasureStatus.REQUESTED.name == "REQUESTED"
+        assert GDPRErasureStatus.PARADOX_ENCOUNTERED.name == "PARADOX_ENCOUNTERED"
+        assert GDPRErasureStatus.CERTIFICATE_ISSUED.name == "CERTIFICATE_ISSUED"
 
     def test_hipaa_minimum_necessary_levels(self):
         """All HIPAA access levels should exist."""
-        assert HIPAAMinimumNecessaryLevel.FULL_ACCESS is not None
-        assert HIPAAMinimumNecessaryLevel.TREATMENT is not None
-        assert HIPAAMinimumNecessaryLevel.OPERATIONS is not None
-        assert HIPAAMinimumNecessaryLevel.RESEARCH is not None
+        assert HIPAAMinimumNecessaryLevel.FULL_ACCESS.name == "FULL_ACCESS"
+        assert HIPAAMinimumNecessaryLevel.TREATMENT.name == "TREATMENT"
+        assert HIPAAMinimumNecessaryLevel.OPERATIONS.name == "OPERATIONS"
+        assert HIPAAMinimumNecessaryLevel.RESEARCH.name == "RESEARCH"
 
     def test_compliance_check_result_frozen(self):
         """ComplianceCheckResult should be immutable."""
@@ -845,10 +845,10 @@ class TestComplianceModels:
 
     def test_compliance_event_types_exist(self):
         """All compliance event types should exist."""
-        assert EventType.COMPLIANCE_CHECK_STARTED is not None
-        assert EventType.COMPLIANCE_CHECK_PASSED is not None
-        assert EventType.COMPLIANCE_CHECK_FAILED is not None
-        assert EventType.GDPR_ERASURE_PARADOX_DETECTED is not None
-        assert EventType.SOX_SEGREGATION_ENFORCED is not None
-        assert EventType.HIPAA_PHI_ENCRYPTED is not None
-        assert EventType.COMPLIANCE_DASHBOARD_RENDERED is not None
+        assert EventType.COMPLIANCE_CHECK_STARTED.name == "COMPLIANCE_CHECK_STARTED"
+        assert EventType.COMPLIANCE_CHECK_PASSED.name == "COMPLIANCE_CHECK_PASSED"
+        assert EventType.COMPLIANCE_CHECK_FAILED.name == "COMPLIANCE_CHECK_FAILED"
+        assert EventType.GDPR_ERASURE_PARADOX_DETECTED.name == "GDPR_ERASURE_PARADOX_DETECTED"
+        assert EventType.SOX_SEGREGATION_ENFORCED.name == "SOX_SEGREGATION_ENFORCED"
+        assert EventType.HIPAA_PHI_ENCRYPTED.name == "HIPAA_PHI_ENCRYPTED"
+        assert EventType.COMPLIANCE_DASHBOARD_RENDERED.name == "COMPLIANCE_DASHBOARD_RENDERED"

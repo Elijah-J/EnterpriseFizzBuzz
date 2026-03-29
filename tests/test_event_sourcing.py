@@ -1010,18 +1010,18 @@ class TestEventSourcingExceptions:
 
 class TestEventSourcingEventTypes:
     def test_new_event_types_exist(self):
-        assert EventType.ES_NUMBER_RECEIVED is not None
-        assert EventType.ES_DIVISIBILITY_CHECKED is not None
-        assert EventType.ES_RULE_MATCHED is not None
-        assert EventType.ES_LABEL_ASSIGNED is not None
-        assert EventType.ES_EVALUATION_COMPLETED is not None
-        assert EventType.ES_SNAPSHOT_TAKEN is not None
-        assert EventType.ES_COMMAND_DISPATCHED is not None
-        assert EventType.ES_COMMAND_HANDLED is not None
-        assert EventType.ES_QUERY_DISPATCHED is not None
-        assert EventType.ES_PROJECTION_UPDATED is not None
-        assert EventType.ES_EVENT_REPLAYED is not None
-        assert EventType.ES_TEMPORAL_QUERY_EXECUTED is not None
+        assert EventType.ES_NUMBER_RECEIVED.name == "ES_NUMBER_RECEIVED"
+        assert EventType.ES_DIVISIBILITY_CHECKED.name == "ES_DIVISIBILITY_CHECKED"
+        assert EventType.ES_RULE_MATCHED.name == "ES_RULE_MATCHED"
+        assert EventType.ES_LABEL_ASSIGNED.name == "ES_LABEL_ASSIGNED"
+        assert EventType.ES_EVALUATION_COMPLETED.name == "ES_EVALUATION_COMPLETED"
+        assert EventType.ES_SNAPSHOT_TAKEN.name == "ES_SNAPSHOT_TAKEN"
+        assert EventType.ES_COMMAND_DISPATCHED.name == "ES_COMMAND_DISPATCHED"
+        assert EventType.ES_COMMAND_HANDLED.name == "ES_COMMAND_HANDLED"
+        assert EventType.ES_QUERY_DISPATCHED.name == "ES_QUERY_DISPATCHED"
+        assert EventType.ES_PROJECTION_UPDATED.name == "ES_PROJECTION_UPDATED"
+        assert EventType.ES_EVENT_REPLAYED.name == "ES_EVENT_REPLAYED"
+        assert EventType.ES_TEMPORAL_QUERY_EXECUTED.name == "ES_TEMPORAL_QUERY_EXECUTED"
 
 
 # ============================================================

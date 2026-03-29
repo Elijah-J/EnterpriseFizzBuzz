@@ -905,10 +905,10 @@ class TestFrameType:
     """Verify frame type enumeration."""
 
     def test_i_frame_exists(self) -> None:
-        assert FrameType.I_FRAME is not None
+        assert FrameType.I_FRAME.name == "I_FRAME"
 
     def test_p_frame_exists(self) -> None:
-        assert FrameType.P_FRAME is not None
+        assert FrameType.P_FRAME.name == "P_FRAME"
 
     def test_two_frame_types(self) -> None:
         assert len(FrameType) == 2

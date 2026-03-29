@@ -161,11 +161,11 @@ def chaos_monkey() -> ChaosMonkey:
 
 class TestFaultType:
     def test_all_fault_types_exist(self):
-        assert FaultType.RESULT_CORRUPTION is not None
-        assert FaultType.LATENCY_INJECTION is not None
-        assert FaultType.EXCEPTION_INJECTION is not None
-        assert FaultType.RULE_ENGINE_FAILURE is not None
-        assert FaultType.CONFIDENCE_MANIPULATION is not None
+        assert FaultType.RESULT_CORRUPTION.name == "RESULT_CORRUPTION"
+        assert FaultType.LATENCY_INJECTION.name == "LATENCY_INJECTION"
+        assert FaultType.EXCEPTION_INJECTION.name == "EXCEPTION_INJECTION"
+        assert FaultType.RULE_ENGINE_FAILURE.name == "RULE_ENGINE_FAILURE"
+        assert FaultType.CONFIDENCE_MANIPULATION.name == "CONFIDENCE_MANIPULATION"
 
     def test_enum_values_are_unique(self):
         values = [ft.value for ft in FaultType]
@@ -737,13 +737,13 @@ class TestChaosExceptions:
 
 class TestChaosEventTypes:
     def test_new_event_types_exist(self):
-        assert EventType.CHAOS_MONKEY_ACTIVATED is not None
-        assert EventType.CHAOS_FAULT_INJECTED is not None
-        assert EventType.CHAOS_RESULT_CORRUPTED is not None
-        assert EventType.CHAOS_LATENCY_INJECTED is not None
-        assert EventType.CHAOS_EXCEPTION_INJECTED is not None
-        assert EventType.CHAOS_GAMEDAY_STARTED is not None
-        assert EventType.CHAOS_GAMEDAY_ENDED is not None
+        assert EventType.CHAOS_MONKEY_ACTIVATED.name == "CHAOS_MONKEY_ACTIVATED"
+        assert EventType.CHAOS_FAULT_INJECTED.name == "CHAOS_FAULT_INJECTED"
+        assert EventType.CHAOS_RESULT_CORRUPTED.name == "CHAOS_RESULT_CORRUPTED"
+        assert EventType.CHAOS_LATENCY_INJECTED.name == "CHAOS_LATENCY_INJECTED"
+        assert EventType.CHAOS_EXCEPTION_INJECTED.name == "CHAOS_EXCEPTION_INJECTED"
+        assert EventType.CHAOS_GAMEDAY_STARTED.name == "CHAOS_GAMEDAY_STARTED"
+        assert EventType.CHAOS_GAMEDAY_ENDED.name == "CHAOS_GAMEDAY_ENDED"
 
 
 # ============================================================

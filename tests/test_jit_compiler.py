@@ -85,13 +85,13 @@ class TestSSAOpCode:
     """Tests for the SSA opcode enum."""
 
     def test_all_opcodes_exist(self):
-        assert SSAOpCode.LOAD is not None
-        assert SSAOpCode.MOD is not None
-        assert SSAOpCode.CMP is not None
-        assert SSAOpCode.BRANCH is not None
-        assert SSAOpCode.EMIT is not None
-        assert SSAOpCode.GUARD is not None
-        assert SSAOpCode.CONST is not None
+        assert SSAOpCode.LOAD.name == "LOAD"
+        assert SSAOpCode.MOD.name == "MOD"
+        assert SSAOpCode.CMP.name == "CMP"
+        assert SSAOpCode.BRANCH.name == "BRANCH"
+        assert SSAOpCode.EMIT.name == "EMIT"
+        assert SSAOpCode.GUARD.name == "GUARD"
+        assert SSAOpCode.CONST.name == "CONST"
 
     def test_opcode_count(self):
         assert len(SSAOpCode) == 7

@@ -117,10 +117,10 @@ class TestBackendStatus:
     """Tests for the BackendStatus enumeration."""
 
     def test_all_statuses_exist(self):
-        assert BackendStatus.HEALTHY is not None
-        assert BackendStatus.DEGRADED is not None
-        assert BackendStatus.UNHEALTHY is not None
-        assert BackendStatus.DRAINING is not None
+        assert BackendStatus.HEALTHY.name == "HEALTHY"
+        assert BackendStatus.DEGRADED.name == "DEGRADED"
+        assert BackendStatus.UNHEALTHY.name == "UNHEALTHY"
+        assert BackendStatus.DRAINING.name == "DRAINING"
 
     def test_status_count(self):
         assert len(BackendStatus) == 4
@@ -913,11 +913,11 @@ class TestEventTypeEntries:
     """Verify that reverse proxy EventType entries exist."""
 
     def test_proxy_event_types_exist(self):
-        assert EventType.PROXY_REQUEST_ROUTED is not None
-        assert EventType.PROXY_REQUEST_COMPLETED is not None
-        assert EventType.PROXY_BACKEND_HEALTH_CHANGED is not None
-        assert EventType.PROXY_BACKEND_DRAINED is not None
-        assert EventType.PROXY_DASHBOARD_RENDERED is not None
+        assert EventType.PROXY_REQUEST_ROUTED.name == "PROXY_REQUEST_ROUTED"
+        assert EventType.PROXY_REQUEST_COMPLETED.name == "PROXY_REQUEST_COMPLETED"
+        assert EventType.PROXY_BACKEND_HEALTH_CHANGED.name == "PROXY_BACKEND_HEALTH_CHANGED"
+        assert EventType.PROXY_BACKEND_DRAINED.name == "PROXY_BACKEND_DRAINED"
+        assert EventType.PROXY_DASHBOARD_RENDERED.name == "PROXY_DASHBOARD_RENDERED"
 
 
 # ============================================================

@@ -1471,7 +1471,7 @@ class TestFizzBuzzIRCompiler:
     def test_compile_fizzbuzz_rules(self):
         compiler = FizzBuzzIRCompiler()
         module = compiler.compile_rules([(3, "Fizz"), (5, "Buzz")])
-        assert module is not None
+        assert isinstance(module, IRModule)
         func = module.get_function("fizzbuzz_evaluate")
         assert func is not None
         assert func.block_count() >= 3  # entry, match blocks, default

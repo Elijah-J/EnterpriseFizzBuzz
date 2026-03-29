@@ -839,14 +839,14 @@ class TestEventTypeEntries:
     """Verify that FizzLock event types exist in the domain model."""
 
     def test_lock_event_types_exist(self):
-        assert EventType.LOCK_ACQUIRED is not None
-        assert EventType.LOCK_RELEASED is not None
-        assert EventType.LOCK_UPGRADE_REQUESTED is not None
-        assert EventType.LOCK_UPGRADE_COMPLETED is not None
-        assert EventType.LOCK_ACQUISITION_TIMEOUT is not None
-        assert EventType.LOCK_DEADLOCK_DETECTED is not None
-        assert EventType.LOCK_TRANSACTION_ABORTED is not None
-        assert EventType.LOCK_LEASE_EXPIRED is not None
-        assert EventType.LOCK_LEASE_RENEWED is not None
-        assert EventType.LOCK_CONTENTION_DETECTED is not None
-        assert EventType.LOCK_DASHBOARD_RENDERED is not None
+        assert EventType.LOCK_ACQUIRED.name == "LOCK_ACQUIRED"
+        assert EventType.LOCK_RELEASED.name == "LOCK_RELEASED"
+        assert EventType.LOCK_UPGRADE_REQUESTED.name == "LOCK_UPGRADE_REQUESTED"
+        assert EventType.LOCK_UPGRADE_COMPLETED.name == "LOCK_UPGRADE_COMPLETED"
+        assert EventType.LOCK_ACQUISITION_TIMEOUT.name == "LOCK_ACQUISITION_TIMEOUT"
+        assert EventType.LOCK_DEADLOCK_DETECTED.name == "LOCK_DEADLOCK_DETECTED"
+        assert EventType.LOCK_TRANSACTION_ABORTED.name == "LOCK_TRANSACTION_ABORTED"
+        assert EventType.LOCK_LEASE_EXPIRED.name == "LOCK_LEASE_EXPIRED"
+        assert EventType.LOCK_LEASE_RENEWED.name == "LOCK_LEASE_RENEWED"
+        assert EventType.LOCK_CONTENTION_DETECTED.name == "LOCK_CONTENTION_DETECTED"
+        assert EventType.LOCK_DASHBOARD_RENDERED.name == "LOCK_DASHBOARD_RENDERED"

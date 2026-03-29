@@ -553,7 +553,10 @@ class FizzBuzzServiceBuilder:
 
         # Formatter
         fmt = self._output_format or self._config.output_format
-        formatter = self._formatter or FormatterFactory.create(fmt)
+        formatter_kwargs = {}
+        if self._config.include_metadata:
+            formatter_kwargs["include_metadata"] = True
+        formatter = self._formatter or FormatterFactory.create(fmt, **formatter_kwargs)
 
         logger.info(
             "FizzBuzzService built: engine=%s, rules=%d, middleware=%d, format=%s",

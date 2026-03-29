@@ -111,18 +111,18 @@ def test_implements_iruleengine(engine):
 def test_fizzchat_correct_returns(engine, number, expected_output):
     """Verify that FizzChatEngine returns the correct FizzBuzz strings using the real LLM.
 
-    The NanoLLM is non-deterministic, so we allow up to 3 attempts before failing.
+    The NanoLLM has a 5% simulated hallucination rate injected via
+    random.random(), but the RLHF correction layer (Bob McFizzington)
+    deterministically corrects any hallucination by falling back to the
+    standard rule engine. We seed the global RNG for reproducibility,
+    but correctness must hold regardless of hallucination injection.
     """
-    rules = []
-    last_result = None
-    for _attempt in range(3):
-        result = engine.evaluate(number, rules)
-        last_result = result
-        if result.output == expected_output:
-            break
-    assert isinstance(last_result, FizzBuzzResult)
-    assert last_result.output == expected_output
-    assert last_result.number == number
+    import random
+    random.seed(42)
+    result = engine.evaluate(number, [])
+    assert isinstance(result, FizzBuzzResult)
+    assert result.output == expected_output
+    assert result.number == number
 
 def test_rlhf_bob_correction():
     """Verify the RLHF mechanism where Bob corrects an LLM hallucination."""

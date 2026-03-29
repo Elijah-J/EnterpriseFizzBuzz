@@ -273,6 +273,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     }
     output_format = format_map.get(args.format) if args.format else config.output_format
 
+    # Metadata flag (CLI overrides config)
+    if args.metadata:
+        config._raw_config.setdefault("output", {})["include_metadata"] = True
+
     # Strategy
     strategy_map = {
         "standard": EvaluationStrategy.STANDARD,

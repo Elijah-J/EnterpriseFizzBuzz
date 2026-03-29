@@ -24,6 +24,7 @@ from __future__ import annotations
 import sys
 import time
 import uuid
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 from unittest.mock import MagicMock
@@ -432,8 +433,15 @@ class TestContextMetadataAccumulation:
         assert "processing_time_ns" in result.metadata
         assert "processing_time_ms" in result.metadata
         assert result.metadata["processing_time_ns"] > 0
-        assert result.start_time is not None
-        assert result.end_time is not None
+        assert isinstance(result.start_time, datetime), (
+            f"start_time should be a datetime, got {type(result.start_time)}"
+        )
+        assert isinstance(result.end_time, datetime), (
+            f"end_time should be a datetime, got {type(result.end_time)}"
+        )
+        assert result.end_time >= result.start_time, (
+            "end_time must be >= start_time"
+        )
 
     def test_sla_middleware_adds_latency_metadata(self, engine, default_rules):
         """SLAMiddleware stamps the context with SLA latency data."""

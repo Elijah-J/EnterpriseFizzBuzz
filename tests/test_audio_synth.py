@@ -97,16 +97,16 @@ class TestWaveform:
     """Verify the Waveform enumeration defines all required synthesis modes."""
 
     def test_sine_exists(self) -> None:
-        assert Waveform.SINE is not None
+        assert Waveform.SINE.name == "SINE"
 
     def test_square_exists(self) -> None:
-        assert Waveform.SQUARE is not None
+        assert Waveform.SQUARE.name == "SQUARE"
 
     def test_sawtooth_exists(self) -> None:
-        assert Waveform.SAWTOOTH is not None
+        assert Waveform.SAWTOOTH.name == "SAWTOOTH"
 
     def test_triangle_exists(self) -> None:
-        assert Waveform.TRIANGLE is not None
+        assert Waveform.TRIANGLE.name == "TRIANGLE"
 
     def test_four_waveforms(self) -> None:
         assert len(Waveform) == 4

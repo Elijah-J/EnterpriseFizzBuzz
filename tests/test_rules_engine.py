@@ -542,7 +542,8 @@ class TestMachineLearningEngine:
         ml_engine.evaluate(1, default_rules)
         for name, report in ml_engine._reports.items():
             assert report.converged, f"Model '{name}' failed to converge"
-            assert report.convergence_epoch is not None
+            assert isinstance(report.convergence_epoch, int)
+            assert report.convergence_epoch >= 0
 
     def test_training_reports_generated(self, ml_engine, default_rules):
         """Training reports must be generated for every rule."""

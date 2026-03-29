@@ -266,12 +266,12 @@ class TestGateType:
     """Tests for the GateType enumeration."""
 
     def test_all_types_exist(self):
-        assert GateType.AND is not None
-        assert GateType.OR is not None
-        assert GateType.NOT is not None
-        assert GateType.XOR is not None
-        assert GateType.NAND is not None
-        assert GateType.NOR is not None
+        assert GateType.AND.name == "AND"
+        assert GateType.OR.name == "OR"
+        assert GateType.NOT.name == "NOT"
+        assert GateType.XOR.name == "XOR"
+        assert GateType.NAND.name == "NAND"
+        assert GateType.NOR.name == "NOR"
 
     def test_six_types(self):
         assert len(GateType) == 6

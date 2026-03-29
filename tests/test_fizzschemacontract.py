@@ -98,19 +98,19 @@ class TestEnums:
     """Validate enum definitions for compatibility modes and field types."""
 
     def test_compatibility_mode_backward(self):
-        assert CompatibilityMode.BACKWARD is not None
+        assert CompatibilityMode.BACKWARD.value == "backward"
 
     def test_compatibility_mode_forward(self):
-        assert CompatibilityMode.FORWARD is not None
+        assert CompatibilityMode.FORWARD.value == "forward"
 
     def test_compatibility_mode_full(self):
-        assert CompatibilityMode.FULL is not None
+        assert CompatibilityMode.FULL.value == "full"
 
     def test_field_type_string(self):
-        assert SchemaFieldType.STRING is not None
+        assert SchemaFieldType.STRING.value == "string"
 
     def test_field_type_integer(self):
-        assert SchemaFieldType.INTEGER is not None
+        assert SchemaFieldType.INTEGER.value == "integer"
 
     def test_field_type_covers_all_primitives(self):
         """All six field types must be present for complete schema coverage."""

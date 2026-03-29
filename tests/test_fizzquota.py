@@ -72,10 +72,10 @@ class TestEnums:
         assert actual == expected
 
     def test_quota_enforcement_hard(self):
-        assert QuotaEnforcement.HARD is not None
+        assert QuotaEnforcement.HARD.value == "hard"
 
     def test_quota_enforcement_soft(self):
-        assert QuotaEnforcement.SOFT is not None
+        assert QuotaEnforcement.SOFT.value == "soft"
 
 
 # ============================================================================

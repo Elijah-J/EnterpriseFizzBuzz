@@ -133,10 +133,10 @@ class TestTelemetryCollector:
 
     def test_error_severity_levels_exist(self):
         """All four severity levels must be present in the enum."""
-        assert ErrorSeverity.LOW is not None
-        assert ErrorSeverity.MEDIUM is not None
-        assert ErrorSeverity.HIGH is not None
-        assert ErrorSeverity.FATAL is not None
+        assert ErrorSeverity.LOW.value == "low"
+        assert ErrorSeverity.MEDIUM.value == "medium"
+        assert ErrorSeverity.HIGH.value == "high"
+        assert ErrorSeverity.FATAL.value == "fatal"
         assert len(ErrorSeverity) == 4
 
     def test_counts_reflect_recorded_items(self):

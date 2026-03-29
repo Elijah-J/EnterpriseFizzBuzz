@@ -265,7 +265,7 @@ class TestWriteAheadLog:
         wal = WriteAheadLog("test-node")
         wal.append(WALOperation.INSERT, {"key": "a"}, 1)
         record = wal.get_record(1)
-        assert record is not None
+        assert isinstance(record, WALRecord)
         assert record.payload == {"key": "a"}
 
     def test_get_record_nonexistent(self):
@@ -280,7 +280,7 @@ class TestWriteAheadLog:
         assert removed == 2
         assert wal.record_count == 3
         assert wal.get_record(1) is None
-        assert wal.get_record(3) is not None
+        assert isinstance(wal.get_record(3), WALRecord)
 
     def test_all_records_returns_copy(self):
         wal = WriteAheadLog("test-node")
@@ -414,7 +414,7 @@ class TestReplicaNode:
     def test_write_on_primary(self):
         primary = ReplicaNode(role=NodeRole.PRIMARY)
         record = primary.write("key", "value")
-        assert record is not None
+        assert isinstance(record, WALRecord)
         assert record.lsn == 1
         assert primary.data_store["key"] == "value"
 
@@ -575,7 +575,7 @@ class TestReplicaSet:
     def test_write_sync(self):
         rs = ReplicaSet(mode=ReplicationMode.SYNC, replica_count=2)
         record = rs.write("key1", "val1")
-        assert record is not None
+        assert isinstance(record, WALRecord)
         assert record.lsn == 1
         # Sync mode ships to all replicas
         for r in rs.replicas:
@@ -584,7 +584,7 @@ class TestReplicaSet:
     def test_write_async(self):
         rs = ReplicaSet(mode=ReplicationMode.ASYNC, replica_count=2)
         record = rs.write("key1", "val1")
-        assert record is not None
+        assert isinstance(record, WALRecord)
         # Async still ships in our in-memory implementation
         for r in rs.replicas:
             assert r.applied_lsn >= 0  # May or may not have applied
@@ -592,7 +592,7 @@ class TestReplicaSet:
     def test_write_quorum(self):
         rs = ReplicaSet(mode=ReplicationMode.QUORUM, replica_count=3)
         record = rs.write("key1", "val1")
-        assert record is not None
+        assert isinstance(record, WALRecord)
 
     def test_quorum_size(self):
         rs2 = ReplicaSet(replica_count=2)
@@ -637,7 +637,7 @@ class TestReplicaSet:
         rs = ReplicaSet(replica_count=3)
         target_id = rs.replicas[1].node_id
         removed = rs.remove_replica(target_id)
-        assert removed is not None
+        assert isinstance(removed, ReplicaNode)
         assert len(rs.replicas) == 2
 
     def test_remove_nonexistent_returns_none(self):
@@ -650,7 +650,7 @@ class TestReplicaSet:
         rs.write("k1", "v1")
         rs.write("k2", "v2")
         best = rs.get_most_advanced_replica()
-        assert best is not None
+        assert isinstance(best, ReplicaNode)
         assert best.applied_lsn >= 1
 
     def test_all_nodes_includes_primary_and_replicas(self):
@@ -710,7 +710,7 @@ class TestFailoverManager:
         fm = FailoverManager(rs)
         old_primary = rs.primary.node_id
         new_primary = fm.trigger_failover()
-        assert new_primary is not None
+        assert isinstance(new_primary, ReplicaNode)
         assert new_primary.role == NodeRole.PRIMARY
         assert rs.epoch == 2
         assert fm.failover_count == 1

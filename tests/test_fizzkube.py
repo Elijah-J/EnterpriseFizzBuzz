@@ -1000,18 +1000,18 @@ class TestEnums:
 
     def test_pod_phases(self):
         """All expected PodPhase values exist."""
-        assert PodPhase.PENDING is not None
-        assert PodPhase.RUNNING is not None
-        assert PodPhase.SUCCEEDED is not None
-        assert PodPhase.FAILED is not None
+        assert PodPhase.PENDING.name == "PENDING"
+        assert PodPhase.RUNNING.name == "RUNNING"
+        assert PodPhase.SUCCEEDED.name == "SUCCEEDED"
+        assert PodPhase.FAILED.name == "FAILED"
 
     def test_node_conditions(self):
         """All expected NodeCondition values exist."""
-        assert NodeCondition.READY is not None
-        assert NodeCondition.NOT_READY is not None
-        assert NodeCondition.DISK_PRESSURE is not None
-        assert NodeCondition.MEMORY_PRESSURE is not None
-        assert NodeCondition.PID_PRESSURE is not None
+        assert NodeCondition.READY.name == "READY"
+        assert NodeCondition.NOT_READY.name == "NOT_READY"
+        assert NodeCondition.DISK_PRESSURE.name == "DISK_PRESSURE"
+        assert NodeCondition.MEMORY_PRESSURE.name == "MEMORY_PRESSURE"
+        assert NodeCondition.PID_PRESSURE.name == "PID_PRESSURE"
 
 
 # ===========================================================================

@@ -331,13 +331,13 @@ class TestNTPClient:
 
     def test_best_measurement_tracked(self, ntp_client, ntp_server):
         ntp_client.poll_burst(ntp_server, count=4)
-        assert ntp_client.best_offset is not None
-        assert ntp_client.best_delay is not None
+        assert isinstance(ntp_client.best_offset, float)
+        assert isinstance(ntp_client.best_delay, float)
 
     def test_filtered_offset_returns_median(self, ntp_client, ntp_server):
         ntp_client.poll_burst(ntp_server, count=8)
         filtered = ntp_client.get_filtered_offset()
-        assert filtered is not None
+        assert isinstance(filtered, float)
 
     def test_filtered_offset_none_when_empty(self, drifting_clock):
         client = NTPClient(clock=drifting_clock)
@@ -552,7 +552,7 @@ class TestAllanDeviationAnalyzer:
         for _ in range(20):
             a.record_phase(0.001)  # Constant offset
         adev = a.compute_adev(1)
-        assert adev is not None
+        assert isinstance(adev, float)
         assert adev == 0.0
 
     def test_adev_with_linear_drift(self):
@@ -561,7 +561,7 @@ class TestAllanDeviationAnalyzer:
         for i in range(20):
             a.record_phase(i * 0.001)  # Linear drift: 1ms per sample
         adev = a.compute_adev(1)
-        assert adev is not None
+        assert isinstance(adev, float)
         assert adev >= 0.0
 
     def test_adev_with_random_walk(self):
@@ -572,7 +572,7 @@ class TestAllanDeviationAnalyzer:
             phase = math.sin(i * 0.5) * 0.001
             a.record_phase(phase)
         adev = a.compute_adev(1)
-        assert adev is not None
+        assert isinstance(adev, float)
         assert adev > 0.0
 
     def test_adev_spectrum(self):
@@ -722,9 +722,9 @@ class TestCreateClockSyncSubsystem:
 
     def test_creates_all_components(self):
         hierarchy, analyzer, middleware = create_clock_sync_subsystem()
-        assert hierarchy is not None
-        assert analyzer is not None
-        assert middleware is not None
+        assert isinstance(hierarchy, StratumHierarchy)
+        assert isinstance(analyzer, AllanDeviationAnalyzer)
+        assert isinstance(middleware, ClockMiddleware)
 
     def test_hierarchy_has_primary(self):
         hierarchy, _, _ = create_clock_sync_subsystem()

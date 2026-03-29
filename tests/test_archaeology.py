@@ -732,10 +732,10 @@ class TestArchaeologyEngine:
         assert len(engine_with_corruption.excavation_history) == 1
 
     def test_engine_properties(self, engine):
-        assert engine.collector is not None
-        assert engine.corruption_simulator is not None
-        assert engine.reconstructor is not None
-        assert engine.stratigraphy is not None
+        assert isinstance(engine.collector, EvidenceCollector)
+        assert isinstance(engine.corruption_simulator, CorruptionSimulator)
+        assert isinstance(engine.reconstructor, BayesianReconstructor)
+        assert isinstance(engine.stratigraphy, StratigraphyEngine)
 
 
 # ---------------------------------------------------------------------------

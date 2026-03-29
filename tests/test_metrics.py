@@ -878,10 +878,10 @@ class TestMetricsIntegration:
             cardinality_threshold=100,
         )
 
-        assert registry is not None
-        assert collector is not None
-        assert middleware is not None
-        assert cardinality is not None
+        assert isinstance(registry, MetricRegistry)
+        assert isinstance(collector, MetricsCollector)
+        assert isinstance(middleware, MetricsMiddleware)
+        assert isinstance(cardinality, CardinalityDetector)
         assert registry.get_metric_count() > 0
 
     def test_full_pipeline(self, event_bus):

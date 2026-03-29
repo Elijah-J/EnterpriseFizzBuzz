@@ -87,27 +87,27 @@ class TestFFIType:
 
     def test_void_type_exists(self):
         """VOID is required for procedures with no return value."""
-        assert FFIType.VOID is not None
+        assert FFIType.VOID.value == "void"
 
     def test_integer_types(self):
         """All standard integer widths must be represented."""
-        assert FFIType.INT8 is not None
-        assert FFIType.INT16 is not None
-        assert FFIType.INT32 is not None
-        assert FFIType.INT64 is not None
+        assert FFIType.INT8.value == "int8"
+        assert FFIType.INT16.value == "int16"
+        assert FFIType.INT32.value == "int32"
+        assert FFIType.INT64.value == "int64"
 
     def test_floating_point_types(self):
         """IEEE 754 single and double precision types must exist."""
-        assert FFIType.FLOAT32 is not None
-        assert FFIType.FLOAT64 is not None
+        assert FFIType.FLOAT32.value == "float32"
+        assert FFIType.FLOAT64.value == "float64"
 
     def test_pointer_type(self):
         """POINTER type is necessary for opaque handle passing."""
-        assert FFIType.POINTER is not None
+        assert FFIType.POINTER.value == "pointer"
 
     def test_string_type(self):
         """STRING type provides null-terminated character array semantics."""
-        assert FFIType.STRING is not None
+        assert FFIType.STRING.value == "string"
 
     def test_type_count(self):
         """Exactly nine primitive FFI types must be defined."""

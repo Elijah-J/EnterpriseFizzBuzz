@@ -311,7 +311,7 @@ class TestMaterial:
         hit_point = Vec3(0, 0, 0)
         normal = Vec3(0, 1, 0)
         result = mat.scatter(ray_in, hit_point, normal, front_face=True)
-        assert result is not None
+        assert isinstance(result, tuple), "Lambertian material must scatter"
         attenuation, scattered = result
         assert attenuation == mat.albedo
         # Scattered ray should originate from hit point
@@ -323,7 +323,7 @@ class TestMaterial:
         ray_in = Ray(Vec3(0, 1, 0), Vec3(0, -1, 0))
         normal = Vec3(0, 1, 0)
         result = mat.scatter(ray_in, Vec3(0, 0, 0), normal, front_face=True)
-        assert result is not None
+        assert isinstance(result, tuple), "Metal material must scatter on direct hit"
         attenuation, scattered = result
         # With zero fuzz, reflected ray should be along normal
         assert scattered.direction.dot(normal) > 0
@@ -343,7 +343,7 @@ class TestMaterial:
         ray_in = Ray(Vec3(0, 1, 0), Vec3(0, -1, 0))
         normal = Vec3(0, 1, 0)
         result = mat.scatter(ray_in, Vec3(0, 0, 0), normal, front_face=True)
-        assert result is not None
+        assert isinstance(result, tuple), "Dielectric material must scatter"
         attenuation, scattered = result
         # Dielectric always scatters with white attenuation
         assert attenuation == Vec3(1.0, 1.0, 1.0)
@@ -443,7 +443,7 @@ class TestSphere:
         )
         ray = Ray(Vec3(0, 0, 0), Vec3(0, 0, -1))
         hit = sphere.hit(ray, 0.001, INF)
-        assert hit is not None
+        assert isinstance(hit, HitRecord)
         assert abs(hit.t - 0.5) < 0.01
 
     def test_ray_misses_sphere(self) -> None:
@@ -464,7 +464,7 @@ class TestSphere:
         )
         ray = Ray(Vec3(0, 0, 0), Vec3(0, 0, -1))
         hit = sphere.hit(ray, 0.001, INF)
-        assert hit is not None
+        assert isinstance(hit, HitRecord)
         # Should hit the far side
         assert hit.t > 0
 
@@ -476,7 +476,7 @@ class TestSphere:
         )
         ray = Ray(Vec3(0, 0, 0), Vec3(0, 0, -1))
         hit = sphere.hit(ray, 0.001, INF)
-        assert hit is not None
+        assert isinstance(hit, HitRecord)
         # Normal should point toward the camera (front face)
         assert hit.normal.z > 0
 
@@ -549,7 +549,7 @@ class TestScene:
         scene.add(Sphere(Vec3(0, 0, -4), 0.5, mat))
         ray = Ray(Vec3(0, 0, 0), Vec3(0, 0, -1))
         hit = scene.hit(ray, 0.001, INF)
-        assert hit is not None
+        assert isinstance(hit, HitRecord)
         # Should hit the closer sphere
         assert abs(hit.t - 1.5) < 0.1
 
@@ -986,7 +986,7 @@ class TestRenderMiddleware:
             mw.process(ctx, _identity_handler)
 
         pixels = mw.render_scene()
-        assert pixels is not None
+        assert isinstance(pixels, list)
         assert len(pixels) == 3
         assert len(pixels[0]) == 4
         assert mw.rendered is True

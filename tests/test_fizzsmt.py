@@ -83,16 +83,16 @@ class TestSortTypeEnum:
     """Tests for the SortType enumeration of SMT-LIB sort kinds."""
 
     def test_bool_sort_exists(self):
-        assert SortType.BOOL is not None
+        assert SortType.BOOL.value == "bool"
 
     def test_int_sort_exists(self):
-        assert SortType.INT is not None
+        assert SortType.INT.value == "int"
 
     def test_real_sort_exists(self):
-        assert SortType.REAL is not None
+        assert SortType.REAL.value == "real"
 
     def test_bitvec_sort_exists(self):
-        assert SortType.BITVEC is not None
+        assert SortType.BITVEC.value == "bitvec"
 
 
 # ---------------------------------------------------------------------------
@@ -149,13 +149,13 @@ class TestSolverResultEnum:
     """Tests for the SolverResult enumeration of solver outcomes."""
 
     def test_sat_result_exists(self):
-        assert SolverResult.SAT is not None
+        assert SolverResult.SAT.value == "sat"
 
     def test_unsat_result_exists(self):
-        assert SolverResult.UNSAT is not None
+        assert SolverResult.UNSAT.value == "unsat"
 
     def test_unknown_result_exists(self):
-        assert SolverResult.UNKNOWN is not None
+        assert SolverResult.UNKNOWN.value == "unknown"
 
 
 # ---------------------------------------------------------------------------

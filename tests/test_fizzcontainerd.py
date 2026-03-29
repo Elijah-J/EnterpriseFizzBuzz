@@ -2223,58 +2223,58 @@ class TestEventTypes:
     """Validate CONTAINERD_* EventType members exist."""
 
     def test_daemon_started(self):
-        assert EventType.CONTAINERD_DAEMON_STARTED is not None
+        assert EventType.CONTAINERD_DAEMON_STARTED.name == "CONTAINERD_DAEMON_STARTED"
 
     def test_daemon_stopped(self):
-        assert EventType.CONTAINERD_DAEMON_STOPPED is not None
+        assert EventType.CONTAINERD_DAEMON_STOPPED.name == "CONTAINERD_DAEMON_STOPPED"
 
     def test_container_created(self):
-        assert EventType.CONTAINERD_CONTAINER_CREATED is not None
+        assert EventType.CONTAINERD_CONTAINER_CREATED.name == "CONTAINERD_CONTAINER_CREATED"
 
     def test_container_updated(self):
-        assert EventType.CONTAINERD_CONTAINER_UPDATED is not None
+        assert EventType.CONTAINERD_CONTAINER_UPDATED.name == "CONTAINERD_CONTAINER_UPDATED"
 
     def test_container_deleted(self):
-        assert EventType.CONTAINERD_CONTAINER_DELETED is not None
+        assert EventType.CONTAINERD_CONTAINER_DELETED.name == "CONTAINERD_CONTAINER_DELETED"
 
     def test_task_created(self):
-        assert EventType.CONTAINERD_TASK_CREATED is not None
+        assert EventType.CONTAINERD_TASK_CREATED.name == "CONTAINERD_TASK_CREATED"
 
     def test_task_started(self):
-        assert EventType.CONTAINERD_TASK_STARTED is not None
+        assert EventType.CONTAINERD_TASK_STARTED.name == "CONTAINERD_TASK_STARTED"
 
     def test_task_killed(self):
-        assert EventType.CONTAINERD_TASK_KILLED is not None
+        assert EventType.CONTAINERD_TASK_KILLED.name == "CONTAINERD_TASK_KILLED"
 
     def test_task_paused(self):
-        assert EventType.CONTAINERD_TASK_PAUSED is not None
+        assert EventType.CONTAINERD_TASK_PAUSED.name == "CONTAINERD_TASK_PAUSED"
 
     def test_task_resumed(self):
-        assert EventType.CONTAINERD_TASK_RESUMED is not None
+        assert EventType.CONTAINERD_TASK_RESUMED.name == "CONTAINERD_TASK_RESUMED"
 
     def test_task_deleted(self):
-        assert EventType.CONTAINERD_TASK_DELETED is not None
+        assert EventType.CONTAINERD_TASK_DELETED.name == "CONTAINERD_TASK_DELETED"
 
     def test_shim_spawned(self):
-        assert EventType.CONTAINERD_SHIM_SPAWNED is not None
+        assert EventType.CONTAINERD_SHIM_SPAWNED.name == "CONTAINERD_SHIM_SPAWNED"
 
     def test_shim_exited(self):
-        assert EventType.CONTAINERD_SHIM_EXITED is not None
+        assert EventType.CONTAINERD_SHIM_EXITED.name == "CONTAINERD_SHIM_EXITED"
 
     def test_image_pulled(self):
-        assert EventType.CONTAINERD_IMAGE_PULLED is not None
+        assert EventType.CONTAINERD_IMAGE_PULLED.name == "CONTAINERD_IMAGE_PULLED"
 
     def test_image_removed(self):
-        assert EventType.CONTAINERD_IMAGE_REMOVED is not None
+        assert EventType.CONTAINERD_IMAGE_REMOVED.name == "CONTAINERD_IMAGE_REMOVED"
 
     def test_content_ingested(self):
-        assert EventType.CONTAINERD_CONTENT_INGESTED is not None
+        assert EventType.CONTAINERD_CONTENT_INGESTED.name == "CONTAINERD_CONTENT_INGESTED"
 
     def test_gc_started(self):
-        assert EventType.CONTAINERD_GC_STARTED is not None
+        assert EventType.CONTAINERD_GC_STARTED.name == "CONTAINERD_GC_STARTED"
 
     def test_gc_completed(self):
-        assert EventType.CONTAINERD_GC_COMPLETED is not None
+        assert EventType.CONTAINERD_GC_COMPLETED.name == "CONTAINERD_GC_COMPLETED"
 
     def test_count_is_18(self):
         containerd_types = [e for e in EventType if e.name.startswith("CONTAINERD_")]

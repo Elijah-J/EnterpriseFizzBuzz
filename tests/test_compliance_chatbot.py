@@ -1468,9 +1468,9 @@ class TestNLQEventTypes:
     """Tests for NLQ event types in the domain model."""
 
     def test_nlq_event_types_exist(self) -> None:
-        assert EventType.NLQ_QUERY_RECEIVED is not None
-        assert EventType.NLQ_TOKENIZATION_COMPLETED is not None
-        assert EventType.NLQ_INTENT_CLASSIFIED is not None
-        assert EventType.NLQ_ENTITIES_EXTRACTED is not None
-        assert EventType.NLQ_QUERY_EXECUTED is not None
-        assert EventType.NLQ_SESSION_STARTED is not None
+        assert EventType.NLQ_QUERY_RECEIVED.name == "NLQ_QUERY_RECEIVED"
+        assert EventType.NLQ_TOKENIZATION_COMPLETED.name == "NLQ_TOKENIZATION_COMPLETED"
+        assert EventType.NLQ_INTENT_CLASSIFIED.name == "NLQ_INTENT_CLASSIFIED"
+        assert EventType.NLQ_ENTITIES_EXTRACTED.name == "NLQ_ENTITIES_EXTRACTED"
+        assert EventType.NLQ_QUERY_EXECUTED.name == "NLQ_QUERY_EXECUTED"
+        assert EventType.NLQ_SESSION_STARTED.name == "NLQ_SESSION_STARTED"

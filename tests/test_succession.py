@@ -829,7 +829,7 @@ class TestSkillsMatrix:
     def test_get_entry_found(self):
         matrix = SkillsMatrix(modules=SMALL_MODULES)
         entry = matrix.get_entry("cache")
-        assert entry is not None
+        assert isinstance(entry, SkillEntry)
         assert entry.module_name == "cache"
         assert entry.proficiency == "expert"
 
@@ -1315,7 +1315,7 @@ class TestKnowledgeTransferTracker:
     def test_get_session_found(self):
         tracker = KnowledgeTransferTracker(modules=SMALL_MODULES)
         session = tracker.get_session("cache")
-        assert session is not None
+        assert isinstance(session, KnowledgeTransferSession)
         assert session.module_name == "cache"
 
     def test_get_session_not_found(self):
@@ -1363,7 +1363,7 @@ class TestKnowledgeTransferTracker:
         tracker = KnowledgeTransferTracker(modules=["cache"])
         tracker.complete_session("cache")
         session = tracker.get_session("cache")
-        assert session.completed_date is not None
+        assert isinstance(session.completed_date, (int, float))
         assert session.completed_date > 0
 
     def test_complete_session_nonexistent(self):

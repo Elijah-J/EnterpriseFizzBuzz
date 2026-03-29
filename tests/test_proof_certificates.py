@@ -1077,7 +1077,7 @@ class TestProofMiddleware:
         assert cert.latex_source is None
 
     def test_middleware_generator_accessible(self, middleware):
-        assert middleware.generator is not None
+        assert isinstance(middleware.generator, CertificateGenerator)
 
     def test_middleware_exporter_accessible(self, middleware):
-        assert middleware.exporter is not None
+        assert isinstance(middleware.exporter, LaTeXExporter)

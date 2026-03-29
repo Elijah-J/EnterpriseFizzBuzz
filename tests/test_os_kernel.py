@@ -1021,11 +1021,11 @@ class TestProcessStateEnum:
     """Tests for the ProcessState enum."""
 
     def test_all_states_exist(self):
-        assert ProcessState.READY is not None
-        assert ProcessState.RUNNING is not None
-        assert ProcessState.BLOCKED is not None
-        assert ProcessState.ZOMBIE is not None
-        assert ProcessState.TERMINATED is not None
+        assert ProcessState.READY.name == "READY"
+        assert ProcessState.RUNNING.name == "RUNNING"
+        assert ProcessState.BLOCKED.name == "BLOCKED"
+        assert ProcessState.ZOMBIE.name == "ZOMBIE"
+        assert ProcessState.TERMINATED.name == "TERMINATED"
 
     def test_states_are_distinct(self):
         states = [ProcessState.READY, ProcessState.RUNNING, ProcessState.BLOCKED,

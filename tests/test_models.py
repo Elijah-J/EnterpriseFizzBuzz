@@ -342,16 +342,16 @@ class TestFizzBuzzClassification:
     """Tests for the strongly-typed FizzBuzz classification enum."""
 
     def test_has_fizz(self):
-        assert FizzBuzzClassification.FIZZ is not None
+        assert FizzBuzzClassification.FIZZ.name == "FIZZ"
 
     def test_has_buzz(self):
-        assert FizzBuzzClassification.BUZZ is not None
+        assert FizzBuzzClassification.BUZZ.name == "BUZZ"
 
     def test_has_fizzbuzz(self):
-        assert FizzBuzzClassification.FIZZBUZZ is not None
+        assert FizzBuzzClassification.FIZZBUZZ.name == "FIZZBUZZ"
 
     def test_has_plain(self):
-        assert FizzBuzzClassification.PLAIN is not None
+        assert FizzBuzzClassification.PLAIN.name == "PLAIN"
 
     def test_exactly_four_members(self):
         """There are exactly four possible FizzBuzz outcomes. A fifth would
@@ -522,16 +522,16 @@ class TestOutputFormat:
     """Tests for the output serialization format enum."""
 
     def test_has_plain(self):
-        assert OutputFormat.PLAIN is not None
+        assert OutputFormat.PLAIN.name == "PLAIN"
 
     def test_has_json(self):
-        assert OutputFormat.JSON is not None
+        assert OutputFormat.JSON.name == "JSON"
 
     def test_has_xml(self):
-        assert OutputFormat.XML is not None
+        assert OutputFormat.XML.name == "XML"
 
     def test_has_csv(self):
-        assert OutputFormat.CSV is not None
+        assert OutputFormat.CSV.name == "CSV"
 
     def test_exactly_four_formats(self):
         """Four output formats, no more, no less. Adding YAML would require
@@ -548,19 +548,19 @@ class TestEvaluationStrategy:
     """Tests for the available FizzBuzz evaluation strategies."""
 
     def test_has_standard(self):
-        assert EvaluationStrategy.STANDARD is not None
+        assert EvaluationStrategy.STANDARD.name == "STANDARD"
 
     def test_has_chain_of_responsibility(self):
-        assert EvaluationStrategy.CHAIN_OF_RESPONSIBILITY is not None
+        assert EvaluationStrategy.CHAIN_OF_RESPONSIBILITY.name == "CHAIN_OF_RESPONSIBILITY"
 
     def test_has_parallel_async(self):
-        assert EvaluationStrategy.PARALLEL_ASYNC is not None
+        assert EvaluationStrategy.PARALLEL_ASYNC.name == "PARALLEL_ASYNC"
 
     def test_has_machine_learning(self):
-        assert EvaluationStrategy.MACHINE_LEARNING is not None
+        assert EvaluationStrategy.MACHINE_LEARNING.name == "MACHINE_LEARNING"
 
     def test_has_quantum(self):
-        assert EvaluationStrategy.QUANTUM is not None
+        assert EvaluationStrategy.QUANTUM.name == "QUANTUM"
 
     def test_exactly_five_strategies(self):
         """At least five strategies for computing n%3 and n%5. A testament to human ambition."""
@@ -630,13 +630,13 @@ class TestEventType:
 
     def test_circuit_breaker_events_exist(self):
         """The circuit breaker must have its own event vocabulary."""
-        assert EventType.CIRCUIT_BREAKER_STATE_CHANGED is not None
-        assert EventType.CIRCUIT_BREAKER_TRIPPED is not None
-        assert EventType.CIRCUIT_BREAKER_RECOVERED is not None
+        assert EventType.CIRCUIT_BREAKER_STATE_CHANGED.name == "CIRCUIT_BREAKER_STATE_CHANGED"
+        assert EventType.CIRCUIT_BREAKER_TRIPPED.name == "CIRCUIT_BREAKER_TRIPPED"
+        assert EventType.CIRCUIT_BREAKER_RECOVERED.name == "CIRCUIT_BREAKER_RECOVERED"
 
     def test_cache_events_include_eulogy(self):
         """A cache entry's eulogy is composed upon eviction. Naturally."""
-        assert EventType.CACHE_EULOGY_COMPOSED is not None
+        assert EventType.CACHE_EULOGY_COMPOSED.name == "CACHE_EULOGY_COMPOSED"
 
 
 class TestLogLevel:

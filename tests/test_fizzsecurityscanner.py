@@ -260,11 +260,11 @@ class TestFinding:
 
     def test_severity_levels(self):
         """All five severity levels must be present in the enum."""
-        assert Severity.CRITICAL is not None
-        assert Severity.HIGH is not None
-        assert Severity.MEDIUM is not None
-        assert Severity.LOW is not None
-        assert Severity.INFO is not None
+        assert Severity.CRITICAL.value == "critical"
+        assert Severity.HIGH.value == "high"
+        assert Severity.MEDIUM.value == "medium"
+        assert Severity.LOW.value == "low"
+        assert Severity.INFO.value == "info"
         assert len(Severity) == 5
 
 

@@ -133,16 +133,16 @@ class TestBobState:
         assert len(BobState) == 4
 
     def test_nominal_exists(self):
-        assert BobState.NOMINAL is not None
+        assert BobState.NOMINAL.name == "NOMINAL"
 
     def test_fatigued_exists(self):
-        assert BobState.FATIGUED is not None
+        assert BobState.FATIGUED.name == "FATIGUED"
 
     def test_overloaded_exists(self):
-        assert BobState.OVERLOADED is not None
+        assert BobState.OVERLOADED.name == "OVERLOADED"
 
     def test_burnout_exists(self):
-        assert BobState.BURNOUT is not None
+        assert BobState.BURNOUT.name == "BURNOUT"
 
 
 # ============================================================

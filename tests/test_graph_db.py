@@ -1851,27 +1851,27 @@ class TestKnowledgeGraphEventTypes:
 
     def test_kg_triple_added_exists(self):
         """The KG_TRIPLE_ADDED event type exists."""
-        assert EventType.KG_TRIPLE_ADDED is not None
+        assert EventType.KG_TRIPLE_ADDED.name == "KG_TRIPLE_ADDED"
 
     def test_kg_inference_started_exists(self):
         """The KG_INFERENCE_STARTED event type exists."""
-        assert EventType.KG_INFERENCE_STARTED is not None
+        assert EventType.KG_INFERENCE_STARTED.name == "KG_INFERENCE_STARTED"
 
     def test_kg_inference_fixpoint_exists(self):
         """The KG_INFERENCE_FIXPOINT event type exists."""
-        assert EventType.KG_INFERENCE_FIXPOINT is not None
+        assert EventType.KG_INFERENCE_FIXPOINT.name == "KG_INFERENCE_FIXPOINT"
 
     def test_kg_sparql_parsed_exists(self):
         """The KG_SPARQL_PARSED event type exists."""
-        assert EventType.KG_SPARQL_PARSED is not None
+        assert EventType.KG_SPARQL_PARSED.name == "KG_SPARQL_PARSED"
 
     def test_kg_sparql_executed_exists(self):
         """The KG_SPARQL_EXECUTED event type exists."""
-        assert EventType.KG_SPARQL_EXECUTED is not None
+        assert EventType.KG_SPARQL_EXECUTED.name == "KG_SPARQL_EXECUTED"
 
     def test_kg_ontology_rendered_exists(self):
         """The KG_ONTOLOGY_RENDERED event type exists."""
-        assert EventType.KG_ONTOLOGY_RENDERED is not None
+        assert EventType.KG_ONTOLOGY_RENDERED.name == "KG_ONTOLOGY_RENDERED"
 
 
 if __name__ == "__main__":
